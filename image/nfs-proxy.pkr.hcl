@@ -1,0 +1,214 @@
+// Copyright 2023 Google LLC
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+packer {
+  required_version = ">= 1.13.0"
+  required_plugins {
+    amazon = {
+      # https://github.com/hashicorp/packer-plugin-amazon
+      source  = "github.com/hashicorp/amazon"
+      version = ">= 1.3.6"
+    }
+  }
+}
+
+locals {
+  version       = "1.1.0-alpha.2"
+  timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
+  ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
+  temp_vol_size = 50
+  build_name = (
+    var.BUILD_NAME == "" ?
+    "packer-knfsd-proxy-${local.version}-${local.timestamp}" :
+    var.BUILD_NAME
+  )
+  image_name = (
+    var.IMAGE_NAME == "" ?
+    "knfsd-proxy-${local.version}" :
+    var.IMAGE_NAME
+  )
+}
+
+# https://documentation.ubuntu.com/aws/en/latest/aws-how-to/instances/find-ubuntu-images/
+# aws ssm get-parameters --names /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+# --query 'Parameters[].Value' --output text
+data "amazon-parameterstore" "base-ami" {
+  name   = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
+  region = var.REGION
+}
+
+# https://developer.hashicorp.com/packer/integrations/hashicorp/amazon/latest/components/builder/ebs
+source "amazon-ebs" "nfs-proxy" {
+
+  # increase timeout for AMI creation
+  aws_polling {
+    delay_seconds = 30
+    max_attempts  = 60
+  }
+
+  # Networking
+  region    = var.REGION
+  subnet_id = var.SUBNET
+
+  # Build machine
+  source_ami    = data.amazon-parameterstore.base-ami.value
+  instance_type = var.INSTANCE_TYPE
+  run_tags = {
+    "Name"                            = local.build_name
+    "knfsd-file-cache:version"        = local.version
+    "knfsd-file-cache:packer:version" = "${packer.version}"
+  }
+
+  # Security
+  # This is only used when "security_group_id", "security_group_ids",
+  # and "temporary_security_group_source_cidrs" are not specified
+  temporary_security_group_source_public_ip = true
+  # temporary_security_group_source_cidrs = ["0.0.0.0/0"]
+
+  # EBS root build volume configuration
+  launch_block_device_mappings {
+    device_name           = "/dev/sda1"
+    encrypted             = true
+    volume_size           = 8
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
+  # EBS temp build volume configuration
+  launch_block_device_mappings {
+    device_name           = "/dev/sdf"
+    encrypted             = true
+    volume_size           = local.temp_vol_size
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
+  # Output image
+  skip_create_ami = var.SKIP_CREATE_IMAGE
+  ami_name        = local.ami_name
+  ami_description = <<-EOF
+    KNFSD-File-Cache: v${local.version}
+    Packer: v${packer.version}
+    Source AMI Name: {{ .SourceAMIName }}
+    Source AMI ID: {{.SourceAMI }}
+  EOF
+
+  ami_virtualization_type = "hvm"
+
+  # EBS root volume configuration
+  ami_block_device_mappings {
+    device_name           = "/dev/sda1"
+    encrypted             = true
+    volume_size           = 8
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
+  # Explicitly exclude ephemeral storage devices
+  ami_block_device_mappings {
+    device_name = "/dev/sdb"
+    no_device   = true
+  }
+
+  ami_block_device_mappings {
+    device_name = "/dev/sdc"
+    no_device   = true
+  }
+
+  # Explicitly exclude the temporary EBS build volume from the AMI
+  ami_block_device_mappings {
+    device_name = "/dev/sdf"
+    no_device   = true
+  }
+
+  # Metadata options
+  imds_support = "v2.0"
+  metadata_options {
+    http_endpoint          = "enabled"
+    http_tokens            = "required"
+    instance_metadata_tags = "enabled"
+  }
+  tags = {
+    "Name" = local.image_name
+  }
+
+  # Communicator
+  communicator = "ssh"
+  ssh_username = "ubuntu"
+}
+
+build {
+  sources = ["source.amazon-ebs.nfs-proxy"]
+
+  # https://developer.hashicorp.com/packer/docs/provisioners/shell
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
+      "mkfs.ext4 /dev/$device",
+      "mkdir -p /mnt/build",
+      "mount /dev/$device /mnt/build",
+      "chown ubuntu:ubuntu /mnt/build"
+    ]
+  }
+
+  # https://developer.hashicorp.com/packer/docs/provisioners/file
+  provisioner "file" {
+    source      = "${path.root}/resources/"
+    destination = "/mnt/build/"
+    timeout     = "10m"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "chmod +x /mnt/build/scripts/*.sh",
+      "/mnt/build/scripts/10_pre_build.sh"
+    ]
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "/mnt/build/scripts/20_build.sh 2>&1",
+      "reboot"
+    ]
+    expect_disconnect = true
+    pause_after       = "30s"
+    timeout           = "1h"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
+      "mount /dev/$device /mnt/build",
+      "/mnt/build/scripts/30_post_build.sh 2>&1"
+    ]
+    timeout = "5m"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline          = ["/mnt/build/scripts/40_custom.sh"]
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "/mnt/build/scripts/50_finalize.sh 2>&1",
+      "umount /mnt/build",
+      "rm -rf /mnt/build"
+    ]
+    expect_disconnect = true
+    timeout           = "5m"
+  }
+
+  # Output the last build to a manifest file in the current directory.
+  # This can be useful for automated tooling, especially if packer generated
+  # the image name with a timestamp.
+  post-processor "manifest" {
+    output = "image.manifest.json"
+  }
+}

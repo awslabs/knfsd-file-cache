@@ -1,0 +1,87 @@
+{
+  "name": "knfsd-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "options": [
+      "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+    ],
+    "args": {
+      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/amd64}",
+      "BUILDARCH": "${localEnv:BUILDARCH:amd64}"
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/knfsd-file-cache,type=bind",
+  "workspaceFolder": "/knfsd-file-cache",
+  "remoteUser": "ubuntu",
+  "containerEnv": {
+    "HOST_REPO_PATH": "${localWorkspaceFolder}",
+    "GITHUB_COM_TOKEN": "${localEnv:GITHUB_COM_TOKEN}",
+    "PACKER_GITHUB_API_TOKEN": "${localEnv:PACKER_GITHUB_API_TOKEN}",
+    "KNFSD_REMOTE_SSH_KEYPAIR": "${localEnv:KNFSD_REMOTE_SSH_KEYPAIR}",
+    "KNFSD_REMOTE_SSH_SUBNET": "${localEnv:KNFSD_REMOTE_SSH_SUBNET}",
+    "KNFSD_REMOTE_SSH_SG_ID": "${localEnv:KNFSD_REMOTE_SSH_SG_ID}"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.dialog.defaultPath": "/knfsd-file-cache",
+        "dev.containers.cacheVolume": true,
+        "dev.containers.copyGitConfig": true,
+        "dev.containers.gitCredentialHelperConfigLocation": "global",
+        "extensions.ignoreRecommendations": true
+      },
+      "extensions": [
+        "DavidAnson.vscode-markdownlint",
+        "EditorConfig.EditorConfig",
+        "SirTori.indenticator",
+        "Tyriar.sort-lines",
+        "amazonwebservices.aws-toolkit-vscode",
+        "ckolkman.vscode-postgres",
+        "coolbear.systemd-unit-file",
+        "dannysteenman.cloudformation-yaml-snippets",
+        "donjayamanne.githistory",
+        "golang.go",
+        "hashicorp.terraform",
+        "jetmartin.bats",
+        "jianbingfang.dupchecker",
+        "mkhl.shfmt",
+        "ms-azuretools.vscode-docker",
+        "oderwat.indent-rainbow",
+        "redhat.vscode-yaml",
+        "hashicorp.hcl",
+        "tfsec.tfsec"
+      ]
+    }
+  },
+  "mounts": [
+    "source=knfsd-dev-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
+    "source=knfsd-dev-go-cache,target=/home/ubuntu/.cache/go-build,type=volume",
+    "source=knfsd-dev-go-mod-cache,target=/home/ubuntu/go/pkg/mod,type=volume",
+    "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
+    "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
+    "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
+    "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
+  ],
+  "postCreateCommand": {
+    "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
+    "chmod-proc-slabinfo": "sudo chmod 444 /proc/slabinfo",
+    "git-add-safe-dir": "sudo git config --system --add safe.directory ${containerWorkspaceFolder}",
+    "docker-image-prune": "sudo docker image prune --force"
+  },
+  "postStartCommand": {
+    "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
+    "chmod-proc-slabinfo": "sudo chmod 444 /proc/slabinfo"
+  },
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--name=knfsd-dev",
+    "--hostname=knfsd-dev",
+    "--network=host",
+    "--add-host=knfsd-dev:127.0.0.1",
+    "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+  ]
+}

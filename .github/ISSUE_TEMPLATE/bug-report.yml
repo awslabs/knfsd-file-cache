@@ -1,0 +1,62 @@
+name: Bug report
+description: File a bug report
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out a bug report.
+  - type: markdown
+    attributes:
+      value: |
+        **Note: security issues should not be reported here.**
+        Please follow the [security policy for this repository](https://github.com/awslabs/knfsd-file-cache/security/policy).
+  - type: input
+    id: version
+    attributes:
+      label: KNFSD File Cache (KNFSD) version
+      description: |
+        Which version of KNFSD File Cache (KNFSD) are you using? You can find release versions [here](https://github.com/awslabs/knfsd-file-cache/releases).
+      placeholder: v1.1.0-beta.1
+    validations:
+      required: true
+  - type: input
+    id: region
+    attributes:
+      label: AWS Region
+      description: Which AWS region did you experience the bug in?
+      placeholder: us-east-1
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Describe the running environment
+      description: |
+        What else can you tell us about the environment you\'re running the solution? Instance type, instance count, etc?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Every file shows an I/O error in ls, or when trying to read/write
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide steps to reproduce this issue. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant log/nfstrace output
+      description: Please copy and paste any relevant log/nfstrace output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false

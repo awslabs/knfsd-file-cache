@@ -1,0 +1,23 @@
+# Copyright 2022 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: connections
+
+scope_name: knfsd-metrics-agent/connections
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  nfs.connections:
+    enabled: true
+    description: The number of NFS Clients connected to the KNFSD filer (used for autoscaling)
+    unit: "{count}"
+    gauge:
+      value_type: int

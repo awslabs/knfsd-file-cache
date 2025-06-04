@@ -1,0 +1,132 @@
+/*
+	Copyright 2022 Google LLC
+	Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+	SPDX-License-Identifier: Apache-2.0
+*/
+
+package main
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/internal/metrics"
+	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/log"
+
+	"github.com/go-ini/ini"
+	"go.uber.org/multierr"
+)
+
+const (
+	defaultConfigFile = "/etc/knfsd-fsidd.conf"
+	defaultSocketPath = "/run/fsidd.sock"
+)
+
+type Config struct {
+	SocketPath string         `ini:"socket"`
+	Database   DatabaseConfig `ini:"database"`
+	Metrics    metrics.Config `ini:"metrics"`
+	Debug      bool           `ini:"debug"`
+	Cache      bool           `ini:"cache"`
+}
+
+type DatabaseConfig struct {
+	URL         string `ini:"url"`
+	IAMAuth     bool   `ini:"iam-auth"`
+	TableName   string `ini:"table-name"`
+	CreateTable bool   `ini:"create-table"`
+}
+
+func (cfg *Config) Validate() error {
+	var err error
+	err = multierr.Append(err, required("socket-path", cfg.SocketPath))
+	err = multierr.Append(err, cfg.Database.Validate())
+	// No validation for the metrics, if there's errors in the config then the
+	// service will still start, just without metrics. Metrics are considered
+	// best effort, and errors do not prevent the app from running.
+	return err
+}
+
+func (cfg *DatabaseConfig) Validate() error {
+	var err error
+	err = multierr.Append(err, required("database-url", cfg.URL))
+	err = multierr.Append(err, required("table-name", cfg.TableName))
+	return err
+}
+
+func readDefaultConfig(cfg *Config) error {
+	err := readConfig(cfg, defaultConfigFile)
+	if errors.Is(err, os.ErrNotExist) {
+		// if config file does not exist, use default values
+		err = nil
+	}
+	return err
+}
+
+func readConfig(cfg *Config, name string) error {
+	name = filepath.Clean(name)
+	f, err := os.Open(name)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return parseConfig(cfg, f)
+}
+
+func parseConfig(cfg *Config, r io.Reader) error {
+	i, err := ini.Load(r)
+	if err != nil {
+		return err
+	}
+	return i.StrictMapTo(cfg)
+}
+
+func readEnv(cfg *Config) error {
+	var err error
+	envString(&cfg.SocketPath, "FSID_SOCKET")
+	envString(&cfg.Database.URL, "FSID_DATABASE_URL")
+	envString(&cfg.Database.TableName, "FSID_TABLE_NAME")
+	err = multierr.Append(err, envBool(&cfg.Database.IAMAuth, "FSID_IAM_AUTH"))
+	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_DEBUG"))
+	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_CACHE"))
+	return err
+}
+
+func envString(value *string, key string) {
+	if s, _ := os.LookupEnv(key); s != "" {
+		*value = s
+	}
+}
+
+func envBool(value *bool, key string) error {
+	if s, _ := os.LookupEnv(key); s != "" {
+		b, err := strconv.ParseBool(s)
+		if err != nil {
+			return fmt.Errorf("invalid argument %q for %q: %w", s, key, err)
+		}
+		*value = b
+	}
+	return nil
+}
+
+func required(name, value string) error {
+	if value == "" {
+		return fmt.Errorf("required: %q", name)
+	} else {
+		return nil
+	}
+}
+
+func printConfigError(err error) {
+	msg := &strings.Builder{}
+	fmt.Fprintln(msg, "invalid configuration")
+	for _, e := range multierr.Errors(err) {
+		fmt.Fprintf(msg, "  - %v\n", e)
+	}
+	log.Error.Print(msg.String())
+}

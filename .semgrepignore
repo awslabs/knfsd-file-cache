@@ -1,0 +1,14 @@
+.git/
+.devcontainer/
+.trivycache/
+.gitlab-ci.yml
+testing/
+testcert.go
+*_test.go
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json

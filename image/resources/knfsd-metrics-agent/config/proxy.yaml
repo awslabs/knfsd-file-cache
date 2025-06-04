@@ -1,0 +1,25 @@
+# Copyright 2022 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "/run/knfsd-metrics.sock"
+        transport: "unix"
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - otlp
+        - connections
+        - mounts
+        - exports
+        - slabinfo
+      processors:
+        - resourcedetection/ec2
+        - metricstransform
+      exporters:
+        - awsemf

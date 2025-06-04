@@ -1,0 +1,9 @@
+default:
+all_set:
+  metrics:
+    fscache.oldest_file:
+      enabled: true
+none_set:
+  metrics:
+    fscache.oldest_file:
+      enabled: false

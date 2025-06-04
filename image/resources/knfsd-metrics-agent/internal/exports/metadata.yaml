@@ -1,0 +1,43 @@
+# Copyright 2022 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: exports
+
+scope_name: knfsd-metrics-agent/exports
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  nfs.exports.total_operations:
+    enabled: true
+    description: Total number of NFS operations received from clients
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.exports.total_read_bytes:
+    enabled: true
+    description: Total bytes read by the NFS clients
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.exports.total_write_bytes:
+    enabled: true
+    description: Total bytes wrote by the NFS clients
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative

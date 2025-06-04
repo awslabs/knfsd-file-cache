@@ -1,0 +1,9 @@
+default:
+all_set:
+  metrics:
+    nfs.connections:
+      enabled: true
+none_set:
+  metrics:
+    nfs.connections:
+      enabled: false

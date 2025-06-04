@@ -1,0 +1,117 @@
+# Add via `pre-commit install` command as per docs: https://pre-commit.com/#quick-start
+# [OPTIONAL] Run against all files without committing:
+#   pre-commit run --all-files
+# Update all repo versions:
+#   pre-commit autoupdate
+# Supported hooks: https://pre-commit.com/hooks.html, https://github.com/pre-commit/pre-commit-hooks
+fail_fast: true
+exclude: ^(.*\.patch$|.*mountstats$)
+repos:
+  - repo: local
+    hooks:
+      - id: ec
+        name: editorconfig
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [ec]
+      - id: codespell
+        name: codespell
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [codespell]
+      - id: shfmt
+        name: shfmt
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [shfmt]
+      - id: shellcheck
+        name: shellcheck
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [shellcheck]
+      - id: black
+        name: black
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [black]
+      - id: mypy
+        name: mypy
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [mypy]
+      - id: pylint
+        name: pylint
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [pylint]
+      - id: packer-format
+        name: packer-format
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [packer-fmt]
+      - id: packer-validate
+        name: packer-validate
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [packer-val]
+      - id: terraform-format
+        name: terraform-format
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [tf-fmt]
+      - id: terraform-lint
+        name: terraform-lint
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [tf-lint]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files # prevents giant files from being committed
+      - id: check-case-conflict # checks for files that would conflict in case-insensitive filesystems
+      - id: check-json # checks json files for parseable syntax
+      - id: check-merge-conflict # checks for files that contain merge conflict strings
+      - id: check-shebang-scripts-are-executable # ensures that (non-binary) files with a shebang are executable
+      - id: check-vcs-permalinks # ensures that links to vcs websites are permalinks
+      - id: check-yaml # checks yaml files for parseable syntax
+      - id: detect-aws-credentials # detects *your* aws credentials from the aws cli credentials file
+        args: ["--allow-missing-credentials"]
+      - id: detect-private-key # detects the presence of private keys
+      - id: mixed-line-ending # replaces or checks mixed line ending
+        args: ["--fix=lf"]
+      - id: pretty-format-json # sets a standard for formatting json files
+        args: [--autofix, --no-sort-keys]
+      - id: trailing-whitespace # trims trailing whitespace
+        args: ["--markdown-linebreak-ext=md"]
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.37.1 # https://github.com/adrienverge/yamllint/tags
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yaml]
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.27.0 # https://github.com/gitleaks/gitleaks/releases
+    hooks:
+      - id: gitleaks
+        name: gitleaks
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.2.0 # https://github.com/compilerla/conventional-pre-commit/releases
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        # https://www.conventionalcommits.org/en/v1.0.0/#summary
+        args: [feat, fix, ci, chore, docs, build, style, refactor, perf, test, debug]

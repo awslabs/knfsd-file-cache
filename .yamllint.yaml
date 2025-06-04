@@ -1,0 +1,9 @@
+# See https://yamllint.readthedocs.io/en/stable/configuration.html#extending-the-default-configuration
+# for configuration documentation
+extends: default
+
+rules:
+  document-start: disable
+  line-length: disable
+  indentation: enable
+  comments: disable

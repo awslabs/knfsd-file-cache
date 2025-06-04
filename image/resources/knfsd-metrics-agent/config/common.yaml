@@ -1,0 +1,234 @@
+# Copyright 2022 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+receivers:
+  connections:
+    collection_interval: 1m
+
+  mounts:
+    collection_interval: 1m
+    # metrics:
+    #   nfs.mount.write_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.requests:
+    #     enabled: false
+    #   nfs.mount.operation.errors:
+    #     enabled: false
+    #   nfs.mount.write_exe:
+    #     enabled: false
+    #   nfs.mount.write_rtt:
+    #     enabled: false
+    #   nfs.mount.ops_per_second:
+    #     enabled: false
+    #   nfs.mount.rpc_backlog:
+    #     enabled: false
+    #   nfs.mount.read_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.sent_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.received_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.major_timeouts:
+    #     enabled: false
+    #   nfs.mount.read_exe:
+    #     enabled: false
+    #   nfs.mount.read_rtt:
+    #     enabled: false
+
+  exports:
+    collection_interval: 1m
+    # metrics:
+    #   nfs.exports.total_operations:
+    #     enabled: false
+    #   nfs.exports.total_read_bytes:
+    #     enabled: false
+    #   nfs.exports.total_write_bytes:
+    #     enabled: false
+
+  slabinfo:
+    collection_interval: 1m
+    # metrics:
+    #   slab.dentry_cache.objsize:
+    #     enabled: false
+    #   slab.nfs_inode_cache.active_objects:
+    #     enabled: false
+    #   slab.nfs_inode_cache.objsize:
+    #     enabled: false
+    #   slab.dentry_cache.active_objects:
+    #     enabled: false
+
+  # This may be useful for diagnostics to indicate if the proxy is culling.
+  # However, this can be expensive as it requires scanning all the cached blocks
+  # in FS-Cache, so be conservative on how often this information is scraped.
+  # By default this is not included in the pipeline.
+  oldestfile:
+    collection_interval: 10m
+
+processors:
+  resourcedetection/ec2:
+    detectors: [ec2]
+    ec2:
+      fail_on_missing_metadata: true
+
+  # NOTE: the open telemetry collector will interpolate environment variables
+  # Thus $1 will be replaced with the value of the environment variable named "1"
+  # This is escaped by using two dollars, thus use $$ in regexp.
+  metricstransform:
+    transforms:
+      - action: update
+        include: nfs.connections
+        new_name: nfs_connections
+
+      - action: update
+        include: nfs.mount.read_rtt
+        new_name: nfsiostat_mount_read_rtt
+
+      - action: update
+        include: nfs.mount.read_exe
+        new_name: nfsiostat_mount_read_exe
+
+      - action: update
+        include: nfs.mount.write_rtt
+        new_name: nfsiostat_mount_write_rtt
+
+      - action: update
+        include: nfs.mount.write_exe
+        new_name: nfsiostat_mount_write_exe
+
+      - action: update
+        include: nfs.mount.ops_per_second
+        new_name: nfsiostat_ops_per_second
+
+      - action: update
+        include: nfs.mount.rpc_backlog
+        new_name: nfsiostat_rpc_backlog
+
+      - action: update
+        include: nfs.mount.read_bytes
+        new_name: mount/read_bytes
+
+      - action: update
+        include: nfs.mount.write_bytes
+        new_name: mount/write_bytes
+
+      - action: update
+        include: nfs.mount.operation.requests
+        new_name: mount/operation/requests
+
+      - action: update
+        include: nfs.mount.operation.sent_bytes
+        new_name: mount/operation/sent_bytes
+
+      - action: update
+        include: nfs.mount.operation.received_bytes
+        new_name: mount/operation/received_bytes
+
+      - action: update
+        include: nfs.mount.operation.major_timeouts
+        new_name: mount/operation/major_timeouts
+
+      - action: update
+        include: nfs.mount.operation.errors
+        new_name: mount/operation/errors
+
+      - action: update
+        include: nfs.exports.total_operations
+        new_name: exports/total_operations
+
+      - action: update
+        include: nfs.exports.total_read_bytes
+        new_name: exports/total_read_bytes
+
+      - action: update
+        include: nfs.exports.total_write_bytes
+        new_name: exports/total_write_bytes
+
+      - action: update
+        include: slab.dentry_cache.active_objects
+        new_name: dentry_cache_active_objects
+
+      - action: update
+        include: slab.dentry_cache.objsize
+        new_name: dentry_cache_objsize
+
+      - action: update
+        include: slab.nfs_inode_cache.objsize
+        new_name: nfs_inode_cache_objsize
+
+      - action: update
+        include: slab.nfs_inode_cache.active_objects
+        new_name: nfs_inode_cache_active_objects
+
+      - action: update
+        include: fscache.oldest_file
+        new_name: fscache_oldest_file
+
+      # fsid daemon metrics, these are reported via the oltp receiver
+      - action: update
+        include: fsid.operation.count
+        new_name: fsid/operation/count
+
+      - action: update
+        include: fsid.operation.duration
+        new_name: fsid/operation/duration
+
+      - action: update
+        include: fsid.request.count
+        new_name: fsid/request/count
+
+      - action: update
+        include: fsid.request.duration
+        new_name: fsid/request/duration
+
+      - action: update
+        include: fsid.request.retries
+        new_name: fsid/request/retries
+
+      - action: update
+        include: fsid.sql.query.count
+        new_name: fsid/sql/query/count
+
+      - action: update
+        include: fsid.sql.query.duration
+        new_name: fsid/sql/query/duration
+
+      - action: update
+        include: ^(.*)$$
+        match_type: regexp
+        new_name: $$1
+
+exporters:
+  # Useful when developing or debugging metrics. When running the agent from the
+  # command line this will write the metrics to the terminal.
+  debug:
+    verbosity: basic
+
+  awsemf:
+    log_retention: 365
+    namespace: "knfsd/metrics"
+    dimension_rollup_option: "NoDimensionRollup"
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  prometheus:
+    endpoint: "localhost:9090"
+    send_timestamps: false
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  telemetry:
+    logs:
+      level: info
+
+    metrics:
+      # disable telemetry, scraping these might confuse the data as it would
+      # generate similar metrics to the CW Agent
+      level: none
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "localhost"
+                port: 8889

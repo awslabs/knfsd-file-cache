@@ -1,0 +1,52 @@
+# https://trivy.dev/v0.61/docs/configuration/filtering/#trivyignoreyaml
+misconfigurations:
+  - id: AVD-DS-0001
+    paths:
+      - "testing/images/terratest/Dockerfile"
+  - id: AVD-DS-0002
+    paths:
+      - "deployment/terraform-module-knfsd/resources/tests/Dockerfile"
+      - "deployment/database/resources/Dockerfile"
+      - "testing/images/terratest/Dockerfile"
+  - id: AVD-DS-0010
+    paths:
+      - ".devcontainer/dev/Dockerfile"
+      - ".devcontainer/prod/Dockerfile"
+  - id: AVD-AWS-0017
+    paths:
+      - "deployment/database/main.tf"
+      - "deployment/terraform-module-knfsd/modules/dns_round_robin/lambda.tf"
+  - id: AVD-DS-0029
+    paths:
+      - ".devcontainer/dev/Dockerfile"
+      - ".devcontainer/prod/Dockerfile"
+      - "testing/images/terratest/Dockerfile"
+  - id: AVD-AWS-0078
+    paths:
+      - "deployment/database/main.tf"
+  - id: AVD-AWS-0104
+    paths:
+      - "deployment/terraform-module-knfsd/vpc.tf"
+      - "deployment/test/main.tf"
+  - id: AVD-AWS-0177
+    paths:
+      - "deployment/database/main.tf"
+  - id: AVD-AWS-0344
+    paths:
+      - "deployment/terraform-module-knfsd/validations.tf"
+  - id: AVD-GCP-0029
+  - id: AVD-GCP-0030
+  - id: AVD-GCP-0033
+  - id: AVD-GCP-0034
+  - id: AVD-GCP-0041
+  - id: AVD-GCP-0045
+  - id: AVD-GCP-0067
+
+licenses:
+  - id: Apache-2.0
+  - id: BSD-2-Clause
+  - id: BSD-3-Clause
+  - id: ISC
+  - id: MIT
+  - id: MPL-2.0
+  - id: Unicode-DFS-2016

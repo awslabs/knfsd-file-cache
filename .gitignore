@@ -1,0 +1,77 @@
+# Linux
+*~
+._*
+.directory
+
+# Windows
+Thumbs.db
+[Dd]esktop.ini
+
+# macOS
+.DS_Store
+
+# Terraform Binaries
+.terraform/
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
+
+# Terraform State
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+
+# Terraform local .tfvars
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Terratest files
+TerraformOptions.json
+.test-data
+
+# Packer variables/debug files
+*.pkrvars.hcl
+*.auto.pkrvars.hcl
+*.pkrvars.json
+*.auto.pkrvars.json
+packer.log
+*.pem
+
+# Exclude Specific Packer Variables File
+!/image/cloudbuild.pkrvars.hcl
+!/image/nfs-proxy.pkr.hcl
+!/image/variables.pkr.hcl
+
+# Build files
+/image.manifest.json
+/image/resources.tgz
+
+# Development files
+go.work
+go.work.sum
+
+# Generated cert/key file
+image/resources/netapp-exports/internal/testcert/testcert.go
+
+# Lambda function files
+db_setup.zip
+static_ip.zip
+response.json
+.mypy_cache
+
+# Checkov report
+checkov-report.xml
+
+# Trivy cache
+.trivycache
+
+# NFS
+nfstrace.log
+
+# draw.io temp files
+*.drawio.dtmp
+*.drawio.bkp
+
+# knfsd-metrics-agent client tarball
+knfsd-metrics-agent.tar.gz

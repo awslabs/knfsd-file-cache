@@ -1,0 +1,27 @@
+# Copyright 2022 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: oldestfile
+
+scope_name: knfsd-metrics-agent/oldestfile
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  fscache.oldest_file:
+    enabled: true
+    description: Age of the oldest file in FS-Cache
+    unit: s
+    gauge:
+      value_type: int
+
+tests:
+  config:
+    cache_path: "/tmp"

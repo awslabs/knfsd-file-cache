@@ -1,0 +1,939 @@
+include:
+  - remote: 'https://gitlab.com/renovate-bot/renovate-runner/-/raw/main/templates/renovate-config-validator.gitlab-ci.yml'
+  - remote: 'https://gitlab.com/renovate-bot/renovate-runner/-/raw/main/templates/renovate.gitlab-ci.yml'
+
+# default settings for all jobs unless overridden
+default:
+  retry: # Automatically retry on any system blips
+    max: 1
+    when:
+      - runner_system_failure
+  interruptible: false
+  tags:
+    - arch:amd64
+    - size:medium
+
+stages:
+  - dependencies
+  - config
+  - shell
+  - packer
+  - terraform
+  - python
+  - test
+  - build
+  - security
+
+variables:
+  GIT_DEPTH: 10
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "fastest"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+  KNFSD_ALPINE_VERSION: 3.22.0 # https://hub.docker.com/_/alpine/tags
+  KNFSD_BLACK_VERSION: 25.1.0 # https://github.com/psf/black/releases
+  KNFSD_BOTO3_VERSION: 1.38.29 # https://github.com/boto/boto3/tags
+  KNFSD_CHECKOV_VERSION: 3.2.436 # https://hub.docker.com/r/bridgecrew/checkov/tags
+  KNFSD_CODESPELL_VERSION: 2.4.1 # https://github.com/codespell-project/codespell/releases
+  KNFSD_EDITORCONFIG_VERSION: 3.3.0 # https://github.com/editorconfig-checker/editorconfig-checker/releases
+  KNFSD_GOLANGCI_LINT_VERSION: 2.1.6 # https://github.com/golangci/golangci-lint/releases
+  KNFSD_GOLANG_VERSION: 1.24.3 # https://go.dev/dl/
+  KNFSD_GOSEC_VERSION: 2.22.4 # https://github.com/securego/gosec/releases
+  KNFSD_GOVULNCHECK_VERSION: 1.1.4 # https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
+  KNFSD_KANIKO_VERSION: 1.24.0 # https://github.com/GoogleContainerTools/kaniko/releases
+  KNFSD_KICS_VERSION: 2.1.9 # https://github.com/Checkmarx/kics/releases
+  KNFSD_MYPY_VERSION: 1.16.0 # https://github.com/python/mypy/tags
+  KNFSD_PACKER_VERSION: 1.13.0 # https://github.com/hashicorp/packer/releases
+  KNFSD_POSTGRES_VERSION: 17.5-alpine3.22 # https://hub.docker.com/_/postgres
+  KNFSD_PSYCOPG_VERSION: 3.2.9 # https://pypi.org/project/psycopg/
+  KNFSD_PYLINT_VERSION: 3.3.7 # https://github.com/pylint-dev/pylint/tags
+  KNFSD_PYTHON_VERSION: 3.13.3 # https://hub.docker.com/_/python/tags
+  KNFSD_SHELLCHECK_VERSION: 0.10.0 # https://github.com/koalaman/shellcheck/releases
+  KNFSD_SHFMT_VERSION: 3.11.0 # https://github.com/mvdan/sh/releases
+  KNFSD_TERRAFORM_VERSION: 1.2.9 # https://github.com/hashicorp/terraform/releases
+  KNFSD_TFLINT_VERSION: 0.58.0 # https://github.com/terraform-linters/tflint/releases
+  KNFSD_TFSEC_VERSION: 1.28.14 # https://github.com/aquasecurity/tfsec/releases
+  KNFSD_TRIVY_VERSION: 0.63.0 # https://github.com/aquasecurity/trivy/releases
+
+.renovate-config: &renovate-config
+  environment: renovate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+.default-config: &default-config
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+
+# generic go cache configuration across all CI golang jobs
+.go-config:
+  stage: build
+  variables:
+    GOPROXY: direct
+    GOPATH: /go
+    GOMODCACHE: ${CI_PROJECT_DIR}/.go/pkg/mod
+    GOCACHE: ${CI_PROJECT_DIR}/.go/.cache/go-build
+    GOLANGCI_LINT_CACHE: ${CI_PROJECT_DIR}/.go/.cache/golangci-lint
+  before_script:
+    - mkdir -p ".go/pkg/mod" ".go/.cache/go-build" ".go/.cache/golangci-lint"
+  allow_failure: true
+  <<: *default-config
+  tags:
+    - arch:amd64
+    - size:xlarge
+
+# separate caches to control policy per CI job
+.go-cache-mod: &go-cache-mod
+  paths:
+    - .go/pkg/mod
+
+.go-cache-build: &go-cache-build
+  paths:
+    - .go/.cache/go-build
+
+.go-cache-lint: &go-cache-lint
+  paths:
+    - .go/.cache/golangci-lint
+
+# pre-hydrate go mod cache (except knfsd-metrics-agent project)
+.go-mod-download: &go-mod-download
+  script:
+    - |
+      # attempt 'go mod tidy/download' command max 3 iterations or until success
+      set -euo pipefail
+      function retry_command() {
+        local retval=1
+        local attempt=1
+        until [[ $retval -eq 0 ]] || [[ $attempt -gt 3 ]]; do
+          echo "retry_command: $1"
+          set +e
+          $1
+          retval=$?
+          set -e
+          attempt=$((attempt + 1))
+          if [[ $retval -ne 0 ]]; then
+            echo "Command failed (attempt $attempt/3), retrying in 2 seconds..."
+            sleep 2
+          fi
+        done
+        if [[ $retval -ne 0 ]] && [[ $attempt -gt 3 ]]; then
+          return $retval
+        fi
+      }
+      retry_command "go mod tidy"
+      retry_command "go mod download"
+
+# specific gosec cache configuration across all CI gosec jobs
+.gosec-config:
+  stage: security
+  variables:
+    GOPROXY: direct
+    GOPATH: /go
+    GOMODCACHE: ${CI_PROJECT_DIR}/.go/pkg/mod
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/securego/gosec:${KNFSD_GOSEC_VERSION}
+    entrypoint: [""]
+  before_script:
+    - mkdir -p ".go/pkg/mod"
+  allow_failure: true
+  <<: *default-config
+  tags:
+    - arch:amd64
+    - size:xlarge
+
+renovate-config-validator:
+  stage: dependencies
+  allow_failure: false
+  <<: *renovate-config
+
+renovate:
+  stage: dependencies
+  needs: ["renovate-config-validator"]
+  variables:
+    GOPROXY: direct
+    RENOVATE_EXTRA_FLAGS: ${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
+  allow_failure: false
+  <<: *renovate-config
+
+editorconfig-check:
+  stage: config
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/mstruebing/editorconfig-checker:v${KNFSD_EDITORCONFIG_VERSION}
+    entrypoint: [""]
+  script:
+    - ec
+  allow_failure: false
+  <<: *default-config
+
+# https://github.com/codespell-project/codespell
+spell-check:
+  stage: config
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:${KNFSD_PYTHON_VERSION}-alpine
+    entrypoint: [""]
+  before_script:
+    - apk update
+    - pip3 install --break-system-packages codespell==${KNFSD_CODESPELL_VERSION}
+    - codespell --version
+  script:
+    - codespell
+  allow_failure: false
+  <<: *default-config
+
+# https://github.com/koalaman/shellcheck
+bash-check:
+  stage: shell
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/koalaman/shellcheck-alpine:v${KNFSD_SHELLCHECK_VERSION}
+    entrypoint: [""]
+  before_script:
+    - apk update && apk add --no-cache git
+    - shellcheck --version
+  script:
+    - git ls-files --exclude='*.bash' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
+  allow_failure: true
+  <<: *default-config
+
+# https://github.com/koalaman/shellcheck
+bats-check:
+  stage: shell
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/koalaman/shellcheck-alpine:v${KNFSD_SHELLCHECK_VERSION}
+    entrypoint: [""]
+  before_script:
+    - apk update && apk add --no-cache git
+    - shellcheck --version
+  script:
+    - git ls-files --exclude='*.bats' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
+  allow_failure: true
+  <<: *default-config
+
+# https://github.com/koalaman/shellcheck
+sh-check:
+  stage: shell
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/koalaman/shellcheck-alpine:v${KNFSD_SHELLCHECK_VERSION}
+    entrypoint: [""]
+  before_script:
+    - apk update && apk add --no-cache git
+    - shellcheck --version
+  script:
+    - git ls-files --exclude='*.sh' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
+  allow_failure: true
+  <<: *default-config
+
+# https://github.com/mvdan/sh
+sh-format:
+  stage: shell
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/mvdan/shfmt:v${KNFSD_SHFMT_VERSION}-alpine
+  before_script:
+    - shfmt -version
+  script:
+    # https://github.com/mvdan/sh/blob/master/cmd/shfmt/shfmt.1.scd
+    - shfmt -d -s "${CI_PROJECT_DIR}"
+  allow_failure: true
+  <<: *default-config
+
+hcl-format:
+  stage: packer
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/hashicorp/packer:${KNFSD_PACKER_VERSION}
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  script:
+    - packer --version
+    - packer init -upgrade "${CI_PROJECT_DIR}/image"
+    - packer fmt -check -diff -recursive "${CI_PROJECT_DIR}"
+  allow_failure: false
+  <<: *default-config
+
+hcl-validate-image:
+  stage: packer
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/hashicorp/packer:${KNFSD_PACKER_VERSION}
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  script:
+    - packer --version
+    - cd "${CI_PROJECT_DIR}/image/" || exit 1
+    - packer init -upgrade .
+    - packer validate .
+  allow_failure: false
+  <<: *default-config
+
+# hcl-validate-testing:
+#   stage: packer
+#   needs: []
+#   image:
+#     name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/hashicorp/packer:${KNFSD_PACKER_VERSION}
+#     entrypoint:
+#       - '/usr/bin/env'
+#       - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+#   script:
+#     - packer --version
+#     - cd "${CI_PROJECT_DIR}/testing/images/client/" || exit 1
+#     - packer init -upgrade .
+#     - packer validate .
+#   allow_failure: false
+#   <<: *default-config
+
+tf-format:
+  stage: terraform
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/hashicorp/terraform:${KNFSD_TERRAFORM_VERSION}
+    entrypoint: [""]
+  script:
+    - terraform fmt -list=true -recursive -diff=true -check=true "${CI_PROJECT_DIR}"
+  allow_failure: false
+  <<: *default-config
+
+tf-lint:
+  stage: terraform
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/alpine:${KNFSD_ALPINE_VERSION}
+    entrypoint: [""]
+  script:
+    - apk --no-cache add curl unzip
+    # https://github.com/terraform-linters/tflint/releases
+    - curl -L "https://github.com/terraform-linters/tflint/releases/download/v${KNFSD_TFLINT_VERSION}/tflint_linux_amd64.zip" -o tflint.zip
+    - unzip -q -o tflint.zip
+    - rm tflint.zip
+    - chmod +x tflint
+    - ./tflint -v
+    - ./tflint --init
+    - ./tflint --recursive --config="${CI_PROJECT_DIR}/.tflint.hcl"
+  allow_failure: false
+  <<: *default-config
+
+tf-validate:
+  stage: terraform
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/hashicorp/terraform:${KNFSD_TERRAFORM_VERSION}
+    entrypoint: [""]
+  variables:
+    TF_PLUGIN_CACHE_DIR: ${CI_PROJECT_DIR}/.terraform.d/plugin-cache
+  before_script:
+    - mkdir -p "${CI_PROJECT_DIR}/.terraform.d/plugin-cache"
+  cache:
+    key: tf-plugins-${CI_COMMIT_REF_SLUG}
+    paths:
+      - deployment/database/.terraform.lock.hcl
+      - deployment/metrics/.terraform.lock.hcl
+      - deployment/terraform-module-knfsd/.terraform.lock.hcl
+      - deployment/terraform-module-knfsd/modules/dns_round_robin/.terraform.lock.hcl
+      - deployment/terraform-module-knfsd/modules/loadbalancer/.terraform.lock.hcl
+      - examples/basic/.terraform.lock.hcl
+      - examples/standard/.terraform.lock.hcl
+      - image/smoke-tests/terraform/.terraform.lock.hcl
+      - testing/examples/common/.terraform.lock.hcl
+      - testing/modules/cloudbuild/.terraform.lock.hcl
+      - testing/modules/source/.terraform.lock.hcl
+      - .terraform.d/plugin-cache
+  script:
+    - |
+      export SHELL_BLUE='\033[0;34m'; export SHELL_DEFAULT='\033[0m'
+      FAILED=0
+      while IFS= read -r dir; do
+        echo -e "\nValidating: ${SHELL_BLUE}${dir}${SHELL_DEFAULT}"
+        cd "${CI_PROJECT_DIR}/${dir}" || exit 1
+        terraform init -backend=false -reconfigure -upgrade
+        if ! terraform validate; then
+          FAILED=1
+        fi
+      done < <(find . -type f -name '*.tf' | sed -e 's#/[^/]*$##' | sort -u)
+      exit ${FAILED}
+  allow_failure: false
+  <<: *default-config
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+py-black: # python black formatter
+  stage: python
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:${KNFSD_PYTHON_VERSION}-alpine
+    entrypoint: [""]
+  before_script:
+    - apk update
+    - apk --no-cache add util-linux
+    - pip3 install --break-system-packages black==${KNFSD_BLACK_VERSION}
+    - black --version
+  script:
+    # Use `script` to emulate `tty` for colored output in GitLab CI
+    - script -q -c 'black --target-version py313 --check --diff "${CI_PROJECT_DIR}" ; echo $? > BLKEXIT'
+    - exit $(cat BLKEXIT)
+  allow_failure: false
+  <<: *default-config
+
+py-mypy: # python mypy type checker
+  stage: python
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:${KNFSD_PYTHON_VERSION}-alpine
+    entrypoint: [""]
+  cache:
+    key: mypy-${CI_COMMIT_REF_SLUG}
+    paths:
+      - ".mypy_cache"
+  before_script:
+    - mkdir -p ".mypy_cache"
+    - apk update
+    - apk --no-cache add util-linux
+    - pip3 install --break-system-packages mypy==${KNFSD_MYPY_VERSION} boto3==${KNFSD_BOTO3_VERSION} psycopg==${KNFSD_PSYCOPG_VERSION}
+    - mypy --version
+  script:
+    # Use `script` to emulate `tty` for colored output in GitLab CI
+    - script -q -c 'mypy --follow-untyped-imports --show-error-context --pretty "${CI_PROJECT_DIR}" ; echo $? > MYPYEXIT'
+    - exit $(cat MYPYEXIT)
+  allow_failure: false
+  <<: *default-config
+
+py-pylint: # python pylint linter
+  stage: python
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:${KNFSD_PYTHON_VERSION}-alpine
+    entrypoint: [""]
+  before_script:
+    - apk update
+    - apk --no-cache add util-linux
+    - pip3 install --break-system-packages pylint==${KNFSD_PYLINT_VERSION} boto3==${KNFSD_BOTO3_VERSION} psycopg==${KNFSD_PSYCOPG_VERSION}
+    - pylint --version
+  script:
+    # Use `script` to emulate `tty` for colored output in GitLab CI
+    - script -q -c 'pylint --output-format=colorized "${CI_PROJECT_DIR}" ; echo $? > PYLINTEXIT'
+    - exit $(cat PYLINTEXIT)
+  allow_failure: false
+  <<: *default-config
+
+bats-deploy-build:
+  stage: test
+  needs: []
+  image:
+    name: gcr.io/kaniko-project/executor:v${KNFSD_KANIKO_VERSION}-debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"},\"$(echo -n $CI_DEPENDENCY_PROXY_SERVER | awk -F[:] '{print $1}')\":{\"auth\":\"$(printf "%s:%s" ${CI_DEPENDENCY_PROXY_USER} "${CI_DEPENDENCY_PROXY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/deployment/terraform-module-knfsd/resources/tests/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}/bats-deploy:${CI_COMMIT_REF_SLUG}"
+      --cache=true
+  allow_failure: false
+  <<: *default-config
+
+# https://bats-core.readthedocs.io/en/stable/usage.html
+bats-deploy-test:
+  stage: test
+  needs: ["bats-deploy-build"]
+  image:
+    name: ${CI_REGISTRY_IMAGE}/bats-deploy:${CI_COMMIT_REF_SLUG}
+    entrypoint: [""]
+  script:
+    - cd "${CI_PROJECT_DIR}/deployment/terraform-module-knfsd/resources/" || exit 1
+    - bats --formatter pretty --recursive ${1-tests}
+  allow_failure: false
+  <<: *default-config
+
+go-filter-exports 1/5: # populate-cache
+  extends: .go-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: []
+  before_script:
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+  <<: *go-mod-download
+
+go-filter-exports 2/5: # lint,format
+  extends: .go-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: fe-lint-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-lint
+    - key: fe-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golangci/golangci-lint:v${KNFSD_GOLANGCI_LINT_VERSION}-alpine
+    entrypoint: [""]
+  needs: ["go-filter-exports 1/5"]
+  script: # https://golangci-lint.run/usage/configuration/#command-line-options
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+    - golangci-lint run --config="${CI_PROJECT_DIR}/.golangci.yaml" --verbose
+
+go-filter-exports 3/5: # https://go.dev/blog/vuln
+  extends: .go-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: fe-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-filter-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+    - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
+    - govulncheck -test -show verbose ./...
+
+go-filter-exports 4/5: # test,vet,race,cover
+  extends: .go-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: fe-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-filter-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+    - go test -race -cover -vet=all -v ./...
+
+go-filter-exports 5/5: # build
+  extends: .go-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: fe-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-filter-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+    - GOOS=linux GOARCH=amd64 go build -o "${CI_PROJECT_DIR}/filter-exports-amd64"
+    - GOOS=linux GOARCH=arm64 go build -o "${CI_PROJECT_DIR}/filter-exports-arm64"
+
+go-knfsd-agent 1/4: # populate-cache
+  extends: .go-config
+  cache:
+    - key: ka-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: []
+  before_script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent" || exit 1
+  <<: *go-mod-download
+
+go-knfsd-agent 2/4: # lint,format
+  extends: .go-config
+  cache:
+    - key: ka-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ka-lint-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-lint
+    - key: ka-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golangci/golangci-lint:v${KNFSD_GOLANGCI_LINT_VERSION}-alpine
+    entrypoint: [""]
+  needs: ["go-knfsd-agent 1/4"]
+  script: # https://golangci-lint.run/usage/configuration/#command-line-options
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent" || exit 1
+    - golangci-lint run --config="${CI_PROJECT_DIR}/.golangci.yaml" --verbose
+
+go-knfsd-agent 3/4: # https://go.dev/blog/vuln
+  extends: .go-config
+  cache:
+    - key: ka-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ka-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent" || exit 1
+    - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
+    - govulncheck -test -show verbose ./...
+
+go-knfsd-agent 4/4: # build
+  extends: .go-config
+  cache:
+    - key: ka-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ka-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent" || exit 1
+    - GOOS=linux GOARCH=amd64 go build -o "${CI_PROJECT_DIR}/knfsd-agent-amd64"
+    - GOOS=linux GOARCH=arm64 go build -o "${CI_PROJECT_DIR}/knfsd-agent-arm64"
+
+go-knfsd-fsidd 1/5: # populate-cache
+  extends: .go-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: []
+  before_script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+  <<: *go-mod-download
+
+go-knfsd-fsidd 2/5: # lint,format
+  extends: .go-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kf-lint-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-lint
+    - key: kf-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golangci/golangci-lint:v${KNFSD_GOLANGCI_LINT_VERSION}-alpine
+    entrypoint: [""]
+  needs: ["go-knfsd-fsidd 1/5"]
+  script: # https://golangci-lint.run/usage/configuration/#command-line-options
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+    - golangci-lint run --config="${CI_PROJECT_DIR}/.golangci.yaml" --verbose
+
+go-knfsd-fsidd 3/5: # https://go.dev/blog/vuln
+  extends: .go-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kf-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-fsidd 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+    - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
+    - govulncheck -test -show verbose ./...
+
+go-knfsd-fsidd 4/5: # test,vet,race,cover,postgres_race
+  extends: .go-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kf-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-fsidd 1/5"]
+  variables:
+    POSTGRES_HOST: db-postgres
+    POSTGRES_PORT: 5432
+    POSTGRES_USER: fsidd
+    POSTGRES_PASSWORD: fsid-test
+    POSTGRES_DB: fsids
+    TEST_DATABASE_URL: "host=${POSTGRES_HOST} port=${POSTGRES_PORT} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} database=${POSTGRES_DB}"
+  services:
+    - name: postgres:${KNFSD_POSTGRES_VERSION}
+      alias: db-postgres
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+    - go vet ./... || exit 1
+    - go test -tags=test.sql -race -cover -vet=all -v ./... || exit 1
+    - go test -tags=test.sql -run TestAllocateFSID/Race -count=50 || exit 1
+
+go-knfsd-fsidd 5/5: # build
+  extends: .go-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kf-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-fsidd 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+    - GOOS=linux GOARCH=amd64 go build -o "${CI_PROJECT_DIR}/knfsd-fsidd-amd64"
+    - GOOS=linux GOARCH=arm64 go build -o "${CI_PROJECT_DIR}/knfsd-fsidd-arm64"
+
+go-knfsd-metrics-agent 1/4: # lint,format,cache
+  extends: .go-config
+  cache:
+    - key: kma-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+    - key: kma-lint-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-lint
+    - key: kma-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golangci/golangci-lint:v${KNFSD_GOLANGCI_LINT_VERSION}-alpine
+    entrypoint: [""]
+  needs: []
+  script: # https://golangci-lint.run/usage/configuration/#command-line-options
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-metrics-agent/" || exit 1
+    - golangci-lint run --config="${CI_PROJECT_DIR}/.golangci.yaml" --verbose
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+go-knfsd-metrics-agent 2/4: # https://go.dev/blog/vuln
+  extends: .go-config
+  cache:
+    - key: kma-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kma-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-metrics-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-metrics-agent/" || exit 1
+    - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
+    - govulncheck -test -show verbose ./...
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+go-knfsd-metrics-agent 3/4: # test,vet,race,cover
+  extends: .go-config
+  cache:
+    - key: kma-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kma-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-metrics-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-metrics-agent/" || exit 1
+    - go test -race -cover -vet=all -v ./...
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+go-knfsd-metrics-agent 4/4: # build
+  extends: .go-config
+  cache:
+    - key: kma-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: kma-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-knfsd-metrics-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-metrics-agent/" || exit 1
+    - GOOS=linux GOARCH=amd64 go build -o "${CI_PROJECT_DIR}/knfsd-metrics-agent-amd64"
+    - GOOS=linux GOARCH=arm64 go build -o "${CI_PROJECT_DIR}/knfsd-metrics-agent-arm64"
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+go-netapp-exports 1/5: # populate-cache
+  extends: .go-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: []
+  before_script:
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
+  <<: *go-mod-download
+
+go-netapp-exports 2/5: # lint,format
+  extends: .go-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ne-lint-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-lint
+    - key: ne-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golangci/golangci-lint:v${KNFSD_GOLANGCI_LINT_VERSION}-alpine
+    entrypoint: [""]
+  needs: ["go-netapp-exports 1/5"]
+  script: # https://golangci-lint.run/usage/configuration/#command-line-options
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
+    - golangci-lint run --config="${CI_PROJECT_DIR}/.golangci.yaml" --verbose
+
+go-netapp-exports 3/5: # https://go.dev/blog/vuln
+  extends: .go-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ne-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-netapp-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
+    - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
+    - govulncheck -test -show verbose ./...
+
+go-netapp-exports 4/5: # test,vet,race,cover
+  extends: .go-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ne-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-netapp-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
+    - go test -race -cover -vet=all -v ./...
+
+go-netapp-exports 5/5: # build
+  extends: .go-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+    - key: ne-build-${CI_JOB_NAME}-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-build
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
+  needs: ["go-netapp-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - GOOS=linux GOARCH=amd64 go build -o "${CI_PROJECT_DIR}/netapp-exports-amd64"
+    - GOOS=linux GOARCH=arm64 go build -o "${CI_PROJECT_DIR}/netapp-exports-arm64"
+
+checkov:
+  stage: security
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/bridgecrew/checkov:${KNFSD_CHECKOV_VERSION}
+    entrypoint: [""]
+  script:
+    # Use `script` to emulate `tty` for colored output in GitLab CI
+    - script -q -c 'checkov --config-file .checkov.yaml ; echo $? > CKVEXIT'
+    - exit $(cat CKVEXIT)
+  allow_failure: true
+  <<: *default-config
+
+# https://github.com/securego/gosec
+gosec 1/5:
+  extends: .gosec-config
+  cache:
+    - key: fe-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+  needs: ["go-filter-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
+    - gosec ./...
+
+gosec 2/5:
+  extends: .gosec-config
+  cache:
+    - key: ka-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+  needs: ["go-knfsd-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent/" || exit 1
+    - gosec ./...
+
+gosec 3/5:
+  extends: .gosec-config
+  cache:
+    - key: kf-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+  needs: ["go-knfsd-fsidd 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
+    - gosec ./...
+
+gosec 4/5:
+  extends: .gosec-config
+  cache:
+    - key: kma-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+  needs: ["go-knfsd-metrics-agent 1/4"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/knfsd-metrics-agent/" || exit 1
+    - gosec ./...
+  tags:
+    - arch:amd64
+    - size:2xlarge
+
+gosec 5/5:
+  extends: .gosec-config
+  cache:
+    - key: ne-mod-${CI_COMMIT_REF_SLUG}
+      <<: *go-cache-mod
+      policy: pull
+  needs: ["go-netapp-exports 1/5"]
+  script:
+    - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
+    - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
+    - gosec ./...
+
+kics:
+  stage: security
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/checkmarx/kics:v${KNFSD_KICS_VERSION}
+    entrypoint: [""]
+  script:
+    - kics version
+    - kics scan -p "${CI_PROJECT_DIR}" --config "${CI_PROJECT_DIR}/.kics.yaml" --no-progress
+  allow_failure: true
+  <<: *default-config
+
+# https://aquasecurity.github.io/tfsec/v1.28.11/guides/usage/
+tfsec:
+  stage: security
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/aquasec/tfsec:v${KNFSD_TFSEC_VERSION}
+    entrypoint: [""]
+  script:
+    - cd "${CI_PROJECT_DIR}" || exit 1
+    - tfsec --force-all-dirs -f lovely --config-file .tfsec.yaml
+  allow_failure: true
+  <<: *default-config
+
+trivy:
+  stage: security
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/aquasec/trivy:${KNFSD_TRIVY_VERSION}
+    entrypoint: [""]
+  cache:
+    key: trivy-${CI_COMMIT_REF_SLUG}
+    paths:
+      - ".trivycache"
+  before_script:
+    - mkdir -p ".trivycache"
+    - apk --no-cache add util-linux
+  script:
+    - trivy --version
+    # Use `script` to emulate `tty` for colored output in GitLab CI
+    - script -q -c 'trivy fs --ignorefile .trivyignore.yaml --exit-code 1 --cache-dir ".trivycache" --scanners secret,vuln,misconfig,license "${CI_PROJECT_DIR}" ; echo $? > TRIVYEXIT'
+    - exit $(cat TRIVYEXIT)
+  allow_failure: true
+  <<: *default-config

@@ -1,0 +1,486 @@
+{
+  "folders": [
+    {
+      "name": "knfsd-file-cache",
+      "path": "."
+    },
+    {
+      "name": "packer/image",
+      "path": "image"
+    },
+    {
+      "name": "terraform/deployment",
+      "path": "deployment"
+    },
+    {
+      "name": "go/filter-exports",
+      "path": "image/resources/filter-exports"
+    },
+    {
+      "name": "go/knfsd-agent",
+      "path": "image/resources/knfsd-agent"
+    },
+    {
+      "name": "go/knfsd-fsidd",
+      "path": "image/resources/knfsd-fsidd"
+    },
+    {
+      "name": "go/knfsd-metrics-agent",
+      "path": "image/resources/knfsd-metrics-agent"
+    },
+    {
+      "name": "go/netapp-exports",
+      "path": "image/resources/netapp-exports"
+    },
+    {
+      "name": "go/image/smoke-tests",
+      "path": "image/smoke-tests"
+    },
+    {
+      "name": "go/testing/examples",
+      "path": "testing/examples"
+    }
+  ],
+  "settings": {
+    "go.toolsManagement.checkForUpdates": "proxy",
+    "go.useLanguageServer": true,
+    "go.toolsEnvVars": {
+      "GOPROXY": "direct"
+    },
+    "gopls": {
+      "build.buildFlags": [
+        "-tags=test.sql"
+      ]
+    },
+    "terminal.integrated.hideOnStartup": "always",
+    "terminal.integrated.scrollback": 10000,
+    "terminal.integrated.showExitAlert": false,
+    "terminal.integrated.defaultProfile.linux": null,
+    "terminal.integrated.profiles.linux": {
+      "default": null,
+      "zsh": null,
+      "JavaScript Debug Terminal": null
+    },
+    "task.allowAutomaticTasks": "on",
+    "markdownlint.config": {
+      "MD013": false,
+      "MD024": false,
+      "MD028": false,
+      "MD033": false,
+      "MD034": false,
+      "MD041": false,
+      "MD053": false,
+      "MD059": false
+    },
+    "workbench.activityBar.orientation": "vertical",
+    "workbench.remoteIndicator.showExtensionRecommendations": false
+  },
+  "tasks":  {
+    "version": "2.0.0",
+    "presentation": {
+      "echo": false,
+      "reveal": "always",
+      "focus": false,
+      "panel": "shared",
+      "showReuseMessage": false
+    },
+    "tasks": [
+      {
+        "label": "terminals",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "knfsd-file-cache",
+          "tf/terraform-module-knfsd",
+          "tf/database",
+          "tf/module/dns-round-robin",
+          "tf/module/loadbalancer",
+          "tf/metrics",
+          "go/filter-exports",
+          "go/knfsd-agent",
+          "go/knfsd-fsidd",
+          "go/knfsd-metrics-agent",
+          "go/netapp-exports",
+          "go/image/smoke-tests",
+          "go/testing/examples"
+        ]
+      },
+      {
+        "label": "knfsd-file-cache",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "tf/terraform-module-knfsd",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "tf/database",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment/database"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "tf/module/dns-round-robin",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd/modules/dns_round_robin"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "tf/module/loadbalancer",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd/modules/loadbalancer"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "tf/metrics",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment/metrics"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/filter-exports",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/resources/filter-exports"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/knfsd-agent",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/resources/knfsd-agent"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/knfsd-fsidd",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/resources/knfsd-fsidd"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/knfsd-metrics-agent",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/resources/knfsd-metrics-agent"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/netapp-exports",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/resources/netapp-exports"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/image/smoke-tests",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image/smoke-tests"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "go/testing/examples",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/testing/examples"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      }
+    ]
+  }
+}

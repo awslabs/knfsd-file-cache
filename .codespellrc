@@ -1,0 +1,2 @@
+[codespell]
+skip=THIRD-PARTY-LICENSES,go.mod,go.sum,slabinfo

@@ -1,0 +1,138 @@
+{
+  "folders": [
+    {
+      "name": "knfsd-file-cache",
+      "path": "."
+    },
+    {
+      "name": "packer/image",
+      "path": "image"
+    },
+    {
+      "name": "terraform/deployment",
+      "path": "deployment"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.hideOnStartup": "always",
+    "terminal.integrated.scrollback": 10000,
+    "terminal.integrated.showExitAlert": false,
+    "terminal.integrated.defaultProfile.linux": null,
+    "terminal.integrated.profiles.linux": {
+      "default": null,
+      "zsh": null,
+      "JavaScript Debug Terminal": null
+    },
+    "task.allowAutomaticTasks": "on",
+    "workbench.activityBar.orientation": "vertical",
+    "workbench.remoteIndicator.showExtensionRecommendations": false
+  },
+  "tasks":  {
+    "version": "2.0.0",
+    "presentation": {
+      "echo": false,
+      "reveal": "always",
+      "focus": false,
+      "panel": "shared",
+      "showReuseMessage": false
+    },
+    "tasks": [
+      {
+        "label": "terminals",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "knfsd-file-cache",
+          "packer/image",
+          "terraform/deployment"
+        ]
+      },
+      {
+        "label": "knfsd-file-cache",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "packer/image",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/image"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "terraform/deployment",
+        "type": "process",
+        "command": "/usr/bin/bash",
+        "windows": {
+          "command": "powershell",
+        },
+        "osx": {
+          "command": "/bin/bash",
+          "args": [ "-il" ]
+        },
+        "linux": {
+          "command": "/usr/bin/bash",
+          "args": [ "-il" ]
+        },
+        "options": {
+          "cwd": "${workspaceFolder}/deployment"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "echo": false,
+          "focus": false,
+          "panel": "shared"
+        },
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      }
+    ]
+  }
+}

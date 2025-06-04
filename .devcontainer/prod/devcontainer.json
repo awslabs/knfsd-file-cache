@@ -1,0 +1,64 @@
+{
+  "name": "knfsd-prod",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "options": [
+      "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+    ],
+    "args": {
+      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/amd64}",
+      "BUILDARCH": "${localEnv:BUILDARCH:amd64}"
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/knfsd-file-cache,type=bind",
+  "workspaceFolder": "/knfsd-file-cache",
+  "remoteUser": "ubuntu",
+  "containerEnv": {
+    "HOST_REPO_PATH": "${localWorkspaceFolder}"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.dialog.defaultPath": "/knfsd-file-cache",
+        "dev.containers.cacheVolume": true,
+        "dev.containers.copyGitConfig": true,
+        "dev.containers.gitCredentialHelperConfigLocation": "global",
+        "extensions.ignoreRecommendations": true
+      },
+      "extensions": [
+        "SirTori.indenticator",
+        "coolbear.systemd-unit-file",
+        "hashicorp.terraform",
+        "ms-azuretools.vscode-docker",
+        "oderwat.indent-rainbow",
+        "redhat.vscode-yaml",
+        "hashicorp.hcl"
+      ]
+    }
+  },
+  "mounts": [
+    "source=knfsd-prod-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
+    "source=knfsd-prod-command-history,target=/home/ubuntu/.commandhistory,type=volume",
+    "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
+  ],
+  "postCreateCommand": {
+    "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
+    "git-add-safe-dir": "sudo git config --system --add safe.directory ${containerWorkspaceFolder}",
+    "docker-image-prune": "sudo docker image prune --force"
+  },
+  "postStartCommand": {
+    "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock"
+  },
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--name=knfsd-prod",
+    "--hostname=knfsd-prod",
+    "--network=host",
+    "--add-host=knfsd-prod:127.0.0.1",
+    "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+  ]
+}

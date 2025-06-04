@@ -1,0 +1,9 @@
+# https://www.shellcheck.net/wiki/SCxxxx
+# SC1091 (info): Not following: helpers.bash: openBinaryFile: does not exist (No such file or directory).
+# SC2001 (style): See if you can use ${variable//search/replace} instead.
+# SC2034 (warning): ${VARIABLE} appears unused. Verify use (or export if used externally).
+# SC2044 (warning): For loops over find output are fragile. Use find -exec or a while read loop.
+# SC2088 (warning): Tilde does not expand in quotes. Use $HOME.
+# SC2016 (info): Expressions don't expand in single quotes, use double quotes for that.
+# SC2086 (info): Double quote to prevent globbing and word splitting.
+disable=SC1091,SC2001,SC2034,SC2044,SC2088,SC2016,SC2086

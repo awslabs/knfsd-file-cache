@@ -1,0 +1,25 @@
+# ACKNOWLEDGEMENTS
+
+KNFSD File Cache (knfsd-file-cache) would not have been possible without the previous efforts of others.
+
+We acknowledge the contributions of:
+
+* Daire Byrne from DNEG, UK
+* Linux NFS open-source development community
+* Glenn Taylor, NZ for his early prototype work
+* Google Cloud Platform knfsd-cache-utils project
+* Wētā FX, NZ for caching development for "Avatar: The Way of Water" and subsequent DIGIPRO'23 whitepaper
+
+## REFERENCES
+
+Daire Byrne, DNEG. 2020. linux-nfs and linux-cachefs mailing list.
+Retrieved from https://lore.kernel.org/linux-nfs/20200917190931.GA6858@fieldses.org/T/
+
+GitHub, 2022. Google Cloud Platform knfsd project.
+Retrieved from https://github.com/GoogleCloudPlatform/knfsd-cache-utils
+
+Wētā FX, 2023. DIGIPRO'23 whitepaper, "How much cloud is too much cloud?: What we wish we knew before we started".
+Retrieved from:
+
+* https://dp2023.digiproconf.org/program/program-6/
+* https://dl.acm.org/doi/10.1145/3603521.3604299

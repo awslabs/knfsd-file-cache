@@ -1,0 +1,21 @@
+default:
+all_set:
+  metrics:
+    slab.dentry_cache.active_objects:
+      enabled: true
+    slab.dentry_cache.objsize:
+      enabled: true
+    slab.nfs_inode_cache.active_objects:
+      enabled: true
+    slab.nfs_inode_cache.objsize:
+      enabled: true
+none_set:
+  metrics:
+    slab.dentry_cache.active_objects:
+      enabled: false
+    slab.dentry_cache.objsize:
+      enabled: false
+    slab.nfs_inode_cache.active_objects:
+      enabled: false
+    slab.nfs_inode_cache.objsize:
+      enabled: false

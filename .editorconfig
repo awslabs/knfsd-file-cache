@@ -1,0 +1,52 @@
+# EditorConfig is awesome: http://EditorConfig.org
+# Uses editorconfig to maintain consistent coding styles
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+charset = utf-8
+end_of_line = lf
+
+# WARNING: do not move/edit this configuration
+[Makefile]
+indent_size = 4
+indent_style = tab
+trim_trailing_whitespace = true
+
+[*.md]
+indent_style = space
+
+[Dockerfile]
+indent_size = 4
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{txt,py,conf}]
+indent_size = 4
+indent_style = space
+trim_trailing_whitespace = true
+
+# WARNING: do not move/edit this configuration
+[*.{tf,yml,yaml,hcl,json,code-workspace}]
+indent_size = 2
+indent_style = space
+trim_trailing_whitespace = true
+
+# WARNING: do not move/edit this configuration
+[*.{sh,bash,bats,go,mod}]
+indent_size = 4
+indent_style = tab
+trim_trailing_whitespace = true
+
+# shfmt settings: do not edit this configuration
+# https://github.com/mvdan/sh/blob/master/cmd/shfmt/shfmt.1.scd
+# --language-variant
+binary_next_line   = true
+# --case-indent
+switch_case_indent = true
+space_redirects    = true
+keep_padding       = true
+# --func-next-line
+function_next_line = false

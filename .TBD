@@ -1,0 +1,17 @@
+## CODE ##
+
+cloudbuild.yaml
+/deployment/metrics (dashboard)
+/image/smoke-tests
+/tutorial
+/testing
+
+## DOCS ##
+
+/image/smoke-tests/README.md
+/tutorial/README.md
+/testing/examples/README.md
+/testing/modules/cloudbuild/README.md
+/docs/tests/recovery-load-balancer.md
+/docs/tests/recovery-source.md
+/docs/tests/recovery-proxy.md
