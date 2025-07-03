@@ -189,9 +189,9 @@ Wait for the instance to be `Running` and `3/3 checks passed` in AWS Console.
 There are other methods to install Go. For simplicity, this example will install Go based on the [standard Go instructions](https://go.dev/doc/install).
 
   ```bash
-  curl -fSLO https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
+  curl -fSLO https://go.dev/dl/go1.24.4.linux-amd64.tar.gz
   sudo rm -rf /usr/local/go
-  sudo tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
+  sudo tar -C /usr/local -xzf go1.24.4.linux-amd64.tar.gz
   ```
 
 Add Go to your path:
@@ -241,25 +241,22 @@ Check the KNFSD Metrics Agent is running:
 You should see output similar to:
 
   ```text
-    ● knfsd-metrics-agent.service - Knfsd Metrics Agent
-        Loaded: loaded (/etc/systemd/system/knfsd-metrics-agent.service; enabled; preset: enabled)
-        Active: active (running) since Sat 2025-05-31 13:14:02 BST; 1min 51s ago
-      Main PID: 14777 (knfsd-metrics-a)
-          Tasks: 13 (limit: 18821)
-        Memory: 16.8M (peak: 18.0M)
-            CPU: 62ms
-        CGroup: /system.slice/knfsd-metrics-agent.service
-                └─14777 /usr/local/bin/knfsd-metrics-agent --config /etc/knfsd-metrics-agent/common.yaml --config /etc/knfsd-metrics-agent/client.yaml --config /etc/knfsd-metrics-agent/custom.yaml
+  ● knfsd-metrics-agent.service - Knfsd Metrics Agent
+     Loaded: loaded (/etc/systemd/system/knfsd-metrics-agent.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2025-06-04 20:52:40 BST; 1h 35min ago
+   Main PID: 606 (knfsd-metrics-a)
+      Tasks: 13 (limit: 18821)
+     Memory: 84.1M (peak: 87.6M)
+        CPU: 901ms
+     CGroup: /system.slice/knfsd-metrics-agent.service
+             └─606 /usr/local/bin/knfsd-metrics-agent --config /etc/knfsd-metrics-agent/common.yaml --config /etc/knfsd-metrics-agent/client.yaml --config /etc/knfsd-metrics-agent/custom.yaml
 
-    2025-05-31T13:14:02.336Z        info    builder/pipelines_builder.go:65 Pipeline is started.    {"name": "pipeline", "name": "metrics"}
-    2025-05-31T13:14:02.336Z        info    service/service.go:97   Starting receivers...
-    2025-05-31T13:14:02.336Z        info    builder/receivers_builder.go:68 Receiver is starting... {"kind": "receiver", "name": "mounts"}
-    2025-05-31T13:14:02.336Z        info    builder/receivers_builder.go:73 Receiver started.       {"kind": "receiver", "name": "mounts"}
-    2025-05-31T13:14:02.336Z        info    builder/receivers_builder.go:68 Receiver is starting... {"kind": "receiver", "name": "slabinfo"}
-    2025-05-31T13:14:02.336Z        info    builder/receivers_builder.go:73 Receiver started.       {"kind": "receiver", "name": "slabinfo"}
-    2025-05-31T13:14:02.336Z        info    service/telemetry.go:87 Skipping telemetry setup.       {"address": ":8889", "level": "none"}
-    2025-05-31T13:14:02.336Z        info    service/collector.go:229        Starting knfsd-metrics-agent... {"Version": "", "NumCPU": 1}
-    2025-05-31T13:14:02.336Z        info    service/collector.go:124        Everything is ready. Begin running and processing data.
+    Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
+    2025-06-04T20:52:40.888+0100    info    service@v0.127.0/service.go:199 Setting up own telemetry...     {"resource": {}}
+    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
+    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.3", "NumCPU": 8}
+    2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
+    2025-06-04T20:52:40.950+0100    info    service@v0.127.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```
 
 Before viewing the metrics you will need to generate some NFS traffic. Mount an NFS share (via a KNFSD Proxy instance) and then read some data from the share.

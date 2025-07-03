@@ -1,5 +1,25 @@
 # Check the KNFSD proxy instance is starting correctly
 
+The simplest way to check if each KNFSD proxy instance is starting correctly is to add the `knfsd-file-cache:status` tag as an AWS Console column.
+
+## AWS Console Live View
+
+1. In the AWS Console go to EC2 and select [Instances](https://console.aws.amazon.com/ec2/v2/#Instances) page.
+
+2. Click the Preferences (⚙️) icon in the top right corner of the screen.
+
+3. Select `knfsd-file-cache:status` from the **Columns** list.
+
+4. Click the **Confirm** button.
+
+5. The `knfsd-file-cache:status` column will now be visible in the Instances table.
+
+6. Check the status of each KNFSD proxy instance. `ready` means the KNFSD proxy instance has successfully completed its `proxy-startup.sh` script.
+
+![AWS Console Live View](images/aws-console-instance-status.png "AWS Console Live View")
+
+## AWS Console Output
+
 To check if a KNFSD proxy instance is starting correctly, check the output from the System log either via AWS Console or AWS CLI.
 
 ```bash
@@ -49,9 +69,7 @@ Using the AWS Console:
 
 If the proxy instance is still starting, then you will need to refresh until the start up script finishes running.
 
-## AWS Command Line Interface
-
-Using the `AWS CLI`:
+## AWS CLI
 
 Retrieve the instance ID of a KNFSD proxy instance in the Auto Scaling Group.
 
@@ -95,6 +113,8 @@ The most likely errors are:
 * Source NFS server could not be contacted:
 
   * Check the `EXPORT_MAP` or `EXPORT_HOST_AUTO_DETECT` has the correct IPs or DNS names and syntax is correct.
+
+  * If using `EXPORT_HOST_AUTO_DETECT` then check `vers3=yes` is set in `/etc/nfs.conf.d/knfsd.conf` for `showmount` to work. Ensure `DISABLED_NFS_VERSIONS` does not include `3`.
 
   * If using DNS, check that the DNS names can be resolved by the KNFSD proxy instances.
 

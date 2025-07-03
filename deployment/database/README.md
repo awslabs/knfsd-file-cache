@@ -6,8 +6,6 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
 ## Inputs
 
-* `REGION` - (Required) The AWS region the RDS DB instance will be deployed to. Example: `us-east-1`.
-
 * `SUBNET` - (Required) The subnet ID to use for deployment of the Amazon RDS DB instance. Example: `subnet-038e337f0ff4cd53f`.
 
 * `FSID_DB_SUBNET_GROUP_NAME` - (Optional) The name of the Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC. Defaults to `null`.
@@ -27,6 +25,8 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 * `ENABLE_PUBLIC_IP` - (Optional) Whether to deploy the database with a public IP address. When the DB instance is publicly accessible and you connect from outside of the DB instance's Virtual Private Cloud (VPC), its Domain Name System (DNS) endpoint resolves to the public IP address. When you connect from within the same VPC as the DB instance, the endpoint resolves to the private IP address. Access to the DB instance is ultimately controlled by the EC2 security group it uses. Public access isn't permitted if the security group assigned to the DB instance doesn't permit it. When the DB instance isn't publicly accessible, it is an internal DB instance with a DNS name that resolves to a private IP address. Defaults to `false`.
 
 * `MASTER_USERNAME` - (Optional) The master username for the database. Password is stored in AWS Secrets Manager. Defaults to `postgres`.
+
+* `ASSUME_ROLE_ARN` - (Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: `arn:aws:iam::123456789012:role/DeploymentRole`.
 
 ## Outputs
 

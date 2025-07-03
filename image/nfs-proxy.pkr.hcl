@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.2"
+  version       = "1.1.0-alpha.3"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 50
@@ -60,7 +60,10 @@ source "amazon-ebs" "nfs-proxy" {
     "knfsd-file-cache:packer:version" = "${packer.version}"
   }
 
-  # Security
+  # SSH Connectivity
+  associate_public_ip_address = var.ASSOCIATE_PUBLIC_IP_ADDRESS
+
+  # SSH Security
   # This is only used when "security_group_id", "security_group_ids",
   # and "temporary_security_group_source_cidrs" are not specified
   temporary_security_group_source_public_ip = true

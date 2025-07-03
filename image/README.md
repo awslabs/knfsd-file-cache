@@ -39,11 +39,15 @@ Enter at least the following 2 required variables:
 
 #### Required
 
-* `REGION` (string) - The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. No default. The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
+* `REGION` (string) - The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. No default.
+
+  > NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
+
 * `SUBNET` (string) - The subnet in which to launch the EC2 instance to create the AMI. Example: `"subnet-0f90440e0e47728b8"`. No default.
 
 #### Optional
 
+* `ASSOCIATE_PUBLIC_IP_ADDRESS` (bool) - Whether to associate a public IP address with the EC2 instance. Default: `true`.
 * `INSTANCE_TYPE` (string) - The EC2 instance type used to build the image. This can be changed to improve build speeds. Default: `"c6in.2xlarge"`. If this instance type is unavailable in your region, try changing to `"m6i.2xlarge"`, `"c5.2xlarge"`, or `"m5.2xlarge"`.
 * `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Default: `"packer-knfsd-proxy-{VERSION}-{TIMESTAMP}"`.
 * `IMAGE_NAME` (string) - The unique name of the resulting image. Default: `"knfsd-proxy-{VERSION}"`.
@@ -69,7 +73,9 @@ See [Authentication](https://developer.hashicorp.com/packer/integrations/hashico
 
 ### AWS Credentials
 
-If using static credentials, ensure you run `aws configure` to set the `AWS Access Key ID` and `AWS Secret Access Key`. The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
+If using static credentials, ensure you run `aws configure` to set the `AWS Access Key ID` and `AWS Secret Access Key`.
+
+> NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
 
 ```bash
 $ aws configure
@@ -110,6 +116,7 @@ Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/has
         "ec2:DescribeSubnets",
         "ec2:DescribeTags",
         "ec2:DescribeVolumes",
+        "ec2:DescribeVpcs",
         "ec2:ModifyImageAttribute",
         "ec2:RunInstances",
         "ec2:StopInstances",
@@ -138,6 +145,14 @@ See [AWS Service Quotas](https://docs.aws.amazon.com/general/latest/gr/aws_servi
 > NOTE: Ensure the machine you are running Packer on has network connectivity to the AWS subnet you are building the image in and the EC2 instance you are building the image on is accessible over TCP port 22 for SSH access.
 
 > NOTE: If your build machine does not receive a public IPv4 address, please review this AWS [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html) and [Public Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-public-ip.html) documentation for more information.
+
+If you do **not** wish to build over the public internet, set `var.ASSOCIATE_PUBLIC_IP_ADDRESS = false` in the `image.pkrvars.hcl` file.
+
+```hcl
+ASSOCIATE_PUBLIC_IP_ADDRESS = false
+```
+
+### SSH Security
 
 It is beyond the scope of this documentation to describe all possible SSH setups that can work here and are compliant to your security policies. For further reading, please consult the AWS docs on how you can [connect to your Linux instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html).
 
@@ -226,7 +241,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.2"
+VERSION="1.1.0-alpha.3"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -295,7 +310,7 @@ export KNFSD_INSTANCE_ID=$(aws ec2 run-instances \
 # short sleep to allow instance IP to be assigned
 sleep 5
 
-export KNFSD_INSTANCE_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $KNFSD_INSTANCE_ID --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+export KNFSD_INSTANCE_PUBLIC_IP=$(aws ec2 describe-instances --region $KNFSD_REGION --instance-ids $KNFSD_INSTANCE_ID --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
 ```
 
 ### Copy Resources to Build Machine

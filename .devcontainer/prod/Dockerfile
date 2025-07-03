@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.2"
+ARG VERSION="1.1.0-alpha.3"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -25,7 +25,7 @@ WORKDIR /
 ## set devcontainer env vars
 ENV CI=devcontainer
 ENV DOCKER_CLI_HINTS=false
-ENV TF_APPEND_USER_AGENT="knfsd-file-cache/${VERSION}"
+ENV TF_APPEND_USER_AGENT="AWSSOLUTION/SO9129/${VERSION}"
 
 ## set devcontainer build args
 ARG BUILDARCH
@@ -117,7 +117,7 @@ RUN set -eux \
 
 ## build version args
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.13.0
+ARG KNFSD_PACKER_VERSION=1.13.1
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 

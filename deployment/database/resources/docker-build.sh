@@ -8,16 +8,26 @@
 
 ARCH=${1:-"linux/arm64"}
 PIP_PLATFORM="manylinux2014_aarch64"
-KNFSD_PYTHON_VERSION=${2:-"3.13.3"}
+KNFSD_PYTHON_VERSION=${2:-"3.13.5"}
 KNFSD_PSYCOPG_VERSION=${3:-"3.2.9"}
 
 # create a hash of the Dockerfile
-if ! HASH="$(sha1sum resources/Dockerfile | cut -d ' ' -f 1)"; then
-	echo "ERROR: could not create sha1sum for resources/Dockerfile" >&2
+function create_hash() {
+	if command -v sha1sum > /dev/null 2>&1; then
+		sha1sum "$1" | cut -d ' ' -f 1
+	elif command -v shasum > /dev/null 2>&1; then
+		shasum -a 1 "$1" | cut -d ' ' -f 1
+	else
+		return 1
+	fi
+}
+
+if ! HASH="$(create_hash resources/Dockerfile)"; then
+	echo "ERROR: could not create hash for resources/Dockerfile (missing sha1sum/shasum or file not found)" >&2
 	exit 1
 fi
 
-DB_SETUP_IMAGE=lambda-db-setup-"$HASH"
+DB_SETUP_IMAGE=lambda-db-setup:"$HASH"
 
 # check if the image exists
 if ! docker image inspect "${DB_SETUP_IMAGE}" > /dev/null 2> /dev/null; then
@@ -45,7 +55,7 @@ fi
 
 # run the docker image
 # https://www.psycopg.org/psycopg3/docs/api/pq.html#pq-impl
-docker run --platform "${ARCH}" --name lambda-db-setup --rm \
+docker run --platform "${ARCH}" --rm \
 	--volume lambda-db-setup-temp-vol:/src \
 	--mount type=bind,source="${path}",target=/db "${DB_SETUP_IMAGE}" \
 	bash -c "

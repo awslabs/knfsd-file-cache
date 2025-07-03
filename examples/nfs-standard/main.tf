@@ -6,11 +6,20 @@
 
 terraform {
   required_version = ">= 1.2.9"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.2.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.REGION
 }
 
 module "proxy" {
   source                    = "../../deployment/terraform-module-knfsd"
-  REGION                    = var.REGION
   SUBNET                    = var.SUBNET
   KNFSD_NODES               = 3
   PROXY_AMI                 = var.PROXY_AMI
@@ -20,5 +29,5 @@ module "proxy" {
   FSID_MODE                 = "external" # default is "external", but including here for clarity
   FSID_DB_SUBNET_GROUP_NAME = null       # if using a non-default VPC, you must specify the name of the DB subnet group
   EXPORT_MAP                = var.EXPORT_MAP
-  INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "standard" }
+  INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "nfs-standard" }
 }

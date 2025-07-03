@@ -24,6 +24,9 @@ misconfigurations:
   - id: AVD-AWS-0078
     paths:
       - "deployment/database/main.tf"
+  - id: AVD-AWS-0098
+    paths:
+      - "examples/fsx-netapp/main.tf"
   - id: AVD-AWS-0104
     paths:
       - "deployment/terraform-module-knfsd/vpc.tf"

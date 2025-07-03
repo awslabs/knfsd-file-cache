@@ -53,14 +53,14 @@ func (f *filter) run() error {
 
 		if !match(export, f.includes, true) {
 			if *verbose {
-				fmt.Fprintf(os.Stderr, "Skipped \"%s\", did not match include filter", export)
+				fmt.Fprintf(os.Stderr, "Skipped \"%s\", did not match include filter\n", export)
 			}
 			continue
 		}
 
 		if match(export, f.excludes, false) {
 			if *verbose {
-				fmt.Fprintf(os.Stderr, "Skipped \"%s\", export was excluded", export)
+				fmt.Fprintf(os.Stderr, "Skipped \"%s\", export was excluded\n", export)
 			}
 			continue
 		}

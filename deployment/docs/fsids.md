@@ -85,14 +85,6 @@ This is the recommended and default deployment option for all knfsd proxy config
 
 > NOTE: The knfsd proxy instance(s) will need to be able to access the Amazon RDS PostgreSQL instance.
 
-## Providing a custom database
-
-By default, when `FSID_MODE="external"` the deployment Terraform configuration will create an Amazon RDS PostgreSQL instance for the proxy cluster. This is the simplest, and recommended option.
-
-However, if you want to create your own database, such as to use a single Amazon RDS PostgreSQL database for multiple knfsd proxy clusters you can set `FSID_DATABASE_DEPLOY=false`.
-
-Before deploying the knfsd proxy cluster create a suitable Amazon RDS PostgreSQL database (the `knfsd-fsidd` service only supports PostgreSQL).
-
 ### Using the Database Terraform module
 
 The Database Terraform module in [deployment/database](../database/README.md) can be used to create an Amazon RDS PostgreSQL instance suitable for use by a knfsd proxy cluster. This is the same module that the KNFSD Terraform module uses internally.
@@ -101,9 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.2"
-
-  REGION = "us-east-1"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.3"
   SUBNET = "subnet-038e337f0ff4cd53f"
 }
 
@@ -136,7 +126,7 @@ output "master_username" {
 
 The FSID service is not resource intensive, and does not require much storage. As such the minimum database instance type of `db.t4g.medium` should be sufficient for most configurations.
 
-By default, the RDS database is deployed with IAM authentication and deletion protection enabled.
+By default, the RDS database is deployed with IAM authentication enabled and deletion protection disabled.
 
 ### IAM roles
 
@@ -203,6 +193,34 @@ endpoint=unix:///run/knfsd-metrics.sock
 insecure=true
 interval=1m
 ```
+
+### Custom Database Configuration
+
+By default, when `FSID_MODE="external"` the deployment Terraform configuration will create an Amazon RDS PostgreSQL instance for the proxy cluster. This is the simplest, and recommended option. `FSID_DATABASE_CONFIG` and `FSID_DATABASE_IAM_POLICY` are automatically generated for you.
+
+However, if you want to create your own database, such as to use a single Amazon RDS PostgreSQL database for multiple knfsd proxy clusters you can set `FSID_DATABASE_DEPLOY=false`. You will need to provide the database configuration and IAM policy via setting the `FSID_DATABASE_CONFIG` (JSON object) and `FSID_DATABASE_IAM_POLICY` (ARN) variables for each additional knfsd proxy cluster deployed. See the [Fanout](fanout.md) example for more details.
+
+The `FSID_DATABASE_CONFIG` JSON object supports the following custom options:
+
+* `db_address` (Required) - The address of the PostgreSQL instance.
+* `db_port` (Required) - The port of the PostgreSQL instance.
+* `db_user` (Required) - The user to authenticate with the PostgreSQL instance.
+* `db_name` (Required) - The name of the database to use for the FSID mappings.
+* `enable_metrics` (Required) - Whether to enable metrics for the FSID database.
+
+```json
+FSID_DATABASE_CONFIG = {
+  db_address     = "fsids.jazg4zscprls.eu-west-2.rds.amazonaws.com"
+  db_port        = 5432
+  db_user        = "fsidd"
+  db_name        = "fsids"
+  enable_metrics = true
+}
+// replace ${} variables with the appropriate values
+FSID_DATABASE_IAM_POLICY = "arn:aws:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"
+```
+
+Before deploying the knfsd proxy cluster, create a suitable Amazon RDS PostgreSQL database (the `knfsd-fsidd` service only supports PostgreSQL).
 
 ### Database Security
 

@@ -8,20 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.2"
+  default     = "1.1.0-alpha.3"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.2\"."
-  }
-}
-
-variable "REGION" {
-  description = "(Required) The AWS Region to use for deployment of the KNFSD File Cache. Example: \"us-east-1\". No default."
-  type        = string
-  nullable    = false
-  validation {
-    condition     = can(regex("^[a-z]{2}-[a-z]+-[1-9]$", var.REGION))
-    error_message = "REGION must be a valid AWS Region format. Example: \"us-east-1\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.3\"."
   }
 }
 
@@ -57,24 +47,13 @@ variable "LOADBALANCER_IP" {
 }
 
 variable "DNS_NAME" {
-  description = "(Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster when \"TRAFFIC_MODE = 'round_robin_dns'\". Defaults to: \"{PROXY_BASENAME}.knfsd.internal.\" [Note: the trailing period is required]. Default: \"\"."
+  description = "(Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: \"lb-knfsd/knfsd.{PROXY_BASENAME}.aws.internal.\" [Note: the trailing period is required]. Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
   validation {
     condition     = var.DNS_NAME == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$$", var.DNS_NAME))
     error_message = "When provided, DNS_NAME must be a valid fully qualified domain name (FQDN) ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
-  }
-}
-
-variable "PRIVATE_HOSTED_ZONE" {
-  description = "(Optional) The R53 private hosted zone to use for DNS when \"TRAFFIC_MODE = 'loadbalancer'\". Defaults to: \"knfsd.internal.\" [Note: the trailing period is required]. Default: \"\"."
-  type        = string
-  nullable    = false
-  default     = ""
-  validation {
-    condition     = var.PRIVATE_HOSTED_ZONE == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$$", var.PRIVATE_HOSTED_ZONE))
-    error_message = "When provided, PRIVATE_HOSTED_ZONE must be a valid domain name ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
   }
 }
 
@@ -86,7 +65,7 @@ variable "ASG_EGRESS_CIDR_BLOCK" {
 }
 
 variable "NFS_PORTS" {
-  description = "(Optional) The list of NFS ports (TCP & UDP) to create security group INGRESS rules for the KNFSD proxy instances in the Auto Scaling Group (ASG). Default: see \"map(object({port = number, check_port = number, name = string}))\"."
+  description = "(Optional) The list of NFS ports (TCP & UDP) to create security group INGRESS rules for the KNFSD proxy instances in the Auto Scaling Group (ASG)/Network Load Balancer (NLB). Default: see \"map(object({port = number, check_port = number, name = string}))\"."
   # mountd default: tcp/udp:20048 as per IANA, RFC8267
   # 'showmount' udp:111 rpcbind/portmapper
   # tcp/udp:20049 (NFS over RDMA) skipped, tcp:20052 & tcp:20054 are outgoing ports, so not required. Outbound=0.0.0.0/0
@@ -133,13 +112,6 @@ variable "NFS_PORTS" {
       name       = "nfs-callback"
     }
   }
-}
-
-variable "ENABLE_VPC_ENDPOINTS" {
-  description = "(Optional) Enable VPC endpoints in order to establish private and secure connection between KNFSD and AWS services that does not traverse the public internet. Alternatively, you can use a NAT gateway and route table to allow access to the internet. Default: \"true\"."
-  type        = bool
-  nullable    = false
-  default     = true
 }
 
 variable "HEALTHCHECK_INITIAL_DELAY_SECONDS" {
@@ -275,7 +247,7 @@ variable "NETAPP_SECRET_VERSION" {
 }
 
 variable "NETAPP_CA" {
-  description = "(Optional) PEM encoded certificate containing the root certificate for the NetApp REST API. This can also include intermediate certificates to provide the full certificate chain. To read this from a file use the Terraform file function. Default: \"\"."
+  description = "(Optional) PEM encoded certificate containing the root certificate for the NetApp REST API. This can also include intermediate certificates to provide the full certificate chain. To read this from a file use the Terraform file function. Example: file(\"path/to/netapp-ca.pem\"). Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
@@ -300,10 +272,10 @@ variable "PROXY_BASENAME" {
 }
 
 variable "EXPORT_CIDR" {
-  description = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export. Default: \"10.0.0.0/8\"."
+  description = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export (VPC CIDR of \"SUBNET\" is used if not specified). Default: \"\"."
   type        = string
   nullable    = false
-  default     = "10.0.0.0/8"
+  default     = ""
 }
 
 variable "PROXY_AMI" {
@@ -366,7 +338,7 @@ variable "ENABLE_METRICS" {
 }
 
 variable "METRICS_AGENT_CONFIG" {
-  description = "(Optional) Custom YAML configuration for the metrics agent. The configuration is not validated by Terraform, when using a custom config check the proxy startup log. See the custom configuration section in the metrics documentation for more details. Default: \"\"."
+  description = "(Optional) Custom YAML configuration for the metrics agent. The configuration is not validated by Terraform when using a custom config, please check the proxy startup log. See the custom configuration section in the metrics documentation for more details. Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
@@ -387,9 +359,9 @@ variable "CUSTOM_POST_STARTUP_SCRIPT" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.6xlarge\"."
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.3xlarge\"."
   type        = string
-  default     = "i3en.6xlarge"
+  default     = "i3en.3xlarge"
   validation {
     condition     = can(regex("^[a-z][0-9]?[a-z]*\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
@@ -412,6 +384,13 @@ variable "ENABLE_KNFSD_AGENT" {
   type        = bool
   nullable    = false
   default     = true
+}
+
+variable "ENABLE_STATUS_CHECK" {
+  description = "(Optional) Whether to enable the status check that waits for all EC2 instances to be KNFSD status: \"ready\" during Terraform deployment. Must be \"true\" for \"fanout\" deployments. Default: \"false\"."
+  type        = bool
+  nullable    = false
+  default     = false
 }
 
 variable "CACHEFILESD_DISK_TYPE" {
@@ -580,10 +559,23 @@ variable "FSID_DATABASE_DEPLOY" {
 }
 
 variable "FSID_DATABASE_CONFIG" {
-  description = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\"."
-  type        = string
+  description = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\". Default: \"{}\"."
+  type        = map(any)
   nullable    = false
-  default     = ""
+  default     = {}
+  validation {
+    condition = (
+      length(var.FSID_DATABASE_CONFIG) == 0 ||
+      (
+        contains(keys(var.FSID_DATABASE_CONFIG), "db_address") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "db_port") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "db_user") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "db_name") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "enable_metrics")
+      )
+    )
+    error_message = "When FSID_DATABASE_CONFIG is provided, all fields (db_address, db_port, db_user, db_name, enable_metrics) must be specified."
+  }
 }
 
 variable "FSID_DB_SUBNET_GROUP_NAME" {
@@ -599,7 +591,7 @@ variable "FSID_DATABASE_IAM_POLICY" {
   nullable    = false
   default     = ""
   validation {
-    condition     = var.FSID_DATABASE_IAM_POLICY == "" || can(regex("^arn:aws:iam::aws:policy/.+$", var.FSID_DATABASE_IAM_POLICY))
+    condition     = var.FSID_DATABASE_IAM_POLICY == "" || can(regex("^arn:aws:iam::([0-9]{12}|aws):policy/.+$", var.FSID_DATABASE_IAM_POLICY))
     error_message = "When provided, FSID_DATABASE_IAM_POLICY must be a valid IAM policy ARN."
   }
 }
@@ -630,4 +622,18 @@ variable "KNFSD_AUTOSCALING_MAX_INSTANCES" {
   type        = number
   nullable    = false
   default     = 10
+}
+
+variable "ASSUME_ROLE_ARN" {
+  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+  type        = string
+  nullable    = true
+  default     = null
+
+  validation {
+    condition = var.ASSUME_ROLE_ARN == null || (
+      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
+    )
+    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+  }
 }

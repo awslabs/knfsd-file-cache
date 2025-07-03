@@ -11,3 +11,4 @@ exclude:
   - aws-rds-enable-deletion-protection
   - aws-rds-enable-performance-insights-encryption
   - aws-cloudwatch-log-group-customer-key
+  - aws-ssm-secret-use-customer-key

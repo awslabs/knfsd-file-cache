@@ -14,14 +14,39 @@ declare -A PARAMETERS
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
+# get metadata from IMDSv2
+function get_metadata() {
+	local token
+	token=$(curl -s --retry 5 --retry-max-time 30 -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 3600" "http://169.254.169.254/latest/api/token")
+	REGION=$(curl -s --retry 5 --retry-max-time 30 -H "X-aws-ec2-metadata-token:${token}" "http://169.254.169.254/latest/meta-data/placement/region")
+	INSTANCE_ID=$(curl -s --retry 5 --retry-max-time 30 -H "X-aws-ec2-metadata-token:${token}" "http://169.254.169.254/latest/meta-data/instance-id")
+}
+
+# update_status() updates the tag:"knfsd-file-cache:status" of the instance
+# @param (str) $1 message
+function update_status() {
+	aws ec2 create-tags \
+		--region "${REGION}" \
+		--resources "${INSTANCE_ID}" \
+		--tags "Key=knfsd-file-cache:status,Value=$1"
+}
+
 # format the terminal for a command output
 function begin_command() {
 	echo -e "${SHELL_YELLOW}---- RUNNING: $1${SHELL_DEFAULT}"
+	update_status "running: $1"
+	COMMAND_START_TIME=$(date +%s)
 }
 
 # format the terminal after command completion
 function complete_command() {
-	echo -e "${SHELL_YELLOW}---- DONE${SHELL_DEFAULT}"
+	local end_time duration hours minutes seconds
+	end_time=$(date +%s)
+	duration=$((COMMAND_START_TIME > 0 ? end_time - COMMAND_START_TIME : 0))
+	hours=$((duration / 3600))
+	minutes=$(((duration % 3600) / 60))
+	seconds=$((duration % 60))
+	printf "${SHELL_YELLOW}---- DONE: %dh%02dm%02ds${SHELL_DEFAULT}\n" "$hours" "$minutes" "$seconds"
 }
 
 # load_parameters() retrieves all parameters from SSM Parameter Store
@@ -31,6 +56,7 @@ function load_parameters() {
 
 	local PARAMS_JSON
 	PARAMS_JSON=$(aws ssm get-parameters-by-path \
+		--region "${REGION}" \
 		--path "${PARAM_PATH}" \
 		--recursive \
 		--with-decryption)
@@ -170,22 +196,33 @@ function mount_nfs_server() {
 		echo "Removed [nconnect] option from MOUNT_OPTIONS: $mount_opts"
 	fi
 
-	# try to mount the NFS Share 3 times 30 seconds apart
-	local -i attempt
-	for ((attempt = 1; ; attempt++)); do
-		echo "(Attempt ${attempt}/3) Mounting $FSTYPE share: $remote..."
+	if [[ $fstype == "efs" ]]; then
+		# EFS mount helper has its own retry logic, so attempt only once
+		echo "Mounting $FSTYPE share: $remote..."
 		if mount -t "$fstype" -o "$mount_opts" "$remote" "$path"; then
 			echo "$FSTYPE mount succeeded for $remote"
-			break
 		else
-			if ((attempt >= 3)); then
-				echo "ERROR: $FSTYPE mount failed for $remote. Maximum attempts reached, exiting with status 1..." >&2
-				exit 1
-			fi
-			echo "$FSTYPE mount failed for $remote. Retrying after 30 seconds..."
-			sleep 30
+			echo "ERROR: $FSTYPE mount failed for $remote" >&2
+			exit 1
 		fi
-	done
+	else
+		# try to mount the NFS share 3 times, 30 seconds apart
+		local -i attempt
+		for ((attempt = 1; ; attempt++)); do
+			echo "(Attempt ${attempt}/3) Mounting $FSTYPE share: $remote..."
+			if mount -t "$fstype" -o "$mount_opts" "$remote" "$path"; then
+				echo "$FSTYPE mount succeeded for $remote"
+				break
+			else
+				if ((attempt >= 3)); then
+					echo "ERROR: $FSTYPE mount failed for $remote. Maximum attempts reached, exiting with status 1..." >&2
+					exit 1
+				fi
+				echo "$FSTYPE mount failed for $remote. Retrying after 30 seconds..."
+				sleep 30
+			fi
+		done
+	fi
 }
 
 # add_nfs_export() adds an entry to /etc/exports
@@ -262,6 +299,32 @@ function trim_slash() {
 	sed '\|^/$| !s|/*$||'
 }
 
+# stop_services() stops one or more services using systemctl.
+# If there is an error stopping the services systemctl is used to check the
+# status and view the most recent log entries.
+function stop_services() {
+	if ! systemctl stop "$@"; then
+		systemctl status "$@"
+		exit 1
+	fi
+}
+
+# disable_services() disables one or more services using systemctl.
+# If there is an error disabling the services systemctl is used to check the
+# status and view the most recent log entries.
+function disable_services() {
+	if ! systemctl disable "$@"; then
+		systemctl status "$@"
+		exit 1
+	fi
+}
+
+# helper function to stop and disable one or more services
+function stop_and_disable_services() {
+	stop_services "$@"
+	disable_services "$@"
+}
+
 # start_services() starts one or more services using systemctl.
 # If there is an error starting the services systemctl is used to check the
 # status and view the most recent log entries.
@@ -272,29 +335,21 @@ function start_services() {
 	fi
 }
 
-# create_swap() creates a 10GB swap file
-function create_swap() {
-	echo "Creating 10GB swap file..."
-	dd if=/dev/zero of=/swapfile bs=1G count=10
-	chmod 0600 /swapfile
-	mkswap --verbose /swapfile
-	swapon /swapfile
-	echo "Swap file created and activated"
-}
-
 function init() {
-	begin_command "Initialize"
+	get_metadata
+	begin_command "initialize"
 	# Set any variables cleanup depends upon as blank before setting the trap.
 	# This prevents stray environment variables causing unexpected behaviour.
 	startup_complete=
 	WORKDIR=
 	trap cleanup EXIT
 
-	# create swap
-	create_swap
-
 	# load parameters
 	load_parameters
+
+	# reload systemd daemon to pick up any service file changes from image build
+	echo "Reloading systemd daemon..."
+	systemctl daemon-reload
 
 	WORKDIR="$(mktemp -d)"
 	# get_parameter INCLUDED_EXPORTS | split >"${WORKDIR}/include-filters"
@@ -378,7 +433,7 @@ function init() {
 # create_fs_cache() creates a RAID 0 array from local NVMe
 # or EBS volumes and mounts it to /var/cache/fscache
 function create_fs_cache() {
-	begin_command "Create FS-Cache"
+	begin_command "create fs-cache"
 	local DEVICESLIST NUMDEVICES
 
 	# Check if we are setting up Local NVMe or EBS volume(s)
@@ -404,12 +459,12 @@ function create_fs_cache() {
 		elif [ ${NUMDEVICES} -eq 1 ]; then
 			echo "Formatting single NVMe device..."
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard ${DEVICESLIST}
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${DEVICESLIST}
 			echo "Finished formatting NVMe device"
 
 			# Mount NVMe device to /var/cache/fscache & start FS-Cache
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mount -o discard,defaults ${DEVICESLIST} /var/cache/fscache
+			mount -o discard,defaults,nobarrier,init_itable=0 ${DEVICESLIST} /var/cache/fscache
 			echo "Finished mounting NVMe device to FS-Cache directory (/var/cache/fscache)"
 			start_fs_cache
 		else
@@ -417,7 +472,7 @@ function create_fs_cache() {
 			if [ ! -e /dev/md127 ]; then
 				echo "Creating RAID 0 array from ${NUMDEVICES} NVMe devices..."
 				# nosemgrep: unquoted-variable-expansion-in-command
-				mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=${NUMDEVICES} ${DEVICESLIST}
+				mdadm --create /dev/md127 --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
 				echo "Finished creating RAID 0 array from ${NUMDEVICES} NVMe devices"
 			fi
 
@@ -426,14 +481,14 @@ function create_fs_cache() {
 			is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
 			if [[ $is_formatted == "" ]]; then
 				echo "RAID 0 array is not formatted. Formatting..."
-				mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
+				mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super /dev/md127
 				echo "Finished formatting RAID 0 array"
 			else
 				echo "RAID 0 array is already formatted"
 			fi
 
 			# Mount /dev/md127 to /var/cache/fscache & start FS-Cache
-			mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
+			mount -o discard,defaults,nobarrier,init_itable=0 /dev/md127 /var/cache/fscache
 			echo "Finished mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)"
 			start_fs_cache
 		fi
@@ -460,12 +515,12 @@ function create_fs_cache() {
 		elif [ ${NUMDEVICES} -eq 1 ]; then
 			echo "Formatting single EBS volume..."
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard ${DEVICESLIST}
+			mkfs.ext4 -m 0 -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${DEVICESLIST}
 			echo "Finished formatting EBS volume"
 
 			# Mount EBS volume to /var/cache/fscache & start FS-Cache
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mount -o discard,defaults ${DEVICESLIST} /var/cache/fscache
+			mount -o discard,defaults,nobarrier,init_itable=0 ${DEVICESLIST} /var/cache/fscache
 			echo "Finished mounting EBS volume to FS-Cache directory (/var/cache/fscache)"
 			start_fs_cache
 		else
@@ -473,7 +528,7 @@ function create_fs_cache() {
 			if [ ! -e /dev/md127 ]; then
 				echo "Creating RAID 0 array from ${NUMDEVICES} EBS volumes..."
 				# nosemgrep: unquoted-variable-expansion-in-command
-				mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=${NUMDEVICES} ${DEVICESLIST}
+				mdadm --create /dev/md127 --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
 				echo "Finished creating RAID 0 array from ${NUMDEVICES} EBS volumes"
 			fi
 
@@ -482,14 +537,14 @@ function create_fs_cache() {
 			is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
 			if [[ $is_formatted == "" ]]; then
 				echo "RAID 0 array is not formatted. Formatting..."
-				mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
+				mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super /dev/md127
 				echo "Finished formatting RAID 0 array"
 			else
 				echo "RAID 0 array is already formatted"
 			fi
 
 			# Mount /dev/md127 to /var/cache/fscache & start FS-Cache
-			mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
+			mount -o discard,defaults,nobarrier,init_itable=0 /dev/md127 /var/cache/fscache
 			echo "Finished mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)"
 			start_fs_cache
 		fi
@@ -517,20 +572,23 @@ function start_fs_cache() {
 	echo "FS-Cache started"
 }
 
-# start_fsidd() starts the FSID service
+# start_fsidd() starts the correct FSID service based on the FSID_MODE
 function start_fsidd() {
-	begin_command "Start FSID"
+	begin_command "start fsidd"
 	case "${FSID_MODE}" in
 		static)
 			echo "Skipping fsidd service"
+			stop_and_disable_services fsidd.service knfsd-fsidd.socket knfsd-fsidd.service
 			;;
 		local)
 			echo "Starting fsidd..."
+			stop_and_disable_services knfsd-fsidd.socket knfsd-fsidd.service
 			start_services fsidd.service
 			echo "Finished starting fsidd"
 			;;
 		external)
 			echo "Starting knfsd-fsidd..."
+			stop_and_disable_services fsidd.service
 			start_services knfsd-fsidd.socket knfsd-fsidd.service
 			echo "Finished starting knfsd-fsidd"
 			;;
@@ -545,7 +603,7 @@ function start_fsidd() {
 # export_map() loops through statically defined NFS exports in $EXPORT_MAP,
 # and re-exports (fn: reexport), without filtering the exports
 function export_map() {
-	begin_command "Export map"
+	begin_command "export map"
 	if [[ -n ${EXPORT_MAP} ]]; then
 		echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
 		local i REMOTE_IP REMOTE_EXPORT LOCAL_EXPORT FSTYPE
@@ -568,7 +626,7 @@ function export_map() {
 # export_auto_detect() dynamically detects NFS exports via 'showmount' command,
 # filters the exports (fn: filter_exports), before re-exporting (fn: reexport)
 function export_auto_detect() {
-	begin_command "Export auto-detect"
+	begin_command "export auto-detect"
 	if [[ -n ${EXPORT_HOST_AUTO_DETECT} ]]; then
 		echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
 		local REMOTE_IP REMOTE_EXPORT
@@ -591,7 +649,7 @@ function export_auto_detect() {
 # export_netapp() dynamically detects NetApp specific exports via NetApp RESTful API (golang: netapp-exports),
 # filters the exports (fn: filter_exports), before re-exporting (fn: reexport)
 function export_netapp() {
-	begin_command "Export NetApp"
+	begin_command "export netapp"
 	if [[ ${ENABLE_NETAPP_AUTO_DETECT} == "true" ]]; then
 		echo "Beginning processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)..."
 		local REMOTE_IP REMOTE_EXPORT
@@ -613,7 +671,7 @@ function export_netapp() {
 
 # configure_read_ahead() sets the read ahead value for NFS mounts
 function configure_read_ahead() {
-	begin_command "Configure read ahead"
+	begin_command "configure read ahead"
 	# Set read ahead value to 8 MiB
 	# Originally read ahead default to rsize * 15, but with rsizes now allowing 1 MiB
 	# a 15 MiB read ahead was too large. Newer versions of Ubuntu changed the
@@ -636,7 +694,7 @@ function configure_read_ahead() {
 
 # configure_nfs() sets the VFS Cache Pressure and disables unwanted NFS Versions
 function configure_nfs() {
-	begin_command "Configure NFS"
+	begin_command "configure nfs"
 	# Set VFS Cache Pressure
 	echo "Setting VFS Cache Pressure to: ${VFS_CACHE_PRESSURE}"
 	sysctl vm.vfs_cache_pressure="${VFS_CACHE_PRESSURE}"
@@ -660,13 +718,17 @@ function configure_nfs() {
 
 # configure_metrics() enables the Metrics Agent & CloudWatch Agent
 function configure_metrics() {
-	begin_command "Configure metrics"
+	begin_command "configure metrics"
+	local cw_pid kma_pid
 	# enable metrics if configured
 	if [[ ${ENABLE_METRICS} == "true" ]]; then
 		echo "Starting Metrics Agents..."
 		printf '%s' "${METRICS_AGENT_CONFIG}" > /etc/knfsd-metrics-agent/custom.yaml
-		amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
-		start_services knfsd-metrics-agent
+		amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s &
+		cw_pid=$!
+		start_services knfsd-metrics-agent &
+		kma_pid=$!
+		wait ${cw_pid} ${kma_pid}
 		echo "Finished starting Metrics Agents"
 	else
 		echo "Metrics are disabled. Skipping..."
@@ -676,7 +738,7 @@ function configure_metrics() {
 
 # start_nfs() starts the KNFSD-Agent if enabled & NFS Server
 function start_nfs() {
-	begin_command "Start NFS"
+	begin_command "start nfs"
 	# enable knfsd agent if configured
 	if [[ ${ENABLE_KNFSD_AGENT} == "true" ]]; then
 		echo "Starting KNFSD Agent..."
@@ -695,7 +757,7 @@ function start_nfs() {
 
 # post_startup() runs the CUSTOM_POST_STARTUP_SCRIPT
 function post_startup() {
-	begin_command "Post startup"
+	begin_command "post startup"
 	# Run the CUSTOM_POST_STARTUP_SCRIPT
 	echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
 	echo "${CUSTOM_POST_STARTUP_SCRIPT}" > /custom-post-startup-script.sh
@@ -703,14 +765,15 @@ function post_startup() {
 	bash /custom-post-startup-script.sh
 	echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
 
-	echo "### NFS Mounts ###"
+	echo -e "${SHELL_YELLOW}### NFS Mounts ###${SHELL_DEFAULT}"
 	findmnt -ut nfs,nfs4
 
-	echo "### NFS Exports ###"
+	echo -e "${SHELL_YELLOW}### NFS Exports ###${SHELL_DEFAULT}"
 	exportfs -s
 
 	complete_command
 	echo "INFO: Reached Proxy Startup Exit. Happy caching!"
+	update_status "ready"
 	startup_complete=yes
 }
 
@@ -721,6 +784,7 @@ function cleanup() {
 	# terminated.
 	if [[ $startup_complete != yes ]]; then
 		echo "ERROR: Failed to start proxy" >&2
+		update_status "error: failed to start proxy"
 	fi
 
 	if [[ -n ${WORKDIR} ]] && [[ -d ${WORKDIR} ]]; then

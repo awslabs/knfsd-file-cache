@@ -13,7 +13,7 @@ locals {
     EXPORT_HOST_AUTO_DETECT = "(Optional) A list of IP addresses or hostnames of NFS filers that respond to the \"showmount\" command. KNFSD will automatically detect and re-export mounts from this filer. Exports paths on the cache will match the export path on the source filer. Default: \"\"."
     EXCLUDED_EXPORTS        = "(Optional) A list of filter patterns to be excluded from auto-discovery (see Filter Patterns). Auto-discovery will ignore any exports that match any of the exclude patterns. Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
     INCLUDED_EXPORTS        = "(Optional) If set, auto-discovery will only include paths matching a filter pattern from the include list (see Filter Patterns). Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
-    EXPORT_CIDR             = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export. Default: \"10.0.0.0/8\"."
+    EXPORT_CIDR             = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export (VPC CIDR of \"SUBNET\" is used if not specified). Default: \"\"."
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = "(Optional) Enables automatic discovery of exports using the NetApp REST API. Default: \"false\"."
@@ -42,7 +42,7 @@ locals {
     # auto re-export nested mounts
     AUTO_REEXPORT        = "(Optional) When \"true\" enables the \"crossmnt\" option on all exports and automatically re-exports any nested mounts that were not explicitly exported. Default: \"false\"."
     FSID_MODE            = "(Optional) How to assign FSIDs (File System Identifiers) to each export. The options are \"static\", \"local\", or \"external\". Default: \"external\"."
-    FSID_DATABASE_CONFIG = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\"."
+    FSID_DATABASE_CONFIG = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\". Default: \"\"."
 
     # system
     NUM_NFS_THREADS       = "(Optional) The number of NFS Threads to use for KNFSD. Default: \"512\"."
@@ -55,7 +55,7 @@ locals {
 
     # metrics / http agent
     ENABLE_METRICS       = "(Optional) Enable the KNFSD Metrics (Open-Telemetry) Agent. Default: \"true\"."
-    METRICS_AGENT_CONFIG = "(Optional) Custom YAML configuration for the metrics agent. The configuration is not validated by Terraform, when using a custom config check the proxy startup log. See the custom configuration section in the metrics documentation for more details. Default: \"\"."
+    METRICS_AGENT_CONFIG = "(Optional) Custom YAML configuration for the metrics agent. The configuration is not validated by Terraform when using a custom config, please check the proxy startup log. See the custom configuration section in the metrics documentation for more details. Default: \"\"."
     ENABLE_KNFSD_AGENT   = "(Optional) Enable the KNFSD HTTP Agent. Default: \"true\"."
   }
 }
@@ -68,7 +68,7 @@ resource "aws_ssm_parameter" "settings" {
     EXPORT_HOST_AUTO_DETECT = var.EXPORT_HOST_AUTO_DETECT
     EXCLUDED_EXPORTS        = join("\n", var.EXCLUDED_EXPORTS)
     INCLUDED_EXPORTS        = join("\n", var.INCLUDED_EXPORTS)
-    EXPORT_CIDR             = var.EXPORT_CIDR
+    EXPORT_CIDR             = local.export_cidr
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = var.ENABLE_NETAPP_AUTO_DETECT
@@ -118,4 +118,5 @@ resource "aws_ssm_parameter" "settings" {
   type        = "SecureString"
   value       = each.value != "" ? each.value : "\"\""
   description = local.descriptions[each.key]
+  tags        = local.tags
 }

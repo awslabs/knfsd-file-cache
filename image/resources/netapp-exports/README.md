@@ -251,6 +251,14 @@ If `showmount` is not supported by the NFS server you will see the error:
 clnt_create: RPC: Unknown host
 ```
 
+You might also see this error:
+
+```bash
+clnt_create: RPC: Program not registered
+```
+
+This is caused by the NFS server not supporting NFSv3. Ensure `vers3=yes` is set in `/etc/nfs.conf.d/knfsd.conf` and is excluded from the `DISABLED_NFS_VERSIONS` parameter.
+
 ## AWS Secrets Manager
 
 [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) allows you to securely store your NetApp user password to your NetApp REST API and control access via IAM permissions, which can be provided to the EC2 KNFSD instance via an IAM instance-role.

@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-variable "REGION" {
-  description = "(Required) The AWS region the RDS DB instance will be deployed to. Example: \"us-east-1\". No default."
+variable "VERSION" {
+  description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-
+  default     = "1.1.0-alpha.3"
   validation {
-    condition     = var.REGION != "" && can(regex("^[a-z]{2}-[a-z]+-[1-9]$", var.REGION))
-    error_message = "REGION must be a valid AWS region format. Example: \"us-east-1\"."
+    condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.3\"."
   }
 }
 
@@ -84,4 +84,18 @@ variable "MASTER_USERNAME" {
   type        = string
   nullable    = false
   default     = "postgres"
+}
+
+variable "ASSUME_ROLE_ARN" {
+  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+  type        = string
+  nullable    = true
+  default     = null
+
+  validation {
+    condition = var.ASSUME_ROLE_ARN == null || (
+      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
+    )
+    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+  }
 }

@@ -4,6 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+variable "VERSION" {
+  description = "(Required) The version of the KNFSD File Cache."
+  type        = string
+  nullable    = false
+  default     = "1.1.0-alpha.3"
+  validation {
+    condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.3\"."
+  }
+}
+
 variable "SUBNET" {
   description = "(Required) The subnet ID to use for deployment of the Network Load Balancer. Example: \"subnet-038e337f0ff4cd53f\". No default."
   type        = string
@@ -24,14 +35,14 @@ variable "PROXY_BASENAME" {
   }
 }
 
-variable "PRIVATE_HOSTED_ZONE" {
-  description = "(Optional) The R53 private hosted zone to use for DNS when \"TRAFFIC_MODE = 'loadbalancer'\". Defaults to: \"knfsd.internal.\" [Note: the trailing period is required]. Default: \"\"."
+variable "DNS_NAME" {
+  description = "(Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: \"lb-knfsd.{PROXY_BASENAME}.aws.internal.\" [Note: the trailing period is required]. Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
   validation {
-    condition     = var.PRIVATE_HOSTED_ZONE == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$$", var.PRIVATE_HOSTED_ZONE))
-    error_message = "When provided, PRIVATE_HOSTED_ZONE must be a valid domain name ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
+    condition     = var.DNS_NAME == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$$", var.DNS_NAME))
+    error_message = "When provided, DNS_NAME must be a valid fully qualified domain name (FQDN) ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
   }
 }
 

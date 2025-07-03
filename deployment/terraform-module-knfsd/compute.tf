@@ -4,20 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+# local variables
 locals {
-  fsid_database_config = (
-    # this module deployed an external fsid database, so generate our own config
-    local.deploy_fsid_database ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", {
-      db_address     = module.fsid_database[0].db_address,
-      db_port        = module.fsid_database[0].db_port,
-      db_user        = module.fsid_database[0].db_user,
-      db_name        = module.fsid_database[0].db_name,
-      enable_metrics = var.ENABLE_METRICS,
-    }) :
-
-    # otherwise use an external config
-    var.FSID_DATABASE_CONFIG
-  )
   ebs_vol_type = var.CACHEFILESD_DISK_TYPE == "ebs-gp3" ? "gp3" : "io2"
 }
 
@@ -34,9 +22,7 @@ resource "aws_ec2_capacity_reservation" "knfsd_reservation" {
   availability_zone       = local.az
   instance_platform       = "Linux/UNIX"
   instance_match_criteria = "targeted"
-  tags = {
-    Name = "${local.name}-reservation"
-  }
+  tags                    = merge(local.tags, { Name = "${local.name}-reservation" })
 
   lifecycle {
     precondition {
@@ -85,10 +71,13 @@ resource "aws_launch_template" "nfsproxy_template" {
     }
   }
 
+  tags = local.tags
+
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name" = local.name
+      "Name"                    = local.name,
+      "knfsd-file-cache:status" = "starting"
     }
   }
 

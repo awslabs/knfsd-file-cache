@@ -14,13 +14,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	middlewarev2 "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	mw "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/smithy-go/middleware"
 )
-
-var version string
 
 type AWSSecret struct {
 	Region  string `hcl:"region,optional"`
@@ -44,7 +42,8 @@ func (s *AWSSecret) get(ctx context.Context) (string, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(s.Region),
 		config.WithAPIOptions([]func(*middleware.Stack) error{
-			middlewarev2.AddUserAgentKeyValue("knfsd-file-cache/netapp-exports", version),
+			mw.AddUserAgentKeyValue("knfsd-file-cache/netapp-exports", version),
+			mw.AddUserAgentKeyValue("AWSSOLUTION/SO9129", version),
 		}),
 	)
 	if err != nil {

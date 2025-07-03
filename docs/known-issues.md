@@ -1,5 +1,28 @@
 # Known Issues
 
+## Showmount fails with "clnt_create: RPC: Program not registered"
+
+When using `EXPORT_HOST_AUTO_DETECT` the proxy will attempt to mount all the exports from the source server using the `showmount` command.
+
+```bash
+$ showmount -e 172.31.1.62 # NFS client
+$ showmount -e localhost # NFS server
+clnt_create: RPC: Program not registered
+```
+
+> INFO: Amazon EFS does not support `showmount` and only supports NFS v4.1.
+
+This is caused by the NFS server not supporting NFSv3. Ensure `vers3=yes` is set in `/etc/nfs.conf.d/knfsd.conf` and is excluded from the `DISABLED_NFS_VERSIONS` parameter.
+
+You can check the current running NFS server configuration:
+
+```bash
+# cat /proc/fs/nfsd/versions
+-2 -3 +4 +4.1 +4.2
+```
+
+Alternatively, do not use `EXPORT_HOST_AUTO_DETECT` and use `EXPORT_MAP` to list the exports explicitly.
+
 ## Kernel NULL pointer dereference when restarting NFS server
 
 When restarting the NFS server process the kernel might crash with "kernel NULL pointer dereference".

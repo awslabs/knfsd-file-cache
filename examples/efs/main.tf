@@ -1,5 +1,4 @@
 /*
- * Copyright 2024 Google Inc.
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -9,9 +8,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.99.1"
+      version = "~> 6.2.0"
     }
   }
+}
+
+provider "aws" {
+  region = var.REGION
 }
 
 # get the selected subnet
@@ -46,6 +49,14 @@ resource "aws_efs_file_system" "efs" {
   tags                   = { "knfsd-file-cache:examples" = "efs" }
 }
 
+# disable EFS backup policy to save cost
+resource "aws_efs_backup_policy" "efs_backup_policy" {
+  file_system_id = aws_efs_file_system.efs.id
+  backup_policy {
+    status = "DISABLED"
+  }
+}
+
 # create a dedicated SG for the EFS mount target
 resource "aws_security_group" "efs_mt_sg" {
   name        = "efs-mt-sg"
@@ -57,21 +68,22 @@ resource "aws_security_group" "efs_mt_sg" {
     from_port       = 2049
     to_port         = 2049
     protocol        = "tcp"
-    security_groups = [module.proxy.nfsproxy_security_group_id]
+    security_groups = [module.proxy.autoscaling_group_security_group_id]
     description     = "Allow NFS from proxy ASG"
   }
 
-  # default egress rule: allow all outbound traffic
+  # default egress rule: allow all outbound traffic to VPC
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = [local.vpc_cidr_block]
-    description = "Allow all outbound traffic"
+    description = "Allow all outbound traffic to VPC"
   }
 
   tags = {
-    "Name" = "efs-mt-sg"
+    "Name"                      = "efs-mt-sg",
+    "knfsd-file-cache:examples" = "efs"
   }
 }
 
@@ -83,7 +95,6 @@ resource "aws_efs_mount_target" "efs_mt" {
 
 module "proxy" {
   source                = "../../deployment/terraform-module-knfsd"
-  REGION                = var.REGION
   SUBNET                = var.SUBNET
   KNFSD_NODES           = 1
   PROXY_AMI             = var.PROXY_AMI

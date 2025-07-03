@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.2"
+VERSION="1.1.0-alpha.3"
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -27,11 +27,18 @@ PATCHES="$(pwd)/patches"
 # format the terminal for a command output
 function begin_command() {
 	echo -e "\n${SHELL_YELLOW}---- RUNNING: $1${SHELL_DEFAULT}"
+	COMMAND_START_TIME=$(date +%s)
 }
 
 # format the terminal after command completion
 function complete_command() {
-	echo -e "${SHELL_YELLOW}---- DONE${SHELL_DEFAULT}"
+	local end_time duration hours minutes seconds
+	end_time=$(date +%s)
+	duration=$((COMMAND_START_TIME > 0 ? end_time - COMMAND_START_TIME : 0))
+	hours=$((duration / 3600))
+	minutes=$(((duration % 3600) / 60))
+	seconds=$((duration % 60))
+	printf "${SHELL_YELLOW}---- DONE: %dh%02dm%02ds${SHELL_DEFAULT}\n" "$hours" "$minutes" "$seconds"
 }
 
 # disable unattended-upgrades.service
@@ -278,9 +285,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() {
 	begin_command "Installing golang"
-	curl -o go1.24.3.linux-amd64.tar.gz https://dl.google.com/go/go1.24.3.linux-amd64.tar.gz
+	curl -o go1.24.4.linux-amd64.tar.gz https://dl.google.com/go/go1.24.4.linux-amd64.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
+	tar -C /usr/local -xzf go1.24.4.linux-amd64.tar.gz
 	# temporarily add 'go' to $PATH
 	export PATH=$PATH:/usr/local/go/bin
 	# temporarily redirect go cache/mod cache during image build to /mnt/build

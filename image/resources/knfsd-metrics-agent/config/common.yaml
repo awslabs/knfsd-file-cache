@@ -193,10 +193,11 @@ processors:
         include: fsid.sql.query.duration
         new_name: fsid/sql/query/duration
 
+      # prefix all metrics with "knfsd/"
       - action: update
         include: ^(.*)$$
         match_type: regexp
-        new_name: $$1
+        new_name: knfsd/$$1
 
 exporters:
   # Useful when developing or debugging metrics. When running the agent from the
@@ -205,9 +206,11 @@ exporters:
     verbosity: basic
 
   awsemf:
-    log_retention: 365
+    log_group_name: "knfsd/metrics"
+    log_stream_name: "otel-metrics-${host.id}"
+    log_retention: 30
     namespace: "knfsd/metrics"
-    dimension_rollup_option: "NoDimensionRollup"
+    dimension_rollup_option: "ZeroAndSingleDimensionRollup"
     resource_to_telemetry_conversion:
       enabled: true
 

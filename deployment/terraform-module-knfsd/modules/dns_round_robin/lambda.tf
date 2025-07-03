@@ -3,16 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-# get the current AWS region
+# child tf module inherits AWS region from provider in root module
 data "aws_region" "current" {}
 
-# get the current AWS account id
+# child tf module inherits AWS account ID from provider in root module
 data "aws_caller_identity" "current" {}
 
+# lookup existing hosted zone when DNS_NAME is provided
+data "aws_route53_zone" "existing" {
+  count        = var.DNS_NAME != "" ? 1 : 0
+  name         = join(".", slice(split(".", var.DNS_NAME), 1, length(split(".", var.DNS_NAME))))
+  private_zone = true
+  vpc_id       = data.aws_vpc.selected.id
+}
+
 locals {
-  aws_region = data.aws_region.current.name
+  # child tf module inherits AWS region from provider in root module
+  region     = data.aws_region.current.region
   account_id = data.aws_caller_identity.current.account_id
   asg_name   = "${var.PROXY_BASENAME}-asg"
+  # determine zone ID based on whether we're creating a new zone or using existing
+  r53_zone_id = var.DNS_NAME == "" ? aws_route53_zone.nfsproxy[0].zone_id : data.aws_route53_zone.existing[0].zone_id
+  r53_fqdn    = var.DNS_NAME == "" ? "knfsd.${aws_route53_zone.nfsproxy[0].name}" : var.DNS_NAME
 }
 
 # create zip file of the python script for the Lambda function
@@ -25,13 +37,14 @@ data "archive_file" "static_ip_zip" {
 
 # nosemgrep: aws-cloudwatch-log-group-unencrypted, missing-cloudwatch-log-group-kms-key
 resource "aws_cloudwatch_log_group" "lambda_static_ip" {
-  name              = "knfsd/lambda/${var.PROXY_BASENAME}-static-ip"
-  retention_in_days = 7
+  name              = "knfsd/lambda/static-ip/${var.PROXY_BASENAME}"
+  retention_in_days = 30
+  tags              = local.tags
 }
 
 # Lambda function to manage secondary ENI on instances in an EC2 ASG
 resource "aws_lambda_function" "static_ip" {
-  depends_on    = [data.archive_file.static_ip_zip, aws_route53_zone.nfsproxy]
+  depends_on    = [data.archive_file.static_ip_zip, aws_cloudwatch_log_group.lambda_static_ip]
   function_name = "${var.PROXY_BASENAME}-static-ip"
   description   = "Lambda Python function to manage secondary ENI on instances in an EC2 ASG"
   role          = aws_iam_role.lambda_static_ip.arn
@@ -43,10 +56,12 @@ resource "aws_lambda_function" "static_ip" {
   # nosemgrep: aws-lambda-environment-unencrypted
   environment {
     variables = {
+      USER_AGENT     = "AWSSOLUTION/SO9129/${var.VERSION}"
+      VERSION        = var.VERSION
       PROXY_BASENAME = var.PROXY_BASENAME
       SUBNET         = var.SUBNET
-      R53_ZONE_ID    = aws_route53_zone.nfsproxy.zone_id
-      R53_ZONE_NAME  = aws_route53_zone.nfsproxy.name
+      R53_ZONE_ID    = local.r53_zone_id
+      R53_FQDN       = local.r53_fqdn
     }
   }
   logging_config {
@@ -57,6 +72,7 @@ resource "aws_lambda_function" "static_ip" {
     mode = "Active"
   }
   reserved_concurrent_executions = 1
+  tags                           = local.tags
 }
 
 # IAM role for the Lambda function
@@ -74,13 +90,14 @@ resource "aws_iam_role" "lambda_static_ip" {
     }]
   })
   force_detach_policies = true
+  tags                  = local.tags
 }
 
 # custom IAM policy for Lambda statc_ip function
 resource "aws_iam_policy" "lambda_static_ip" {
-  depends_on  = [aws_route53_zone.nfsproxy]
   name        = "${var.PROXY_BASENAME}-lambda-static-ip-policy"
   description = "Policy for Lambda to manage persistent secondary ENI on instances in an EC2 ASG"
+  tags        = local.tags
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -93,8 +110,8 @@ resource "aws_iam_policy" "lambda_static_ip" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:logs:${local.aws_region}:${local.account_id}:log-group:knfsd/lambda/${var.PROXY_BASENAME}-static-ip:*",
-          "arn:aws:logs:${local.aws_region}:${local.account_id}:log-group:knfsd/lambda/${var.PROXY_BASENAME}-static-ip:log-stream:*"
+          "arn:aws:logs:${local.region}:${local.account_id}:log-group:knfsd/lambda/static-ip/*:*",
+          "arn:aws:logs:${local.region}:${local.account_id}:log-group:knfsd/lambda/static-ip/*:log-stream:*"
         ]
       },
       {
@@ -102,7 +119,7 @@ resource "aws_iam_policy" "lambda_static_ip" {
           "autoscaling:CompleteLifecycleAction"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:autoscaling:${local.aws_region}:${local.account_id}:autoScalingGroup:*:autoScalingGroupName/${local.asg_name}"
+        Resource = "arn:aws:autoscaling:${local.region}:${local.account_id}:autoScalingGroup:*:autoScalingGroupName/${local.asg_name}"
       },
       {
         Action = [
@@ -110,9 +127,9 @@ resource "aws_iam_policy" "lambda_static_ip" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:ec2:${local.aws_region}:${local.account_id}:network-interface/*",
-          "arn:aws:ec2:${local.aws_region}:${local.account_id}:subnet/${var.SUBNET}",
-          "arn:aws:ec2:${local.aws_region}:${local.account_id}:security-group/*"
+          "arn:aws:ec2:${local.region}:${local.account_id}:network-interface/*",
+          "arn:aws:ec2:${local.region}:${local.account_id}:subnet/${var.SUBNET}",
+          "arn:aws:ec2:${local.region}:${local.account_id}:security-group/*"
         ]
       },
       {
@@ -120,12 +137,13 @@ resource "aws_iam_policy" "lambda_static_ip" {
           "ec2:AttachNetworkInterface",
           "ec2:DeleteNetworkInterface",
           "ec2:ModifyNetworkInterfaceAttribute",
-          "ec2:CreateTags"
+          "ec2:CreateTags",
+          "ec2:DeleteTags"
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:ec2:${local.aws_region}:${local.account_id}:network-interface/*",
-          "arn:aws:ec2:${local.aws_region}:${local.account_id}:instance/*"
+          "arn:aws:ec2:${local.region}:${local.account_id}:network-interface/*",
+          "arn:aws:ec2:${local.region}:${local.account_id}:instance/*"
         ]
       },
       {
@@ -141,7 +159,7 @@ resource "aws_iam_policy" "lambda_static_ip" {
           "route53:ChangeResourceRecordSets"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:route53:::hostedzone/${aws_route53_zone.nfsproxy.zone_id}"
+        Resource = "arn:aws:route53:::hostedzone/${local.r53_zone_id}"
       }
     ]
   })
@@ -155,7 +173,7 @@ resource "aws_iam_role_policy_attachment" "lambda_static_ip" {
 
 # LAUNCHING: EventBridge Rule for launching instances
 resource "aws_cloudwatch_event_rule" "instance_launching" {
-  name        = "capture-instance-launching"
+  name        = "${var.PROXY_BASENAME}-knfsd-instance-launching"
   description = "Capture EC2 nfsproxy instance launching events"
   event_pattern = jsonencode({
     source      = ["aws.autoscaling"]
@@ -164,6 +182,7 @@ resource "aws_cloudwatch_event_rule" "instance_launching" {
       AutoScalingGroupName = [local.asg_name]
     }
   })
+  tags = local.tags
 }
 
 # LAUNCHING: EventBridge target for launching instances
@@ -183,7 +202,7 @@ resource "aws_lambda_permission" "allow_eventbridge_launching" {
 
 # TERMINATED: EventBridge Rule for terminated instances
 resource "aws_cloudwatch_event_rule" "instance_terminated" {
-  name        = "capture-instance-terminated"
+  name        = "${var.PROXY_BASENAME}-knfsd-instance-terminated"
   description = "Capture EC2 nfsproxy instance terminated events"
   event_pattern = jsonencode({
     source      = ["aws.autoscaling"]
@@ -192,6 +211,7 @@ resource "aws_cloudwatch_event_rule" "instance_terminated" {
       AutoScalingGroupName = [local.asg_name]
     }
   })
+  tags = local.tags
 }
 
 # TERMINATED: EventBridge target for terminated instances

@@ -1,5 +1,4 @@
 /*
- * Copyright 2024 Google Inc.
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,7 +14,7 @@ variable "REGION" {
 }
 
 variable "SUBNET" {
-  description = "(Required) The single subnet ID to use for deployment of the KNFSD solution. No default."
+  description = "(Required) The single subnet ID to use for deployment of the KNFSD File Cache. Example: \"subnet-038e337f0ff4cd53f\". No default."
   type        = string
   nullable    = false
   validation {

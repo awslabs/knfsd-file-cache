@@ -14,6 +14,18 @@ The AMI must be in the same AWS Region as the KNFSD proxy instances.
 │    9: data "aws_ami" "proxy" {
 ```
 
+## Error: The DB instance and EC2 security group are in different VPCs
+
+```hcl
+│ Error: creating RDS DB Instance (nfsproxy-fsids): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 150419e9-cbb0-4dc9-856e-4b8db915dd51, api error InvalidParameterCombination: The DB instance and EC2 security group are in different VPCs. The DB instance is in vpc-56786e19f2a7c041e and the EC2 security group is in vpc-1234ebfdfc54626ad
+│
+│   with module.nfs_proxy.module.fsid_database[0].aws_db_instance.fsids,
+│   on ../database/main.tf line 64, in resource "aws_db_instance" "fsids":
+│   64: resource "aws_db_instance" "fsids" {
+```
+
+If you are using a **non-default** VPC for the database, you should create a DB subnet group in RDS, containing at least 2 subnets, each in a different availability zone, and then specify `FSID_DB_SUBNET_GROUP_NAME`. The single AZ deployment of the database will still target the availability zone of the provided subnet via `var.SUBNET`. The RDS DB subnet group must contain the subnet defined in `var.SUBNET`. Please make sure to review the [FSID Database Options](../deployment/README.md#fsid-database-options).
+
 ## Error creating resource: already exists
 
 Some of the resources created by Terraform must have a globally unique name. When deploying multiple KNFSD proxy clusters in the same AWS region, you *MUST* give each KNFSD proxy cluster a unique `PROXY_BASENAME`. The default value of `nfsproxy` will have 8 random characters appended to the end of the name to make it unique, such as `nfsproxy-a1b2c3d4` if the default value is used.

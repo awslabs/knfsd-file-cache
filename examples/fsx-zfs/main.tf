@@ -1,0 +1,174 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+terraform {
+  required_version = ">= 1.2.9"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.2.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.REGION
+}
+
+# get the selected subnet
+data "aws_subnet" "selected" {
+  id = var.SUBNET
+}
+
+# get the VPC via selected subnet
+data "aws_vpc" "selected" {
+  id = data.aws_subnet.selected.vpc_id
+}
+
+locals {
+  vpc_cidr_block = data.aws_vpc.selected.cidr_block
+}
+
+# create FSx for OpenZFS as source filer
+resource "aws_fsx_openzfs_file_system" "zfs" {
+  deployment_type                 = "SINGLE_AZ_1"
+  storage_capacity                = 1024
+  subnet_ids                      = [var.SUBNET]
+  throughput_capacity             = 512
+  automatic_backup_retention_days = 0
+  copy_tags_to_volumes            = true
+  delete_options                  = ["DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"]
+  security_group_ids              = [aws_security_group.fsx_sg.id]
+  skip_final_backup               = true
+  storage_type                    = "SSD"
+
+  root_volume_configuration {
+    nfs_exports {
+      client_configurations {
+        clients = "*"
+        options = ["rw", "crossmnt", "async"]
+      }
+    }
+    copy_tags_to_snapshots = true
+    data_compression_type  = "NONE"
+  }
+
+  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
+}
+
+# create additional ZFS volume: /fsx/vol2
+resource "aws_fsx_openzfs_volume" "vol2" {
+  name             = "vol2"
+  parent_volume_id = aws_fsx_openzfs_file_system.zfs.root_volume_id
+
+  nfs_exports {
+    client_configurations {
+      clients = "*"
+      options = ["rw", "crossmnt", "async"]
+    }
+  }
+  copy_tags_to_snapshots = true
+  data_compression_type  = "NONE"
+
+  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
+}
+
+# create additional ZFS volume: /fsx/vol3
+resource "aws_fsx_openzfs_volume" "vol3" {
+  name             = "vol3"
+  parent_volume_id = aws_fsx_openzfs_file_system.zfs.root_volume_id
+
+  nfs_exports {
+    client_configurations {
+      clients = "*"
+      options = ["rw", "crossmnt", "async"]
+    }
+  }
+  copy_tags_to_snapshots = true
+  data_compression_type  = "NONE"
+
+  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
+}
+
+# create a dedicated SG for FSx for OpenZFS
+resource "aws_security_group" "fsx_sg" {
+  name        = "fsx-zfs-sg"
+  description = "knfsd security group for FSx ZFS"
+  vpc_id      = data.aws_subnet.selected.vpc_id
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound NFS from the VPC CIDR block"
+  }
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "udp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound NFS over UDP (some NFS implementations may use UDP)"
+  }
+
+  ingress {
+    from_port   = 111
+    to_port     = 111
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound portmapper/rpcbind"
+  }
+
+  ingress {
+    from_port   = 111
+    to_port     = 111
+    protocol    = "udp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound portmapper/rpcbind"
+  }
+
+  ingress {
+    from_port   = 20001
+    to_port     = 20003
+    protocol    = "tcp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound TCP for OpenZFS management: NFS mount, status monitor, and lock daemon"
+  }
+
+  ingress {
+    from_port   = 20001
+    to_port     = 20003
+    protocol    = "udp"
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow inbound UDP for OpenZFS management: NFS mount, status monitor, and lock daemon"
+  }
+
+  tags = {
+    "Name"                      = "fsx-zfs-sg",
+    "knfsd-file-cache:examples" = "fsx-zfs"
+  }
+}
+
+module "proxy" {
+  source                  = "../../deployment/terraform-module-knfsd"
+  SUBNET                  = var.SUBNET
+  KNFSD_NODES             = 1
+  PROXY_AMI               = var.PROXY_AMI
+  INSTANCE_TAGS           = { "knfsd-file-cache:examples" = "fsx-zfs" }
+  PROXY_BASENAME          = var.PROXY_BASENAME
+  TRAFFIC_MODE            = "dns_round_robin"
+  KEY_NAME                = var.KEY_NAME
+  FSID_MODE               = "external"
+  EXPORT_HOST_AUTO_DETECT = aws_fsx_openzfs_file_system.zfs.dns_name # Detect exports from the source filer via "showmount -e <SOURCE_FILER_DNS_NAME>"
+  EXPORT_OPTIONS          = "insecure"                               # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
+  NFS_MOUNT_VERSION       = "3"                                      # Mount the source filer as NFSv3
+  DISABLED_NFS_VERSIONS   = "4.0,4.1,4.2"                            # Ensure NFS v3 is used ("showmount" auto-discovery)
+  depends_on = [                                                     # Wait for FSxZ source filer to be available
+    aws_fsx_openzfs_file_system.zfs,
+    aws_fsx_openzfs_volume.vol2,
+    aws_fsx_openzfs_volume.vol3
+  ]
+}

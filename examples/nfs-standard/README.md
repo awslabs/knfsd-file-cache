@@ -1,10 +1,12 @@
-# Standard Example
+# Standard NFS Example
 
 This example shows a standard KNFSD proxy deployment.
 
 As a starting point, the example deploys 3 KNFSD proxy instances with local NVMe.
 
 The deployment uses an external Amazon RDS PostgreSQL database to store FSIDs to ensure all instances in the cluster allocate the same FSID to each export.
+
+There are a number of ways to [monitor](../../docs/check-startup.md) the deployment progress.
 
 ## Security Groups
 
@@ -19,7 +21,7 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
 
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD solution. Example: `subnet-038e337f0ff4cd53f`. No default.
+* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD File Cache. Example: `subnet-038e337f0ff4cd53f`. No default.
 
 * `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
 
@@ -30,10 +32,6 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
 ## Outputs
-
-* `region` - AWS region where the resources were created.
-
-* `subnet` - AWS subnet where the resources were created.
 
 * `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
 

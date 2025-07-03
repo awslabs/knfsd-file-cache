@@ -9,8 +9,9 @@ module "loadbalancer" {
   source                          = "./modules/loadbalancer"
   SUBNET                          = var.SUBNET
   PROXY_BASENAME                  = local.name
-  PRIVATE_HOSTED_ZONE             = var.PRIVATE_HOSTED_ZONE
+  DNS_NAME                        = var.DNS_NAME
   LOADBALANCER_IP                 = var.LOADBALANCER_IP
+  NFS_PORTS                       = var.NFS_PORTS
   HEALTHCHECK_INTERVAL_SECONDS    = var.HEALTHCHECK_INTERVAL_SECONDS
   HEALTHCHECK_TIMEOUT_SECONDS     = var.HEALTHCHECK_TIMEOUT_SECONDS
   HEALTHCHECK_HEALTHY_THRESHOLD   = var.HEALTHCHECK_HEALTHY_THRESHOLD

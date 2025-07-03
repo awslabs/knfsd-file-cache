@@ -25,8 +25,3 @@ plugin "aws" {
   version = "0.40.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
-
-rule "aws_provider_missing_default_tags" {
-  enabled = true
-  tags = ["knfsd-file-cache:version"]
-}

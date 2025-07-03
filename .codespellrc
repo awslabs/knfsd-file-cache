@@ -1,2 +1,2 @@
 [codespell]
-skip=THIRD-PARTY-LICENSES,go.mod,go.sum,slabinfo
+skip=THIRD-PARTY-LICENSES,ACKNOWLEDGEMENTS,go.mod,go.sum,slabinfo

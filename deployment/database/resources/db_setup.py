@@ -16,6 +16,7 @@ import json
 import logging
 import psycopg
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 # configure logging
@@ -28,10 +29,16 @@ def get_secret(db_secret_endpoint, db_secret_region, db_secret_name):
     Retrieve database credentials from AWS Secrets Manager
     """
     session = boto3.session.Session()
+    script_id = "knfsd-file-cache/db-setup"
+    sol_id = os.environ.get("USER_AGENT")
+    combined_user_agent = f"{script_id} {sol_id}".strip()
+    user_agent_extra = {"user_agent_extra": combined_user_agent}
+    config = Config(**user_agent_extra)
     client = session.client(
         "secretsmanager",
         region_name=db_secret_region,
         endpoint_url=f"https://{db_secret_endpoint}",
+        config=config,
     )
 
     logger.info("Retrieving secret")

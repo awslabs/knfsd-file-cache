@@ -22,7 +22,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.2"
+VERSION="1.1.0-alpha.3"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache

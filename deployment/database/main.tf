@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.99.1"
+      version = "~> 6.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -28,7 +28,7 @@ resource "random_id" "name" {
   prefix      = "${var.NAME_PREFIX}-"
   byte_length = 4
   keepers = {
-    region = var.REGION,
+    region = local.region,
     subnet = var.SUBNET
   }
 }
@@ -48,11 +48,13 @@ data "aws_vpc" "selected" {
 
 # local variables
 locals {
+  tags           = { "knfsd-file-cache:version" = var.VERSION }
   name           = coalesce(var.NAME, random_id.name.hex)
   db_user        = "fsidd"
   db_name        = "fsids"
   account_id     = data.aws_caller_identity.current.account_id
   az             = data.aws_subnet.selected.availability_zone
+  region         = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
   vpc_id         = data.aws_vpc.selected.id
   vpc_cidr_block = data.aws_vpc.selected.cidr_block
   is_windows     = can(env("USERPROFILE"))
@@ -74,6 +76,7 @@ resource "aws_db_instance" "fsids" {
   allocated_storage        = 20
   max_allocated_storage    = 40
   storage_type             = "gp3"
+  tags                     = local.tags
 
   # db network config
   availability_zone      = local.az
@@ -107,9 +110,7 @@ resource "aws_security_group" "db_sg" {
   name        = "${local.name}-postgres-sg"
   description = "knfsd security group for PostgreSQL RDS instance"
   vpc_id      = local.vpc_id
-  tags = {
-    Name = "${local.name}-postgres-sg"
-  }
+  tags        = merge(local.tags, { Name = "${local.name}-postgres-sg" })
 }
 
 # db ingress rule
@@ -120,6 +121,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_ingress" {
   from_port         = 5432
   to_port           = 5432
   cidr_ipv4         = local.vpc_cidr_block
+  tags              = merge(local.tags, { Name = "tcp-5432-postgres" })
 }
 
 # db egress rule
@@ -128,6 +130,7 @@ resource "aws_vpc_security_group_egress_rule" "db_egress" {
   description       = "Allow all outbound traffic to knfsd security group"
   ip_protocol       = "-1" # all protocols
   cidr_ipv4         = local.vpc_cidr_block
+  tags              = merge(local.tags, { Name = "egress-all-vpc" })
 }
 
 # db parameter group
@@ -135,6 +138,7 @@ resource "aws_db_parameter_group" "fsids_pg" {
   name        = "${local.name}-pg"
   description = "DB parameter group for ${local.name}"
   family      = "postgres17"
+  tags        = local.tags
 }
 
 # enhanced monitoring role
@@ -142,6 +146,7 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
   name                  = "${local.name}-rds-enhanced-monitoring"
   assume_role_policy    = data.aws_iam_policy_document.rds_enhanced_monitoring.json
   force_detach_policies = true
+  tags                  = local.tags
 }
 
 # attach enhanced monitoring policy to role
@@ -168,7 +173,7 @@ data "aws_iam_policy_document" "rds_enhanced_monitoring" {
     condition {
       test     = "StringLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:rds:${var.REGION}:${local.account_id}:db:*"]
+      values   = ["arn:aws:rds:${local.region}:${local.account_id}:db:*"]
     }
   }
 }
@@ -177,6 +182,7 @@ data "aws_iam_policy_document" "rds_enhanced_monitoring" {
 resource "aws_iam_policy" "db_policy" {
   name   = "${local.name}-rds-auth-policy"
   policy = data.aws_iam_policy_document.db_role_document.json
+  tags   = local.tags
 }
 
 # IAM default policy document to allow rds-db:connect database access
@@ -184,7 +190,7 @@ data "aws_iam_policy_document" "db_role_document" {
   statement {
     effect    = "Allow"
     actions   = ["rds-db:connect"]
-    resources = ["arn:aws:rds-db:${var.REGION}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"]
+    resources = ["arn:aws:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"]
   }
 }
 
@@ -194,8 +200,7 @@ resource "null_resource" "lambda_package" {
     when        = create
     working_dir = path.module
     interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
-    # ./resources/docker-build.sh $ARCH $KNFSD_PYTHON_VERSION $KNFSD_PSYCOPG_VERSION
-    # ./resources/docker-build.sh linux/arm64 3.13.3 3.2.7
+    # "./resources/docker-build.sh $ARCH $KNFSD_PYTHON_VERSION $KNFSD_PSYCOPG_VERSION"
     command = "./resources/docker-build.sh"
   }
 }
@@ -205,9 +210,7 @@ resource "aws_security_group" "lambda_db_setup_sg" {
   name        = "${local.name}-lambda-db-setup-sg"
   description = "knfsd security group for Lambda db-setup function"
   vpc_id      = local.vpc_id
-  tags = {
-    Name = "${local.name}-lambda-db-setup-sg"
-  }
+  tags        = merge(local.tags, { Name = "${local.name}-lambda-db-setup-sg" })
   ingress {
     from_port   = 0
     to_port     = 0
@@ -238,12 +241,13 @@ resource "aws_lambda_function" "db_setup" {
   # nosemgrep: aws-lambda-environment-unencrypted
   environment {
     variables = {
+      USER_AGENT         = "AWSSOLUTION/SO9129/${var.VERSION}"
       DB_ADDRESS         = aws_db_instance.fsids.address
       DB_PORT            = aws_db_instance.fsids.port
       DB_USER            = local.db_user
       DB_NAME            = local.db_name
       DB_SECRET_ENDPOINT = aws_vpc_endpoint.lambda_db_setup.dns_entry[0].dns_name
-      DB_SECRET_REGION   = var.REGION
+      DB_SECRET_REGION   = local.region
       DB_SECRET_NAME     = aws_db_instance.fsids.master_user_secret[0].secret_arn
     }
   }
@@ -258,23 +262,26 @@ resource "aws_lambda_function" "db_setup" {
   tracing_config {
     mode = "Active"
   }
+  tags = local.tags
 }
 
 # CloudWatch log group for Lambda function
 # nosemgrep: aws-cloudwatch-log-group-unencrypted, missing-cloudwatch-log-group-kms-key
 resource "aws_cloudwatch_log_group" "lambda_db_setup" {
-  name              = "knfsd/lambda/${local.name}-db-setup"
-  retention_in_days = 7
+  name              = "knfsd/lambda/db-setup/${local.name}"
+  retention_in_days = 30
+  tags              = local.tags
 }
 
 # VPC endpoint for Lambda function to access Secrets Manager
 resource "aws_vpc_endpoint" "lambda_db_setup" {
   vpc_id              = local.vpc_id
-  service_name        = "com.amazonaws.${var.REGION}.secretsmanager"
+  service_name        = "com.amazonaws.${local.region}.secretsmanager"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [var.SUBNET]
   private_dns_enabled = false
   security_group_ids  = [aws_security_group.lambda_db_setup_sg.id]
+  tags                = local.tags
 }
 
 # IAM role for Lambda function
@@ -292,6 +299,7 @@ resource "aws_iam_role" "lambda_db_setup" {
     }]
   })
   force_detach_policies = true
+  tags                  = local.tags
 }
 
 # attach Lambda VPC access/CW logging policy to role
@@ -318,13 +326,31 @@ resource "aws_iam_role_policy" "lambda_db_setup" {
 resource "null_resource" "trigger_lambda_after_rds" {
   depends_on = [aws_lambda_function.db_setup]
 
+  # This provisioner will automatically assume the role specified in var.ASSUME_ROLE_ARN
+  # if provided, otherwise it will use the existing AWS credentials from the environment.
+  # This is useful for CI/CD pipelines where you need to assume a specific role for
+  # AWS CLI commands while Terraform uses a different role via the AWS provider.
   provisioner "local-exec" {
     when    = create
-    command = "aws lambda invoke --function-name ${aws_lambda_function.db_setup.function_name} response.json"
+    command = <<-EOF
+      # Check if role assumption is required
+      if [ -n "${var.ASSUME_ROLE_ARN}" ]; then
+        echo "Assuming role: ${var.ASSUME_ROLE_ARN}"
+        # Assume the role and get temporary credentials
+        ROLE_CREDS=$(aws sts assume-role --role-arn "${var.ASSUME_ROLE_ARN}" --role-session-name "terraform-lambda-invoke" --output json)
+        export AWS_ACCESS_KEY_ID=$(echo $ROLE_CREDS | jq -r '.Credentials.AccessKeyId')
+        export AWS_SECRET_ACCESS_KEY=$(echo $ROLE_CREDS | jq -r '.Credentials.SecretAccessKey')
+        export AWS_SESSION_TOKEN=$(echo $ROLE_CREDS | jq -r '.Credentials.SessionToken')
+        echo "Role assumption completed successfully"
+      else
+        echo "No role assumption required, using existing AWS credentials"
+      fi
+      aws lambda invoke --region ${local.region} --function-name ${aws_lambda_function.db_setup.function_name} response.json
+    EOF
   }
 }
 
-# destroy single-shot Lambda components after execution (optional, causes longer terraform apply time)
+# cleanup (destroy) single-shot Lambda components after execution (optional, causes longer terraform apply time)
 # resource "null_resource" "cleanup_lambda" {
 #   depends_on = [null_resource.trigger_lambda_after_rds]
 
@@ -349,3 +375,21 @@ resource "null_resource" "trigger_lambda_after_rds" {
 #     EOT
 #   }
 # }
+
+# this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution
+resource "aws_cloudformation_stack" "metrics_database" {
+  name          = "${local.name}-metrics-database"
+  on_failure    = "DO_NOTHING"
+  tags          = local.tags
+  template_body = <<STACK
+    {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "(SO9129) - KNFSD-File-Cache. Version v${var.VERSION}",
+        "Resources": {
+            "EmptyResource": {
+                "Type": "AWS::CloudFormation::WaitConditionHandle"
+            }
+        }
+    }
+    STACK
+}

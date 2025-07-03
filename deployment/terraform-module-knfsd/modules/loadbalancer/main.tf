@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.99.1"
+      version = "~> 6.2.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -33,11 +33,20 @@ data "dns_a_record_set" "nfsproxy_lb_ip" {
   host = aws_lb.nfsproxy_lb.dns_name
 }
 
+# lookup existing hosted zone when DNS_NAME is provided
+data "aws_route53_zone" "existing" {
+  count        = var.DNS_NAME != "" ? 1 : 0
+  name         = join(".", slice(split(".", var.DNS_NAME), 1, length(split(".", var.DNS_NAME))))
+  private_zone = true
+  vpc_id       = local.vpc_id
+}
+
 # local variables
 locals {
-  az             = data.aws_subnet.selected.availability_zone
+  tags           = { "knfsd-file-cache:version" = var.VERSION }
   vpc_id         = data.aws_vpc.selected.id
   vpc_cidr_block = data.aws_vpc.selected.cidr_block
+  dns_name       = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.aws.internal."))
 }
 
 # network load balancer; name=32 chars max (29 chars) + "-lb" (3 suffix)
@@ -52,6 +61,7 @@ resource "aws_lb" "nfsproxy_lb" {
     subnet_id            = var.SUBNET
     private_ipv4_address = var.LOADBALANCER_IP
   }
+  tags = local.tags
 }
 
 # lb security group
@@ -60,9 +70,7 @@ resource "aws_security_group" "nfsproxy_lb_sg" {
   name        = "${var.PROXY_BASENAME}-lb-sg"
   description = "knfsd security group for Network Load Balancer"
   vpc_id      = local.vpc_id
-  tags = {
-    Name = "${var.PROXY_BASENAME}-lb-sg"
-  }
+  tags        = merge(local.tags, { Name = "${var.PROXY_BASENAME}-lb-sg" })
 }
 
 # lb sg ingress rule: TCP
@@ -74,9 +82,7 @@ resource "aws_vpc_security_group_ingress_rule" "nfsproxy_lb_ingress_tcp" {
   from_port         = each.value.port
   to_port           = each.value.port
   cidr_ipv4         = local.vpc_cidr_block
-  tags = {
-    Name = "tcp-${each.value.port}-${each.value.name}"
-  }
+  tags              = merge(local.tags, { Name = "tcp-${each.value.port}-${each.value.name}" })
 }
 
 # lb sg ingress rule: UDP
@@ -88,9 +94,7 @@ resource "aws_vpc_security_group_ingress_rule" "nfsproxy_lb_ingress_udp" {
   from_port         = each.value.port
   to_port           = each.value.port
   cidr_ipv4         = local.vpc_cidr_block
-  tags = {
-    Name = "udp-${each.value.port}-${each.value.name}"
-  }
+  tags              = merge(local.tags, { Name = "udp-${each.value.port}-${each.value.name}" })
 }
 
 # lb sg egress rule
@@ -99,9 +103,7 @@ resource "aws_vpc_security_group_egress_rule" "nfsproxy_lb_egress" {
   description       = "Allow all outbound traffic to KNFSD proxy security group"
   ip_protocol       = "-1" # all protocols
   cidr_ipv4         = local.vpc_cidr_block
-  tags = {
-    Name = "egress-all-vpc"
-  }
+  tags              = merge(local.tags, { Name = "egress-all-vpc" })
 }
 
 # dynamically create load balancer listeners
@@ -119,9 +121,7 @@ resource "aws_lb_listener" "nfsproxy_lb_listener" {
     target_group_arn = aws_lb_target_group.nfsproxy_lb_tg[each.key].arn
   }
 
-  tags = {
-    Name = "${var.PROXY_BASENAME}-lb-listener-${each.value.port}-${each.value.name}"
-  }
+  tags = merge(local.tags, { Name = "${var.PROXY_BASENAME}-lb-listener-${each.value.port}-${each.value.name}" })
 }
 
 # dynamically create load balancer target groups
@@ -144,26 +144,37 @@ resource "aws_lb_target_group" "nfsproxy_lb_tg" {
     unhealthy_threshold = var.HEALTHCHECK_UNHEALTHY_THRESHOLD
   }
 
-  tags = {
-    Name = "${var.PROXY_BASENAME}-lb-tg-${each.value.port}-${each.value.name}"
-  }
+  tags = merge(local.tags, { Name = "${var.PROXY_BASENAME}-lb-tg-${each.value.port}-${each.value.name}" })
 }
 
 # create a private route53 DNS zone for the load balancer
 resource "aws_route53_zone" "lb" {
-  name          = coalesce(var.PRIVATE_HOSTED_ZONE, "knfsd.internal.")
+  count         = var.DNS_NAME == "" ? 1 : 0
+  name          = local.dns_name
   comment       = "Internal DNS for KNFSD Network Load Balancer"
   force_destroy = true
   vpc {
     vpc_id = local.vpc_id
   }
+  tags = merge(local.tags, { Name = trimsuffix(local.dns_name, ".") })
 }
 
-# create route53 CNAME record for load balancer
+# create a route53 CNAME record for the load balancer
 resource "aws_route53_record" "nfsproxy_lb_cname" {
-  name    = "${var.PROXY_BASENAME}-${local.az}"
+  count   = var.DNS_NAME == "" ? 1 : 0
+  name    = "lb-knfsd"
   type    = "CNAME"
   ttl     = 120
   records = [aws_lb.nfsproxy_lb.dns_name]
-  zone_id = aws_route53_zone.lb.zone_id
+  zone_id = aws_route53_zone.lb[0].zone_id
+}
+
+# create a custom route53 CNAME record for the load balancer in pre-existing zone
+resource "aws_route53_record" "nfsproxy_lb_cname_custom" {
+  count   = var.DNS_NAME != "" ? 1 : 0
+  zone_id = data.aws_route53_zone.existing[0].zone_id
+  name    = split(".", var.DNS_NAME)[0]
+  type    = "CNAME"
+  ttl     = 120
+  records = [aws_lb.nfsproxy_lb.dns_name]
 }

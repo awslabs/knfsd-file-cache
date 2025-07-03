@@ -8,7 +8,7 @@ For simplicity this example uses some settings that are not recommended for prod
 
 * `FSID_MODE = "static"`
 
-This deploys the KNFSD proxy cluster without a shared FSID database. In production it is recommended to use a shared (external) FSID database to ensure that all the KNFSD proxy instances in the cluster allocate the same FSID to each export.
+This deploys the KNFSD proxy cluster without a shared FSID database. In production it is recommended to use a shared (`"external"`) FSID database to ensure that all the KNFSD proxy instances in the cluster allocate the same FSID to each export.
 
 ## EFS Utilities
 
@@ -24,6 +24,8 @@ EFS does not support the `showmount` command, so we must identify the filesystem
 
 See `man mount.efs` for additional mount options specific to EFS that can be provided via the `var.MOUNT_OPTIONS` variable.
 
+There are a number of ways to [monitor](../../docs/check-startup.md) the deployment progress.
+
 ## Security Groups
 
 This example creates a dedicated security group for the EFS mount target (proxy to source), allowing inbound NFS traffic from the proxy ASG security group.
@@ -38,7 +40,7 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
 
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD solution. Example: `subnet-038e337f0ff4cd53f`. No default.
+* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD File Cache. Example: `subnet-038e337f0ff4cd53f`. No default.
 
 * `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
 
@@ -48,10 +50,10 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 ## Outputs
 
-* `region` - AWS region where the resources were created.
-
-* `subnet` - AWS subnet where the resources were created.
-
 * `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
 
 * `proxy_host` - DNS name of the KNFSD proxy.
+
+## Amazon EFS Limitations
+
+Amazon EFS does not support being re-exported more than once, so does not support the `fanout` feature. You will see a "stale file handle" error on the 2nd tier KNFSD proxy, with a loss of metadata on the 1st and 2nd tier KNFSD proxies.

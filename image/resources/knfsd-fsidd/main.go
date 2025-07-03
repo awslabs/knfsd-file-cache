@@ -9,6 +9,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -22,6 +23,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var version = "dev"
+
 type FSIDProvider interface {
 	GetFSID(ctx context.Context, path string) (int32, error)
 	AllocateFSID(ctx context.Context, path string) (int32, error)
@@ -30,18 +33,21 @@ type FSIDProvider interface {
 
 func main() {
 	var err error
+	var showVersion bool
 
 	cfg := new(Config)
 	f := pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
 
 	// setup flags before reading the config files, otherwise the pflag package
 	// will overwrite the config with the default values
-	f.StringVar(&cfg.SocketPath, "socket", defaultSocketPath, "")
-	f.StringVar(&cfg.Database.URL, "database-url", "", "")
-	f.StringVar(&cfg.Database.TableName, "table-name", "", "")
-	f.BoolVar(&cfg.Database.IAMAuth, "iam-auth", true, "")
-	f.BoolVar(&cfg.Debug, "debug", false, "")
-	f.BoolVar(&cfg.Cache, "cache", true, "")
+	f.StringVar(&cfg.SocketPath, "socket", defaultSocketPath, "The unix socket to listen on for incoming FSID requests from 'mountd'. This *must* match the value configured in '/etc/nfs.conf'")
+	f.StringVar(&cfg.Database.URL, "database-url", "", "A pgxpool URL. The 'host', 'port', 'user', and 'dbname' options must be set. Authentication will be handled by the AWS GO v2 SDK")
+	f.BoolVar(&cfg.Database.IAMAuth, "iam-auth", true, "Set to 'true' to enable automatic IAM authentication. The knfsd proxy instance will use the IAM instance profile to authenticate with RDS PostgreSQL database")
+	f.StringVar(&cfg.Database.TableName, "table-name", "", "The name of table to store the FSID mappings for the proxy cluster. It is recommended that each proxy cluster has its own unique table name")
+	f.BoolVar(&cfg.Cache, "cache", true, "Enables caching FSID mappings to avoid querying FSID database. Setting this to false can result in excessive SQL queries and slow performance and is only intended for debugging")
+	f.BoolVar(&cfg.Debug, "debug", false, "Enabled writing verbose debug output to 'stderr'")
+	f.BoolVarP(&showVersion, "version", "v", false, "Show version and exit")
+	f.SortFlags = false
 
 	// read the config file before parsing the command line arguments so
 	// that the command line arguments override any config values
@@ -66,6 +72,11 @@ func main() {
 	if err != nil {
 		log.Error.Print(err)
 		os.Exit(2)
+	}
+
+	if showVersion {
+		fmt.Println(version)
+		os.Exit(0)
 	}
 
 	if cfg.Debug {

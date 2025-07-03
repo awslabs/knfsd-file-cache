@@ -9,11 +9,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.99.1"
+      version = "~> 6.2.0"
     }
     archive = {
       source  = "hashicorp/archive"
-      version = "~> 2.7.0"
+      version = "~> 2.7.1"
     }
   }
 }
@@ -30,20 +30,19 @@ data "aws_vpc" "selected" {
 
 # local variables
 locals {
-  dns_name = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.knfsd.internal."))
+  tags = {
+    "knfsd-file-cache:version" = var.VERSION
+  }
 }
 
-# create a private route53 DNS zone for the cluster
+# create a private route53 DNS zone for the dns-rr cluster
 resource "aws_route53_zone" "nfsproxy" {
-  name          = local.dns_name
-  comment       = "Internal DNS for KNFSD proxies"
+  count         = var.DNS_NAME == "" ? 1 : 0
+  name          = "${var.PROXY_BASENAME}.aws.internal."
+  comment       = "Internal DNS for KNFSD DNS Round-Robin"
   force_destroy = true
-
   vpc {
     vpc_id = data.aws_vpc.selected.id
   }
-
-  tags = {
-    Name = trimsuffix(local.dns_name, ".")
-  }
+  tags = merge(local.tags, { Name = "${var.PROXY_BASENAME}.aws.internal" })
 }

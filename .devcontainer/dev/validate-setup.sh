@@ -11,7 +11,7 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.2"
+VERSION="1.1.0-alpha.3"
 
 # List of binaries to check
 binaries=(
@@ -101,7 +101,7 @@ expected_values=(
 	"/bin/bash"
 	"/home/${USERNAME}/.cache/golangci-lint"
 	"/home/${USERNAME}"
-	"knfsd-file-cache/${VERSION}"
+	"AWSSOLUTION/SO9129/${VERSION}"
 )
 
 # Function to check an environment variable

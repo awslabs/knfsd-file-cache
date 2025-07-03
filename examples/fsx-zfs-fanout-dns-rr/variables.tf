@@ -1,5 +1,4 @@
 /*
- * Copyright 2024 Google Inc.
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,7 +14,7 @@ variable "REGION" {
 }
 
 variable "SUBNET" {
-  description = "(Required) The single subnet ID to use for deployment of the KNFSD solution. No default."
+  description = "(Required) The single subnet ID to use for deployment of the FSx for OpenZFS source filer and KNFSD File Caches. Example: \"subnet-038e337f0ff4cd53f\". No default."
   type        = string
   nullable    = false
   validation {
@@ -31,23 +30,6 @@ variable "PROXY_AMI" {
   validation {
     condition     = can(regex("^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$", var.PROXY_AMI))
     error_message = "PROXY_AMI must be a valid AMI ID."
-  }
-}
-
-variable "EXPORT_MAP" {
-  description = "(Required) A list of NFS exports to mount from the source and re-export in the format \"<SOURCE_IP>;<SOURCE_EXPORT>;<TARGET_EXPORT>\". No default."
-  type        = string
-  nullable    = false
-}
-
-variable "PROXY_BASENAME" {
-  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"nfsproxy\"."
-  type        = string
-  nullable    = false
-  default     = "nfsproxy"
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{0,27}[a-zA-Z0-9]$", var.PROXY_BASENAME))
-    error_message = "PROXY_BASENAME must be 2-29 characters long, contain only alphanumeric characters or hyphens, and cannot begin or end with a hyphen."
   }
 }
 

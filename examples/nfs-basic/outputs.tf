@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-output "region" {
-  description = "AWS region where the resources were created."
-  value       = var.REGION
-}
-
-output "subnet" {
-  description = "AWS subnet where the resources were created."
-  value       = var.SUBNET
-}
-
 output "autoscaling_group_name" {
   description = "Name of the KNFSD proxy Auto Scaling Group."
   value       = module.proxy.autoscaling_group_name

@@ -6,7 +6,7 @@
 
 output "dns_name" {
   description = "The private DNS name that was created for the KNFSD Network Load Balancer."
-  value       = aws_route53_record.nfsproxy_lb_cname.fqdn
+  value       = var.DNS_NAME == "" ? aws_route53_record.nfsproxy_lb_cname[0].fqdn : aws_route53_record.nfsproxy_lb_cname_custom[0].fqdn
 }
 
 output "ip_address" {

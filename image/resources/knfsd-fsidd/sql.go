@@ -15,7 +15,7 @@ import (
 	"text/template" // nosemgrep
 	"time"
 
-	middlewarev2 "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	mw "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
@@ -29,8 +29,6 @@ import (
 
 // The main purpose of this code is to provide a way to manage file system IDs in a database,
 // allowing for the association of paths with unique identifiers (FSIDs) and vice versa.
-
-var version string
 
 //go:embed schema.sql
 var tableSchema string
@@ -121,7 +119,8 @@ func connect(ctx context.Context, config DatabaseConfig) (DB, error) {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(region),
 		awsconfig.WithAPIOptions([]func(*middleware.Stack) error{
-			middlewarev2.AddUserAgentKeyValue("knfsd-file-cache/fsidd", version),
+			mw.AddUserAgentKeyValue("knfsd-file-cache/fsidd", version),
+			mw.AddUserAgentKeyValue("AWSSOLUTION/SO9129", version),
 		}),
 	)
 	if err != nil {

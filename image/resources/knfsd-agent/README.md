@@ -85,7 +85,7 @@ This method provides basic information on the knfsd proxy node. It is useful for
   "region": "eu-west-2",
   "availabilityZone": "eu-west-2a",
   "availabilityZoneID": "euw2-az2",
-  "instanceType": "i3en.6xlarge",
+  "instanceType": "i3en.3xlarge",
   "imageID": "ami-07c1b39b7b3d2525d"
 }
 ```

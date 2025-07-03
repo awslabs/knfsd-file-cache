@@ -8,12 +8,23 @@
 #   test - Optional, name of a specific *.bats test file in the tests directory.
 #          For example "tests/configure-nfs.bats", defaults to "tests".
 
-if ! HASH="$(sha1sum tests/Dockerfile | cut -d ' ' -f 1)"; then
-	echo "ERROR: could not create sha1sum for tests/Dockerfile" >&2
+# create a hash of the Dockerfile
+function create_hash() {
+	if command -v sha1sum > /dev/null 2>&1; then
+		sha1sum "$1" | cut -d ' ' -f 1
+	elif command -v shasum > /dev/null 2>&1; then
+		shasum -a 1 "$1" | cut -d ' ' -f 1
+	else
+		return 1
+	fi
+}
+
+if ! HASH="$(create_hash tests/Dockerfile)"; then
+	echo "ERROR: could not create hash for tests/Dockerfile (missing sha1sum/shasum or file not found)" >&2
 	exit 1
 fi
 
-BATS_IMAGE=bats:proxy-startup-tests-"$HASH"
+BATS_IMAGE=bats-proxy-startup-tests:"$HASH"
 
 if ! docker image inspect "${BATS_IMAGE}" > /dev/null 2> /dev/null; then
 	if ! docker build --platform linux/amd64 -t "${BATS_IMAGE}" tests; then

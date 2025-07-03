@@ -21,11 +21,18 @@ cd "$(dirname "$0")"/../
 # format the terminal for a command output
 function begin_command() {
 	echo -e "\n${SHELL_YELLOW}---- RUNNING: $1${SHELL_DEFAULT}"
+	COMMAND_START_TIME=$(date +%s)
 }
 
 # format the terminal after command completion
 function complete_command() {
-	echo -e "${SHELL_YELLOW}---- DONE${SHELL_DEFAULT}"
+	local end_time duration hours minutes seconds
+	end_time=$(date +%s)
+	duration=$((COMMAND_START_TIME > 0 ? end_time - COMMAND_START_TIME : 0))
+	hours=$((duration / 3600))
+	minutes=$(((duration % 3600) / 60))
+	seconds=$((duration % 60))
+	printf "${SHELL_YELLOW}---- DONE: %dh%02dm%02ds${SHELL_DEFAULT}\n" "$hours" "$minutes" "$seconds"
 }
 
 # install latest ena driver

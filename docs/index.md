@@ -41,13 +41,12 @@
 
 ## User Reference
 
+* [CHANGELOG](../CHANGELOG.md)
 * [Check Proxy Startup](check-startup.md)
 * [Client Metrics](client-metrics.md)
 * [Culling](culling.md)
 * [FAQ](faq.md)
 * [Known Issues](known-issues.md)
-* [Advanced/Developer](developer.md)
-* [CHANGELOG](../CHANGELOG.md)
 
 ## Tutorial
 
@@ -55,9 +54,20 @@
 
 ## Examples
 
-* [Basic](../examples/basic/README.md)
-* [Standard](../examples/standard/README.md)
+* [Basic NFS](../examples/nfs-basic/README.md)
+* [Standard NFS](../examples/nfs-standard/README.md)
+* [EFS](../examples/efs/README.md)
+* [FSx for NetApp ONTAP](../examples/fsx-netapp/README.md)
+* [FSx for OpenZFS](../examples/fsx-zfs/README.md)
+* [FSx for OpenZFS Fanout (DNS Round Robin)](../examples/fsx-zfs-fanout-dns-rr/README.md)
+* [FSx for OpenZFS Fanout (Network Load Balancer)](../examples/fsx-zfs-fanout-loadbalancer/README.md)
 * [Weka NFS Gateway](../examples/weka/README.md)
+
+## Developer Reference
+
+* [Advanced/Developer](developer.md)
+* [Pre-commit](pre-commit.md)
+* [GitLab CI](gitlab-ci.md)
 
 ## Testing
 
@@ -67,9 +77,11 @@
 
 ## Project Reference
 
+* [ACKNOWLEDGEMENTS](../ACKNOWLEDGEMENTS)
 * [Code of Conduct](CODE_OF_CONDUCT.md)
 * [Contributing](CONTRIBUTING.md)
 * [Security](SECURITY.md)
+* [THIRD-PARTY-LICENSES](../THIRD-PARTY-LICENSES)
 
 ## External Documentation
 

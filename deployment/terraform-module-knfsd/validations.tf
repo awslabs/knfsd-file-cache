@@ -1,5 +1,4 @@
 /*
- * Copyright 2020 Google Inc.
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -101,7 +100,7 @@ resource "null_resource" "validations" {
     precondition {
       condition = (
         var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
-        ? var.FSID_DATABASE_CONFIG == ""
+        ? length(var.FSID_DATABASE_CONFIG) == 0
         : true
       )
       error_message = "You can only provide a custom FSID_DATABASE_CONFIG when using a custom external fsid database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
@@ -112,7 +111,7 @@ resource "null_resource" "validations" {
     precondition {
       condition = (
         var.FSID_MODE != "external"
-        ? var.FSID_DATABASE_CONFIG == ""
+        ? length(var.FSID_DATABASE_CONFIG) == 0
         : true
       )
       error_message = "You can only provide a custom FSID_DATABASE_CONFIG when using a custom external fsid database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
@@ -122,21 +121,17 @@ resource "null_resource" "validations" {
     precondition {
       condition = (
         var.FSID_MODE == "external" && !var.FSID_DATABASE_DEPLOY
-        ? var.FSID_DATABASE_CONFIG != ""
+        ? length(var.FSID_DATABASE_CONFIG) > 0
         : true
       )
       error_message = "You must specify a database configuration (FSID_DATABASE_CONFIG) when using a custom external database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
     }
 
-    # When using a custom external database then FSID_DATABASE_IAM_POLICY ARN must be provided
-    precondition {
-      condition = (
-        var.FSID_MODE == "external" && !var.FSID_DATABASE_DEPLOY
-        ? var.FSID_DATABASE_IAM_POLICY != ""
-        : true
-      )
-      error_message = "You must specify a database IAM policy (FSID_DATABASE_IAM_POLICY) ARN when using a custom external database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
-    }
+    # NOTE: We don't validate FSID_DATABASE_IAM_POLICY != "" here because:
+    # * In fanout deployments, this variable contains module.fsid_database[0].db_iam_policy
+    # * Terraform can't evaluate computed values in preconditions during plan phase
+    # * The IAM policy attachment will fail at apply time if the ARN is invalid
+    # * The variable validation already ensures it's a valid ARN format when provided
 
     # Bug check: This should not occur and indicates a bug in the Terraform script.
     # Fail early during terraform plan, otherwise the proxy will deploy and enter

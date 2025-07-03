@@ -5,6 +5,16 @@
 
 terraform {
   required_version = ">= 1.2.9"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.2.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.REGION
 }
 
 ################################################### PROJECTS ##################################################
@@ -12,7 +22,6 @@ terraform {
 module "projects" {
   source = "../../deployment/terraform-module-knfsd"
 
-  REGION = var.REGION
   SUBNET = var.SUBNET
 
   INSTANCE_TAGS = { "knfsd-file-cache:examples" = "weka-projects" }
@@ -27,7 +36,7 @@ module "projects" {
   EOF
 
   TRAFFIC_MODE = "dns_round_robin"
-  DNS_NAME     = "projects.knfsd.internal."
+  DNS_NAME     = "projects.aws.internal."
 
   # metadata cache timeouts
   ACREGMIN = 300 # file inode min cache time
@@ -49,7 +58,6 @@ module "projects" {
 module "software" {
   source = "../../deployment/terraform-module-knfsd"
 
-  REGION = var.REGION
   SUBNET = var.SUBNET
 
   INSTANCE_TAGS = { "knfsd-file-cache:examples" = "weka-software" }
@@ -64,7 +72,7 @@ module "software" {
   EOF
 
   TRAFFIC_MODE = "dns_round_robin"
-  DNS_NAME     = "software.knfsd.internal."
+  DNS_NAME     = "software.aws.internal."
 
   # metadata cache timeouts
   ACREGMIN = 3600 # file inode min cache time

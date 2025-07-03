@@ -1,6 +1,72 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.3
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added `var.ASSUME_ROLE_ARN` to allow for role assumption in CI/CD pipelines for `local-exec` provisioners.
+* Enabled Auto-Scaling (scale-up only) for the `loadbalancer` module.
+* Enabled OpenTelemetry metrics for the KNFSD proxy.
+* Amazon CloudWatch metrics & logs are grouped by `knfsd/` prefix.
+* Added `fsx-zfs-fanout-dns-rr` example to demonstrate how to use the `terraform-module-knfsd` module with an Amazon FSx for OpenZFS file system in a `fanout/dns-round-robin` architecture.
+* Renamed `fsx-zfs-fanout` example to `fsx-zfs-fanout-loadbalancer`.
+* Extended `delete` timeout during Terraform `destroy` for `AutoScalingGroup` from 10m to 20m.
+* Fixed a bug in Eventbridge rules for `dns_round_robin` module where the rules were not being created with unique names per cluster, causing a conflict in the `fanout` architecture.
+* Fixed a bug in `dns_round_robin` module where secondary ENI TAG `knfsd-file-cache:instance-id` could be misrepresented in an `ec2.describe_network_interfaces` filter.
+* Split the default FQDN for `dns_round_robin` module into two parts for Amazon Route 53: `name=knfsd` and `zone=<PROXY_BASENAME>.aws.internal.`, ensuring unique zone names per cluster deployment.
+* Re-factored `DNS_NAME` to allow users to specify their own private FQDN for the KNFSD proxy cluster.
+  * If `var.DNS_NAME` is `""` (default), a private DNS zone (`aws.internal.`) is created, and A or CNAME record(s) (`knfsd.<PROXY_BASENAME>.aws.internal.`) are created via the Amazon R53 service.
+  * If `var.DNS_NAME` is a FQDN, including trailing dot `.` (R53 private zone already exists), then A or CNAME record(s) (`<CUSTOM_NAME>.<CUSTOM_DOMAIN>.`) are created in the existing Amazon R53 zone.
+* Removed `var.PRIVATE_HOSTED_ZONE` from all modules.
+* Added 60m timeout to `status.tf` check to prevent infinite loops during deployment.
+* Minor Go module updates.
+* Fixed `proxy-startup.sh` conflict between `fsidd` and `knfsd-fsidd` service, causing RDS database to not be used, when `FSID_MODE="external"`.
+* Enhanced the `fsx-zfs` example to deploy additional ZFS volumes and demonstrate the use of `EXPORT_HOST_AUTO_DETECT` feature (`showmount`), together with NFS v3 for performance.
+* Increased GitLab CI job `Trivy` timeout to 10 minutes.
+* Added explicit support for `--region` in the `aws` calls via IMDS retrieval on the EC2 instance within the `proxy-startup.sh` script.
+* Added `fsx-netapp` example to demonstrate how to use the `terraform-module-knfsd` module with an Amazon FSx for NetApp ONTAP file system in a `dns-round-robin` architecture. This example uses the NetApp REST API to automatically discover, filter and configure exports.
+* Added documentation for [GitLab-CI](docs/gitlab-ci.md) and [Pre-Commit](docs/pre-commit.md).
+* Improved `proxy-startup.sh` 'cold' startup time from 281 seconds to 38 seconds (i3en.3xl), ~86% quicker.
+* Added timestamp to each stage of the Packer image build process.
+* Consolidated log/metrics group names for CloudWatch & OpenTelemetry.
+* Added Terraform AWS provider configuration to all `./examples` modules.
+* Added new `./examples` to be cached in GitLab-CI pipeline.
+* Reduced default instance type from `i3en.6xlarge` to `i3en.3xlarge` in the `terraform-module-knfsd` module.
+* Updated `hashicorp/aws` provider to v6.0.0. Ensure you `terraform init -upgrade` to ensure you are using the correct version of the provider.
+* Added timestamp to each section of the `proxy-startup.sh` script to measure startup timings.
+* Added `fsx-zfs` example to demonstrate how to use the `terraform-module-knfsd` module with an Amazon FSx for OpenZFS file system in a `dns-round-robin` architecture.
+* Added `fsx-zfs-fanout` example to demonstrate how to use the `terraform-module-knfsd` module with an Amazon FSx for OpenZFS file system in a `fanout/load-balancer` architecture.
+* Added note to the `efs` example that Amazon EFS does not support being re-exported more than once, so does not support the `fanout` feature.
+* Removal of `var.REGION` from all modules. AWS Region is now derived from the provided `var.SUBNET`. Can be overridden with AWS provider configuration in the root module.
+* Remove AWS provider configuration from Terraform root module (no longer a legacy module).
+* Removal of VPC Endpoints from Terraform module. See [VPC Endpoints](deployment/docs/vpc-endpoints.md) for detailed setup instructions if required.
+* Renamed `gitlab-ci.yml` to `gitlab-ci-aws.yml` to avoid conflicting with a customer's `gitlab-ci.yml` file.
+* Minor software version updates.
+* Updated `THIRD-PARTY-LICENSES` file for reference.
+* Updated to Packer v1.13.1.
+* `var.EXPORT_CIDR` now defaults to `""` (VPC CIDR of `var.SUBNET` is used if not specified).
+* `var.ENABLE_STATUS_CHECK` added to enable the status check that waits for all EC2 instances to be KNFSD status: `ready` during Terraform deployment. Must be `true` for `fanout` deployments.
+* `var.FSID_DATABASE_CONFIG` is now a JSON `map` of key/value pairs that can be used to override the default FSID database configuration (used in `fanout` deployments and when you want to reuse the database from a previous deployment).
+* `output.database_config` has been added to the `terraform-module-knfsd` module. It is a `map` of key/value pairs that can be used to override the default FSID database configuration (used in `fanout` deployments).
+* `output.database_iam_policy` has been added to the `terraform-module-knfsd` module. It is an ARN `string` that can be used to attach the IAM policy to the KNFSD proxy instances.
+* `output.cluster_ready` has been added to the `terraform-module-knfsd` module. It is a `boolean` that can be used with `var.ENABLE_STATUS_CHECK` to wait for the KNFSD cluster and EC2 instances to be ready before deploying downstream resources.
+* `output.autoscaling_group_security_group_id` has been added to the `terraform-module-knfsd` module.
+* `null_resource.trigger_lambda_after_rds` now explicitly targets the AWS `--region` of the RDS instance.
+* Fanout documentation updated to reflect the new settings.
+* Prerequisites documentation updated to reflect removal of VPC Endpoints.
+* Fixed bug where Network Load Balancer target groups were not being created when `var.TRAFFIC_MODE` was set to `loadbalancer`.
+* Added additional IAM policy for EC2 instance "status" tagging.
+* Fixed bug where `var.NFS_PORTS` was not being passed to the `loadbalancer` module from the `terraform-module-knfsd` module.
+* Added `knfsd-file-cache:status` tag to deployed EC2 instances for real-time status checking during deployment of a KNFSD cluster.
+* Updated `validations.tf` to account for `var.FSID_DATABASE_CONFIG` being a JSON `map` of key/value pairs.
+* Secondary ENIs created for `dns_round_robin` deployments now have a `knfsd-file-cache:version` tag.
+* `proxy-startup.sh` now updates the `knfsd-file-cache:status` tag to track the status of the proxy after it has started. `ready` is set after the proxy has successfully completed the startup process and `error: failed to start proxy` is set if the proxy fails to start.
+* `proxy-startup.sh` only attempts to mount Amazon EFS source server once, instead of three attempts (EFS helper utility already hard-wired to attempt to mount the EFS source server three times).
+* `check-startup.md` documentation updated to reflect the new `knfsd-file-cache:status` tagging system for real-time status viewing in the AWS Console during deployment.
+* `known-issues.md` documentation added entry to explain why `showmount` fails with `clnt_create: RPC: Program not registered` when using `EXPORT_HOST_AUTO_DETECT`.
+* Packer: added `var.ASSOCIATE_PUBLIC_IP_ADDRESS` in `image.pkrvars.hcl` to force public IP address association during image build. Default: `true`.
+* Packer: added new CloudWatch EBS metrics to `amazon-cloudwatch-agent.json` to monitor EBS volume performance.
+
 ## v1.1.0-alpha.2
 
 * Initial alpha release of KNFSD-File-Cache
-* Includes everything from v1.0.0 from GCP `knfsd-cache-utils`

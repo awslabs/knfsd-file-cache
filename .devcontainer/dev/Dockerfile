@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.2"
+ARG VERSION="1.1.0-alpha.3"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -25,7 +25,7 @@ WORKDIR /
 ## set devcontainer env vars
 ENV CI=devcontainer
 ENV DOCKER_CLI_HINTS=false
-ENV TF_APPEND_USER_AGENT="knfsd-file-cache/${VERSION}"
+ENV TF_APPEND_USER_AGENT="AWSSOLUTION/SO9129/${VERSION}"
 
 ## set devcontainer build args
 ARG BUILDARCH
@@ -153,21 +153,21 @@ ARG KNFSD_BATS_CORE_VERSION=1.12.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=25.1.0
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.38.29
+ARG KNFSD_BOTO3_VERSION=1.39.2
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.436
+ARG KNFSD_CHECKOV_VERSION=3.2.447
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 ARG KNFSD_EDITORCONFIG_VERSION=3.3.0
 # https://github.com/golangci/golangci-lint/releases
-ARG KNFSD_GOLANGCI_LINT_VERSION=2.1.6
+ARG KNFSD_GOLANGCI_LINT_VERSION=2.2.1
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.24.3
+ARG KNFSD_GOLANG_VERSION=1.24.4
 # https://github.com/python/mypy/tags
-ARG KNFSD_MYPY_VERSION=1.16.0
+ARG KNFSD_MYPY_VERSION=1.16.1
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.13.0
+ARG KNFSD_PACKER_VERSION=1.13.1
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.2.0
 # https://pypi.org/project/psycopg/
@@ -175,7 +175,7 @@ ARG KNFSD_PSYCOPG_VERSION=3.2.9
 # https://github.com/pylint-dev/pylint/tags
 ARG KNFSD_PYLINT_VERSION=3.3.7
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.123.0
+ARG KNFSD_SEMGREP_VERSION=1.127.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.10.0.1
 # https://github.com/mvdan/sh/releases
@@ -183,13 +183,13 @@ ARG KNFSD_SHFMT_VERSION=3.11.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=0.81.0
+ARG KNFSD_TERRAGRUNT_VERSION=0.82.4
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.58.0
 # https://github.com/aquasecurity/tfsec/releases
 ARG KNFSD_TFSEC_VERSION=1.28.14
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.63.0
+ARG KNFSD_TRIVY_VERSION=0.64.0
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN set -eux \

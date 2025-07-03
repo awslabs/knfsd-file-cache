@@ -10,16 +10,6 @@ variable "PROJECT" {
   default     = ""
 }
 
-variable "REGION" {
-  description = "(Required) The AWS region to use for deployment of the KNFSD File Cache. Example: \"us-east-1\"."
-  type        = string
-  nullable    = false
-  validation {
-    condition     = can(regex("^[a-z]{2}-[a-z]+-[1-9]$", var.REGION))
-    error_message = "REGION must be a valid AWS region format. Example: \"us-east-1\"."
-  }
-}
-
 variable "SUBNET" {
   description = "(Required) The single subnet ID to use for deployment of the KNFSD solution."
   type        = string

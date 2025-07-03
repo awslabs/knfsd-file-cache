@@ -20,8 +20,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   alarm_description   = "Alarm if NFS connections average is more than: ${var.KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD}"
   actions_enabled     = true
   alarm_actions       = [aws_autoscaling_policy.scale_up_policy[0].arn]
-  metric_name         = "nfs_connections"
-  namespace           = "knfsd"
+  metric_name         = "knfsd/nfs_connections"
+  namespace           = "knfsd/metrics"
   statistic           = "Average"
   threshold           = var.KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD
   period              = 60
@@ -30,6 +30,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.knfsd_asg.name
   }
+  tags = local.tags
 }
 
 # null resource to ensure ASG is created after the
@@ -59,8 +60,8 @@ resource "aws_autoscaling_group" "knfsd_asg" {
   health_check_type         = "EC2"
   health_check_grace_period = var.HEALTHCHECK_INITIAL_DELAY_SECONDS
 
-  target_group_arns = var.ENABLE_KNFSD_AUTOSCALING ? [
-    for key, value in var.NFS_PORTS : module.loadbalancer.lb_target_groups[key]
+  target_group_arns = var.TRAFFIC_MODE == "loadbalancer" ? [
+    for key, value in var.NFS_PORTS : module.loadbalancer[0].lb_target_groups[key]
   ] : []
 
   # instance maintenance policy only applies to instance maintenance events
@@ -120,6 +121,10 @@ resource "aws_autoscaling_group" "knfsd_asg" {
       value               = tag.value
       propagate_at_launch = true
     }
+  }
+
+  timeouts {
+    delete = "20m" # increase from default 10m to 20m
   }
 }
 

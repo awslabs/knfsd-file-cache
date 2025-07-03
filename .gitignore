@@ -75,3 +75,9 @@ nfstrace.log
 
 # knfsd-metrics-agent client tarball
 knfsd-metrics-agent.tar.gz
+
+# .gitlab-ci.yml
+.gitlab-ci.yml
+
+# debug files
+debug/

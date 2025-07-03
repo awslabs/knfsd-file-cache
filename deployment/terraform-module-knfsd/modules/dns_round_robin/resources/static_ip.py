@@ -17,40 +17,52 @@ import json
 import logging
 import time
 import boto3
+from botocore.config import Config
 
 # configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# configure user agent
+SCRIPT_ID = "knfsd-file-cache/static-ip"
+SOL_ID = os.environ.get("USER_AGENT")
+COMBINED_USER_AGENT = f"{SCRIPT_ID} {SOL_ID}".strip()
+USER_AGENT_EXTRA = {"user_agent_extra": COMBINED_USER_AGENT}
+config = Config(**USER_AGENT_EXTRA)
+
 # initialize AWS clients
-ec2 = boto3.client("ec2")
-route53 = boto3.client("route53")
-autoscaling = boto3.client("autoscaling")
+ec2 = boto3.client("ec2", config=config)
+route53 = boto3.client("route53", config=config)
+autoscaling = boto3.client("autoscaling", config=config)
 
 
 """
 fn instance_launching():
-    query if any ENIs are:
+    query for any ENIs in a specific ASG & specific subnet:
+        "subnet-id==subnet_id"
         "tag:knfsd-file-cache:asg-name==asg_name"
-        "tag:knfsd-file-cache:instance-id==null"
         "status==available"
-    if YES:
-        "AttachNetworkInterface" eni[0] to launching EC2 instance
-        & update "tag:knfsd-file-cache:instance-id={new instance-id}"
+        +filter: ENIs that have no instance-id or empty instance-id TAG
     if NO:
-        CreateNetworkInterface, then follow the YES steps as above
-    upsert DNS "A" record set
-    set ENI to DeleteOnTermination=False
+        CreateNetworkInterface, then follow the YES steps (below)
+    if YES:
+        "AttachNetworkInterface" ENI to launching EC2 instance at eni[1]
+        Set ENI to DeleteOnTermination=False
+        CreateTag: "tag:knfsd-file-cache:instance-id={instance-id}"
+        Upsert DNS "A" record set for ENI private IP address (start to receive NFS traffic)
+---
 fn instance_terminated():
     find cause of termination of instance-id? ()"Cause" field in event)
-    find DescribeNetWorkInterfaces where: (while-do loop)
+    find DescribeNetworkInterfaces where: (while-do loop)
+        "subnet-id==subnet_id"
         "tag:knfsd-file-cache:asg-name==asg_name"
         "tag:knfsd-file-cache:instance-id=={terminated instance-id}"
+        "status==available"
+    Delete DNS "A" record set for ENI private IP address (stop receiving NFS traffic)
     if cause==SCALE_IN:
         DeleteNetworkInterface eni-id
     else:
-        Modify TAG to: "tag:knfsd-file-cache:instance-id=null"
-    delete DNS "A" record set
+        Delete TAG: "tag:knfsd-file-cache:instance-id"
 """
 
 
@@ -129,6 +141,7 @@ def instance_launching(instance_id, asg_name, hook_name, token):
     """
     Handle the EC2 instance launch lifecycle action.
     """
+    version = os.environ.get("VERSION")
     proxy_basename = os.environ.get("PROXY_BASENAME")
     subnet_id = os.environ.get("SUBNET")
 
@@ -140,11 +153,20 @@ def instance_launching(instance_id, asg_name, hook_name, token):
         Filters=[
             {"Name": "subnet-id", "Values": [subnet_id]},
             {"Name": "tag:knfsd-file-cache:asg-name", "Values": [asg_name]},
-            {"Name": "tag:knfsd-file-cache:instance-id", "Values": [""]},
             {"Name": "status", "Values": ["available"]},
         ]
     ):
-        available_enis.extend(page["NetworkInterfaces"])
+        # Filter programmatically for truly available ENIs
+        for eni in page["NetworkInterfaces"]:
+            instance_id_tag = None
+            for tag in eni.get("TagSet", []):
+                if tag["Key"] == "knfsd-file-cache:instance-id":
+                    instance_id_tag = tag["Value"]
+                    break
+
+            # Only include ENIs that have no instance-id tag or empty instance-id tag
+            if instance_id_tag is None or instance_id_tag == "":
+                available_enis.append(eni)
 
     logger.info("Available ENIs: %s", available_enis)
 
@@ -167,6 +189,7 @@ def instance_launching(instance_id, asg_name, hook_name, token):
                     "Tags": [
                         {"Key": "Name", "Value": f"{proxy_basename}-static-ip"},
                         {"Key": "knfsd-file-cache:asg-name", "Value": asg_name},
+                        {"Key": "knfsd-file-cache:version", "Value": version},
                     ],
                 }
             ],
@@ -176,13 +199,6 @@ def instance_launching(instance_id, asg_name, hook_name, token):
     else:
         eni = available_enis[0]
         logger.info("Found available ENI: %s", eni["NetworkInterfaceId"])
-
-    # get the private IP address of the ENI
-    private_ip = eni["PrivateIpAddress"]
-
-    # create the DNS "A" record
-    change_dns_record(private_ip, "UPSERT")
-    logger.info("DNS 'A' record created successfully: %s", private_ip)
 
     logger.info(
         "Attaching ENI: %s to instance: %s",
@@ -230,6 +246,13 @@ def instance_launching(instance_id, asg_name, hook_name, token):
         eni["NetworkInterfaceId"],
     )
 
+    # get the private IP address of the ENI
+    private_ip = eni["PrivateIpAddress"]
+
+    # create the DNS "A" record
+    change_dns_record(private_ip, "UPSERT")
+    logger.info("DNS 'A' record created successfully: %s", private_ip)
+
     # complete the lifecycle action
     complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
 
@@ -255,24 +278,23 @@ def instance_terminated(instance_id, asg_name, cause):
     eni_id = eni["NetworkInterfaceId"]
     private_ip = eni["PrivateIpAddress"]
 
+    # delete the DNS "A" record
+    change_dns_record(private_ip, "DELETE")
+    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
+
     if reason == "SCALE_IN":
         logger.info("Deleting ENI: %s", eni_id)
         ec2.delete_network_interface(NetworkInterfaceId=eni_id)
         logger.info("ENI deleted successfully")
     else:
         # in a termination event other than SCALE_IN or ASG deleted,
-        # re-tag the ENI to remove the instance-id tag and return
-        # it to the ENI pool
-        logger.info("Re-tagging ENI: %s", eni_id)
-        ec2.create_tags(
+        # remove the instance-id tag entirely to return it to the ENI pool
+        logger.info("Removing instance-id tag from ENI: %s", eni_id)
+        ec2.delete_tags(
             Resources=[eni_id],
-            Tags=[{"Key": "knfsd-file-cache:instance-id", "Value": ""}],
+            Tags=[{"Key": "knfsd-file-cache:instance-id"}],
         )
-        logger.info("ENI re-tagged successfully")
-
-    # delete the DNS "A" record
-    change_dns_record(private_ip, "DELETE")
-    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
+        logger.info("ENI instance-id tag removed successfully")
 
 
 def get_eni(subnet_id, asg_name, instance_id, max_attempts=10, delay_sec=30):
@@ -343,7 +365,7 @@ def change_dns_record(private_ip, action):
         action: The action to perform (UPSERT or DELETE)
     """
     zone_id = os.environ.get("R53_ZONE_ID")
-    zone_name = os.environ.get("R53_ZONE_NAME")
+    fqdn = os.environ.get("R53_FQDN")
 
     route53.change_resource_record_sets(
         HostedZoneId=zone_id,
@@ -352,9 +374,9 @@ def change_dns_record(private_ip, action):
                 {
                     "Action": action,
                     "ResourceRecordSet": {
-                        "Name": zone_name,
+                        "Name": fqdn,
                         "Type": "A",
-                        "TTL": 300,
+                        "TTL": 120,
                         "ResourceRecords": [{"Value": private_ip}],
                         "Weight": 1,
                         "SetIdentifier": f"static-ip-{private_ip}",

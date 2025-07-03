@@ -17,7 +17,7 @@ To use DNS round-robin the KNFSD proxy cluster must be configured with:
 
 * `PROXY_BASENAME` - (Required) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). No default.
 
-* `DNS_NAME` - (Optional) The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. Defaults to: `{PROXY_BASENAME}.knfsd.internal.` [Note: the trailing period is required]. Default: "".
+* `DNS_NAME` - (Optional) The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. Defaults to: `knfsd.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required]. Default: "".
 
 ## Outputs
 

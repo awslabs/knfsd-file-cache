@@ -77,9 +77,11 @@ An optional `metrics` Terraform module will automatically create an Amazon Cloud
 
 ## AWS PrivateLink
 
+By default, it is assumed your subnet has internet connectivity to connect to AWS services. Connectivity could be via a NAT gateway and route table to allow access to the internet from your private subnet or via another network construct such as AWS Transit Gateway, which is beyond the scope of this documentation.
+
 AWS [PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html) is a feature that allows you to create a private connection between your VPC and AWS services. This allows you to securely access AWS services without exposing your resources to the public internet.
 
-By default, `ENABLE_VPC_ENDPOINTS` is set to `true` which will create VPC endpoints for the KNFSD proxy instances to allow private and secure connection between KNFSD and AWS services. Alternatively, you can use a NAT gateway and route table to allow access to the internet from your private subnet or via another network construct such as AWS Transit Gateway, which is beyond the scope of this documentation.
+When deploying KNFSD File Cache in a private subnet without any internet connectivity, VPC endpoints (PrivateLink) are required for AWS service access. See [VPC Endpoints](vpc-endpoints.md) for detailed setup instructions. In this situation, you will need to ensure the VPC endpoints exist **BEFORE** deploying KNFSD modules.
 
 ## IAM Permissions
 

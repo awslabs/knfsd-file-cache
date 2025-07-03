@@ -9,43 +9,43 @@
         "collect_list": [
           {
             "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-            "log_group_name": "knfsd/amazon-cloudwatch-agent.log",
+            "log_group_name": "knfsd/logs/aws",
             "log_stream_name": "cloudwatch-agent-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/amazon/ssm/amazon-ssm-agent.log",
-            "log_group_name": "knfsd/ssm/amazon-ssm-agent.log",
+            "log_group_name": "knfsd/logs/aws",
             "log_stream_name": "amazon-ssm-agent-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/amazon/ssm/errors.log",
-            "log_group_name": "knfsd/ssm/errors.log",
+            "log_group_name": "knfsd/logs/aws",
             "log_stream_name": "amazon-ssm-errors-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/cloud-init-output.log",
-            "log_group_name": "knfsd/cloud-init-output.log",
+            "log_group_name": "knfsd/logs/aws",
             "log_stream_name": "cloud-init-output-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/syslog",
-            "log_group_name": "knfsd/syslog",
+            "log_group_name": "knfsd/logs/os",
             "log_stream_name": "syslog-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/auth.log",
-            "log_group_name": "knfsd/auth.log",
+            "log_group_name": "knfsd/logs/os",
             "log_stream_name": "auth-{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/kern.log",
-            "log_group_name": "knfsd/kern.log",
+            "log_group_name": "knfsd/logs/os",
             "log_stream_name": "kern-{instance_id}",
             "retention_in_days": 30
           }
@@ -92,11 +92,23 @@
         "measurement": [
           "diskio_io_time",
           "diskio_write_bytes",
-          "diskio_read_bytes"
+          "diskio_read_bytes",
+          "diskio_ebs_total_read_ops",
+          "diskio_ebs_total_write_ops",
+          "diskio_ebs_total_read_bytes",
+          "diskio_ebs_total_write_bytes",
+          "diskio_ebs_total_read_time",
+          "diskio_ebs_total_write_time",
+          "diskio_ebs_volume_performance_exceeded_iops",
+          "diskio_ebs_volume_performance_exceeded_tp",
+          "diskio_ebs_ec2_instance_performance_exceeded_iops",
+          "diskio_ebs_ec2_instance_performance_exceeded_tp",
+          "diskio_ebs_volume_queue_length"
         ],
-        "metrics_collection_interval": 60,
+        "metrics_collection_interval": 30,
         "resources": [
-          "*"
+          "/",
+          "/var/cache/fscache"
         ]
       },
       "ethtool": {

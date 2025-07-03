@@ -4,7 +4,7 @@ This module configures Cloud Build with a private worker pool to support buildin
 
 ## Inputs
 
-* `REGION` - (Required) AWS Region that will be used to build images.
+* `REGION` - (Required) GCP Region that will be used to build images.
 
 * `NETWORK` - (Optional) Name of private VPC network to create for use by Cloud Build. Defaults to "knfsd-build".
 

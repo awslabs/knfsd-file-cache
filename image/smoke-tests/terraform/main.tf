@@ -9,14 +9,13 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.38.0"
+      version = "~> 6.42.0"
     }
   }
 }
 
 provider "google" {
   project = var.PROJECT
-  region  = var.REGION
   zone    = var.ZONE
 }
 
@@ -45,7 +44,6 @@ resource "google_filestore_instance" "source" {
 module "proxy" {
   source = "../../../deployment/terraform-module-knfsd"
 
-  REGION = var.REGION
   SUBNET = var.SUBNET
 
   TRAFFIC_MODE = "dns_round_robin"

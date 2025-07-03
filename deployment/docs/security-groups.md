@@ -2,7 +2,7 @@
 
 ## KNFSD proxy instances to source servers
 
-By default, an AWS Security Group's egress rule allows all outbound traffic. However, you are most likely using a non-default Security Group which restricts egress traffic. Terraform, by default, removes the default egress rule when creating a new security group within a VPC. You will need to add a rule to allow egress traffic to the source servers.
+By default, an AWS Security Group's egress rule allows all outbound traffic. However, you are most likely using a non-default Security Group which restricts egress traffic.
 
 Many of the ports used by NFS v3 are dynamic, so you will need to check with the source NFS server to see which ports are required.
 

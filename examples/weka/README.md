@@ -4,6 +4,8 @@ This example shows a 2 cluster KNFSD deployment, one mount for `/projects` and o
 
 The deployment uses an external Amazon RDS PostgreSQL database per module, to store FSIDs to ensure all instances in each cluster allocate the same FSID to each export. A future enhancement could be to share a single RDS database for multiple clusters. See `var.FSID_DATABASE_DEPLOY` and `var.FSID_DATABASE_CONFIG` on how this could be achieved.
 
+There are a number of ways to [monitor](../../docs/check-startup.md) the deployment progress.
+
 ## Security Groups
 
 You will need to create or append to existing security group(s) for:
@@ -17,7 +19,7 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
 
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD solution. Example: `subnet-038e337f0ff4cd53f`. No default.
+* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD File Cache. Example: `subnet-038e337f0ff4cd53f`. No default.
 
 * `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
 

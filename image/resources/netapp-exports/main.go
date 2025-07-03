@@ -20,6 +20,8 @@ import (
 	"netapp-exports/internal/opt"
 )
 
+var version = "dev"
+
 func main() {
 	var (
 		config       *Config
@@ -27,6 +29,7 @@ func main() {
 		passwordFile string
 		caFile       string
 		insecure     bool
+		showVersion  bool
 		err          error
 	)
 
@@ -39,6 +42,7 @@ func main() {
 	opts := opt.NewOptSet(flags)
 
 	flags.StringVar(&configFile, "config", "", "Config *.hcl file")
+	flags.BoolVar(&showVersion, "version", false, "show version and exit")
 
 	opts.StringVar(&server.Host, "host", "NETAPP_HOST", "NetApp Host")
 	opts.StringVar(&server.URL, "url", "NETAPP_URL", "NetApp URL")
@@ -58,6 +62,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
+	}
+
+	if showVersion {
+		fmt.Println(version)
+		os.Exit(0)
 	}
 
 	if configFile != "" {
