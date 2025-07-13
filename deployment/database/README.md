@@ -26,7 +26,7 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
 * `MASTER_USERNAME` - (Optional) The master username for the database. Password is stored in AWS Secrets Manager. Defaults to `postgres`.
 
-* `ASSUME_ROLE_ARN` - (Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: `arn:aws:iam::123456789012:role/DeploymentRole`.
+* `ASSUME_ROLE_ARN` - (Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: `arn:aws:iam::123456789012:role/DeploymentRole`. Defaults to `null`.
 
 ## Outputs
 

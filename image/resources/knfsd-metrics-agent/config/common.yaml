@@ -193,7 +193,7 @@ processors:
         include: fsid.sql.query.duration
         new_name: fsid/sql/query/duration
 
-      # prefix all metrics with "knfsd/"
+      # prefix all custom metrics with "knfsd/"
       - action: update
         include: ^(.*)$$
         match_type: regexp
@@ -207,7 +207,7 @@ exporters:
 
   awsemf:
     log_group_name: "knfsd/metrics"
-    log_stream_name: "otel-metrics-${host.id}"
+    log_stream_name: "otel-metrics"
     log_retention: 30
     namespace: "knfsd/metrics"
     dimension_rollup_option: "ZeroAndSingleDimensionRollup"

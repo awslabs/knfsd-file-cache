@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.3"
+VERSION="1.1.0-alpha.4"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}
@@ -137,7 +137,7 @@ KNFSD_EDITORCONFIG_VERSION=3.3.0
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.2.1
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.24.4
+KNFSD_GOLANG_VERSION=1.24.5
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=1.16.1
 # https://github.com/hashicorp/packer/releases

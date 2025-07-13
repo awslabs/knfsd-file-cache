@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+# local variables
+locals {
+  assume_role_arn = var.ASSUME_ROLE_ARN != null ? var.ASSUME_ROLE_ARN : ""
+}
+
 # null resource that waits for all ASG instances to be ready
 resource "null_resource" "status_check" {
   count = var.ENABLE_STATUS_CHECK ? 1 : 0
@@ -17,10 +22,10 @@ resource "null_resource" "status_check" {
     interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
     command     = <<-EOF
       # Check if role assumption is required
-      if [ -n "${var.ASSUME_ROLE_ARN}" ]; then
-        echo "Assuming role: ${var.ASSUME_ROLE_ARN}"
+      if [ -n "${local.assume_role_arn}" ]; then
+        echo "Assuming role: ${local.assume_role_arn}"
         # Assume the role and get temporary credentials
-        ROLE_CREDS=$(aws sts assume-role --role-arn "${var.ASSUME_ROLE_ARN}" --role-session-name "terraform-status-check" --output json)
+        ROLE_CREDS=$(aws sts assume-role --role-arn "${local.assume_role_arn}" --role-session-name "terraform-status-check" --output json)
         export AWS_ACCESS_KEY_ID=$(echo $ROLE_CREDS | jq -r '.Credentials.AccessKeyId')
         export AWS_SECRET_ACCESS_KEY=$(echo $ROLE_CREDS | jq -r '.Credentials.SecretAccessKey')
         export AWS_SESSION_TOKEN=$(echo $ROLE_CREDS | jq -r '.Credentials.SessionToken')

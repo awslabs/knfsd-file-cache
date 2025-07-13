@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.3"
+VERSION="1.1.0-alpha.4"
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -285,9 +285,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() {
 	begin_command "Installing golang"
-	curl -o go1.24.4.linux-amd64.tar.gz https://dl.google.com/go/go1.24.4.linux-amd64.tar.gz
+	curl -o go1.24.5.linux-amd64.tar.gz https://dl.google.com/go/go1.24.5.linux-amd64.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.24.4.linux-amd64.tar.gz
+	tar -C /usr/local -xzf go1.24.5.linux-amd64.tar.gz
 	# temporarily add 'go' to $PATH
 	export PATH=$PATH:/usr/local/go/bin
 	# temporarily redirect go cache/mod cache during image build to /mnt/build

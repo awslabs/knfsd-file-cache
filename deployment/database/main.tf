@@ -48,16 +48,17 @@ data "aws_vpc" "selected" {
 
 # local variables
 locals {
-  tags           = { "knfsd-file-cache:version" = var.VERSION }
-  name           = coalesce(var.NAME, random_id.name.hex)
-  db_user        = "fsidd"
-  db_name        = "fsids"
-  account_id     = data.aws_caller_identity.current.account_id
-  az             = data.aws_subnet.selected.availability_zone
-  region         = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
-  vpc_id         = data.aws_vpc.selected.id
-  vpc_cidr_block = data.aws_vpc.selected.cidr_block
-  is_windows     = can(env("USERPROFILE"))
+  tags            = { "knfsd-file-cache:version" = var.VERSION }
+  name            = coalesce(var.NAME, random_id.name.hex)
+  db_user         = "fsidd"
+  db_name         = "fsids"
+  account_id      = data.aws_caller_identity.current.account_id
+  az              = data.aws_subnet.selected.availability_zone
+  region          = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
+  vpc_id          = data.aws_vpc.selected.id
+  vpc_cidr_block  = data.aws_vpc.selected.cidr_block
+  is_windows      = can(env("USERPROFILE"))
+  assume_role_arn = var.ASSUME_ROLE_ARN != null ? var.ASSUME_ROLE_ARN : ""
 }
 
 # create the rds db instance, identifier=60 chars max + ("db-")
@@ -334,10 +335,10 @@ resource "null_resource" "trigger_lambda_after_rds" {
     when    = create
     command = <<-EOF
       # Check if role assumption is required
-      if [ -n "${var.ASSUME_ROLE_ARN}" ]; then
-        echo "Assuming role: ${var.ASSUME_ROLE_ARN}"
+      if [ -n "${local.assume_role_arn}" ]; then
+        echo "Assuming role: ${local.assume_role_arn}"
         # Assume the role and get temporary credentials
-        ROLE_CREDS=$(aws sts assume-role --role-arn "${var.ASSUME_ROLE_ARN}" --role-session-name "terraform-lambda-invoke" --output json)
+        ROLE_CREDS=$(aws sts assume-role --role-arn "${local.assume_role_arn}" --role-session-name "terraform-lambda-invoke" --output json)
         export AWS_ACCESS_KEY_ID=$(echo $ROLE_CREDS | jq -r '.Credentials.AccessKeyId')
         export AWS_SECRET_ACCESS_KEY=$(echo $ROLE_CREDS | jq -r '.Credentials.SecretAccessKey')
         export AWS_SESSION_TOKEN=$(echo $ROLE_CREDS | jq -r '.Credentials.SessionToken')

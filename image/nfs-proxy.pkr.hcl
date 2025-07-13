@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.3"
+  version       = "1.1.0-alpha.4"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 50
@@ -61,13 +61,31 @@ source "amazon-ebs" "nfs-proxy" {
   }
 
   # SSH Connectivity
+  # If using non-default VPC, whether to forcefully associate a public IP address (default: null)
   associate_public_ip_address = var.ASSOCIATE_PUBLIC_IP_ADDRESS
 
-  # SSH Security
-  # This is only used when "security_group_id", "security_group_ids",
-  # and "temporary_security_group_source_cidrs" are not specified
-  temporary_security_group_source_public_ip = true
-  # temporary_security_group_source_cidrs = ["0.0.0.0/0"]
+  # Security Group Configuration
+  # Priority order (descending):
+  # 1. security_group_id
+  # 2. security_group_ids
+  # 3. temporary_security_group_source_cidrs
+  # 4. temporary_security_group_source_public_ip
+
+  # Use existing, single security group ID (highest priority - default: "")
+  security_group_id = var.SECURITY_GROUP_ID != "" ? var.SECURITY_GROUP_ID : null
+
+  # Use existing security group IDs (second priority - default: [])
+  security_group_ids = length(var.SECURITY_GROUP_IDS) > 0 ? var.SECURITY_GROUP_IDS : null
+
+  # Use custom CIDR blocks for temporary security group (third priority - default: [])
+  temporary_security_group_source_cidrs = length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) > 0 ? var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS : null
+
+  # Use public IP /32 for temporary security group (lowest priority - default: true)
+  temporary_security_group_source_public_ip = (
+    var.SECURITY_GROUP_ID == "" &&
+    length(var.SECURITY_GROUP_IDS) == 0 &&
+    length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) == 0
+  ) ? var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP : null
 
   # EBS root build volume configuration
   launch_block_device_mappings {

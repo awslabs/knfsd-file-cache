@@ -18,7 +18,7 @@ Alternatively, if your build procedure is more complex, you can replace the cust
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.13.0 or newer from <https://packer.io/downloads>.
+Download Packer 1.13.1 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -39,15 +39,18 @@ Enter at least the following 2 required variables:
 
 #### Required
 
+> NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
+
 * `REGION` (string) - The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. No default.
-
-  > NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
-
 * `SUBNET` (string) - The subnet in which to launch the EC2 instance to create the AMI. Example: `"subnet-0f90440e0e47728b8"`. No default.
 
 #### Optional
 
-* `ASSOCIATE_PUBLIC_IP_ADDRESS` (bool) - Whether to associate a public IP address with the EC2 instance. Default: `true`.
+* `ASSOCIATE_PUBLIC_IP_ADDRESS` (bool) - If using a non-default VPC, whether to forcefully associate a public IP address with the EC2 instance. Default: `null`.
+* `SECURITY_GROUP_ID` (string) - The ID of an existing, single security group to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `""`.
+* `SECURITY_GROUP_IDS` (list(string)) - A list of security group IDs to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `[]`.
+* `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` (list(string)) - A list of CIDR blocks to allow access from when creating a temporary security group. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP`. Example: `["10.0.0.0/8", "172.16.0.0/12"]`. Default: `[]`.
+* `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` (bool) - Whether to allow access from the public IP address of the machine running Packer when creating a temporary security group. Only used when `SECURITY_GROUP_ID`, `SECURITY_GROUP_IDS`, and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` are not specified. Default: `true`.
 * `INSTANCE_TYPE` (string) - The EC2 instance type used to build the image. This can be changed to improve build speeds. Default: `"c6in.2xlarge"`. If this instance type is unavailable in your region, try changing to `"m6i.2xlarge"`, `"c5.2xlarge"`, or `"m5.2xlarge"`.
 * `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Default: `"packer-knfsd-proxy-{VERSION}-{TIMESTAMP}"`.
 * `IMAGE_NAME` (string) - The unique name of the resulting image. Default: `"knfsd-proxy-{VERSION}"`.
@@ -144,29 +147,87 @@ See [AWS Service Quotas](https://docs.aws.amazon.com/general/latest/gr/aws_servi
 
 > NOTE: Ensure the machine you are running Packer on has network connectivity to the AWS subnet you are building the image in and the EC2 instance you are building the image on is accessible over TCP port 22 for SSH access.
 
-> NOTE: If your build machine does not receive a public IPv4 address, please review this AWS [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html) and [Public Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-public-ip.html) documentation for more information.
-
-If you do **not** wish to build over the public internet, set `var.ASSOCIATE_PUBLIC_IP_ADDRESS = false` in the `image.pkrvars.hcl` file.
-
-```hcl
-ASSOCIATE_PUBLIC_IP_ADDRESS = false
-```
-
-### SSH Security
+> NOTE: If you are expecting your build machine to receive a public IPv4 address, please review this AWS [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/how-it-works.html) and [Public Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-public-ip.html) documentation for more information.
 
 It is beyond the scope of this documentation to describe all possible SSH setups that can work here and are compliant to your security policies. For further reading, please consult the AWS docs on how you can [connect to your Linux instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html).
 
-The Packer configuration provides an opinionated setup via a Packer created temporary EC2 Security Group with SSH access from the public internet (`temporary_security_group_source_public_ip = true`), allowlisted to your current public IP /32 address (obtained via [https://checkip.amazonaws.com](https://checkip.amazonaws.com)).
+The Packer configuration (by default) provides an opinionated setup via a Packer created temporary EC2 Security Group with SSH access from the public internet (`var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP = true`), allowlisted to your current public IP /32 address (obtained via [https://checkip.amazonaws.com](https://checkip.amazonaws.com)). If using a non-default VPC, you can set `var.ASSOCIATE_PUBLIC_IP_ADDRESS = true` in the `image.pkrvars.hcl` file to forcefully associate a public IP address with the EC2 instance.
 
-Alternatively, the Packer variable `temporary_security_group_source_cidrs` is set to `["0.0.0.0/0"]` by default (commented out in the `nfs-proxy.pkr.hcl` file), which allows all public IP addresses to access the temporary security group.
+For a stronger security posture or if you work in a corporate network with egress traffic passing via a NAT layer, with multiple possible public IP addresses, you can set `var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` to a list of your CIDR ranges in the `image.pkrvars.hcl` file.
 
-For a stronger security posture or if you work in a corporate network with egress traffic passing via a NAT layer, with multiple possible public IP addresses, you can set the `temporary_security_group_source_cidrs` to a list of your CIDR ranges.
-
-```hcl
-temporary_security_group_source_cidrs = ["1.2.3.4/32", "5.6.7.8/32"]
-```
+Several other security group variables are available to configure the Packer build process. See the [variables.pkr.hcl](variables.pkr.hcl) file for more information or the [Security Group Usage Scenarios](#security-group-usage-scenarios) section below for examples.
 
 Alternatively, you can provision an EC2 instance within your VPC in your AWS account, `git clone` the project repository, and run the Packer build script. This bypasses the need to run anything from on-premises.
+
+### Security Group Usage Scenarios
+
+The following scenarios demonstrate different networking and security configurations for building the AMI via Packer.
+
+The precedence order (highest to lowest) is:
+
+1. `SECURITY_GROUP_ID` - overrides all other security settings
+2. `SECURITY_GROUP_IDS` - overrides temporary security group settings
+3. `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` - overrides public IP source setting
+4. `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` - default fallback behavior
+
+The `ASSOCIATE_PUBLIC_IP_ADDRESS` setting is independent of the security group configuration and controls whether the EC2 instance gets a public IP address assigned when using a non-default VPC.
+
+#### 1. Default VPC with Public IP (Default Behaviour)
+
+```bash
+# No variables need to be set - uses all defaults:
+# ASSOCIATE_PUBLIC_IP_ADDRESS = null
+# SECURITY_GROUP_ID = ""
+# SECURITY_GROUP_IDS = []
+# TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS = []
+# TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP = true
+```
+
+#### 2. Non-Default VPC with Public IP Association
+
+```bash
+# Only need to force public IP association in non-default VPC:
+ASSOCIATE_PUBLIC_IP_ADDRESS = true
+# All other variables remain at defaults
+```
+
+#### 3. Private Subnet with Custom CIDR Access
+
+```bash
+# For private subnets, specify internal CIDR ranges:
+ASSOCIATE_PUBLIC_IP_ADDRESS = false
+TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS = ["10.0.0.0/8", "172.16.0.0/12"]
+# SECURITY_GROUP_ID = "" (default)
+# SECURITY_GROUP_IDS = [] (default)
+# TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP = true (default, but overridden by CIDRS)
+```
+
+#### 4. Existing Security Group
+
+```bash
+# Use pre-configured security group:
+SECURITY_GROUP_ID = "sg-existing123"
+# All other variables remain at defaults (will be overridden by SECURITY_GROUP_ID)
+```
+
+#### 5. Multiple Existing Security Groups
+
+```bash
+# Use multiple security groups:
+SECURITY_GROUP_IDS = ["sg-web123", "sg-ssh456"]
+# All other variables remain at defaults (will be overridden by SECURITY_GROUP_IDS)
+```
+
+#### 6. Disable Public IP Access
+
+```bash
+# More restrictive - no public IP source access:
+TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP = false
+TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS = ["192.168.1.0/24"]
+# ASSOCIATE_PUBLIC_IP_ADDRESS = null (default)
+# SECURITY_GROUP_ID = "" (default)
+# SECURITY_GROUP_IDS = [] (default)
+```
 
 ### Run Packer Build
 
@@ -241,7 +302,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.3"
+VERSION="1.1.0-alpha.4"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>

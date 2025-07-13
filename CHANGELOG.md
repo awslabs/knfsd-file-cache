@@ -1,5 +1,16 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.4
+
+> BREAKING CHANGES: `var.ASSOCIATE_PUBLIC_IP_ADDRESS` is now `null` by default in `image.pkrvars.hcl`. See [Packer: Security Group Usage Scenarios](image/README.md#security-group-usage-scenarios) for more information.
+
+* Fixed a typo in OTEL `common.yaml` config file.
+* Fixed a bug when `var.ASSUME_ROLE_ARN` is `null` (default) during deployment.
+* Packer: added `var.SECURITY_GROUP_ID` in `image.pkrvars.hcl` to use an existing security group during image build. Default: `""`.
+* Packer: added `var.SECURITY_GROUP_IDS` in `image.pkrvars.hcl` to use multiple existing security groups during image build. Default: `[]`.
+* Packer: added `var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` in `image.pkrvars.hcl` to allow access from a list of CIDR blocks during image build. Default: `[]`.
+* Packer: added `var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` in `image.pkrvars.hcl` to allow access from the public IP address of the machine running Packer during image build. Default: `true`.
+
 ## v1.1.0-alpha.3
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
