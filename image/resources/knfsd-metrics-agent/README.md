@@ -6,10 +6,6 @@ While the KNFSD Metrics Agent's primary use is on the proxy, the agent is also d
 
 See [Client Metrics](../../../docs/client-metrics.md) for a guide on installing the KNFSD Metrics Agent on a client.
 
-## Pre-requisites
-
-Before this collector can be used with Amazon CloudWatch, you must first deploy the [metrics](../../../deployment/metrics/README.md) module.
-
 ## Plugins
 
 The agent uses the OpenTelemetry Collector and can support exporting metrics in several formats including Amazon CloudWatch, Prometheus, and Elasticsearch.
@@ -192,6 +188,14 @@ processors:
 exporters:
   awsemf:
     log_retention: 365
+    log_group_name: "knfsd/metrics"
+    log_retention: 30
+    namespace: "knfsd/metrics"
+    # minimize the number of metrics published to CloudWatch (save cost)
+    dimension_rollup_option: "NoDimensionRollup"
+    resource_to_telemetry_conversion:
+      enabled: true
+
   # Useful when developing or debugging metrics. When running the agent from the
   # command line this will write the metrics to the terminal.
   debug:

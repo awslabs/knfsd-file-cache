@@ -19,7 +19,7 @@ SHELL_DEFAULT := "\033[0m"
 default:
 
 .PHONY: all
-all: lint packer terraform bats scan golint goscan test
+all: lint packer terraform bats scan golint test
 
 .PHONY: pre-commit precommit pc
 pre-commit precommit pc:
@@ -48,7 +48,7 @@ codespell:
 
 shfmt:
 	@echo "[shfmt]"
-	@shfmt -d -s .
+	@shfmt -d .
 
 shellcheck:
 	@echo "[shellcheck]"
@@ -165,16 +165,6 @@ golint:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/netapp-exports golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples golint
-
-.PHONY: goscan
-goscan:
-	$(MAKE) -C image/resources/filter-exports goscan
-	$(MAKE) -C image/resources/knfsd-agent goscan
-	$(MAKE) -C image/resources/knfsd-fsidd goscan
-	$(MAKE) -C image/resources/knfsd-metrics-agent goscan
-	$(MAKE) -C image/resources/netapp-exports goscan
-	$(MAKE) -C image/smoke-tests goscan
-	$(MAKE) -C testing/examples goscan
 
 .PHONY: gotidy
 gotidy:

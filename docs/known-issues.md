@@ -109,18 +109,12 @@ For further details see:
 * [Reexporting NFS filesystems - Filehandle limits](https://www.kernel.org/doc/html/latest/filesystems/nfs/reexport.html#filehandle-limits)
 * [NFS wiki - filehandle limits](https://linux-nfs.org/wiki/index.php/NFS_re-export#filehandle_limits)
 
-## KNFSD proxy stops caching new data
-
-Sometimes the cachefilesd will stop culling old data from the cache. When this happens the cache will fill up and be unable to cache any new data.
-
-See [culling](./culling.md) for further details.
-
 ## NFS transport metrics add up to the wrong value
 
 Transport level metrics come from the transport (`xprt`) lines from `/proc/self/mountstats`.
 
 While these metrics are reported per mount, the same transport may be shared by multiple mounts. This occurs because multiple mounts share the same source server, normally one TCP connection will be created per source server and shared by all the mounts. This can be changed by the `nconnect` value, for the KNFSD proxy this defaults to 16 TCP connections per source server.
 
-If you sum the transport level metrics such as `nfs.mount.ops_per_second` (aka `knfsd/nfsiostat_ops_per_second`) the total value will be higher than expected due to counting the same TCP connection multiple times.
+If you sum the transport level metrics such as `nfs.mount.ops_per_second` (CloudWatch: `knfsd/nfsiostat_ops_per_second`) the total value will be higher than expected due to counting the same TCP connection multiple times.
 
 Where possible the per-operation statistics should be summarised as these will give the correct value.

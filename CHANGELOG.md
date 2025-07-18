@@ -1,5 +1,15 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.5
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Minor Golang package updates.
+* Minor Terraform provider version updates.
+* Re-factored `knfsd-fsidd` to always use a new `iam-auth` TOKEN for a new database connection.
+* Added debug logging to `knfsd-fsidd` to validate the local database cache is working as expected.
+* Added initial metrics changes to OTEL `*.yaml` config files.
+
 ## v1.1.0-alpha.4
 
 > BREAKING CHANGES: `var.ASSOCIATE_PUBLIC_IP_ADDRESS` is now `null` by default in `image.pkrvars.hcl`. See [Packer: Security Group Usage Scenarios](image/README.md#security-group-usage-scenarios) for more information.

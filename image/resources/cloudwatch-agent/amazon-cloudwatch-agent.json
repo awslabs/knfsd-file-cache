@@ -73,7 +73,7 @@
         "resources": [
           "*"
         ],
-        "totalcpu": false
+        "totalcpu": true
       },
       "disk": {
         "measurement": [

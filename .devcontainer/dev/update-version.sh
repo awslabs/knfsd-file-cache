@@ -8,7 +8,7 @@ shopt -s extglob globstar
 
 function usage() {
 	printf 'Syntax: ./update-version.sh <OLD_VERSION> <NEW_VERSION>\n'
-	printf '    Example: ./update-version.sh 1.1.0-alpha.4 1.1.0-beta.100\n'
+	printf '    Example: ./update-version.sh 1.1.0-alpha.5 1.1.0-beta.100\n'
 	printf '    Note: Do not include "v" prefix in version parameters\n'
 }
 

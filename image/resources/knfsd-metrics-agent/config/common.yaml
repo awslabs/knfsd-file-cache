@@ -66,10 +66,40 @@ receivers:
     collection_interval: 10m
 
 processors:
-  resourcedetection/ec2:
+  resourcedetection:
     detectors: [ec2]
     ec2:
       fail_on_missing_metadata: true
+      resource_attributes:
+        cloud.provider:
+          enabled: false
+        cloud.account.id:
+          enabled: false
+        cloud.platform:
+          enabled: false
+        cloud.region:
+          enabled: false
+        cloud.availability_zone:
+          enabled: false
+        host.name:
+          enabled: true
+        host.id:
+          enabled: true
+        host.image.id:
+          enabled: false
+        host.type:
+          enabled: true
+      tags:
+        - ^aws:autoscaling:groupName$
+
+  transform:
+    error_mode: ignore
+    metric_statements:
+      - delete_matching_keys(resource.attributes, "telemetry\\.sdk\\..*")
+      - delete_key(resource.attributes, "service.name")
+      - replace_all_patterns(resource.attributes, "key", "^host\\.", "host_")
+      - replace_all_patterns(resource.attributes, "key", "^cloud\\.", "cloud_")
+      - replace_all_patterns(resource.attributes, "key", "ec2.tag.aws:autoscaling:groupName", "asg_name")
 
   # NOTE: the open telemetry collector will interpolate environment variables
   # Thus $1 will be replaced with the value of the environment variable named "1"
@@ -207,10 +237,10 @@ exporters:
 
   awsemf:
     log_group_name: "knfsd/metrics"
-    log_stream_name: "otel-metrics"
     log_retention: 30
     namespace: "knfsd/metrics"
-    dimension_rollup_option: "ZeroAndSingleDimensionRollup"
+    # minimize the number of metrics published to CloudWatch
+    dimension_rollup_option: "NoDimensionRollup"
     resource_to_telemetry_conversion:
       enabled: true
 

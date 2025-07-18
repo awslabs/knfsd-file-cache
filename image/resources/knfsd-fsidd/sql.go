@@ -11,6 +11,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"math/rand" // nosemgrep
 	"strings"
 	"text/template" // nosemgrep
 	"time"
@@ -108,42 +109,56 @@ func connect(ctx context.Context, config DatabaseConfig) (DB, error) {
 	log.Debug.Printf("table-name: %v", config.TableName)
 	log.Debug.Printf("create-table: %v", config.CreateTable)
 
-	region, err := getRegion(ctx)
-	if err != nil {
-		log.Error.Print("unable to retrieve the AWS region from the EC2 instance")
-		return nil, err
-	}
-	log.Debug.Printf("region: %v", region)
-
-	// Create AWS configuration with explicit AWS region and custom user agent
-	cfg, err := awsconfig.LoadDefaultConfig(ctx,
-		awsconfig.WithRegion(region),
-		awsconfig.WithAPIOptions([]func(*middleware.Stack) error{
-			mw.AddUserAgentKeyValue("knfsd-file-cache/fsidd", version),
-			mw.AddUserAgentKeyValue("AWSSOLUTION/SO9129", version),
-		}),
-	)
-	if err != nil {
-		log.Error.Print("failed to load AWS configuration")
-		return nil, err
-	}
-
 	if config.IAMAuth {
-		endpoint := fmt.Sprintf("%s:%d", pgConfig.ConnConfig.Host, pgConfig.ConnConfig.Port)
-		// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/rds/
-		authToken, err := auth.BuildAuthToken(
-			ctx,
-			endpoint,
-			region,
-			pgConfig.ConnConfig.User,
-			cfg.Credentials,
-		)
+		// set random connection lifetime between 10-14 minutes to prevent connection storms
+		randomMinutes := 10 + rand.Intn(5) // #nosec G404
+		pgConfig.MaxConnLifetime = time.Duration(randomMinutes) * time.Minute
+		log.Debug.Printf("max-conn-lifetime: %v", pgConfig.MaxConnLifetime)
+
+		// get AWS region from IMDS
+		region, err := getRegion(ctx)
 		if err != nil {
-			log.Error.Print("failed to create authentication token")
+			log.Error.Print("unable to retrieve the AWS region from the EC2 instance")
 			return nil, err
 		}
-		pgConfig.ConnConfig.Password = authToken
-		log.Debug.Printf("auth token: %v", authToken)
+		log.Debug.Printf("region: %v", region)
+
+		// create AWS config with explicit AWS region and custom user agent
+		cfg, err := awsconfig.LoadDefaultConfig(ctx,
+			awsconfig.WithRegion(region),
+			awsconfig.WithAPIOptions([]func(*middleware.Stack) error{
+				mw.AddUserAgentKeyValue("knfsd-file-cache/fsidd", version),
+				mw.AddUserAgentKeyValue("AWSSOLUTION/SO9129", version),
+			}),
+		)
+		if err != nil {
+			log.Error.Print("failed to load AWS configuration")
+			return nil, err
+		}
+
+		// use BeforeConnect hook to generate fresh IAM token for each connection
+		pgConfig.BeforeConnect = func(ctx context.Context, connConfig *pgx.ConnConfig) error {
+			log.Debug.Print("generating fresh IAM token for new connection")
+
+			endpoint := fmt.Sprintf("%s:%d", connConfig.Host, connConfig.Port)
+			// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/rds/
+			authToken, err := auth.BuildAuthToken(
+				ctx,
+				endpoint,
+				region,
+				connConfig.User,
+				cfg.Credentials,
+			)
+			if err != nil {
+				log.Error.Print("failed to create authentication token")
+				return err
+			}
+			log.Debug.Printf("auth token: %v", authToken)
+
+			// set password to auth token
+			connConfig.Password = authToken
+			return nil
+		}
 	}
 
 	log.Debug.Print("creating pgxpool")

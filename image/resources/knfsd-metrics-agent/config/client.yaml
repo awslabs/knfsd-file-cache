@@ -30,7 +30,8 @@ service:
         - mounts
         - slabinfo
       processors:
-        - resourcedetection/ec2
+        - resourcedetection
+        - transform
         - metricstransform
       exporters:
         - awsemf

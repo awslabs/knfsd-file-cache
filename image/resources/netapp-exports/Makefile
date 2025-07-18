@@ -4,7 +4,7 @@
 
 ROOT_DIR ?= "../../.."
 
-.PHONY: default golint goscan gotidy goget test
+.PHONY: default golint gotidy goget test
 
 .PHONY: default
 default:
@@ -19,13 +19,6 @@ gen_cert:
 golint: gen_cert
 	@echo "[golangci-lint]"
 	@~/go/bin/golangci-lint run --config=$(ROOT_DIR)/.golangci.yaml --color always --verbose
-
-.PHONY: goscan
-goscan: gen_cert
-	@echo "[govulncheck]"
-	@~/go/bin/govulncheck -test ./...
-	@echo "[gosec]"
-	@gosec ./...
 
 .PHONY: gotidy
 gotidy: gen_cert

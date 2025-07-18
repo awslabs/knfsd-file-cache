@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.4"
+  version       = "1.1.0-alpha.5"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 50

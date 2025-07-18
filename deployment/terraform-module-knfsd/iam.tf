@@ -38,7 +38,7 @@ resource "aws_iam_role" "knfsd_instance_role" {
   tags                  = local.tags
 }
 
-# IAM policy document for EC2 instance "status" tagging
+# IAM policy document for EC2 instance "status" tagging & OTEL resource detection
 data "aws_iam_policy_document" "ec2_instance_tags_policy_document" {
   statement {
     effect    = "Allow"
@@ -47,14 +47,14 @@ data "aws_iam_policy_document" "ec2_instance_tags_policy_document" {
   }
 }
 
-# IAM policy for EC2 instance "status" tagging
+# IAM policy for EC2 instance "status" tagging & OTEL resource detection
 resource "aws_iam_policy" "ec2_instance_tags_policy" {
   name   = "${local.name}-ec2-instance-tags-policy"
   policy = data.aws_iam_policy_document.ec2_instance_tags_policy_document.json
   tags   = local.tags
 }
 
-# IAM role policy attachment for EC2 instance "status" tagging
+# IAM role policy attachment for EC2 instance "status" tagging & OTEL resource detection
 resource "aws_iam_role_policy_attachment" "ec2_instance_tags_policy_attachment" {
   role       = aws_iam_role.knfsd_instance_role.name
   policy_arn = aws_iam_policy.ec2_instance_tags_policy.arn

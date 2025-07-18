@@ -122,7 +122,6 @@ The following commands operate across all Go projects in the repository:
 | Command       | Aliases    | Purpose                       | Reference                                                                                                       |
 |---------------|------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `make golint` | -          | Lint all Go projects          | [golangci-lint Documentation](https://golangci-lint.run/)                                                       |
-| `make goscan` | -          | Security scan all Go projects | [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck), [gosec](https://github.com/securego/gosec) |
 | `make gotidy` | -          | Tidy Go modules               | [Go Modules](https://golang.org/ref/mod)                                                                        |
 | `make goget`  | `goupdate` | Update Go dependencies        | [Go Modules](https://golang.org/ref/mod)                                                                        |
 
@@ -145,7 +144,6 @@ Each Go project has its own Makefile with standardized targets:
 | Target               | Purpose                          | Tools Used                                                                                                      |
 |----------------------|----------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `golint`             | Lint Go code                     | [golangci-lint](https://golangci-lint.run/) with [`.golangci.yaml`](../.golangci.yaml)                          |
-| `goscan`             | Security vulnerability scanning  | [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck), [gosec](https://github.com/securego/gosec) |
 | `gotidy`             | Clean up Go module dependencies  | `go mod tidy`                                                                                                   |
 | `goget` / `goupdate` | Update Go dependencies           | `go get -t -u ./...`                                                                                            |
 | `test`               | Run Go tests with race detection | `go test -race -cover -vet=all -v ./...`                                                                        |

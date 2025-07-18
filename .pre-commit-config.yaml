@@ -103,7 +103,7 @@ repos:
         args: [-c=.yamllint.yaml]
 
   - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.27.0 # https://github.com/gitleaks/gitleaks/releases
+    rev: v8.27.2 # https://github.com/gitleaks/gitleaks/releases
     hooks:
       - id: gitleaks
         name: gitleaks

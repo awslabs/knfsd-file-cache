@@ -33,6 +33,8 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 
 	"go.uber.org/multierr"
 )
@@ -47,6 +49,7 @@ func components() (otelcol.Factories, error) {
 		exports.NewFactory(),
 		oldestfile.NewFactory(),
 		slab.NewFactory(),
+		filelogreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -56,6 +59,7 @@ func components() (otelcol.Factories, error) {
 		metricstransformprocessor.NewFactory(),
 		resourcedetectionprocessor.NewFactory(),
 		resourceprocessor.NewFactory(),
+		transformprocessor.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
