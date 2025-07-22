@@ -1,5 +1,18 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.6
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added support for Linux v6.14 kernel, including NFS server, client and `FS-Cache` improvements.
+* Minor Golang package updates.
+* Packer: pinned version of `rust` and `efs-utils`.
+* Packer: increased EBS root volume size from 8 GB to 10 GB.
+* Packer: decreased EBS temp volume size from 50 GB to 20 GB.
+* Packer: fixed bug preventing the `go` build cache from being global within the build script.
+* Packer: updated Packer min version to v1.13.1.
+* Packer: updated `amazon-ebs` plugin min version to v1.3.9.
+
 ## v1.1.0-alpha.5
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

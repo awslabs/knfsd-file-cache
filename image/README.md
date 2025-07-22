@@ -244,7 +244,7 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.2 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.11.0-26-generic
+amazon-ebs.nfs-proxy: Kernel:       6.14.0-24-generic
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
@@ -302,7 +302,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.5"
+VERSION="1.1.0-alpha.6"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -357,10 +357,10 @@ export KNFSD_INSTANCE_ID=$(aws ec2 run-instances \
   --associate-public-ip-address \
   --security-group-ids $KNFSD_SECURITY_GROUP_ID \
   --block-device-mappings '[
-    {"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":8,"VolumeType":"gp3","Encrypted":true,"DeleteOnTermination":true}},
+    {"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":10,"VolumeType":"gp3","Encrypted":true,"DeleteOnTermination":true}},
     {"DeviceName":"/dev/sdb","NoDevice":""},
     {"DeviceName":"/dev/sdc","NoDevice":""},
-    {"DeviceName":"/dev/sdf","Ebs":{"VolumeSize":50,"VolumeType":"gp3","Encrypted":true,"DeleteOnTermination":true}}
+    {"DeviceName":"/dev/sdf","Ebs":{"VolumeSize":20,"VolumeType":"gp3","Encrypted":true,"DeleteOnTermination":true}}
     ]' \
   --metadata-options "HttpEndpoint=enabled,HttpTokens=required,HttpPutResponseHopLimit=2,InstanceMetadataTags=enabled" \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${KNFSD_BUILD_NAME}},{Key=knfsd-file-cache:version,Value=${VERSION}}]" \
@@ -422,7 +422,7 @@ sudo reboot
 ```bash
 ssh -i /path/to/$KNFSD_KEYPAIR ubuntu@$KNFSD_INSTANCE_PUBLIC_IP
 # re-mount the build disk
-device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '50G' | awk '{print $1}' | head -n1)
+device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '20G' | awk '{print $1}' | head -n1)
 sudo mount "/dev/$device" /mnt/build
 cd /mnt/build
 # execute post build script
@@ -464,7 +464,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.2 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.11.0-26-generic
+Kernel:       6.14.0-24-generic
 ---- SUCCESS: Finished finalize image script
 ```
 

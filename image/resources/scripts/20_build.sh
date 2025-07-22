@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.5"
+VERSION="1.1.0-alpha.6"
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -19,6 +19,11 @@ export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 export QUILT_PATCHES=debian/patches
+export NAME=build EMAIL=build
+# golang build cache
+export GOCACHE="/mnt/build/go/.cache/go-build"
+export GOMODCACHE="/mnt/build/go/pkg/mod"
+export GOPROXY=direct
 
 # set the working directory to "/mnt/build"
 cd "$(dirname "$0")"/../
@@ -108,8 +113,7 @@ function install_nfs_packages() (
 	complete_command
 )
 
-# install dependencies required to build the kernel,
-# nfs-utils, and amazon-ec2-net-utils
+# install dependencies
 function install_build_dependencies() (
 	begin_command "Installing build dependencies"
 	apt-get -o DPkg::Lock::Timeout=60 install -y -qq \
@@ -156,7 +160,7 @@ function download_nfs-utils() (
 	# Noble Numbat (Ubuntu 24.04) has nfs-common 2.6.4
 	# Plucky Puffin (Ubuntu 25.04) has nfs-common 2.8.2
 	curl -o nfs-utils-2.8.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.3/nfs-utils-2.8.3.tar.gz
-	tar xvf nfs-utils-2.8.3.tar.gz
+	tar xf nfs-utils-2.8.3.tar.gz
 	complete_command
 )
 
@@ -256,7 +260,7 @@ function install_amazon_ec2_net_utils() (
 		AccuracySec=1s
 	EOF
 	dpkg-buildpackage -uc -us -b
-	apt-get install -y ../amazon-ec2-net-utils_2.5.3_all.deb
+	apt-get install -y ../amazon-ec2-net-utils*.deb
 	complete_command
 )
 
@@ -271,11 +275,21 @@ function install_cloudwatch_agent() (
 	complete_command
 )
 
+# install rust
+function install_rust() (
+	begin_command "Installing rust"
+	# https://forge.rust-lang.org/infra/other-installation-methods.html#standalone
+	curl -sSO https://static.rust-lang.org/dist/rust-1.88.0-x86_64-unknown-linux-gnu.tar.xz
+	tar xf rust-1.88.0-x86_64-unknown-linux-gnu.tar.xz
+	cd rust-1.88.0-x86_64-unknown-linux-gnu
+	./install.sh
+	complete_command
+)
+
 # install amazon-efs-utils
 function install_amazon_efs_utils() (
 	begin_command "Installing amazon-efs-utils"
-	apt-get -o DPkg::Lock::Timeout=60 install -y rustc cargo
-	git clone https://github.com/aws/efs-utils
+	git clone --depth 1 --branch v2.3.2 https://github.com/aws/efs-utils efs-utils
 	cd efs-utils
 	./build-deb.sh
 	apt-get install -y ./build/amazon-efs-utils*deb
@@ -283,21 +297,14 @@ function install_amazon_efs_utils() (
 )
 
 # install golang
-function install_golang() {
+function install_golang() (
 	begin_command "Installing golang"
 	curl -o go1.24.5.linux-amd64.tar.gz https://dl.google.com/go/go1.24.5.linux-amd64.tar.gz
 	rm -rf /usr/local/go
 	tar -C /usr/local -xzf go1.24.5.linux-amd64.tar.gz
-	# temporarily add 'go' to $PATH
-	export PATH=$PATH:/usr/local/go/bin
-	# temporarily redirect go cache/mod cache during image build to /mnt/build
-	export GOCACHE="/mnt/build/go/.cache/go-build"
-	export GOMODCACHE="/mnt/build/go/pkg/mod"
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
-	# temporarily modify go proxy to direct only
-	go env -w GOPROXY=direct
 	complete_command
-}
+)
 
 # install the knfsd-fsidd service
 function install_fsidd_service() (
@@ -320,14 +327,11 @@ function install_knfsd_agent() (
 # install the custom Open-Telemetry KNFSD metrics agent
 function install_knfsd_metrics_agent() (
 	begin_command "Installing knfsd-metrics-agent"
-
 	cd knfsd-metrics-agent
 	go build -o /usr/local/bin/knfsd-metrics-agent -ldflags "-X main.version=${VERSION}"
-
 	mkdir -p /etc/knfsd-metrics-agent
 	cp config/*.yaml /etc/knfsd-metrics-agent/
 	cp systemd/proxy.service /etc/systemd/system/knfsd-metrics-agent.service
-
 	complete_command
 )
 
@@ -389,8 +393,11 @@ configure_serial_console
 install_aws_cli
 install_amazon_ec2_net_utils
 install_cloudwatch_agent
+install_rust
+export PATH=$PATH:/root/.cargo/bin
 install_amazon_efs_utils
 install_golang
+export PATH=$PATH:/usr/local/go/bin
 install_fsidd_service
 install_knfsd_agent
 install_knfsd_metrics_agent

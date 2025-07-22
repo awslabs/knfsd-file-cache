@@ -8,7 +8,7 @@ This modules configures an Amazon CloudWatch custom dashboard.
 
 ```terraform
 module "metrics" {
-    source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.5"
+    source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.6"
     project = "my-aws-account"
 }
 ```
@@ -27,7 +27,7 @@ provider "google" {
 }
 
 module "metrics" {
-    source = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.5"
+    source = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.6"
 }
 ```
 

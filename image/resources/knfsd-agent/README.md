@@ -509,7 +509,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "6.11.0-26-generic",
+  "kernel": "6.14.0-24-generic",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	KERNEL_VERSION = "6.11.0-26-generic"
+	KERNEL_VERSION = "6.14.0-24-generic"
 )
 
 func TestKernelVersion(t *testing.T) {

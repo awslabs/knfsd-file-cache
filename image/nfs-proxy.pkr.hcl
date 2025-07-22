@@ -3,21 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 packer {
-  required_version = ">= 1.13.0"
+  required_version = ">= 1.13.1"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = ">= 1.3.6"
+      version = ">= 1.3.9"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-alpha.5"
+  version       = "1.1.0-alpha.6"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
-  temp_vol_size = 50
+  temp_vol_size = 20
   build_name = (
     var.BUILD_NAME == "" ?
     "packer-knfsd-proxy-${local.version}-${local.timestamp}" :
@@ -91,7 +91,7 @@ source "amazon-ebs" "nfs-proxy" {
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
     encrypted             = true
-    volume_size           = 8
+    volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true
   }
@@ -121,7 +121,7 @@ source "amazon-ebs" "nfs-proxy" {
   ami_block_device_mappings {
     device_name           = "/dev/sda1"
     encrypted             = true
-    volume_size           = 8
+    volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true
   }
