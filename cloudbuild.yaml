@@ -35,28 +35,28 @@ options:
     - IMAGE_NAME=${_IMAGE_NAME}
 
 steps:
-  - name: golang:1.24
+  - name: golang:1.25
     id: filter-exports:test
     dir: image/resources/filter-exports
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.24
+  - name: golang:1.25
     id: knfsd-agent:test
     dir: image/resources/knfsd-agent
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.24
+  - name: golang:1.25
     id: knfsd-metrics-agent:test
     dir: image/resources/knfsd-metrics-agent
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.24
+  - name: golang:1.25
     id: netapp-exports:test
     dir: image/resources/netapp-exports
     script: make test
@@ -70,7 +70,7 @@ steps:
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.24
+  - name: golang:1.25
     id: knfsd-fsidd:test
     dir: image/resources/knfsd-fsidd
     script: ./test.sh run
@@ -97,7 +97,7 @@ steps:
   # an image for general use, to avoid building the image twice, once the tests
   # are complete you could copy the image to a proper image_family and more
   # usable name (such as using a timestamp or version tag).
-  - name: hashicorp/packer:1.13
+  - name: hashicorp/packer:1.14
     id: knfsd-image:build
     script: |
       packer init image &&

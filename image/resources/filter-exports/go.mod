@@ -1,10 +1,10 @@
 module github.com/awslabs/knfsd-file-cache/image/resources/filter-exports
 
-go 1.24
+go 1.25
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.9.0
-	github.com/stretchr/testify v1.10.0
+	github.com/bmatcuk/doublestar/v4 v4.9.1
+	github.com/stretchr/testify v1.11.1
 )
 
 require (

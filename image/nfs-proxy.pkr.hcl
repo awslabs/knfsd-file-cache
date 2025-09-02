@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 packer {
-  required_version = ">= 1.13.1"
+  required_version = ">= 1.14.0"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.6"
+  version       = "1.1.0-alpha.7"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 20

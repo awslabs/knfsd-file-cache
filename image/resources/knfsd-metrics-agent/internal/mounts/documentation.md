@@ -22,11 +22,11 @@ Number of requests that complete with tk_status < 0
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
-| operation | NFS operation name | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
+| operation | NFS operation name | Any Str | false |
 
 ### nfs.mount.operation.major_timeouts
 
@@ -38,11 +38,11 @@ Number of times a request has had a major timeout
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
-| operation | NFS operation name | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
+| operation | NFS operation name | Any Str | false |
 
 ### nfs.mount.operation.received_bytes
 
@@ -54,11 +54,11 @@ Total bytes received for these operations, including RPC headers and payload
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
-| operation | NFS operation name | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
+| operation | NFS operation name | Any Str | false |
 
 ### nfs.mount.operation.requests
 
@@ -70,11 +70,11 @@ Number of requests
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
-| operation | NFS operation name | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
+| operation | NFS operation name | Any Str | false |
 
 ### nfs.mount.operation.sent_bytes
 
@@ -86,11 +86,11 @@ Total bytes sent for these operations, including RPC headers and payload
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
-| operation | NFS operation name | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
+| operation | NFS operation name | Any Str | false |
 
 ### nfs.mount.ops_per_second
 
@@ -104,10 +104,10 @@ The number of NFS operations per second per NFS client mount over the past 60 se
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.read_bytes
 
@@ -119,10 +119,10 @@ Bytes read from remote NFS server
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.read_exe
 
@@ -136,10 +136,10 @@ The average read operation EXE per NFS client mount over the past 60 seconds (KN
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.read_rtt
 
@@ -153,10 +153,10 @@ The average read operation RTT per NFS client mount over the past 60 seconds (KN
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.rpc_backlog
 
@@ -170,10 +170,10 @@ The RPC Backlog per NFS client mount over the past 60 seconds (KNFSD --> Source 
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.write_bytes
 
@@ -185,10 +185,10 @@ Bytes wrote to remote NFS server
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.write_exe
 
@@ -202,10 +202,10 @@ The average write operation EXE per NFS client mount over the past 60 seconds (K
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |
 
 ### nfs.mount.write_rtt
 
@@ -219,7 +219,7 @@ The average write operation RTT per NFS client mount over the past 60 seconds (K
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| server | NFS mount's server | Any Str |
-| instance | NFS Proxy instance | Any Str |
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| server | NFS mount's server | Any Str | false |
+| instance | NFS Proxy instance | Any Str | false |

@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # https://gallery.ecr.aws/docker/library/python
-ARG KNFSD_PYTHON_VERSION=3.13.5
+ARG KNFSD_PYTHON_VERSION=3.13.7
 
 # nosemgrep: dockerfile-source-not-pinned
 FROM public.ecr.aws/docker/library/python:${KNFSD_PYTHON_VERSION}-alpine
 
-ARG VERSION="1.1.0-alpha.6"
+ARG VERSION="1.1.0-alpha.7"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache lambda-db-setup container image"

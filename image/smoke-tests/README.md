@@ -70,7 +70,7 @@ You will need the following software on your local machine:
 * [Terraform](https://www.terraform.io/)
 * [GCloud SDK](https://cloud.google.com/sdk/docs/install)
 * [Bash](https://www.gnu.org/software/bash/)
-* [Go 1.24](https://go.dev/) or higher
+* [Go 1.25](https://go.dev/) or higher
 * [GNU Make](https://www.gnu.org/software/make/)
 
 You will also need to enable and configure [IAP for TCP forwarding](https://cloud.google.com/iap/docs/using-tcp-forwarding) so that the tests can access the NFS client running in GCP. Remember to include a firewall rule to allow TCP port 22 from `35.235.240.0/20`.

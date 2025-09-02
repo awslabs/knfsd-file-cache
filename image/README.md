@@ -18,7 +18,7 @@ Alternatively, if your build procedure is more complex, you can replace the cust
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.13.1 or newer from <https://packer.io/downloads>.
+Download Packer 1.14.0 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -302,7 +302,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.6"
+VERSION="1.1.0-alpha.7"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>

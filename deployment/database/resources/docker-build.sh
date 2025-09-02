@@ -8,7 +8,7 @@
 
 ARCH=${1:-"linux/arm64"}
 PIP_PLATFORM="manylinux2014_aarch64"
-KNFSD_PYTHON_VERSION=${2:-"3.13.5"}
+KNFSD_PYTHON_VERSION=${2:-"3.13.7"}
 KNFSD_PSYCOPG_VERSION=${3:-"3.2.9"}
 
 # create a hash of the Dockerfile
@@ -27,12 +27,14 @@ if ! HASH="$(create_hash resources/Dockerfile)"; then
 	exit 1
 fi
 
-DB_SETUP_IMAGE=lambda-db-setup:"$HASH"
+ARCH_TAG="${ARCH//\//-}"
+DB_SETUP_IMAGE=lambda-db-setup:"${HASH}-${ARCH_TAG}"
 
 # check if the image exists
 if ! docker image inspect "${DB_SETUP_IMAGE}" > /dev/null 2> /dev/null; then
-	if ! docker build \
+	if ! docker buildx build \
 		--platform "${ARCH}" \
+		--load \
 		-t "${DB_SETUP_IMAGE}" \
 		--build-arg KNFSD_PYTHON_VERSION="${KNFSD_PYTHON_VERSION}" \
 		resources; then

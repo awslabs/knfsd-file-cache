@@ -8,7 +8,7 @@ config {
 
 plugin "terraform" {
   enabled = true
-  version = "0.12.0"
+  version = "0.13.0"
   source  = "github.com/terraform-linters/tflint-ruleset-terraform"
   preset  = "all"
 }
@@ -22,6 +22,6 @@ rule "terraform_naming_convention" {
 
 plugin "aws" {
   enabled = true
-  version = "0.40.0"
+  version = "0.42.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }

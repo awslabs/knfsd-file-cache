@@ -77,7 +77,7 @@ repos:
         args: [tf-lint]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files # prevents giant files from being committed
       - id: check-case-conflict # checks for files that would conflict in case-insensitive filesystems
@@ -103,7 +103,7 @@ repos:
         args: [-c=.yamllint.yaml]
 
   - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.27.2 # https://github.com/gitleaks/gitleaks/releases
+    rev: v8.28.0 # https://github.com/gitleaks/gitleaks/releases
     hooks:
       - id: gitleaks
         name: gitleaks

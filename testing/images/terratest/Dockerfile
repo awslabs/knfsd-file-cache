@@ -14,19 +14,19 @@ HEALTHCHECK NONE
 
 # the build requires the following tools:
 #  - gcloud
-#  - go v1.24
+#  - go v1.25
 #  - terraform 1.2.0
 
 # install golang (and unzip which we need later for terraform)
 RUN apt-get update \
     && apt-get install -y \
-    golang-1.24 \
+    golang-1.25 \
     unzip \
     && apt-get clean \
     && rm -rf "/var/lib/apt/lists/*"
 
 # add go to the path
-ENV PATH="$PATH:/usr/lib/go-1.24/bin"
+ENV PATH="$PATH:/usr/lib/go-1.25/bin"
 
 # install terraform
 RUN set -eux \

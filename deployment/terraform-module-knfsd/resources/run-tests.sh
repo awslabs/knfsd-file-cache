@@ -27,7 +27,7 @@ fi
 BATS_IMAGE=bats-proxy-startup-tests:"$HASH"
 
 if ! docker image inspect "${BATS_IMAGE}" > /dev/null 2> /dev/null; then
-	if ! docker build --platform linux/amd64 -t "${BATS_IMAGE}" tests; then
+	if ! docker buildx build --platform linux/amd64 -t "${BATS_IMAGE}" tests; then
 		echo "ERROR: could not build docker image" >&2
 		exit 1
 	fi

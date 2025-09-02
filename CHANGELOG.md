@@ -1,5 +1,17 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.7
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Updated to PostgreSQL v17.6.
+* Minor Golang package updates.
+* Updated to Golang v1.25.0.
+* Updated to Python v3.13.7.
+* Updated Terraform providers.
+* Add Docker "buildx" CLI argument for cross-platform builds.
+* Enhance Docker image inspect command to support multi-platform images.
+
 ## v1.1.0-alpha.6
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
@@ -53,7 +65,7 @@
   * If `var.DNS_NAME` is a FQDN, including trailing dot `.` (R53 private zone already exists), then A or CNAME record(s) (`<CUSTOM_NAME>.<CUSTOM_DOMAIN>.`) are created in the existing Amazon R53 zone.
 * Removed `var.PRIVATE_HOSTED_ZONE` from all modules.
 * Added 60m timeout to `status.tf` check to prevent infinite loops during deployment.
-* Minor Go module updates.
+* Minor Golang package updates.
 * Fixed `proxy-startup.sh` conflict between `fsidd` and `knfsd-fsidd` service, causing RDS database to not be used, when `FSID_MODE="external"`.
 * Enhanced the `fsx-zfs` example to deploy additional ZFS volumes and demonstrate the use of `EXPORT_HOST_AUTO_DETECT` feature (`showmount`), together with NFS v3 for performance.
 * Increased GitLab CI job `Trivy` timeout to 10 minutes.

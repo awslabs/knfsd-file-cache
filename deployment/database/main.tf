@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.4.0"
+      version = "~> 6.11.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -69,7 +69,7 @@ resource "aws_db_instance" "fsids" {
   identifier               = local.name
   db_name                  = local.db_name
   engine                   = "postgres"
-  engine_version           = "17.5"
+  engine_version           = "17.6"
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   parameter_group_name     = aws_db_parameter_group.fsids_pg.name
   username                 = var.MASTER_USERNAME # master db user

@@ -7,19 +7,14 @@
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.4.0"
-    }
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.44.0"
+      version = "~> 7.0.1"
     }
   }
 }
 
 locals {
-  tags = { "knfsd-file-cache:version" = var.VERSION }
   mount_labels = {
     "server" : "Source NFS server of the mount",
     "instance" : "Proxy instance the client is connected to",
@@ -244,22 +239,4 @@ resource "google_monitoring_metric_descriptor" "fscache_oldest_file" {
 resource "google_monitoring_dashboard" "knfsd_monitoring_dashboard" {
   project        = var.PROJECT
   dashboard_json = file("${path.module}/dashboard/dashboard.json")
-}
-
-# this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution
-resource "aws_cloudformation_stack" "metrics_dashboard" {
-  name          = "metrics-dashboard"
-  on_failure    = "DO_NOTHING"
-  tags          = local.tags
-  template_body = <<STACK
-    {
-        "AWSTemplateFormatVersion": "2010-09-09",
-        "Description": "(SO9129) - KNFSD-File-Cache. Version v${var.VERSION}",
-        "Resources": {
-            "EmptyResource": {
-                "Type": "AWS::CloudFormation::WaitConditionHandle"
-            }
-        }
-    }
-    STACK
 }
