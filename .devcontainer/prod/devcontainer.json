@@ -38,6 +38,7 @@
   },
   "mounts": [
     "source=knfsd-prod-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
+    "source=knfsd-prod-packer-cache,target=/home/ubuntu/.packer.d/plugins,type=volume",
     "source=knfsd-prod-command-history,target=/home/ubuntu/.commandhistory,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",

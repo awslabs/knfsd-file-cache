@@ -8,13 +8,13 @@ packer {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = ">= 1.3.9"
+      version = "~> 1.3.10"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-alpha.7"
+  version       = "1.1.0-alpha.8"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 20

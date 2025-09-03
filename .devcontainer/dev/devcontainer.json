@@ -17,6 +17,7 @@
     "HOST_REPO_PATH": "${localWorkspaceFolder}",
     "GITHUB_COM_TOKEN": "${localEnv:GITHUB_COM_TOKEN}",
     "PACKER_GITHUB_API_TOKEN": "${localEnv:PACKER_GITHUB_API_TOKEN}",
+    "KNFSD_REMOTE_SSH_IAM_PROFILE_NAME": "${localEnv:KNFSD_REMOTE_SSH_IAM_PROFILE_NAME}",
     "KNFSD_REMOTE_SSH_KEYPAIR": "${localEnv:KNFSD_REMOTE_SSH_KEYPAIR}",
     "KNFSD_REMOTE_SSH_SUBNET": "${localEnv:KNFSD_REMOTE_SSH_SUBNET}",
     "KNFSD_REMOTE_SSH_SG_ID": "${localEnv:KNFSD_REMOTE_SSH_SG_ID}"
@@ -55,6 +56,7 @@
   },
   "mounts": [
     "source=knfsd-dev-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
+    "source=knfsd-dev-packer-cache,target=/home/ubuntu/.packer.d/plugins,type=volume",
     "source=knfsd-dev-go-cache,target=/home/ubuntu/.cache/go-build,type=volume",
     "source=knfsd-dev-go-mod-cache,target=/home/ubuntu/go/pkg/mod,type=volume",
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",

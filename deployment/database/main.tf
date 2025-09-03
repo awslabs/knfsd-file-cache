@@ -201,8 +201,7 @@ resource "null_resource" "lambda_package" {
     when        = create
     working_dir = path.module
     interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
-    # "./resources/docker-build.sh $ARCH $KNFSD_PYTHON_VERSION $KNFSD_PSYCOPG_VERSION"
-    command = "./resources/docker-build.sh"
+    command     = "./resources/docker-build.sh"
   }
 }
 
@@ -235,7 +234,7 @@ resource "aws_lambda_function" "db_setup" {
   description   = "Lambda Python function to configure the RDS PostgreSQL database"
   role          = aws_iam_role.lambda_db_setup.arn
   handler       = "db_setup.lambda_handler"
-  architectures = ["arm64"]
+  architectures = ["x86_64"] # always use x86_64 only
   runtime       = "python3.13"
   timeout       = 15
   filename      = "${path.module}/resources/db_setup.zip"

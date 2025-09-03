@@ -93,6 +93,7 @@ repos:
         args: ["--fix=lf"]
       - id: pretty-format-json # sets a standard for formatting json files
         args: [--autofix, --no-sort-keys]
+        exclude: dashboard\.json$
       - id: trailing-whitespace # trims trailing whitespace
         args: ["--markdown-linebreak-ext=md"]
 

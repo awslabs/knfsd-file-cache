@@ -26,12 +26,6 @@ receivers:
 service:
   pipelines:
     metrics:
-      receivers:
-        - mounts
-        - slabinfo
-      processors:
-        - resourcedetection
-        - transform
-        - metricstransform
-      exporters:
-        - awsemf
+      receivers: [mounts, slabinfo]
+      processors: [resourcedetection, transform, metricstransform]
+      exporters: [awsemf]

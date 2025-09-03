@@ -50,3 +50,14 @@ variable "KEY_NAME" {
   nullable    = false
   default     = ""
 }
+
+variable "FSID_MODE" {
+  description = "(Optional) How to assign FSIDs (File System Identifiers) to each export. The options are \"static\", \"local\", or \"external\". Default: \"external\"."
+  type        = string
+  nullable    = false
+  default     = "external"
+  validation {
+    condition     = contains(["static", "local", "external"], var.FSID_MODE)
+    error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
+  }
+}

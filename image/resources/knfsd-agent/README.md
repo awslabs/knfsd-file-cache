@@ -64,7 +64,7 @@ Reports the disk usage of FS-Cache.
 
 Note: This method is also accessible via `/`
 
-This method provides basic information on the knfsd proxy node. It is useful for determining which backend node you are connected to when connecting via the internal load balancer.
+This method provides basic information on the KNFSD proxy node. It is useful for determining which backend node you are connected to when connecting via the Network Load Balancer.
 
 ```json
 {
@@ -92,7 +92,7 @@ This method provides basic information on the knfsd proxy node. It is useful for
 
 ### GET /api/v1/mounts
 
-Lists the NFS mounts on the knfsd proxy node.
+Lists the NFS mounts on the KNFSD proxy node.
 
 ```json
 {
@@ -115,7 +115,7 @@ Lists the NFS mounts on the knfsd proxy node.
 }
 ```
 
-* `mounts` - List of NFS mounts on the knfsd proxy node.
+* `mounts` - List of NFS mounts on the KNFSD proxy node.
   * `device` - (`string`) NFS device name (source), in the same format as per the `mount` command (`<source>:<export>`).
   * `mount` - (`string`) Directory where the NFS share is mounted on the proxy.
   * `export` - (`string`) Path that the NFS share is re-exported as.
@@ -129,7 +129,7 @@ Lists the NFS mounts on the knfsd proxy node.
 
 ### GET /api/v1/mountStats
 
-Lists NFS per-mount metrics on the knfsd proxy node.
+Lists NFS per-mount metrics on the KNFSD proxy node.
 
 This endpoint is only intended for diagnostics and testing and has been optimised for ease of use. As such the response size can be quite large if you have a lot of mounted volumes. For standard reporting of metrics you should use the [knfsd-metrics-agent](../knfsd-metrics-agent/).
 
@@ -233,7 +233,7 @@ You should also compute the difference in age between two samples and divide the
 **NOTE**: When a share is re-mounted all the counters will be reset. This can be detected by the age also resetting.
 If the age of the latest sample is less than the age of the previous sample, assume the counters have been reset.
 
-* `mounts` - List of NFS mounts on the knfsd proxy node.
+* `mounts` - List of NFS mounts on the KNFSD proxy node.
   * `device` - (`string`) NFS device name (source), in the same format as per the `mount` command (`<source>:<export>`).
   * `mount` - (`string`) Directory where the NFS share is mounted on the proxy.
   * `export` - (`string`) Path that the NFS share is re-exported as.
@@ -294,7 +294,7 @@ If the age of the latest sample is less than the age of the previous sample, ass
 
         These are less frequent as NFS prefers to write multiple pages at once when flushing changes. Most of these calls are in response to automatically flushing dirty pages before reading or when closing a file.
 
-        This can also be invoked via various memory-mapped file operations, though this not relevant for the knfsd proxy. Any memory-mapped files would be on a client, and these would be translated to standard NFS read/write operations by the client before being sent to the proxy.
+        This can also be invoked via various memory-mapped file operations, though this not relevant for the KNFSD proxy. Any memory-mapped files would be on a client, and these would be translated to standard NFS read/write operations by the client before being sent to the proxy.
 
       * `vfsWritePages` - (uint64) Number of multi-page writes. This indicates a batch write, though for smaller files/changes the batch might only include a single page.
 

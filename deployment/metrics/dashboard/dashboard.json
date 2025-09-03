@@ -63,7 +63,7 @@
       {
         "height": 4,
         "widget": {
-          "title": "FS-Cache (var/cache/fscache) Free Space",
+          "title": "FS-Cache (/var/cache/fscache) Free Space",
           "xyChart": {
             "chartOptions": {
               "mode": "COLOR"
@@ -326,7 +326,7 @@
       {
         "height": 4,
         "widget": {
-          "title": "FS-Cache (var/cache/fscache) Read Throughput",
+          "title": "FS-Cache (/var/cache/fscache) Read Throughput",
           "xyChart": {
             "chartOptions": {
               "mode": "COLOR"

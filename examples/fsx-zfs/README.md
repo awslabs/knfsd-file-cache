@@ -75,6 +75,8 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
+* `FSID_MODE` - (Optional) How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. Default: `external`.
+
 ## Outputs
 
 * `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.

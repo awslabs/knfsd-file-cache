@@ -311,9 +311,10 @@ This [blog post](https://aws.amazon.com/blogs/compute/secure-connectivity-from-p
 
 To ensure a reliable workflow of provision, start, SSH config, stop, and terminate EC2 instance host, as well as various convenience functions, a shell script has been created in `.devcontainer/dev/remote.sh`.
 
-3 environment variables are required to be present for the successful provisioning of an EC2 instance:
+4 environment variables are required to be present for the successful provisioning of an EC2 instance:
 
   ```bash
+  export KNFSD_REMOTE_SSH_IAM_PROFILE_NAME=<iam-profile-name> # "name" of the EC2 IAM instance profile
   export KNFSD_REMOTE_SSH_KEYPAIR=<keypair-name> # "name" of the RSA key created/uploaded to your AWS account
   export KNFSD_REMOTE_SSH_SUBNET=<subnet-id> # "id" of the private subnet where the EC2 instance will be launched
   export KNFSD_REMOTE_SSH_SG_ID=<security-group-id> # "id" of the security group to be used for the EC2 instance
@@ -325,36 +326,40 @@ Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|hel
   Ensure AWS credentials/region are configured.
 
   Commands:
-      ./remote.sh help|-h|--help
-          Show this message
+    ./remote.sh help|-h|--help
+        Show this message
       ./remote.sh
-          Start the EC2 instance and add ssh-config (default)
-      ./remote.sh create|new [<vm|docker>] [<amd64|arm64>]
-          Create a new EC2 VM (default) instance. Required ENV VARs:
+        Start the EC2 instance and add ssh-config (default)
+      ./remote.sh create|new [<vm|docker>] [<amd64|arm64>] [<ami-id>](optional)
+        Create a new EC2 VM (default) instance.
+        Required ENV VARs:
+          KNFSD_REMOTE_SSH_IAM_PROFILE_NAME
+            The name of the EC2 IAM instance profile
           KNFSD_REMOTE_SSH_KEYPAIR
-              The name of the EC2 keypair
+            The name of the EC2 keypair
           KNFSD_REMOTE_SSH_SUBNET
-              The ID of the EC2 subnet
+            The ID of the EC2 subnet
           KNFSD_REMOTE_SSH_SG_ID
-              The ID of the EC2 security group
-          [<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
-          [<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
-          ENV VAR: BUILDARCH=<amd64|arm64> also sets the architecture for the EC2 host [optional]
+            The ID of the EC2 security group
+        [<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
+        [<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
+        [<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
+        ENV VAR: BUILDARCH=<amd64|arm64> also sets the architecture for the EC2 host [optional]
+        Arguments can be provided in any order
       ./remote.sh up|start
-          Start the EC2 instance and add ssh-config
+        Start the EC2 instance and add ssh-config
       ./remote.sh down|stop
-          Stop the EC2 instance
+        Stop the EC2 instance
       ./remote.sh size <INSTANCE_TYPE>
-          Modify the instance type of the EC2 instance
+        Modify the instance type of the EC2 instance
       ./remote.sh sync <push|pull> [<test>]
-          <push> code changes from local <devcontainer> to <remote-ssh>
-          <pull> code changes from <remote-ssh> to local <devcontainer>
-          <test> run dry-run only [optional]
-          .git directory is ignored
+        <push> code changes from local <devcontainer> to <remote-ssh>
+        <pull> code changes from <remote-ssh> to local <devcontainer>
+        <test> run dry-run only [optional]
       ./remote.sh creds
-          Copy local AWS config/creds to <remote-ssh>
+        Copy local AWS config/creds to <remote-ssh>
       ./remote.sh delete|del|terminate
-          Delete the EC2 instance and remove ssh-config
+        Delete the EC2 instance and remove ssh-config
   ```
 
 ### Remote-SSH: VM Setup
@@ -374,15 +379,16 @@ The first 3 steps can be skipped if you already have a running devcontainer loca
   Default output format [json]:
   ```
 
-* *Local*: Ensure 3 environment variables are present in your terminal for the EC2 instance to be launched:
+* *Local*: Ensure 4 environment variables are present in your terminal for the EC2 instance to be launched:
 
   ```bash
+  export KNFSD_REMOTE_SSH_IAM_PROFILE_NAME=<iam-profile-name>
   export KNFSD_REMOTE_SSH_KEYPAIR=<keypair-name>
   export KNFSD_REMOTE_SSH_SUBNET=<subnet-id>
   export KNFSD_REMOTE_SSH_SG_ID=<security-group-id>
   ```
 
-* *Local*: Execute `./remote.sh new vm` will provision a new EC2 instance (default: c5n.large, amd64, 30GB EBS root) and automatically configure your local SSH config (`~/.ssh/config`) file. The EC2 host will be configured via the `setup-remote-vm.sh` user-data script at launch.
+* *Local*: Execute `./remote.sh new vm` will provision a new EC2 instance (default: c6in.2xlarge, amd64, 30GB EBS root) and automatically configure your local SSH config (`~/.ssh/config`) file. The EC2 host will be configured via the `setup-remote-vm.sh` user-data script at launch.
 
   ```bash
   INFO: knfsd-dev-ec2: i-1234567890abcdef0 created as: EC2 VM
@@ -482,14 +488,14 @@ Once *Initial Setup* is completed above, general usage of your cloud development
     PubkeyAcceptedAlgorithms +ssh-rsa-cert-v01@openssh.com
   ```
 
-* Post *Initial Setup*, you may wish to modify the spec of EC2 instance type (c5n.large ~$0.10/hr OD in us-east-1) when it is **stopped**. The `./remote.sh` script can be used.
+* Post *Initial Setup*, you may wish to modify the spec/size of EC2 instance type (c6in.2xlarge ~$0.45/hr OD in us-east-1) when it is **stopped**. The `./remote.sh` script can be used.
 
   ```bash
   ./remote.sh size <INSTANCE_TYPE>
   ```
 
-* The `./remote.sh` script can be used to provision an EC2 host with a different architecture.
+* The `./remote.sh` script can be used to provision an EC2 host with a different architecture. The `<ami-id>` argument can be used to specify a custom AMI ID, instead of the default Ubuntu AMI sourced from AWS SSM parameter store.
 
   ```bash
-  ./remote.sh new <vm|docker> <amd64|arm64>
+  ./remote.sh new <vm|docker> <amd64|arm64> <ami-id> # optional
   ```

@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.7"
+ARG VERSION="1.1.0-alpha.8"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -233,6 +233,8 @@ WORKDIR /tmp
 RUN set -eux \
     && curl -fsSL "https://releases.hashicorp.com/packer/${KNFSD_PACKER_VERSION}/packer_${KNFSD_PACKER_VERSION}_linux_${BUILDARCH}.zip" \
     --output packer.zip && sudo unzip -q -o packer.zip -d /usr/local/bin && rm packer.zip
+RUN mkdir -p "/home/${USERNAME}/.packer.d/plugins"
+ENV PACKER_PLUGIN_PATH="/home/${USERNAME}/.packer.d/plugins"
 
 ## install terraform
 RUN set -eux \

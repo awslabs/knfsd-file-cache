@@ -12,15 +12,6 @@ receivers:
 service:
   pipelines:
     metrics:
-      receivers:
-        - otlp
-        - connections
-        - mounts
-        - exports
-        - slabinfo
-      processors:
-        - resourcedetection
-        - transform
-        - metricstransform
-      exporters:
-        - awsemf
+      receivers: [otlp, connections, mounts, exports, slabinfo]
+      processors: [resourcedetection, transform, metricstransform]
+      exporters: [awsemf]

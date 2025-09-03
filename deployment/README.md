@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.7"
+source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.8"
 ```
 
 ## Prerequisites
@@ -34,7 +34,7 @@ provider "aws" {
 }
 
 module "nfs_proxy" {
-  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.7"
+  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.8"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg"
@@ -71,7 +71,7 @@ When deploying KNFSD File Cache in private subnets without internet connectivity
 | Variable                | Description                                                                                                                                                                                                                                                                                                                                             | Required | Default                                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------- |
 | `TRAFFIC_MODE`          | The [client traffic distribution mode](docs/traffic-distribution.md) used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either `dns_round_robin`, `loadbalancer`, or `none`. The recommended option is `dns_round_robin`. If using `none` you will need to provide your own solution to handle traffic distribution. | True     |                                                   |
-| `LOADBALANCER_IP`       | The static private IPv4 address to use for the Internal Load Balancer when `TRAFFIC_MODE = "loadbalancer"`. If not specified, a random IP address will be assigned from the VPC Subnet.                                                                                                                                                                 | False    | `null`                                            |
+| `LOADBALANCER_IP`       | The static private IPv4 address to use for the Network Load Balancer when `TRAFFIC_MODE = "loadbalancer"`. If not specified, a random IP address will be assigned from the VPC Subnet.                                                                                                                                                                  | False    | `null`                                            |
 | `DNS_NAME`              | The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: `"lb-knfsd/knfsd.nfsproxy-a1b2c3d4.aws.internal."` [Note: the trailing period is required].                                                                                                                                                                        | False    | `"lb-knfsd/knfsd.{PROXY_BASENAME}.aws.internal."` |
 | `ASG_EGRESS_CIDR_BLOCK` | The IPv4 CIDR block to use for the Auto Scaling Group (ASG) EGRESS rule for KNFSD proxy instances. Default: `0.0.0.0/0`.                                                                                                                                                                                                                                | False    | `0.0.0.0/0`                                       |
 | `NFS_PORTS`             | The list of NFS ports (TCP & UDP) to create security group INGRESS rules for the KNFSD proxy instances in the Auto Scaling Group (ASG)/Network Load Balancer (NLB). Default: see `map(object({port = number, check_port = number, name = string}))` in `variables.tf`.                                                                                  | False    | see `variables.tf` for TCP/UDP ports              |

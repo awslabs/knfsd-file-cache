@@ -7,7 +7,7 @@
 
 ## USAGE:
 ## ./remote.sh help|-h|--help
-## ./remote.sh create|new [<vm|docker>] [<amd64|arm64>] ($BUILDARCH if present, also sets the architecture for the EC2 host)
+## ./remote.sh create|new [<vm|docker>] [<amd64|arm64>] [<ami-id>] ($BUILDARCH if present, also sets the architecture for the EC2 host)
 ## ./remote.sh up|start
 ## ./remote.sh down|stop
 ## ./remote.sh size <INSTANCE_TYPE>
@@ -22,7 +22,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.7"
+VERSION="1.1.0-alpha.8"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -50,17 +50,22 @@ Commands:
 		Show this message
 	./remote.sh
 		Start the EC2 instance and add ssh-config (default)
-	./remote.sh create|new [<vm|docker>] [<amd64|arm64>]
-		Create a new EC2 VM (default) instance. Required ENV VARs:
-		KNFSD_REMOTE_SSH_KEYPAIR
-			The name of the EC2 keypair
-		KNFSD_REMOTE_SSH_SUBNET
-			The ID of the EC2 subnet
-		KNFSD_REMOTE_SSH_SG_ID
-			The ID of the EC2 security group
+	./remote.sh create|new [<vm|docker>] [<amd64|arm64>] [<ami-id>](optional)
+		Create a new EC2 VM (default) instance.
+		Required ENV VARs:
+			KNFSD_REMOTE_SSH_IAM_PROFILE_NAME
+				The name of the EC2 IAM instance profile
+			KNFSD_REMOTE_SSH_KEYPAIR
+				The name of the EC2 keypair
+			KNFSD_REMOTE_SSH_SUBNET
+				The ID of the EC2 subnet
+			KNFSD_REMOTE_SSH_SG_ID
+				The ID of the EC2 security group
 		[<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
 		[<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
+		[<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
 		ENV VAR: BUILDARCH=<amd64|arm64> also sets the architecture for the EC2 host [optional]
+		Arguments can be provided in any order
 	./remote.sh up|start
 		Start the EC2 instance and add ssh-config
 	./remote.sh down|stop
@@ -108,47 +113,77 @@ function create-instance() {
 		exit 1
 	fi
 
-	local cmd1="vm" # default to vm
-	local cmd2=""
+	local image_type="vm" # default to vm
+	local arch=""
+	local ami_id_override=""
 
 	# handle different numbers of arguments
 	case "$#" in
 		1) ;;
 		2)
-			# check if second argument is vm/docker or amd64/arm64
+			# check if second argument is vm/docker, amd64/arm64, or ami-id
 			if [[ $2 == "vm" || $2 == "docker" ]]; then
-				cmd1="$2"
+				image_type="$2"
 			elif [[ $2 == "amd64" || $2 == "arm64" ]]; then
-				cmd2="$2"
+				arch="$2"
+			elif [[ $2 =~ ^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$ ]]; then
+				ami_id_override="$2"
 			else
-				echo -e "${SHELL_RED}ERROR: Invalid second argument. Must be [<vm/docker>] or [<amd64/arm64>]${SHELL_DEFAULT}"
+				echo -e "${SHELL_RED}ERROR: Invalid second argument. Must be [<vm/docker>], [<amd64/arm64>], or [<ami-id>]${SHELL_DEFAULT}"
 				exit 1
 			fi
 			;;
 		3)
-			# validate both additional arguments
+			# handle three arguments - determine what combination we have
+			# argument 2
 			if [[ $2 == "vm" || $2 == "docker" ]]; then
-				cmd1="$2"
+				image_type="$2"
+			elif [[ $2 == "amd64" || $2 == "arm64" ]]; then
+				arch="$2"
+			elif [[ $2 =~ ^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$ ]]; then
+				ami_id_override="$2"
 			else
-				echo -e "${SHELL_RED}ERROR: First optional argument must be <vm> or <docker>${SHELL_DEFAULT}"
+				echo -e "${SHELL_RED}ERROR: Invalid second argument. Must be [<vm/docker>], [<amd64/arm64>], or [<ami-id>]${SHELL_DEFAULT}"
 				exit 1
 			fi
 
-			if [[ $3 == "amd64" || $3 == "arm64" ]]; then
-				cmd2="$3"
+			# argument 3
+			if [[ $3 == "vm" || $3 == "docker" ]]; then
+				image_type="$3"
+			elif [[ $3 == "amd64" || $3 == "arm64" ]]; then
+				arch="$3"
+			elif [[ $3 =~ ^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$ ]]; then
+				ami_id_override="$3"
 			else
-				echo -e "${SHELL_RED}ERROR: Second optional argument must be <amd64> or <arm64>${SHELL_DEFAULT}"
+				echo -e "${SHELL_RED}ERROR: Invalid third argument. Must be [<vm/docker>], [<amd64/arm64>], or [<ami-id>]${SHELL_DEFAULT}"
 				exit 1
 			fi
 			;;
+		4)
+			# handle four arguments
+			local args=("$2" "$3" "$4")
+
+			for arg in "${args[@]}"; do
+				if [[ $arg == "vm" || $arg == "docker" ]]; then
+					image_type="$arg"
+				elif [[ $arg == "amd64" || $arg == "arm64" ]]; then
+					arch="$arg"
+				elif [[ $arg =~ ^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$ ]]; then
+					ami_id_override="$arg"
+				else
+					echo -e "${SHELL_RED}ERROR: Invalid argument '$arg'. Must be [<vm/docker>], [<amd64/arm64>], or [<ami-id>]${SHELL_DEFAULT}"
+					exit 1
+				fi
+			done
+			;;
 		*)
-			echo -e "${SHELL_RED}ERROR: usage: create|new [<vm|docker>] [<amd64|arm64>]${SHELL_DEFAULT}"
+			echo -e "${SHELL_RED}ERROR: usage: create|new [<vm|docker>] [<amd64|arm64>] [<ami-id>]${SHELL_DEFAULT}"
 			exit 1
 			;;
 	esac
 
 	# "docker" override settings
-	if [ "$cmd1" == "docker" ]; then
+	if [ "$image_type" == "docker" ]; then
 		# optimized user-data script for minimal setup/faster boot time
 		USER_DATA_SCRIPT="setup-remote-docker.sh"
 	fi
@@ -161,16 +196,21 @@ function create-instance() {
 	fi
 
 	# if $ARCH provided at CLI, override default script value & $BUILDARCH if present
-	if [ -n "$cmd2" ]; then
-		ARCH="$cmd2"
+	if [ -n "$arch" ]; then
+		ARCH="$arch"
 	fi
 
-	# https://documentation.ubuntu.com/aws/en/latest/aws-how-to/instances/find-ubuntu-images
+	# determine AMI ID - use override if provided, otherwise get from SSM
 	local ami_id
-	ami_id=$(aws ssm get-parameter \
-		--name "/aws/service/canonical/ubuntu/${PRODUCT}/${RELEASE}/stable/current/${ARCH}/hvm/${VOL_TYPE}/ami-id" \
-		--query 'Parameter.Value' \
-		--output text)
+	if [ -n "$ami_id_override" ]; then
+		ami_id="$ami_id_override"
+	else
+		# https://documentation.ubuntu.com/aws/en/latest/aws-how-to/instances/find-ubuntu-images
+		ami_id=$(aws ssm get-parameter \
+			--name "/aws/service/canonical/ubuntu/${PRODUCT}/${RELEASE}/stable/current/${ARCH}/hvm/${VOL_TYPE}/ami-id" \
+			--query 'Parameter.Value' \
+			--output text)
+	fi
 
 	# check ami-id is valid
 	local ami_id_regex="^ami-[0-9a-f]{8}$|^ami-[0-9a-f]{17}$"
@@ -204,6 +244,7 @@ function create-instance() {
 		--key-name "${KNFSD_REMOTE_SSH_KEYPAIR}" \
 		--subnet-id "${KNFSD_REMOTE_SSH_SUBNET}" \
 		--security-group-ids "${KNFSD_REMOTE_SSH_SG_ID}" \
+		--iam-instance-profile Name="${KNFSD_REMOTE_SSH_IAM_PROFILE_NAME}" \
 		--block-device-mappings '[{"DeviceName":"'"$root_device_name"'","Ebs":{"VolumeSize":'"$VOLUME_SIZE"',"VolumeType":"gp3","Encrypted":true}}]' \
 		--user-data file://"${USER_DATA_SCRIPT}" \
 		--metadata-options "HttpEndpoint=enabled,HttpTokens=required,HttpPutResponseHopLimit=2,InstanceMetadataTags=enabled" \
@@ -213,7 +254,7 @@ function create-instance() {
 
 	# "docker" override msg
 	local msg="EC2 VM"
-	if [ "$cmd1" == "docker" ]; then msg="EC2 DOCKER HOST"; fi
+	if [ "$image_type" == "docker" ]; then msg="EC2 DOCKER HOST"; fi
 	echo "INFO: ${REMOTE_HOST}: ${INSTANCE_ID} created as: ${msg}"
 
 	add-ssh-config

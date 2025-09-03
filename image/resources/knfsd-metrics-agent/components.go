@@ -22,7 +22,6 @@ import (
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsemfexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/elasticsearchexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter"
@@ -34,7 +33,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 
 	"go.uber.org/multierr"
 )
@@ -49,7 +47,6 @@ func components() (otelcol.Factories, error) {
 		exports.NewFactory(),
 		oldestfile.NewFactory(),
 		slab.NewFactory(),
-		filelogreceiver.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)
 
@@ -64,7 +61,6 @@ func components() (otelcol.Factories, error) {
 	errs = multierr.Append(errs, err)
 
 	exporters, err := otelcol.MakeFactoryMap(
-		awscloudwatchlogsexporter.NewFactory(),
 		awsemfexporter.NewFactory(),
 		debugexporter.NewFactory(),
 		otlpexporter.NewFactory(),

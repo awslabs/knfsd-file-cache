@@ -2,7 +2,7 @@
 
 The KNFSD Metrics Agent is designed so that it can be used on NFS clients (as well as the KNFSD proxies) to collect additional metrics to indicate the health of the KNFSD proxies.
 
-The primary metrics from the clients is the round trip (RTT) and execution (EXE) times of the read/write requests. These indicate the total latency of client requests. At first the latency will be high as all requests need to go back to the source server. As more data is cached the latency of read request should reduce as more requests are answered by the proxy.
+The primary metrics from the clients is the round trip (RTT) and execution (EXE) times of the read/write requests. These indicate the total latency of client requests. At first the latency will be high as all requests need to go back to the source server. As more data is cached the latency of read requests should reduce as more requests are answered by the proxy.
 
 These instructions only include the custom NFS metrics collected by the KNFSD Metrics Agent. For standard metrics, including network throughput, install the standard metrics agent for your system. On AWS, the [Amazon CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/GettingStarted.html) is recommended (and already installed on the KNFSD proxy instances).
 
@@ -43,7 +43,7 @@ The agent can be started from the terminal with following command:
   sudo ./knfsd-metrics-agent --config config/common.yaml --config config/client.yaml
   ```
 
-When running from the terminal to test the configuration it can be useful to change the `collection_interval` to `10s` and add the `logging` exporter to the pipeline.
+When running from the terminal to test the configuration it can be useful to change the `collection_interval` to `10s` and add the `debug` exporter to the pipeline.
 
 ### Other Environments
 
@@ -254,7 +254,7 @@ You should see output similar to:
     Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
     2025-06-04T20:52:40.888+0100    info    service@v0.127.0/service.go:199 Setting up own telemetry...     {"resource": {}}
     2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.7", "NumCPU": 8}
+    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.8", "NumCPU": 8}
     2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
     2025-06-04T20:52:40.950+0100    info    service@v0.127.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```

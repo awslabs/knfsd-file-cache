@@ -239,7 +239,7 @@ exporters:
     log_group_name: "knfsd/metrics"
     log_retention: 30
     namespace: "knfsd/metrics"
-    # minimize the number of metrics published to CloudWatch
+    # minimize the number of dimensions published to CloudWatch
     dimension_rollup_option: "NoDimensionRollup"
     resource_to_telemetry_conversion:
       enabled: true

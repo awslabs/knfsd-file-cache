@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.7"
+VERSION="1.1.0-alpha.8"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}
@@ -55,8 +55,9 @@ apt-get -y -q update && apt-get -y -q upgrade \
 echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && locale-gen \
 	&& update-locale LC_ALL=C.UTF-8 LANG=en_US.UTF-8
 
-## change hostname
+## change hostname, add HOSTNAME to /etc/hosts
 hostnamectl set-hostname ${HOSTNAME}
+sed -i "/127\.0\.0\.1 localhost/a 127.0.0.1 ${HOSTNAME}" /etc/hosts
 
 ## setup docker apt repo
 install -m 0755 -d /etc/apt/keyrings \

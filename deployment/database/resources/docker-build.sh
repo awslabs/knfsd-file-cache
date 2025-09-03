@@ -6,10 +6,11 @@
 # Build the "db_setup.zip" file for the Lambda function
 # Usage: ./resources/docker-build.sh via ../main.tf
 
-ARCH=${1:-"linux/arm64"}
-PIP_PLATFORM="manylinux2014_aarch64"
-KNFSD_PYTHON_VERSION=${2:-"3.13.7"}
-KNFSD_PSYCOPG_VERSION=${3:-"3.2.9"}
+# always use x86_64 only for the DB setup image
+ARCH="linux/amd64"
+PIP_PLATFORM="manylinux2014_x86_64"
+KNFSD_PYTHON_VERSION="3.13.7"
+KNFSD_PSYCOPG_VERSION="3.2.9"
 
 # create a hash of the Dockerfile
 function create_hash() {
@@ -27,8 +28,7 @@ if ! HASH="$(create_hash resources/Dockerfile)"; then
 	exit 1
 fi
 
-ARCH_TAG="${ARCH//\//-}"
-DB_SETUP_IMAGE=lambda-db-setup:"${HASH}-${ARCH_TAG}"
+DB_SETUP_IMAGE=lambda-db-setup:"${HASH}"
 
 # check if the image exists
 if ! docker image inspect "${DB_SETUP_IMAGE}" > /dev/null 2> /dev/null; then
@@ -48,11 +48,6 @@ path="$(pwd)"
 if [[ $CI == "devcontainer" ]]; then
 	root=$(dirname "${HOST_REPO_PATH}")
 	path=${root}${path}
-fi
-
-# Determine the pip platform based on the arch
-if [[ $ARCH == "linux/amd64" ]]; then
-	PIP_PLATFORM="manylinux2014_x86_64"
 fi
 
 # run the docker image

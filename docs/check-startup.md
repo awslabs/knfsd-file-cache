@@ -96,6 +96,14 @@ cloud-init status
 tail -f /var/log/cloud-init-output.log
 ```
 
+## CloudWatch Logs
+
+If the Amazon CloudWatch agent is successfully running after instance startup, then the `cloud-init` output is stored in the `knfsd/logs/aws/cloud-init-output` CloudWatch log group. Retrieve the instance ID of a KNFSD proxy instance in the Auto Scaling Group.
+
+```bash
+aws logs get-log-events --log-group-name knfsd/logs/aws/cloud-init-output --log-stream-name INSTANCE_ID --output text --no-cli-pager
+```
+
 ## Common Startup Issues
 
 There are three main reasons:

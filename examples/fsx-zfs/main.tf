@@ -161,7 +161,7 @@ module "proxy" {
   PROXY_BASENAME          = var.PROXY_BASENAME
   TRAFFIC_MODE            = "dns_round_robin"
   KEY_NAME                = var.KEY_NAME
-  FSID_MODE               = "external"
+  FSID_MODE               = var.FSID_MODE
   EXPORT_HOST_AUTO_DETECT = aws_fsx_openzfs_file_system.zfs.dns_name # Detect exports from the source filer via "showmount -e <SOURCE_FILER_DNS_NAME>"
   EXPORT_OPTIONS          = "insecure"                               # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
   NFS_MOUNT_VERSION       = "3"                                      # Mount the source filer as NFSv3

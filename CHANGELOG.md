@@ -1,5 +1,23 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.8
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: due to an emerging bug in `hashicorp/packer-plugin-amazon` v1.4.0, pin the plugin version via pessimistic constraint operator to v1.3.10.
+* Revert Docker Lambda DB function to exclusively use amd64 (x86_64) architecture to work across all platforms by default.
+* Refactored CloudWatch JSON configuration file for CW log storage and CW appended dimensions.
+* Minor Golang package updates.
+* Updated Terraform provider.
+* Added Packer plugin caching to dev/prod .devcontainer environment.
+* Added ability to use specific AMI-id when provisioning a remote-ssh EC2 instance.
+* Added `KNFSD_REMOTE_SSH_IAM_PROFILE_NAME` support to `dev` .devcontainer for remote-ssh into EC2.
+* Added helper script to generate AWS region names for metrics dashboard.json file.
+* Exclude pretty-format-json formatting of `dashboard.json` file from pre-commit hook.
+* Added `make image` & `make image-debug` support to build Packer AMI via Makefile alias.
+* Exposed `FSID_MODE` as a variable to the `fsx-zfs` example.
+* Removed unused OTEL packages from `knfsd-metrics-agent` Golang module.
+
 ## v1.1.0-alpha.7
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

@@ -21,6 +21,18 @@ default:
 .PHONY: all
 all: lint packer terraform bats scan golint test
 
+.PHONY: image
+image:
+	@packer init -upgrade image/nfs-proxy.pkr.hcl
+	@packer build -var-file image/image.pkrvars.hcl image
+
+.PHONY: image-debug
+image-debug:
+	@export PACKER_LOG=1
+	@export PACKER_LOG_PATH=packer.log
+	@packer init -upgrade image/nfs-proxy.pkr.hcl
+	@packer build -debug -var-file image/image.pkrvars.hcl image
+
 .PHONY: pre-commit precommit pc
 pre-commit precommit pc:
 	@pre-commit run --all-files

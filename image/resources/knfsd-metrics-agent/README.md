@@ -122,11 +122,11 @@ receivers:
 * [Metrics Transform](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor)
 * [Resource Detection](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor)
 * [Resource](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor)
+* [Transform](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor)
 
 ### Exporters
 
 * [AWS CloudWatch Metrics](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsemfexporter)
-* [AWS CloudWatch Logs](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter)
 * [Debug](https://pkg.go.dev/go.opentelemetry.io/collector/exporter/debugexporter)
 * [OTLP](https://pkg.go.dev/go.opentelemetry.io/collector/exporter/otlpexporter)
 * [OTLP HTTP](https://pkg.go.dev/go.opentelemetry.io/collector/exporter/otlphttpexporter)
@@ -187,7 +187,6 @@ processors:
 # https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsemfexporter#readme-exporter-configuration
 exporters:
   awsemf:
-    log_retention: 365
     log_group_name: "knfsd/metrics"
     log_retention: 30
     namespace: "knfsd/metrics"
@@ -220,7 +219,7 @@ service:
         # can use receivers/processors/exporters in multiple pipelines
         - resourcedetection
       exporters:
-        - logging
+        - debug
 ```
 
 ## Examples
