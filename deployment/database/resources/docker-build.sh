@@ -10,7 +10,10 @@
 ARCH="linux/amd64"
 PIP_PLATFORM="manylinux2014_x86_64"
 KNFSD_PYTHON_VERSION="3.13.7"
-KNFSD_PSYCOPG_VERSION="3.2.9"
+KNFSD_PSYCOPG_VERSION="3.2.10"
+
+# ensure resources directory is writable by all users
+chmod 0777 resources
 
 # create a hash of the Dockerfile
 function create_hash() {
@@ -44,7 +47,7 @@ if ! docker image inspect "${DB_SETUP_IMAGE}" > /dev/null 2> /dev/null; then
 fi
 
 path="$(pwd)"
-# if running in devcontainer, use the host repo path
+# if running in devcontainer, prefix the host repo path
 if [[ $CI == "devcontainer" ]]; then
 	root=$(dirname "${HOST_REPO_PATH}")
 	path=${root}${path}

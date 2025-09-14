@@ -42,7 +42,6 @@ fn instance_launching():
         "subnet-id==subnet_id"
         "tag:knfsd-file-cache:asg-name==asg_name"
         "status==available"
-        +filter: ENIs that have no instance-id or empty instance-id TAG
     if NO:
         CreateNetworkInterface, then follow the YES steps (below)
     if YES:
@@ -51,18 +50,20 @@ fn instance_launching():
         CreateTag: "tag:knfsd-file-cache:instance-id={instance-id}"
         Upsert DNS "A" record set for ENI private IP address (start to receive NFS traffic)
 ---
+fn instance_terminating():
+    DetachNetworkInterface from instance at eni[1]
+    Wait up to 60s until ENI becomes 'available'
+    Delete DNS "A" record set for ENI private IP address
+---
 fn instance_terminated():
-    find cause of termination of instance-id? ()"Cause" field in event)
-    find DescribeNetworkInterfaces where: (while-do loop)
+    Find cause of termination of instance-id? ("Cause" field in event)
+    DescribeNetworkInterfaces where: (while-do loop)
         "subnet-id==subnet_id"
         "tag:knfsd-file-cache:asg-name==asg_name"
         "tag:knfsd-file-cache:instance-id=={terminated instance-id}"
         "status==available"
-    Delete DNS "A" record set for ENI private IP address (stop receiving NFS traffic)
-    if cause==SCALE_IN:
+    if cause=="SCALE_IN":
         DeleteNetworkInterface eni-id
-    else:
-        Delete TAG: "tag:knfsd-file-cache:instance-id"
 """
 
 
@@ -78,6 +79,7 @@ def lambda_handler(event, context):
     message = "Event processed successfully"
 
     # event details
+    # https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-event-reference.html
     detail_type = event.get("detail-type")
     termination_cause = event["detail"].get("Cause")
     autoscaling_group_name = event["detail"].get("AutoScalingGroupName")
@@ -99,6 +101,19 @@ def lambda_handler(event, context):
                 "EVENT: instance-LAUNCHING lifecycle ACTION: COMPLETED SUCCESSFULLY"
             )
 
+        # handle instance TERMINATING lifecycle ACTION
+        if detail_type == "EC2 Instance-terminate Lifecycle Action":
+            logger.info("EVENT: instance-TERMINATING lifecycle ACTION: %s", instance_id)
+            instance_terminating(
+                instance_id,
+                autoscaling_group_name,
+                lifecycle_hook_name,
+                lifecycle_action_token,
+            )
+            logger.info(
+                "EVENT: instance-TERMINATING lifecycle ACTION: COMPLETED SUCCESSFULLY"
+            )
+
         # handle instance TERMINATED EVENT
         if detail_type == "EC2 Instance Terminate Successful":
             logger.info("EVENT: instance TERMINATED EVENT: %s", instance_id)
@@ -115,8 +130,11 @@ def lambda_handler(event, context):
         status_code = 500
         message = f"Error: {str(e)}"
 
-        # abandon the launch lifecycle as failed
-        if detail_type in ("EC2 Instance-launch Lifecycle Action"):
+        # abandon the lifecycle as failed (launch/terminate wait hooks)
+        if detail_type in {
+            "EC2 Instance-launch Lifecycle Action",
+            "EC2 Instance-terminate Lifecycle Action",
+        }:
             try:
                 complete_lifecycle_action(
                     autoscaling_group_name,
@@ -124,7 +142,6 @@ def lambda_handler(event, context):
                     lifecycle_action_token,
                     "ABANDON",
                 )
-            # pylint: disable=broad-exception-caught
             except Exception as lifecycle_error:
                 logger.error(
                     "Error completing lifecycle action: %s", str(lifecycle_error)
@@ -156,17 +173,9 @@ def instance_launching(instance_id, asg_name, hook_name, token):
             {"Name": "status", "Values": ["available"]},
         ]
     ):
-        # Filter programmatically for truly available ENIs
+        # Accept all ENIs that are in status==available for this specific ASG/subnet
         for eni in page["NetworkInterfaces"]:
-            instance_id_tag = None
-            for tag in eni.get("TagSet", []):
-                if tag["Key"] == "knfsd-file-cache:instance-id":
-                    instance_id_tag = tag["Value"]
-                    break
-
-            # Only include ENIs that have no instance-id tag or empty instance-id tag
-            if instance_id_tag is None or instance_id_tag == "":
-                available_enis.append(eni)
+            available_enis.append(eni)
 
     logger.info("Available ENIs: %s", available_enis)
 
@@ -242,7 +251,7 @@ def instance_launching(instance_id, asg_name, hook_name, token):
     )
 
     logger.info(
-        "Successfully updated tag to ENI: %s",
+        "Successfully updated instance-id tag to ENI: %s",
         eni["NetworkInterfaceId"],
     )
 
@@ -254,6 +263,75 @@ def instance_launching(instance_id, asg_name, hook_name, token):
     logger.info("DNS 'A' record created successfully: %s", private_ip)
 
     # complete the lifecycle action
+    complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
+
+
+def instance_terminating(instance_id, asg_name, hook_name, token):
+    """
+    Handle the EC2 instance terminate lifecycle action (Terminating:Wait).
+    Detach the secondary ENI (DeviceIndex=1), do NOT remove the tag,
+    then complete the lifecycle action.
+    """
+    # find the secondary ENI on the instance by DeviceIndex=1
+    reservations = ec2.describe_instances(InstanceIds=[instance_id])["Reservations"]
+    if not reservations or not reservations[0]["Instances"]:
+        logger.info("No instance data found for %s; continuing", instance_id)
+        complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
+        return
+
+    instance = reservations[0]["Instances"][0]
+    secondary = None
+    for iface in instance.get("NetworkInterfaces", []):
+        if iface.get("Attachment", {}).get("DeviceIndex") == 1:
+            secondary = iface
+            break
+
+    # if no secondary ENI, complete the lifecycle action
+    if not secondary:
+        logger.info(
+            "No secondary ENI (DeviceIndex=1) attached to %s; continuing", instance_id
+        )
+        complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
+        return
+
+    attachment_id = secondary["Attachment"]["AttachmentId"]
+    eni_id = secondary["NetworkInterfaceId"]
+    logger.info(
+        "Detaching ENI: %s (attachment: %s) from instance: %s",
+        eni_id,
+        attachment_id,
+        instance_id,
+    )
+
+    # detach and wait until ENI becomes 'available'
+    ec2.detach_network_interface(AttachmentId=attachment_id, Force=True)
+
+    # wait up to 2 mins (bounded loop) for the ENI to transition to "available"
+    max_attempts = 12
+    delay_sec = 10
+    for attempt in range(1, max_attempts + 1):
+        eni_desc = ec2.describe_network_interfaces(NetworkInterfaceIds=[eni_id])[
+            "NetworkInterfaces"
+        ][0]
+        status = eni_desc.get("Status")
+        logger.info(
+            "ENI %s status after detach attempt %d/%d: %s",
+            eni_id,
+            attempt,
+            max_attempts,
+            status,
+        )
+        if status == "available":
+            break
+        # nosemgrep: arbitrary-sleep
+        time.sleep(delay_sec)
+
+    # delete the DNS "A" record now that the ENI is detached
+    private_ip = eni_desc["PrivateIpAddress"]
+    change_dns_record(private_ip, "DELETE")
+    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
+
+    # complete the terminating lifecycle so ASG can proceed
     complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
 
 
@@ -269,32 +347,21 @@ def instance_terminated(instance_id, asg_name, cause):
         reason,
     )
 
-    subnet_id = os.environ.get("SUBNET")
-
-    # find ENI that was attached to the terminated instance
-    eni_response = get_eni(subnet_id, asg_name, instance_id)
-
-    eni = eni_response[0]
-    eni_id = eni["NetworkInterfaceId"]
-    private_ip = eni["PrivateIpAddress"]
-
-    # delete the DNS "A" record
-    change_dns_record(private_ip, "DELETE")
-    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
-
+    # delete the ENI only if the reason is SCALE_IN
     if reason == "SCALE_IN":
+        subnet_id = os.environ.get("SUBNET")
+
+        # find ENI that was attached to the terminated instance
+        eni_response = get_eni(subnet_id, asg_name, instance_id)
+
+        eni = eni_response[0]
+        eni_id = eni["NetworkInterfaceId"]
+
         logger.info("Deleting ENI: %s", eni_id)
         ec2.delete_network_interface(NetworkInterfaceId=eni_id)
         logger.info("ENI deleted successfully")
     else:
-        # in a termination event other than SCALE_IN or ASG deleted,
-        # remove the instance-id tag entirely to return it to the ENI pool
-        logger.info("Removing instance-id tag from ENI: %s", eni_id)
-        ec2.delete_tags(
-            Resources=[eni_id],
-            Tags=[{"Key": "knfsd-file-cache:instance-id"}],
-        )
-        logger.info("ENI instance-id tag removed successfully")
+        logger.info("Skipping ENI deletion")
 
 
 def get_eni(subnet_id, asg_name, instance_id, max_attempts=10, delay_sec=30):
@@ -346,6 +413,7 @@ def get_eni(subnet_id, asg_name, instance_id, max_attempts=10, delay_sec=30):
                 attempt,
                 delay_sec,
             )
+            # nosemgrep: arbitrary-sleep
             time.sleep(delay_sec)
 
         attempt += 1

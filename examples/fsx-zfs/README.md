@@ -75,6 +75,10 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
+* `INSTANCE_TYPE` - (Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: `i3en.3xlarge`.
+
+* `KNFSD_NODES` - (Optional) The number of KNFSD instances to deploy as part of the cluster. Default: `1`.
+
 * `FSID_MODE` - (Optional) How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. Default: `external`.
 
 ## Outputs

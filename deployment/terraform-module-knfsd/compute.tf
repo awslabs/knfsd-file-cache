@@ -103,7 +103,24 @@ resource "aws_launch_template" "nfsproxy_template" {
     enabled = true
   }
 
-  user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOT
+  Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+  MIME-Version: 1.0
+
+  --==BOUNDARY==
+  Content-Type: text/cloud-config; charset="us-ascii"
+  MIME-Version: 1.0
+  Content-Transfer-Encoding: 7bit
+
+  #cloud-config
+  cloud_final_modules:
+  - [scripts-user, always]
+
+  --==BOUNDARY==
+  Content-Type: text/x-shellscript; charset="us-ascii"
+  MIME-Version: 1.0
+  Content-Transfer-Encoding: 7bit
+
   #!/bin/bash
   export CLUSTER_NAME="${local.name}"
   export CUSTOM_PRE_STARTUP_SCRIPT="${var.CUSTOM_PRE_STARTUP_SCRIPT}"
@@ -111,7 +128,9 @@ resource "aws_launch_template" "nfsproxy_template" {
   echo '${base64gzip(file("${path.module}/resources/proxy-startup.sh"))}' | base64 -d | gzip -d > /tmp/proxy-startup.sh
   chmod +x /tmp/proxy-startup.sh
   /tmp/proxy-startup.sh
-  EOF
+
+  --==BOUNDARY==--
+  EOT
   )
 
   # only create the reservation specification if RESERVE_KNFSD_CAPACITY is true

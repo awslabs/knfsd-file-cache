@@ -6,13 +6,14 @@
 # Usage: ./run-kics.sh <path>[optional]
 
 # https://github.com/Checkmarx/kics/releases
-KNFSD_KICS_VERSION=2.1.10
+KNFSD_KICS_VERSION=2.1.13
 
 KICS_IMAGE=checkmarx/kics:v${KNFSD_KICS_VERSION}
 
-# Use the first argument if provided, otherwise use the default path calculation
+# use the first argument if provided, otherwise use the default path calculation
 path="${1:-$(dirname "$(dirname "$(pwd)")")}"
 
+# if running in devcontainer, prefix the host repo path
 if [[ $CI == "devcontainer" ]]; then
 	root=$(dirname "${HOST_REPO_PATH}")
 	path=${root}${path}

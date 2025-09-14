@@ -104,7 +104,6 @@ resource "aws_iam_policy" "lambda_static_ip" {
     Statement = [
       {
         Action = [
-          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
@@ -135,6 +134,7 @@ resource "aws_iam_policy" "lambda_static_ip" {
       {
         Action = [
           "ec2:AttachNetworkInterface",
+          "ec2:DetachNetworkInterface",
           "ec2:DeleteNetworkInterface",
           "ec2:ModifyNetworkInterfaceAttribute",
           "ec2:CreateTags",
@@ -198,6 +198,35 @@ resource "aws_lambda_permission" "allow_eventbridge_launching" {
   function_name = aws_lambda_function.static_ip.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.instance_launching.arn
+}
+
+# TERMINATING: EventBridge Rule for terminating instances
+resource "aws_cloudwatch_event_rule" "instance_terminating" {
+  name        = "${var.PROXY_BASENAME}-knfsd-instance-terminating"
+  description = "Capture EC2 nfsproxy instance terminating events"
+  event_pattern = jsonencode({
+    source      = ["aws.autoscaling"]
+    detail-type = ["EC2 Instance-terminate Lifecycle Action"]
+    detail = {
+      AutoScalingGroupName = [local.asg_name]
+    }
+  })
+  tags = local.tags
+}
+
+# TERMINATING: EventBridge target for terminating instances
+resource "aws_cloudwatch_event_target" "instance_terminating_target" {
+  rule = aws_cloudwatch_event_rule.instance_terminating.name
+  arn  = aws_lambda_function.static_ip.arn
+}
+
+# TERMINATING: Lambda permission for EventBridge terminating instances
+resource "aws_lambda_permission" "allow_eventbridge_terminating" {
+  statement_id  = "AllowExecutionFromEventBridgeTerminating"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.static_ip.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.instance_terminating.arn
 }
 
 # TERMINATED: EventBridge Rule for terminated instances

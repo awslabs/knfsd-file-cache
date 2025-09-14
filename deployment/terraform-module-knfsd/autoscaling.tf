@@ -92,6 +92,16 @@ resource "aws_autoscaling_group" "knfsd_asg" {
     }
   }
 
+  dynamic "initial_lifecycle_hook" {
+    for_each = var.TRAFFIC_MODE == "dns_round_robin" ? [1] : []
+    content {
+      name                 = "terminating-hook"
+      default_result       = "ABANDON"
+      heartbeat_timeout    = 300
+      lifecycle_transition = "autoscaling:EC2_INSTANCE_TERMINATING"
+    }
+  }
+
   launch_template {
     id      = aws_launch_template.nfsproxy_template.id
     version = aws_launch_template.nfsproxy_template.latest_version

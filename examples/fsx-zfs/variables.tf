@@ -51,6 +51,23 @@ variable "KEY_NAME" {
   default     = ""
 }
 
+variable "INSTANCE_TYPE" {
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.3xlarge\"."
+  type        = string
+  default     = "i3en.3xlarge"
+  validation {
+    condition     = can(regex("^[a-z][0-9]?[a-z]*\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
+  }
+}
+
+variable "KNFSD_NODES" {
+  description = "(Optional) The number of KNFSD instances to deploy as part of the cluster. Default: \"1\"."
+  type        = number
+  nullable    = false
+  default     = 1
+}
+
 variable "FSID_MODE" {
   description = "(Optional) How to assign FSIDs (File System Identifiers) to each export. The options are \"static\", \"local\", or \"external\". Default: \"external\"."
   type        = string

@@ -4,7 +4,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# Exit immediately if a command exits with a non-zero status
+# exit immediately if a command exits with a non-zero status
 set -o errexit
 set -o pipefail
 shopt -s lastpipe
@@ -13,6 +13,8 @@ declare -A PARAMETERS
 
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
+
+EXPORTS_FILE="/etc/exports.d/knfsd.exports"
 
 # get metadata from IMDSv2
 function get_metadata() {
@@ -61,13 +63,13 @@ function load_parameters() {
 		--recursive \
 		--with-decryption)
 
-	# Check if parameters were retrieved successfully
+	# check if parameters were retrieved successfully
 	if [[ -z ${PARAMS_JSON} ]]; then
 		echo "ERROR: Failed to retrieve parameters from ${PARAM_PATH}" >&2
 		exit 1
 	fi
 
-	# Extract parameters from the JSON output and store in associative array
+	# extract parameters from the JSON output and store in associative array
 	echo "${PARAMS_JSON}" | jq -r '.Parameters[] | [.Name, (.Value | @base64)] | @tsv' | while IFS=$'\t' read -r path encoded_value; do
 		local param_name value
 		param_name=$(basename "${path}")
@@ -186,6 +188,12 @@ function mount_nfs_server() {
 	local fstype="${4:-nfs}"
 	local FSTYPE="${fstype^^}"
 
+	# skip if local $path is already mounted
+	if is_mounted "$path"; then
+		echo "Skipping $FSTYPE path, already mounted: $path"
+		return
+	fi
+
 	# make the local export directory
 	mkdir -p "$path"
 
@@ -261,8 +269,22 @@ function add_nfs_export() {
 	fi
 
 	echo "Creating NFS share export for $1..."
-	echo "$1   ${EXPORT_CIDR}(${EXPORT_OPTIONS},${FSID})" >> /etc/exports
+	echo "$1   ${EXPORT_CIDR}(${EXPORT_OPTIONS},${FSID})" >> "${EXPORTS_FILE}"
 	echo "Finished creating NFS share export for $1"
+}
+
+# has_fs() checks if a path has a filesystem
+# @param (str) $1 Path
+# @return (bool)
+function has_fs() {
+	lsblk -no FSTYPE "$1" | grep -q .
+}
+
+# is_mounted() checks if a path is mounted
+# @param (str) $1 Path
+# @return (bool)
+function is_mounted() {
+	findmnt -rn "$1" > /dev/null 2>&1
 }
 
 # rexport() mounts and reexports an NFS share from another NFS server
@@ -418,8 +440,10 @@ function init() {
 
 	echo "Done setting parameters"
 
-	# Truncate the exports file to avoid stale/duplicate exports if the server restarts
-	: > /etc/exports
+	# avoid using /etc/exports directly to avoid potential conflicts with other NFS exports
+	# truncate the "knfsd.exports" file to avoid stale/duplicate exports if the server restarts
+	mkdir -p /etc/exports.d
+	: > ${EXPORTS_FILE}
 
 	# Run the CUSTOM_PRE_STARTUP_SCRIPT
 	echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
@@ -434,69 +458,22 @@ function init() {
 # or EBS volumes and mounts it to /var/cache/fscache
 function create_fs_cache() {
 	begin_command "create fs-cache"
-	local DEVICESLIST NUMDEVICES
+	local mount_point=/var/cache/fscache
+	local DEVICESLIST NUMDEVICES root_device
 
-	# Check if we are setting up Local NVMe or EBS volume(s)
+	mkdir -p "${mount_point}"
+
+	# detect device set based on cache disk type
 	if [[ ${CACHEFILESD_DISK_TYPE} == "local-nvme" ]]; then
-
-		# Find attached NVMe instance store volumes
 		echo "Detecting local NVMe devices for FS-Cache..."
-
-		# collect nvme devices
 		DEVICESLIST=$(lsblk -pno NAME,TYPE,MODEL \
 			| grep 'disk' \
 			| grep 'NVMe Instance Storage' \
 			| awk '{print $1}' \
 			| sort -V \
 			| tr '\n' ' ')
-		NUMDEVICES=$(echo "${DEVICESLIST}" | wc -w)
-		echo "Detected ${NUMDEVICES} devices: ${DEVICESLIST}"
-
-		# If there are local NVMe drives attached, start the process of formatting and mounting
-		if [ ${NUMDEVICES} -eq 0 ]; then
-			echo "ERROR: No NVMe devices found"
-			exit 1
-		elif [ ${NUMDEVICES} -eq 1 ]; then
-			echo "Formatting single NVMe device..."
-			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${DEVICESLIST}
-			echo "Finished formatting NVMe device"
-
-			# Mount NVMe device to /var/cache/fscache & start FS-Cache
-			# nosemgrep: unquoted-variable-expansion-in-command
-			mount -o discard,defaults,nobarrier,init_itable=0 ${DEVICESLIST} /var/cache/fscache
-			echo "Finished mounting NVMe device to FS-Cache directory (/var/cache/fscache)"
-			start_fs_cache
-		else
-			# Create RAID 0 array from multiple NVMe devices
-			if [ ! -e /dev/md127 ]; then
-				echo "Creating RAID 0 array from ${NUMDEVICES} NVMe devices..."
-				# nosemgrep: unquoted-variable-expansion-in-command
-				mdadm --create /dev/md127 --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
-				echo "Finished creating RAID 0 array from ${NUMDEVICES} NVMe devices"
-			fi
-
-			# Check if the RAID 0 array has already been formatted
-			echo "Checking if RAID 0 array needs formatting..."
-			is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
-			if [[ $is_formatted == "" ]]; then
-				echo "RAID 0 array is not formatted. Formatting..."
-				mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super /dev/md127
-				echo "Finished formatting RAID 0 array"
-			else
-				echo "RAID 0 array is already formatted"
-			fi
-
-			# Mount /dev/md127 to /var/cache/fscache & start FS-Cache
-			mount -o discard,defaults,nobarrier,init_itable=0 /dev/md127 /var/cache/fscache
-			echo "Finished mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)"
-			start_fs_cache
-		fi
 	else
-		# Find attached EBS volumes
 		echo "Detecting EBS volumes for FS-Cache..."
-
-		# collect ebs volumes except the root device
 		root_device=$(lsblk -pno PKNAME "$(findmnt -n -o SOURCE /)")
 		DEVICESLIST=$(lsblk -pno NAME,TYPE,MODEL \
 			| grep 'disk' \
@@ -505,50 +482,63 @@ function create_fs_cache() {
 			| grep -v "^$root_device$" \
 			| sort -V \
 			| tr '\n' ' ')
-		NUMDEVICES=$(echo "${DEVICESLIST}" | wc -w)
-		echo "Detected ${NUMDEVICES} devices: ${DEVICESLIST}"
-
-		# If there are EBS volumes attached, start the process of formatting and mounting
-		if [ ${NUMDEVICES} -eq 0 ]; then
-			echo "ERROR: No EBS volumes found"
-			exit 1
-		elif [ ${NUMDEVICES} -eq 1 ]; then
-			echo "Formatting single EBS volume..."
-			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${DEVICESLIST}
-			echo "Finished formatting EBS volume"
-
-			# Mount EBS volume to /var/cache/fscache & start FS-Cache
-			# nosemgrep: unquoted-variable-expansion-in-command
-			mount -o discard,defaults,nobarrier,init_itable=0 ${DEVICESLIST} /var/cache/fscache
-			echo "Finished mounting EBS volume to FS-Cache directory (/var/cache/fscache)"
-			start_fs_cache
-		else
-			# Create RAID 0 array from multiple EBS volumes
-			if [ ! -e /dev/md127 ]; then
-				echo "Creating RAID 0 array from ${NUMDEVICES} EBS volumes..."
-				# nosemgrep: unquoted-variable-expansion-in-command
-				mdadm --create /dev/md127 --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
-				echo "Finished creating RAID 0 array from ${NUMDEVICES} EBS volumes"
-			fi
-
-			# Check if the RAID 0 array has already been formatted
-			echo "Checking if RAID 0 array needs formatting..."
-			is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
-			if [[ $is_formatted == "" ]]; then
-				echo "RAID 0 array is not formatted. Formatting..."
-				mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super /dev/md127
-				echo "Finished formatting RAID 0 array"
-			else
-				echo "RAID 0 array is already formatted"
-			fi
-
-			# Mount /dev/md127 to /var/cache/fscache & start FS-Cache
-			mount -o discard,defaults,nobarrier,init_itable=0 /dev/md127 /var/cache/fscache
-			echo "Finished mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)"
-			start_fs_cache
-		fi
 	fi
+
+	NUMDEVICES=$(echo "${DEVICESLIST}" | wc -w)
+	echo "Detected ${NUMDEVICES} devices: ${DEVICESLIST}"
+
+	if [ $NUMDEVICES -eq 0 ]; then
+		echo "ERROR: No storage devices found" >&2
+		exit 1
+	elif [ $NUMDEVICES -eq 1 ]; then
+		# single block device (NVMe or EBS)
+		local dev
+		dev=${DEVICESLIST}
+
+		if ! has_fs $dev; then
+			echo "Creating filesystem on ${dev}..."
+			# nosemgrep: unquoted-variable-expansion-in-command
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${dev}
+			echo "Finished formatting ${dev}"
+		else
+			echo "Filesystem already present on ${dev}; skipping mkfs"
+		fi
+
+		echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
+		# nosemgrep: unquoted-variable-expansion-in-command
+		mount -o discard,defaults,nobarrier,init_itable=0 ${dev} "${mount_point}"
+		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
+
+		start_fs_cache
+	else
+		# multiple (NVMe or EBS) devices -> mdraid0 on /dev/md127
+		local raid_dev=/dev/md127
+
+		if [[ ! -e $raid_dev ]]; then
+			echo "Creating RAID array on $raid_dev..."
+			# nosemgrep: unquoted-variable-expansion-in-command
+			mdadm --create $raid_dev --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
+			echo "Finished creating RAID array"
+		fi
+
+		if ! has_fs $raid_dev; then
+			echo "Creating filesystem on ${raid_dev}..."
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${raid_dev}
+			echo "Finished formatting ${raid_dev}"
+		else
+			echo "Filesystem already present on ${raid_dev}; skipping mkfs"
+		fi
+
+		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
+		mount -o discard,defaults,nobarrier,init_itable=0 ${raid_dev} "${mount_point}"
+		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
+
+		# persist mdadm config for reliable RAID assembly
+		mdadm --detail --scan || true | tee /etc/mdadm/mdadm.conf > /dev/null || true
+
+		start_fs_cache
+	fi
+
 	complete_command
 }
 
@@ -659,7 +649,7 @@ function export_netapp() {
 				REMOTE_IP="$(echo "${REMOTE}" | cut -d ' ' -f1)"
 				REMOTE_EXPORT="$(echo "${REMOTE}" | cut -d ' ' -f2-)"
 
-				# Mount the NFS Server export
+				# mount the NFS Server export
 				reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${REMOTE_EXPORT}"
 			done
 		echo "Finished processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)"
@@ -695,18 +685,18 @@ function configure_read_ahead() {
 # configure_nfs() sets the VFS Cache Pressure and disables unwanted NFS Versions
 function configure_nfs() {
 	begin_command "configure nfs"
-	# Set VFS Cache Pressure
+	# set VFS Cache Pressure
 	echo "Setting VFS Cache Pressure to: ${VFS_CACHE_PRESSURE}"
 	sysctl vm.vfs_cache_pressure="${VFS_CACHE_PRESSURE}"
 
-	# Build Flags to Disable NFS Versions
+	# build Flags to Disable NFS Versions
 	DISABLED_NFS_VERSIONS_FLAGS=("vers2=no")
 	for v in $(echo "${DISABLED_NFS_VERSIONS}" | sed "s/,/ /g"); do
 		DISABLED_NFS_VERSIONS_FLAGS+=("vers$v=no")
 	done
 	DISABLED_NFS_VERSIONS_CONFIG=$(printf '%s\n' "${DISABLED_NFS_VERSIONS_FLAGS[@]}")
 
-	# Set NFS Kernel Server Config
+	# set NFS Kernel Server Config
 	echo "Setting number of NFS Threads to: ${NUM_NFS_THREADS}"
 	cat <<- EOF > /etc/nfs.conf.d/knfsd.conf
 		[nfsd]
@@ -724,10 +714,14 @@ function configure_metrics() {
 	if [[ ${ENABLE_METRICS} == "true" ]]; then
 		echo "Starting Metrics Agents..."
 		printf '%s' "${METRICS_AGENT_CONFIG}" > /etc/knfsd-metrics-agent/custom.yaml
-		amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s &
+		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
+		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then
+			amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s &
+		fi
 		cw_pid=$!
 		start_services knfsd-metrics-agent &
 		kma_pid=$!
+		# wait for both agents to finish starting to ensure stdout is grouped within this function
 		wait ${cw_pid} ${kma_pid}
 		echo "Finished starting Metrics Agents"
 	else
@@ -748,7 +742,7 @@ function start_nfs() {
 		echo "KNFSD Agent disabled. Skipping..."
 	fi
 
-	# Start NFS Server
+	# start NFS Server
 	echo "Starting nfs-kernel-server..."
 	start_services portmap nfs-kernel-server
 	echo "Finished starting nfs-kernel-server..."

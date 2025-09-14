@@ -1,5 +1,20 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.9
+
+* Updated to Terraform AWS provider v6.13.0.
+* Updated to Packer v1.14.2.
+* Updated to KICS v2.1.13.
+* Updated to Golang 1.25.1.
+* Minor Golang package updates.
+* Fixed issue where the CloudWatch log group for the `static-ip` Lambda function can be re-created by an EC2 instance terminating slowly after its ASG is deleted during a Terraform destroy.
+* Re-factored the handling of the secondary `static-ip` ENI when an EC2 instance is terminated for any reason other than a scale-in event.
+* Exposed Terraform `KNFSD_NODES` and `INSTANCE_TYPE` variables to the `fsx-zfs` example.
+* Re-factored `proxy-startup.sh` to be stateless.
+* Added support for KNFSD machine reboot, `/var/cache/fscache` data persists between reboots.
+* KNFSD specific NFS exports are now stored in `/etc/exports.d/knfsd.exports`, leaving default `/etc/exports` untouched.
+* Ensure `resources` directory is writable by all users in `../deployment/database/resources/docker-build.sh`.
+
 ## v1.1.0-alpha.8
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

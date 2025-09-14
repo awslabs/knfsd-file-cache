@@ -34,6 +34,7 @@ if ! docker image inspect "${BATS_IMAGE}" > /dev/null 2> /dev/null; then
 fi
 
 path="$(pwd)"
+# if running in devcontainer, prefix the host repo path
 if [[ $CI == "devcontainer" ]]; then
 	root=$(dirname "${HOST_REPO_PATH}")
 	path=${root}${path}
