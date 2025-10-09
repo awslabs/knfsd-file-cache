@@ -21,24 +21,24 @@ resource "null_resource" "validations" {
       error_message = "HEALTHCHECK_TIMEOUT_SECONDS (${var.HEALTHCHECK_TIMEOUT_SECONDS}) must be less than or equal to HEALTHCHECK_INTERVAL_SECONDS (${var.HEALTHCHECK_INTERVAL_SECONDS})."
     }
     precondition {
-      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_SIZE >= 1 && var.CACHEFILESD_EBS_SIZE <= 16384)
-      error_message = "For ebs-gp3, CACHEFILESD_EBS_SIZE must be between 1 and 16384 GiB."
+      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_SIZE >= 1 && var.CACHEFILESD_EBS_SIZE <= 65536)
+      error_message = "For ebs-gp3, CACHEFILESD_EBS_SIZE must be between 1 and 65536 GiB."
     }
     precondition {
       condition     = var.CACHEFILESD_DISK_TYPE != "ebs-io2" || (var.CACHEFILESD_EBS_SIZE >= 4 && var.CACHEFILESD_EBS_SIZE <= 65536)
       error_message = "For ebs-io2, CACHEFILESD_EBS_SIZE must be between 4 and 65536 GiB."
     }
     precondition {
-      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_IOPS >= 3000 && var.CACHEFILESD_EBS_IOPS <= 16000)
-      error_message = "For ebs-gp3, CACHEFILESD_EBS_IOPS must be between 3000 and 16000."
+      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_IOPS >= 3000 && var.CACHEFILESD_EBS_IOPS <= 80000)
+      error_message = "For ebs-gp3, CACHEFILESD_EBS_IOPS must be between 3000 and 80000."
     }
     precondition {
       condition     = var.CACHEFILESD_DISK_TYPE != "ebs-io2" || (var.CACHEFILESD_EBS_IOPS >= 100 && var.CACHEFILESD_EBS_IOPS <= 256000)
       error_message = "For ebs-io2, CACHEFILESD_EBS_IOPS must be between 100 and 256000."
     }
     precondition {
-      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_THROUGHPUT >= 125 && var.CACHEFILESD_EBS_THROUGHPUT <= 1000)
-      error_message = "For ebs-gp3, CACHEFILESD_EBS_THROUGHPUT must be between 125 and 1000 MiB/s."
+      condition     = var.CACHEFILESD_DISK_TYPE != "ebs-gp3" || (var.CACHEFILESD_EBS_THROUGHPUT >= 125 && var.CACHEFILESD_EBS_THROUGHPUT <= 2000)
+      error_message = "For ebs-gp3, CACHEFILESD_EBS_THROUGHPUT must be between 125 and 2000 MiB/s."
     }
     precondition {
       condition     = var.ENABLE_NETAPP_AUTO_DETECT || var.EXPORT_MAP != "" || var.EXPORT_HOST_AUTO_DETECT != ""

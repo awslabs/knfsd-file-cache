@@ -44,6 +44,7 @@ misconfigurations:
   - id: AVD-GCP-0041
   - id: AVD-GCP-0045
   - id: AVD-GCP-0067
+  - id: AVD-GCP-0076
 
 licenses:
   - id: Apache-2.0

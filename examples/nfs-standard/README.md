@@ -35,4 +35,4 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
 
-* `proxy_host` - DNS name of the KNFSD proxy.
+* `proxy_dns_name` - DNS name of the KNFSD proxy.

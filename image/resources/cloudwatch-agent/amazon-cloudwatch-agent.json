@@ -55,14 +55,6 @@
   },
   "metrics": {
     "namespace": "knfsd/ec2",
-    "aggregation_dimensions": [
-      [
-        "AutoScalingGroupName"
-      ],
-      [
-        "InstanceId"
-      ]
-    ],
     "append_dimensions": {
       "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
       "InstanceId": "${aws:InstanceId}"
@@ -72,21 +64,14 @@
         "measurement": [
           "cpu_usage_active",
           "cpu_usage_iowait"
-        ],
-        "metrics_collection_interval": 60,
-        "resources": [
-          "*"
-        ],
-        "totalcpu": true
+        ]
       },
       "disk": {
         "measurement": [
           "disk_free",
-          "disk_total",
-          "disk_used",
           "disk_used_percent"
         ],
-        "metrics_collection_interval": 60,
+        "drop_device": true,
         "resources": [
           "/",
           "/var/cache/fscache"
@@ -94,26 +79,22 @@
       },
       "diskio": {
         "measurement": [
-          "diskio_io_time",
           "diskio_write_bytes",
           "diskio_read_bytes",
-          "diskio_ebs_total_read_ops",
-          "diskio_ebs_total_write_ops",
-          "diskio_ebs_total_read_bytes",
-          "diskio_ebs_total_write_bytes",
-          "diskio_ebs_total_read_time",
-          "diskio_ebs_total_write_time",
-          "diskio_ebs_volume_performance_exceeded_iops",
-          "diskio_ebs_volume_performance_exceeded_tp",
+          "diskio_reads",
+          "diskio_writes",
+          "diskio_io_time",
           "diskio_ebs_ec2_instance_performance_exceeded_iops",
           "diskio_ebs_ec2_instance_performance_exceeded_tp",
-          "diskio_ebs_volume_queue_length"
+          "diskio_ebs_volume_queue_length",
+          "diskio_instance_store_performance_exceeded_iops",
+          "diskio_instance_store_performance_exceeded_tp",
+          "diskio_instance_store_volume_queue_length"
         ],
-        "metrics_collection_interval": 30,
         "resources": [
-          "/",
-          "/var/cache/fscache"
-        ]
+          "*"
+        ],
+        "metrics_collection_interval": 30
       },
       "ethtool": {
         "metrics_include": [
@@ -121,42 +102,52 @@
           "bw_out_allowance_exceeded",
           "conntrack_allowance_exceeded",
           "linklocal_allowance_exceeded",
-          "pps_allowance_exceeded",
-          "conntrack_allowance_available"
+          "pps_allowance_exceeded"
         ]
       },
       "mem": {
         "measurement": [
-          "mem_total",
           "mem_cached",
           "mem_buffered",
-          "mem_free",
           "mem_used_percent"
-        ],
-        "metrics_collection_interval": 60
+        ]
       },
       "net": {
         "measurement": [
           "net_bytes_recv",
-          "net_bytes_sent"
+          "net_bytes_sent",
+          "net_drop_in",
+          "net_drop_out",
+          "net_err_in",
+          "net_err_out"
         ],
-        "metrics_collection_interval": 60,
         "resources": [
-          "*"
+          "ens*"
         ]
       },
       "netstat": {
         "measurement": [
+          "netstat_tcp_close_wait",
           "netstat_tcp_established",
-          "netstat_tcp_time_wait"
-        ],
-        "metrics_collection_interval": 60
+          "netstat_tcp_listen",
+          "netstat_tcp_syn_sent",
+          "netstat_tcp_time_wait",
+          "netstat_udp_socket"
+        ]
+      },
+      "processes": {
+        "measurement": [
+          "processes_blocked",
+          "processes_stopped",
+          "processes_total",
+          "processes_total_threads",
+          "processes_zombies"
+        ]
       },
       "swap": {
         "measurement": [
           "swap_used_percent"
-        ],
-        "metrics_collection_interval": 60
+        ]
       }
     }
   }

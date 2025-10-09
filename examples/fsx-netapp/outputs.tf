@@ -8,7 +8,7 @@ output "autoscaling_group_name" {
   value       = module.proxy.autoscaling_group_name
 }
 
-output "proxy_host" {
+output "proxy_dns_name" {
   description = "DNS name of the KNFSD proxy."
   value       = module.proxy.dns_name
 }

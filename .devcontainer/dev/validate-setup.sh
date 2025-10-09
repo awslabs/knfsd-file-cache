@@ -11,7 +11,7 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.9"
+VERSION="1.1.0-alpha.10"
 
 # List of binaries to check
 binaries=(

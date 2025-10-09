@@ -23,6 +23,22 @@ receivers:
       #   local_paths:
       #   - /mnt/logs
 
+exporters:
+  awsemf:
+    metric_declarations:
+      # per-mount metrics
+      - dimensions:
+          - [InstanceId, server, instance]
+        metric_name_selectors:
+          - "^knfsd/nfsiostat_.+"
+          - "^knfsd/mount/(read_bytes|write_bytes)$"
+
+      # per-mount operation metrics
+      - dimensions:
+          - [InstanceId, server, instance, operation]
+        metric_name_selectors:
+          - "^knfsd/mount/operation/.+"
+
 service:
   pipelines:
     metrics:

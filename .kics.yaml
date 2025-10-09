@@ -20,6 +20,8 @@ exclude-queries:
   - 2f01fb2d-828a-499d-b98e-b83747305052 # (AWS) AWS CloudFormation Stack should have a stack policy in order to protect stack resources from update actions (false-positive, not applicable)
   - a2f548f2-188c-4fff-b172-e9a6acb216bd # (AWS) Secretsmanager Secret Without KMS (false-positive, AWS managed KMS used by default) - https://docs.kics.io/latest/queries/terraform-queries/aws/a2f548f2-188c-4fff-b172-e9a6acb216bd/
   - b72d0026-f649-4c91-a9ea-15d8f681ac09 # (AWS) Stack Notifications Disabled  - https://docs.kics.io/latest/queries/terraform-queries/aws/b72d0026-f649-4c91-a9ea-15d8f681ac09/ (false-positive, not applicable)
+  - ba2ed23b-52d3-45ca-be25-f6c358d45abd # (AWS) IAM policy allows for data exfiltration - https://docs.kics.io/latest/queries/terraform-queries/aws/ba2ed23b-52d3-45ca-be25-f6c358d45abd/ (false-positive, not applicable)
+  - 3e34db4f-0ad9-4290-bfd0-4a9ee884acaf # (AWS) ELBv2 LB Access Log Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/3e34db4f-0ad9-4290-bfd0-4a9ee884acaf/ (not required)
   - 3cb4af0b-056d-4fb1-8b95-fdc4593625ff # GCP (will be removed in the future)
   - d3499f6d-1651-41bb-a9a7-de925fea487b # GCP (will be removed in the future)
   - cefdad16-0dd5-4ac5-8ed2-a37502c78672 # GCP (will be removed in the future)

@@ -103,22 +103,20 @@ func (s *mountsScraper) start(context.Context, component.Host) error {
 func (s *mountsScraper) scrape(context.Context) (pmetric.Metrics, error) {
 	s.logger.Debug("Scraping mounts")
 
-	md := pmetric.NewMetrics()
-	now := pcommon.NewTimestampFromTime(time.Now())
-
 	agg, err := s.aggregateNFSStats()
 	if err != nil {
-		return md, err
+		return pmetric.NewMetrics(), err
 	}
 	s.queryInstanceNames(agg)
 
 	stats := agg.Totals()
+	now := pcommon.NewTimestampFromTime(time.Now())
 	for _, stat := range stats {
 		s.report(stat, now)
 	}
 	s.track(stats)
 
-	return md, nil
+	return s.mb.Emit(), nil
 }
 
 // aggregateNFSStats reads /proc/self/mountstats and aggregates the stats to
@@ -337,8 +335,6 @@ func (s *mountsScraper) report(mount nfsStats, now pcommon.Timestamp) {
 
 	// report original delta based metrics
 	s.reportDelta(mount, now)
-
-	s.mb.Emit()
 }
 
 func (s *mountsScraper) reportDelta(stats nfsStats, now pcommon.Timestamp) {

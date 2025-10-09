@@ -9,6 +9,53 @@ receivers:
         endpoint: "/run/knfsd-metrics.sock"
         transport: "unix"
 
+exporters:
+  awsemf:
+    metric_declarations:
+      # proxy-level metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId]
+        metric_name_selectors:
+          - "^knfsd/nfs_connections$"
+          - "^knfsd/nfs_inode_cache_active_objects$"
+          - "^knfsd/nfs_inode_cache_objsize$"
+          - "^knfsd/dentry_cache_active_objects$"
+          - "^knfsd/dentry_cache_objsize$"
+          - "^knfsd/fscache_oldest_file$"
+          - "^knfsd/exports/.+"
+          - "^knfsd/fsid/.+"
+
+      # per-mount metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId, server]
+        metric_name_selectors:
+          - "^knfsd/nfsiostat_.+"
+          - "^knfsd/mount/(read_bytes|write_bytes)$"
+
+      # per-mount operation metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId, server, operation]
+        metric_name_selectors:
+          - "^knfsd/mount/operation/.+"
+
+      # fsid operation metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId, command, result, retry]
+        metric_name_selectors:
+          - "^knfsd/fsid/operation/.+"
+
+      # fsid request metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId, command, result]
+        metric_name_selectors:
+          - "^knfsd/fsid/request/.+"
+
+      # fsid sql query metrics
+      - dimensions:
+          - [AutoScalingGroupName, InstanceId, query, result]
+        metric_name_selectors:
+          - "^knfsd/fsid/sql/query/.+"
+
 service:
   pipelines:
     metrics:

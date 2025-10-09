@@ -82,24 +82,21 @@ processors:
         cloud.availability_zone:
           enabled: false
         host.name:
-          enabled: true
+          enabled: false
         host.id:
           enabled: true
         host.image.id:
           enabled: false
         host.type:
-          enabled: true
+          enabled: false
       tags:
         - ^aws:autoscaling:groupName$
 
   transform:
     error_mode: ignore
     metric_statements:
-      - delete_matching_keys(resource.attributes, "telemetry\\.sdk\\..*")
-      - delete_key(resource.attributes, "service.name")
-      - replace_all_patterns(resource.attributes, "key", "^host\\.", "host_")
-      - replace_all_patterns(resource.attributes, "key", "^cloud\\.", "cloud_")
-      - replace_all_patterns(resource.attributes, "key", "ec2.tag.aws:autoscaling:groupName", "asg_name")
+      - replace_all_patterns(resource.attributes, "key", "ec2.tag.aws:autoscaling:groupName", "AutoScalingGroupName")
+      - replace_all_patterns(resource.attributes, "key", "host.id", "InstanceId")
 
   # NOTE: the open telemetry collector will interpolate environment variables
   # Thus $1 will be replaced with the value of the environment variable named "1"
@@ -239,8 +236,7 @@ exporters:
     log_group_name: "knfsd/metrics"
     log_retention: 30
     namespace: "knfsd/metrics"
-    # minimize the number of dimensions published to CloudWatch
-    dimension_rollup_option: "NoDimensionRollup"
+    dimension_rollup_option: NoDimensionRollup
     resource_to_telemetry_conversion:
       enabled: true
 

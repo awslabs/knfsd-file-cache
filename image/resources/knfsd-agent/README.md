@@ -509,14 +509,14 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "6.14.0-24-generic",
+  "kernel": "6.14.0-32-generic",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",
     "ID": "ubuntu",
     "ID_LIKE": "debian",
     "NAME": "Ubuntu",
-    "PRETTY_NAME": "Ubuntu 24.04.2 LTS",
+    "PRETTY_NAME": "Ubuntu 24.04.3 LTS",
     "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
     "SUPPORT_URL": "https://help.ubuntu.com/",
     "UBUNTU_CODENAME": "noble",
@@ -534,7 +534,7 @@ Gets the OS and kernel versions.
 
   * `NAME` - Identifies the operating system, without a version component, suitable for presentation to the user (e.g. "Ubuntu").
 
-  * `PRETTY_NAME` - Display name of the operating system (e.g. "Ubuntu 24.04.2 LTS").
+  * `PRETTY_NAME` - Display name of the operating system (e.g. "Ubuntu 24.04.3 LTS").
 
   * `ID` - Lower-case string identifying the operating system, excluding an version information and suitable for processing by scripts or usage in filenames (e.g. "ubuntu").
 

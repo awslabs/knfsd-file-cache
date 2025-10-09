@@ -29,7 +29,6 @@ metrics:
       monotonic: true
       aggregation: cumulative
 
-
   fsid.operation.duration:
     enabled: true
     description: Duration of each operation performed by the KNFSD FSID daemon. Each attempt to handle a request is one operation.

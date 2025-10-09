@@ -44,7 +44,7 @@ resource "aws_launch_template" "nfsproxy_template" {
 
   ebs_optimized = true
 
-  # 100GB root vol
+  # root vol
   block_device_mappings {
     device_name = "/dev/sda1"
     ebs {

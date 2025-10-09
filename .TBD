@@ -1,7 +1,6 @@
 ## CODE ##
 
 cloudbuild.yaml
-/deployment/metrics (dashboard)
 /image/smoke-tests
 /tutorial
 /testing

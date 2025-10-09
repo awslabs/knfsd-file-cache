@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.9"
+  default     = "1.1.0-alpha.10"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.9\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.10\"."
   }
 }
 
@@ -309,11 +309,9 @@ variable "RESERVE_KNFSD_CAPACITY" {
 }
 
 variable "INSTANCE_TAGS" {
-  description = "(Optional) AWS TAGS to apply to all KNFSD proxy EC2 instances. Default: {\"knfsd-file-cache:vm-type\" = \"nfs-proxy\"}."
+  description = "(Optional) AWS TAGS to apply to all KNFSD proxy EC2 instances. Default: {}."
   type        = map(string)
-  default = {
-    "knfsd-file-cache:vm-type" = "nfs-proxy",
-  }
+  default     = {}
 }
 
 variable "VFS_CACHE_PRESSURE" {
@@ -369,13 +367,13 @@ variable "INSTANCE_TYPE" {
 }
 
 variable "ROOT_DISK_SIZE" {
-  description = "(Optional) The size of the root disk in GB. Default: \"100\"."
+  description = "(Optional) The size of the root disk in GB. Default: \"20\"."
   type        = number
   nullable    = false
-  default     = 100
+  default     = 20
   validation {
-    condition     = var.ROOT_DISK_SIZE >= 50 && var.ROOT_DISK_SIZE <= 16384
-    error_message = "ROOT_DISK_SIZE must be between 50 and 16384 GB."
+    condition     = var.ROOT_DISK_SIZE >= 10 && var.ROOT_DISK_SIZE <= 65536
+    error_message = "ROOT_DISK_SIZE must be between 10 and 65536 GB."
   }
 }
 
@@ -417,21 +415,21 @@ variable "CACHEFILESD_EBS_COUNT" {
 }
 
 variable "CACHEFILESD_EBS_SIZE" {
-  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\" or \"ebs-io2\"), the size of the EBS volume in GB. \"ebs-gp3\" supports 1 GiB - 16384 GiB (16 TiB), \"ebs-io2\" supports 4 GiB - 65536 GiB (64 TiB). Default: \"1024\"."
+  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\" or \"ebs-io2\"), the size of the EBS volume in GB. \"ebs-gp3\" supports 1 GiB - 65536 GiB (64 TiB), \"ebs-io2\" supports 4 GiB - 65536 GiB (64 TiB). Default: \"1024\"."
   type        = number
   nullable    = false
   default     = 1024
 }
 
 variable "CACHEFILESD_EBS_IOPS" {
-  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\" or \"ebs-io2\"), the number of I/O operations per second (IOPS) for the EBS volume. \"ebs-gp3\" supports 3000 - 16000 IOPS, \"ebs-io2\" supports 100 - 256000 IOPS. Default: \"3000\"."
+  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\" or \"ebs-io2\"), the number of I/O operations per second (IOPS) for the EBS volume. \"ebs-gp3\" supports 3000 - 80000 IOPS, \"ebs-io2\" supports 100 - 256000 IOPS. Default: \"3000\"."
   type        = number
   nullable    = false
   default     = 3000
 }
 
 variable "CACHEFILESD_EBS_THROUGHPUT" {
-  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\"), the throughput (MB/s) for the EBS volume. \"ebs-gp3\" supports 125 - 1000 MiB/s. Default: \"125\"."
+  description = "(Optional) (Only used if \"CACHEFILESD_DISK_TYPE\" = \"ebs-gp3\"), the throughput (MB/s) for the EBS volume. \"ebs-gp3\" supports 125 - 2000 MiB/s. Default: \"125\"."
   type        = number
   nullable    = false
   default     = 125

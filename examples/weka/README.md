@@ -29,6 +29,6 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 ## Outputs
 
-* `projects_host` - DNS name of the KNFSD projects node for NFS clients to mount.
+* `projects_dns_name` - DNS name of the KNFSD projects node for NFS clients to mount.
 
-* `software_host` - DNS name of the KNFSD software node for NFS clients to mount.
+* `software_dns_name` - DNS name of the KNFSD software node for NFS clients to mount.

@@ -43,7 +43,7 @@ The following custom metrics are exported currently:
 | **knfsd/exports/total_operations**       | The total number of NFS operations received from NFS clients.                                                   |
 | **knfsd/exports/total_read_bytes**       | The total number of bytes read by NFS clients.                                                                  |
 | **knfsd/exports/total_write_bytes**      | The total number of bytes written by NFS clients.                                                               |
-| **knfsd/fscache_oldest_file**            | The age of the oldest file in FS-Cache. This metric is not enabled by default.                                  |
+| **knfsd/fscache_oldest_file**            | The age of the oldest file in FS-Cache. This metric is NOT enabled by default.                                  |
 
 ## Dashboards
 
@@ -61,7 +61,7 @@ Providing the metrics config from a file:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.9"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
 
   METRICS_AGENT_CONFIG = file("metrics-config.yaml")
 }
@@ -71,7 +71,7 @@ Providing the metrics config inline using heredoc syntax:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.9"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
 
   METRICS_AGENT_CONFIG = <<- EOT
     receivers:

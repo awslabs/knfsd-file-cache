@@ -2,6 +2,8 @@
 
 > INFO: This architecture requires the use of NFS v4.
 
+> WARNING: Ensure the **fanout** EC2 `INSTANCE_TYPE` is at least 2x-8x more powerful than the **cluster** EC2 `INSTANCE_TYPE` (use a larger size).
+
 ## Overview
 
 In the standard architecture, one layer of KNFSD proxies are deployed that sit between the downstream clients and the on-premise/source NFS server. This approach is shown in the below diagram:
@@ -42,7 +44,7 @@ The [fsx-zfs-fanout](../../examples/fsx-zfs-fanout/README.md) example provides a
 
 ```terraform
 module "nfs_proxy_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.9"
+  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
@@ -57,7 +59,7 @@ module "nfs_proxy_fanout" {
 }
 
 module "nfs_proxy_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.9"
+  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI

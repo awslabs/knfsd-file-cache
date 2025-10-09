@@ -20,19 +20,14 @@ linters:
       - legacy
       - std-error-handling
     rules:
-      - linters:
+      - path: _test\.go
+        linters:
           - errcheck
-        path: _test\.go
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+      - path: '(^|/)testcert\.go$'
+        linters:
+          - misspell
 formatters:
   enable:
     - gofmt
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$

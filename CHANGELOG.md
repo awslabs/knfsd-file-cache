@@ -1,5 +1,26 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.10
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added Terraform `metrics` module to deploy a custom Amazon CloudWatch dashboard. See [README](deployment/metrics/README.md), [metrics](deployment/docs/metrics.md), amd [client-metrics](docs/client-metrics.md) documentation.
+* Flatterned and minimised the dimensions of all custom metrics.
+* Fixed bug in Golang `knfsd-metrics-agent` preventing `nfsiostat` and `mount` metrics from being published.
+* Refactored Open-Telemetry dimension configuration across `common.yaml`, `proxy.yaml`, and `client.yaml`.
+* Enhanced `proxy-startup.sh` to handle different Nitro block device names depending on NVMe, EBS, RAID0 configuration at initial KNFSD instance startup only.
+* Updated to Terraform AWS provider v6.15.0.
+* Updated to Golang 1.25.2.
+* Updated KICS to 2.1.14 (and silenced false-positive).
+* Minor Golang package updates.
+* Updated to Python 3.13.8 (awaiting Python 3.14 support in AWS Lambda runtime).
+* Fix initial error with `proxy-startup.sh` startup order with KNFSD metrics agent and `nfsd`.
+* Tweak `golangci-lint` yaml config to ignore `misspell` false-positive on `testcert.go` in CI pipeline.
+* Fixed `semgrep` bug via updating to 1.137.0.
+* Updated Amazon EBS `gp3` settings in `terraform-module-knfsd` that increase the maximum size and provisioned performance as per [announcement](https://aws.amazon.com/about-aws/whats-new/2025/09/amazon-ebs-size-provisioned-performance-gp3-volumes/).
+* Reduce TF variable: `ROOT_DISK_SIZE` from 100GB to 20GB for KNFSD instance boot volume (5x cost saving on EBS `gp3` used).
+* Added **WARNING** to `fanout` documentation: *Ensure the **fanout** EC2 `INSTANCE_TYPE` is at least 2x-8x more powerful than the **cluster** EC2 `INSTANCE_TYPE` (use a larger size).*
+
 ## v1.1.0-alpha.9
 
 * Updated to Terraform AWS provider v6.13.0.
@@ -11,7 +32,7 @@
 * Re-factored the handling of the secondary `static-ip` ENI when an EC2 instance is terminated for any reason other than a scale-in event.
 * Exposed Terraform `KNFSD_NODES` and `INSTANCE_TYPE` variables to the `fsx-zfs` example.
 * Re-factored `proxy-startup.sh` to be stateless.
-* Added support for KNFSD machine reboot, `/var/cache/fscache` data persists between reboots.
+* Added support for KNFSD machine reboot, `/var/cache/fscache` data persists between reboots (shutdown not supported).
 * KNFSD specific NFS exports are now stored in `/etc/exports.d/knfsd.exports`, leaving default `/etc/exports` untouched.
 * Ensure `resources` directory is writable by all users in `../deployment/database/resources/docker-build.sh`.
 

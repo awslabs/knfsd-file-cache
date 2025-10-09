@@ -1,5 +1,7 @@
 # FSx for OpenZFS Fanout (Network Load Balancer) Example
 
+> WARNING: Ensure the **fanout** EC2 `INSTANCE_TYPE` is at least 2x-8x more powerful than the **cluster** EC2 `INSTANCE_TYPE` (use a larger size).
+
 This example provides a `ZFS (source) <-> tier-1 (fanout) <-> NLB <-> tier-2 (cluster) <-> NLB` example of the multi-tier, [fanout](../../deployment/docs/fanout.md) architecture for KNFSD-File-Cache.
 
 Amazon [FSx for OpenZFS](https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/what-is.html) is a fully managed file storage service that supports the industry-standard NFS protocol (v3, v4.0, v4.1, v4.2).

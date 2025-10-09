@@ -459,7 +459,7 @@ function init() {
 function create_fs_cache() {
 	begin_command "create fs-cache"
 	local mount_point=/var/cache/fscache
-	local DEVICESLIST NUMDEVICES root_device
+	local root_device
 
 	mkdir -p "${mount_point}"
 
@@ -706,30 +706,6 @@ function configure_nfs() {
 	complete_command
 }
 
-# configure_metrics() enables the Metrics Agent & CloudWatch Agent
-function configure_metrics() {
-	begin_command "configure metrics"
-	local cw_pid kma_pid
-	# enable metrics if configured
-	if [[ ${ENABLE_METRICS} == "true" ]]; then
-		echo "Starting Metrics Agents..."
-		printf '%s' "${METRICS_AGENT_CONFIG}" > /etc/knfsd-metrics-agent/custom.yaml
-		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
-		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then
-			amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s &
-		fi
-		cw_pid=$!
-		start_services knfsd-metrics-agent &
-		kma_pid=$!
-		# wait for both agents to finish starting to ensure stdout is grouped within this function
-		wait ${cw_pid} ${kma_pid}
-		echo "Finished starting Metrics Agents"
-	else
-		echo "Metrics are disabled. Skipping..."
-	fi
-	complete_command
-}
-
 # start_nfs() starts the KNFSD-Agent if enabled & NFS Server
 function start_nfs() {
 	begin_command "start nfs"
@@ -746,6 +722,77 @@ function start_nfs() {
 	echo "Starting nfs-kernel-server..."
 	start_services portmap nfs-kernel-server
 	echo "Finished starting nfs-kernel-server..."
+	complete_command
+}
+
+# update_cloudwatch_diskio_resources() dynamically configures CW Agent JSON file
+# with the actual block devices detected for FS-Cache, excluding the root volume.
+# Only runs on first boot before the agent converts JSON to TOML.
+function update_cloudwatch_diskio_resources() {
+	local cw_config="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+
+	echo "Updating CloudWatch Agent diskio resources..."
+
+	# build JSON array of device names
+	local devices_json=""
+	local first=true
+
+	# add individual storage devices (already detected in create_fs_cache)
+	if [[ -n "${DEVICESLIST}" ]]; then
+		for dev in ${DEVICESLIST}; do
+			local dev_name
+			dev_name=$(basename "$dev")
+
+			if [[ "$first" == "true" ]]; then
+				devices_json="\"$dev_name\""
+				first=false
+			else
+				devices_json="${devices_json}, \"$dev_name\""
+			fi
+		done
+	fi
+
+	# add md127 if RAID array exists (created when NUMDEVICES > 1)
+	if [[ -e /dev/md127 ]]; then
+		if [[ "$first" == "true" ]]; then
+			devices_json="\"md127\""
+		else
+			devices_json="${devices_json}, \"md127\""
+		fi
+	fi
+
+	echo "Detected block devices: [$devices_json]"
+
+	# update "resources" array in diskio section
+	jq ".metrics.metrics_collected.diskio.resources = [$devices_json]" \
+		"$cw_config" > "${cw_config}.tmp" \
+		&& mv "${cw_config}.tmp" "$cw_config"
+
+	echo "CloudWatch Agent diskio resources updated successfully"
+}
+
+# start_metrics() enables the Metrics Agent & CloudWatch Agent
+function start_metrics() {
+	begin_command "start metrics"
+	local cw_pid kma_pid
+	# enable metrics if configured
+	if [[ ${ENABLE_METRICS} == "true" ]]; then
+		echo "Starting Metrics Agents..."
+		printf '%s' "${METRICS_AGENT_CONFIG}" > /etc/knfsd-metrics-agent/custom.yaml
+		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
+		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then
+			update_cloudwatch_diskio_resources
+			amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s &
+		fi
+		cw_pid=$!
+		start_services knfsd-metrics-agent &
+		kma_pid=$!
+		# wait for both agents to finish starting to ensure stdout is grouped within this function
+		wait ${cw_pid} ${kma_pid}
+		echo "Finished starting Metrics Agents"
+	else
+		echo "Metrics are disabled. Skipping..."
+	fi
 	complete_command
 }
 
@@ -800,10 +847,11 @@ function main() {
 
 	configure_read_ahead
 	configure_nfs
-	configure_metrics
 
 	start_fsidd
 	start_nfs
+	start_metrics
+
 	post_startup
 }
 
