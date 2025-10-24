@@ -1,11 +1,29 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.11
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Pinned Linux HWE kernel to v6.14.0-29-generic due to [bug](https://bugs.launchpad.net/ubuntu/+source/linux-hwe-6.14/+bug/2125678).
+* Updated default `INSTANCE_TYPE` to `i3en.6xlarge` in `terraform-module-knfsd` module and all examples.
+* Updated default `INSTANCE_TYPE` to `i3en.12xlarge` in `fanout` examples.
+* Updated to Terraform AWS provider v6.18.0.
+* Updated to Golang 1.25.3.
+* Minor Golang package updates.
+* Added missing NFSv4 file operations widgets to CloudWatch `metrics` dashboard.
+* Added a tutorial: "Deploy a kernel space NFS caching proxy on AWS". See [README](tutorial/README.md) for more information.
+* Cleaned up log messaging in `proxy-startup.sh` script for custom pre/post startup scripts.
+* Fixed bug in custom pre/post `proxy-startup.sh` script handling where double-quotations were not being handled correctly inside inline bash commands or referenced shell script files.
+* Packer: Added `missingok` and `notifempty` to `knfsd-logrotate.conf`.
+* Packer: Purge `/etc/machine-id` file to ensure unique machine-id is generated during first-boot.
+* Added network throughput metric to CloudWatch `metrics` dashboard.
+
 ## v1.1.0-alpha.10
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Added Terraform `metrics` module to deploy a custom Amazon CloudWatch dashboard. See [README](deployment/metrics/README.md), [metrics](deployment/docs/metrics.md), amd [client-metrics](docs/client-metrics.md) documentation.
-* Flatterned and minimised the dimensions of all custom metrics.
+* Added Terraform `metrics` module to deploy a custom Amazon CloudWatch dashboard. See [README](deployment/metrics/README.md), [metrics](deployment/docs/metrics.md), and [client-metrics](docs/client-metrics.md) documentation.
+* Flattened and minimised the dimensions of all custom metrics.
 * Fixed bug in Golang `knfsd-metrics-agent` preventing `nfsiostat` and `mount` metrics from being published.
 * Refactored Open-Telemetry dimension configuration across `common.yaml`, `proxy.yaml`, and `client.yaml`.
 * Enhanced `proxy-startup.sh` to handle different Nitro block device names depending on NVMe, EBS, RAID0 configuration at initial KNFSD instance startup only.

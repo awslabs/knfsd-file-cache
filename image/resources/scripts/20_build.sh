@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.10"
+VERSION="1.1.0-alpha.11"
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -299,9 +299,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.25.2.linux-amd64.tar.gz https://dl.google.com/go/go1.25.2.linux-amd64.tar.gz
+	curl -o go1.25.3.linux-amd64.tar.gz https://dl.google.com/go/go1.25.3.linux-amd64.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.25.2.linux-amd64.tar.gz
+	tar -C /usr/local -xzf go1.25.3.linux-amd64.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
 	complete_command
 )
@@ -363,8 +363,8 @@ function update_kernel() (
 	apt-get purge -yq linux-image-aws linux-headers-aws linux-aws
 	DEBIAN_FRONTEND=noninteractive apt-get purge -yq linux-image-"${version}" linux-headers-"${version}" linux-modules-"${version}"
 	apt-get autoremove -y
-	# install latest Linux HWE kernel
-	apt-get -o DPkg::Lock::Timeout=60 install -y linux-generic-hwe-24.04
+	# install Linux HWE kernel: pinned to known good version
+	apt-get -o DPkg::Lock::Timeout=60 install -y linux-image-6.14.0-29-generic linux-headers-6.14.0-29-generic linux-modules-6.14.0-29-generic
 	complete_command
 )
 

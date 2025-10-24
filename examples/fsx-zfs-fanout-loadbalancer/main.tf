@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.15.0"
+      version = "~> 6.18.0"
     }
   }
 }
@@ -121,7 +121,7 @@ module "nfs_proxy_fanout" {
   KEY_NAME              = var.KEY_NAME
   PROXY_AMI             = var.PROXY_AMI
   INSTANCE_TAGS         = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-loadbalancer" }
-  INSTANCE_TYPE         = "i3en.6xlarge"                                          # Use a higher CPU and Memory machine type to increase fanout performance
+  INSTANCE_TYPE         = "i3en.12xlarge"                                         # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES           = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
   EXPORT_MAP            = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
   PROXY_BASENAME        = "nfsproxy-fanout"                                       # Give this proxy a unique base name
@@ -140,7 +140,7 @@ module "nfs_proxy_cluster" {
   FSID_DATABASE_DEPLOY     = false                                                                  # Reuse the database from the fanout module
   FSID_DATABASE_CONFIG     = module.nfs_proxy_fanout.database_config                                # Database configuration from the fanout module
   FSID_DATABASE_IAM_POLICY = module.nfs_proxy_fanout.database_iam_policy                            # ARN of the IAM policy for rds-db:connect database access from the fanout module
-  INSTANCE_TYPE            = "i3en.3xlarge"                                                         # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
+  INSTANCE_TYPE            = "i3en.6xlarge"                                                         # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
   KNFSD_NODES              = 3                                                                      # Deploy >1 knfsd node for the performant based, temporary proxy nodes
   EXPORT_MAP               = "${module.nfs_proxy_fanout.nfsproxy_loadbalancer_ipaddress};/fsx;/fsx" # Re-export the export from the fanout proxy
   PROXY_BASENAME           = "nfsproxy-cluster"                                                     # Give this cluster a unique base name

@@ -44,11 +44,11 @@ The [fsx-zfs-fanout](../../examples/fsx-zfs-fanout/README.md) example provides a
 
 ```terraform
 module "nfs_proxy_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
+  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.11"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
-  INSTANCE_TYPE         = "i3en.6xlarge"                         # Use a higher CPU and Memory machine type to increase fanout performance
+  INSTANCE_TYPE         = "i3en.12xlarge"                        # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES           = 1                                      # Only deploy 1 proxy in the cluster because we want a single fanout proxy
   EXPORT_MAP            = "10.0.5.5;/remoteexport;/remoteexport" # Define the exports in the standard way
   PROXY_BASENAME        = "nfsproxy-fanout"                      # Give this proxy a unique base name
@@ -59,14 +59,14 @@ module "nfs_proxy_fanout" {
 }
 
 module "nfs_proxy_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
+  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.11"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI
   FSID_DATABASE_DEPLOY     = false                                                                                    # Reuse the database from the fanout module
   FSID_DATABASE_CONFIG     = module.nfs_proxy_fanout.database_config                                                  # database configuration from the fanout module
   FSID_DATABASE_IAM_POLICY = module.nfs_proxy_fanout.database_iam_policy                                              # ARN of the IAM policy for rds-db:connect database access from the fanout module
-  INSTANCE_TYPE            = "i3en.3xlarge"                                                                           # Use a smaller CPU and memory machine type as we have multiple proxies in the cluster
+  INSTANCE_TYPE            = "i3en.6xlarge"                                                                           # Use a smaller CPU and memory machine type as we have multiple proxies in the cluster
   KNFSD_NODES              = 3                                                                                        # Deploy 3 knfsd proxies for the performant based, temporary cache nodes
   EXPORT_MAP               = "${module.nfs_proxy_fanout.nfsproxy_loadbalancer_ipaddress};/remoteexport;/remoteexport" # Re-export the export from the fanout proxy
   PROXY_BASENAME           = "nfsproxy-cluster"                                                                       # Give this cluster a unique base name

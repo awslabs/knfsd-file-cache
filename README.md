@@ -1,6 +1,8 @@
 # KNFSD File Cache
 
-Please log issues/feature requests in the [GitHub issue tracker](https://github.com/awslabs/knfsd-file-cache/issues). For questions & comments, reach out to `knfsd-file-cache@amazon.com`.
+Please log issues/feature requests in the [GitHub issue tracker](https://github.com/awslabs/knfsd-file-cache/issues).
+
+For questions & comments, reach out to `knfsd-file-cache@amazon.com`.
 
 ## Overview
 

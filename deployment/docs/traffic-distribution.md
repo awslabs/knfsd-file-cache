@@ -12,7 +12,7 @@ This module supports two methods of distributing traffic from clients to KNFSD p
 
 This Terraform child module uses Amazon Route 53 DNS to distribute client traffic between the KNFSD proxy instances by configuring a private DNS A record per static IP address for each proxy instance using the [weighted routing policy](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html).
 
-The clients need to be configured to use the DNS name of the KNFSD proxy cluster. The client will resolve the DNS name to the IP of a specific proxy instance. This address resolution is stable, so resolving the DNS address multiple times on the same client will result in the same IP each time.
+The clients need to be configured to use the DNS name of the KNFSD proxy cluster. The client will resolve the DNS name to the IP of a specific proxy instance. This address resolution is stable, so resolving the DNS address multiple times on the same client will result in the same IP address until the Time-To-Live (TTL) of the DNS A record is reached.
 
 ### Limitations: RR
 

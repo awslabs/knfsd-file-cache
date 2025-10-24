@@ -35,7 +35,7 @@ For KNFSD developers, you can use either VS Code or Cursor to run a `.devcontain
 
 ## AWS Service Quotas
 
-By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the `c6in.2xlarge` instance type used in the Packer build process, which requires 8 vCPUs or the default `i3en.6xl` instance type used as the KNFSD proxy, which requires 24 vCPUs. For each additional KNFSD node, you will need to multiply the number of vCPUs by the maximum number of nodes you plan to deploy. You should also add a 25% buffer to the total number of vCPUs required.
+By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the `c6in.2xlarge` instance type used in the Packer build process, which requires 8 vCPUs or the default `i3en.6xlarge` instance type used as the KNFSD proxy, which requires 24 vCPUs. For each additional KNFSD node, you will need to multiply the number of vCPUs by the maximum number of nodes you plan to deploy. You should also add a 25% buffer to the total number of vCPUs required.
 
 You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the total number of On-Demand vCPUs required. Please note that EC2 Spot vCPU service quotas are not applicable to this solution, but will be necessary for your EC2 compute instances.
 

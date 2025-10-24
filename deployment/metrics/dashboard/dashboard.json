@@ -516,7 +516,7 @@
           "type": "metric",
           "x": 0,
           "y": 22,
-          "width": 6,
+          "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
@@ -540,9 +540,9 @@
       },
       {
           "type": "metric",
-          "x": 6,
+          "x": 12,
           "y": 22,
-          "width": 6,
+          "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
@@ -566,9 +566,9 @@
       },
       {
           "type": "metric",
-          "x": 12,
-          "y": 22,
-          "width": 6,
+          "x": 0,
+          "y": 30,
+          "width": 7,
           "height": 8,
           "properties": {
               "metrics": [
@@ -590,9 +590,36 @@
       },
       {
           "type": "metric",
-          "x": 18,
-          "y": 22,
-          "width": 6,
+          "x": 7,
+          "y": 30,
+          "width": 10,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "AWS/EC2", "NetworkIn", "InstanceId", "INSTANCE_FILTER", { "id": "m1", "visible": false } ],
+                  [ "AWS/EC2", "NetworkOut", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false } ],
+                  [ { "expression": "m1 / 300 / 0.008", "label": "${PROP('Dim.InstanceId')}: IN" } ],
+                  [ { "expression": "m2 / 300 / 0.008", "label": "${PROP('Dim.InstanceId')}: OUT" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": true,
+              "region": "${region_filter}",
+              "title": "Proxy Network Throughput",
+              "period": 300,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Mbps/Gbps",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 17,
+          "y": 30,
+          "width": 7,
           "height": 8,
           "properties": {
               "metrics": [
@@ -620,7 +647,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 30,
+          "y": 38,
           "width": 12,
           "height": 8,
           "properties": {
@@ -644,7 +671,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 30,
+          "y": 38,
           "width": 12,
           "height": 8,
           "properties": {
@@ -668,7 +695,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 38,
+          "y": 46,
           "width": 12,
           "height": 8,
           "properties": {
@@ -692,7 +719,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 38,
+          "y": 46,
           "width": 12,
           "height": 8,
           "properties": {
@@ -716,7 +743,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 46,
+          "y": 54,
           "width": 24,
           "height": 3,
           "properties": {
@@ -727,7 +754,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 49,
+          "y": 57,
           "width": 12,
           "height": 8,
           "properties": {
@@ -751,7 +778,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 49,
+          "y": 57,
           "width": 12,
           "height": 8,
           "properties": {
@@ -775,7 +802,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 57,
+          "y": 65,
           "width": 12,
           "height": 8,
           "properties": {
@@ -799,7 +826,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 57,
+          "y": 65,
           "width": 12,
           "height": 8,
           "properties": {
@@ -823,7 +850,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 65,
+          "y": 73,
           "width": 12,
           "height": 8,
           "properties": {
@@ -847,7 +874,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 65,
+          "y": 73,
           "width": 12,
           "height": 8,
           "properties": {
@@ -871,18 +898,18 @@
       {
           "type": "text",
           "x": 0,
-          "y": 73,
+          "y": 81,
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## NFS Operations\n\nThe following graphs show KNFSD -> Source Filer operations.",
+              "markdown": "## NFS v3 Operations\n\nThe following graphs show KNFSD -> Source Filer operations for NFS v3.",
               "background": "transparent"
           }
       },
       {
           "type": "metric",
           "x": 0,
-          "y": 75,
+          "y": 83,
           "width": 12,
           "height": 8,
           "properties": {
@@ -913,15 +940,21 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS Ops: Sent Bytes",
+              "title": "NFS v3 Ops: Sent Bytes",
               "period": 60,
-              "stat": "Sum"
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
           "type": "metric",
           "x": 12,
-          "y": 75,
+          "y": 83,
           "width": 12,
           "height": 8,
           "properties": {
@@ -952,15 +985,21 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS Ops: Received Bytes",
+              "title": "NFS v3 Ops: Received Bytes",
               "period": 60,
-              "stat": "Sum"
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
           "type": "metric",
           "x": 0,
-          "y": 83,
+          "y": 91,
           "width": 8,
           "height": 8,
           "properties": {
@@ -991,7 +1030,7 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS Ops: Requests",
+              "title": "NFS v3 Ops: Requests",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1005,7 +1044,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 83,
+          "y": 91,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1036,7 +1075,7 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS Ops: Major Timeouts",
+              "title": "NFS v3 Ops: Major Timeouts",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1050,7 +1089,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 83,
+          "y": 91,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1081,7 +1120,7 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS Ops: Errors",
+              "title": "NFS v3 Ops: Errors",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1095,7 +1134,478 @@
       {
           "type": "text",
           "x": 0,
-          "y": 91,
+          "y": 99,
+          "width": 24,
+          "height": 2,
+          "properties": {
+              "markdown": "## NFS v4 Operations\n\nThe following graphs show KNFSD -> Source Filer operations for NFS v4.",
+              "background": "transparent"
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 101,
+          "width": 12,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
+                  [ "...", "READ" ],
+                  [ "...", "WRITE" ],
+                  [ "...", "COMMIT" ],
+                  [ "...", "OPEN" ],
+                  [ "...", "OPEN_CONFIRM" ],
+                  [ "...", "OPEN_NOATTR" ],
+                  [ "...", "OPEN_DOWNGRADE" ],
+                  [ "...", "CLOSE" ],
+                  [ "...", "SETATTR" ],
+                  [ "...", "FSINFO" ],
+                  [ "...", "RENEW" ],
+                  [ "...", "SETCLIENTID" ],
+                  [ "...", "SETCLIENTID_CONFIRM" ],
+                  [ "...", "LOCK" ],
+                  [ "...", "LOCKT" ],
+                  [ "...", "LOCKU" ],
+                  [ "...", "ACCESS" ],
+                  [ "...", "GETATTR" ],
+                  [ "...", "LOOKUP" ],
+                  [ "...", "LOOKUP_ROOT" ],
+                  [ "...", "REMOVE" ],
+                  [ "...", "RENAME" ],
+                  [ "...", "LINK" ],
+                  [ "...", "SYMLINK" ],
+                  [ "...", "CREATE" ],
+                  [ "...", "PATHCONF" ],
+                  [ "...", "STATFS" ],
+                  [ "...", "READLINK" ],
+                  [ "...", "READDIR" ],
+                  [ "...", "SERVER_CAPS" ],
+                  [ "...", "DELEGRETURN" ],
+                  [ "...", "GETACL" ],
+                  [ "...", "SETACL" ],
+                  [ "...", "FS_LOCATIONS" ],
+                  [ "...", "RELEASE_LOCKOWNER" ],
+                  [ "...", "SECINFO" ],
+                  [ "...", "FSID_PRESENT" ],
+                  [ "...", "EXCHANGE_ID" ],
+                  [ "...", "CREATE_SESSION" ],
+                  [ "...", "DESTROY_SESSION" ],
+                  [ "...", "SEQUENCE" ],
+                  [ "...", "GET_LEASE_TIME" ],
+                  [ "...", "RECLAIM_COMPLETE" ],
+                  [ "...", "LAYOUTGET" ],
+                  [ "...", "GETDEVICEINFO" ],
+                  [ "...", "LAYOUTCOMMIT" ],
+                  [ "...", "LAYOUTRETURN" ],
+                  [ "...", "SECINFO_NO_NAME" ],
+                  [ "...", "TEST_STATEID" ],
+                  [ "...", "FREE_STATEID" ],
+                  [ "...", "GETDEVICELIST" ],
+                  [ "...", "BIND_CONN_TO_SESSION" ],
+                  [ "...", "DESTROY_CLIENTID" ],
+                  [ "...", "SEEK" ],
+                  [ "...", "ALLOCATE" ],
+                  [ "...", "DEALLOCATE" ],
+                  [ "...", "LAYOUTSTATS" ],
+                  [ "...", "CLONE" ],
+                  [ "...", "COPY" ],
+                  [ "...", "COPY_NOTIFY" ],
+                  [ "...", "GETXATTR" ],
+                  [ "...", "LISTXATTRS" ],
+                  [ "...", "LOOKUPP" ],
+                  [ "...", "OFFLOAD_CANCEL" ],
+                  [ "...", "READ_PLUS" ],
+                  [ "...", "REMOVEXATTR" ],
+                  [ "...", "SETXATTR" ],
+                  [ "...", "LAYOUTERROR" ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS v4 Ops: Sent Bytes",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 101,
+          "width": 12,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
+                  [ "...", "READ" ],
+                  [ "...", "WRITE" ],
+                  [ "...", "COMMIT" ],
+                  [ "...", "OPEN" ],
+                  [ "...", "OPEN_CONFIRM" ],
+                  [ "...", "OPEN_NOATTR" ],
+                  [ "...", "OPEN_DOWNGRADE" ],
+                  [ "...", "CLOSE" ],
+                  [ "...", "SETATTR" ],
+                  [ "...", "FSINFO" ],
+                  [ "...", "RENEW" ],
+                  [ "...", "SETCLIENTID" ],
+                  [ "...", "SETCLIENTID_CONFIRM" ],
+                  [ "...", "LOCK" ],
+                  [ "...", "LOCKT" ],
+                  [ "...", "LOCKU" ],
+                  [ "...", "ACCESS" ],
+                  [ "...", "GETATTR" ],
+                  [ "...", "LOOKUP" ],
+                  [ "...", "LOOKUP_ROOT" ],
+                  [ "...", "REMOVE" ],
+                  [ "...", "RENAME" ],
+                  [ "...", "LINK" ],
+                  [ "...", "SYMLINK" ],
+                  [ "...", "CREATE" ],
+                  [ "...", "PATHCONF" ],
+                  [ "...", "STATFS" ],
+                  [ "...", "READLINK" ],
+                  [ "...", "READDIR" ],
+                  [ "...", "SERVER_CAPS" ],
+                  [ "...", "DELEGRETURN" ],
+                  [ "...", "GETACL" ],
+                  [ "...", "SETACL" ],
+                  [ "...", "FS_LOCATIONS" ],
+                  [ "...", "RELEASE_LOCKOWNER" ],
+                  [ "...", "SECINFO" ],
+                  [ "...", "FSID_PRESENT" ],
+                  [ "...", "EXCHANGE_ID" ],
+                  [ "...", "CREATE_SESSION" ],
+                  [ "...", "DESTROY_SESSION" ],
+                  [ "...", "SEQUENCE" ],
+                  [ "...", "GET_LEASE_TIME" ],
+                  [ "...", "RECLAIM_COMPLETE" ],
+                  [ "...", "LAYOUTGET" ],
+                  [ "...", "GETDEVICEINFO" ],
+                  [ "...", "LAYOUTCOMMIT" ],
+                  [ "...", "LAYOUTRETURN" ],
+                  [ "...", "SECINFO_NO_NAME" ],
+                  [ "...", "TEST_STATEID" ],
+                  [ "...", "FREE_STATEID" ],
+                  [ "...", "GETDEVICELIST" ],
+                  [ "...", "BIND_CONN_TO_SESSION" ],
+                  [ "...", "DESTROY_CLIENTID" ],
+                  [ "...", "SEEK" ],
+                  [ "...", "ALLOCATE" ],
+                  [ "...", "DEALLOCATE" ],
+                  [ "...", "LAYOUTSTATS" ],
+                  [ "...", "CLONE" ],
+                  [ "...", "COPY" ],
+                  [ "...", "COPY_NOTIFY" ],
+                  [ "...", "GETXATTR" ],
+                  [ "...", "LISTXATTRS" ],
+                  [ "...", "LOOKUPP" ],
+                  [ "...", "OFFLOAD_CANCEL" ],
+                  [ "...", "READ_PLUS" ],
+                  [ "...", "REMOVEXATTR" ],
+                  [ "...", "SETXATTR" ],
+                  [ "...", "LAYOUTERROR" ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS v4 Ops: Received Bytes",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 109,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
+                  [ "...", "READ" ],
+                  [ "...", "WRITE" ],
+                  [ "...", "COMMIT" ],
+                  [ "...", "OPEN" ],
+                  [ "...", "OPEN_CONFIRM" ],
+                  [ "...", "OPEN_NOATTR" ],
+                  [ "...", "OPEN_DOWNGRADE" ],
+                  [ "...", "CLOSE" ],
+                  [ "...", "SETATTR" ],
+                  [ "...", "FSINFO" ],
+                  [ "...", "RENEW" ],
+                  [ "...", "SETCLIENTID" ],
+                  [ "...", "SETCLIENTID_CONFIRM" ],
+                  [ "...", "LOCK" ],
+                  [ "...", "LOCKT" ],
+                  [ "...", "LOCKU" ],
+                  [ "...", "ACCESS" ],
+                  [ "...", "GETATTR" ],
+                  [ "...", "LOOKUP" ],
+                  [ "...", "LOOKUP_ROOT" ],
+                  [ "...", "REMOVE" ],
+                  [ "...", "RENAME" ],
+                  [ "...", "LINK" ],
+                  [ "...", "SYMLINK" ],
+                  [ "...", "CREATE" ],
+                  [ "...", "PATHCONF" ],
+                  [ "...", "STATFS" ],
+                  [ "...", "READLINK" ],
+                  [ "...", "READDIR" ],
+                  [ "...", "SERVER_CAPS" ],
+                  [ "...", "DELEGRETURN" ],
+                  [ "...", "GETACL" ],
+                  [ "...", "SETACL" ],
+                  [ "...", "FS_LOCATIONS" ],
+                  [ "...", "RELEASE_LOCKOWNER" ],
+                  [ "...", "SECINFO" ],
+                  [ "...", "FSID_PRESENT" ],
+                  [ "...", "EXCHANGE_ID" ],
+                  [ "...", "CREATE_SESSION" ],
+                  [ "...", "DESTROY_SESSION" ],
+                  [ "...", "SEQUENCE" ],
+                  [ "...", "GET_LEASE_TIME" ],
+                  [ "...", "RECLAIM_COMPLETE" ],
+                  [ "...", "LAYOUTGET" ],
+                  [ "...", "GETDEVICEINFO" ],
+                  [ "...", "LAYOUTCOMMIT" ],
+                  [ "...", "LAYOUTRETURN" ],
+                  [ "...", "SECINFO_NO_NAME" ],
+                  [ "...", "TEST_STATEID" ],
+                  [ "...", "FREE_STATEID" ],
+                  [ "...", "GETDEVICELIST" ],
+                  [ "...", "BIND_CONN_TO_SESSION" ],
+                  [ "...", "DESTROY_CLIENTID" ],
+                  [ "...", "SEEK" ],
+                  [ "...", "ALLOCATE" ],
+                  [ "...", "DEALLOCATE" ],
+                  [ "...", "LAYOUTSTATS" ],
+                  [ "...", "CLONE" ],
+                  [ "...", "COPY" ],
+                  [ "...", "COPY_NOTIFY" ],
+                  [ "...", "GETXATTR" ],
+                  [ "...", "LISTXATTRS" ],
+                  [ "...", "LOOKUPP" ],
+                  [ "...", "OFFLOAD_CANCEL" ],
+                  [ "...", "READ_PLUS" ],
+                  [ "...", "REMOVEXATTR" ],
+                  [ "...", "SETXATTR" ],
+                  [ "...", "LAYOUTERROR" ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS v4 Ops: Requests",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 8,
+          "y": 109,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
+                  [ "...", "READ" ],
+                  [ "...", "WRITE" ],
+                  [ "...", "COMMIT" ],
+                  [ "...", "OPEN" ],
+                  [ "...", "OPEN_CONFIRM" ],
+                  [ "...", "OPEN_NOATTR" ],
+                  [ "...", "OPEN_DOWNGRADE" ],
+                  [ "...", "CLOSE" ],
+                  [ "...", "SETATTR" ],
+                  [ "...", "FSINFO" ],
+                  [ "...", "RENEW" ],
+                  [ "...", "SETCLIENTID" ],
+                  [ "...", "SETCLIENTID_CONFIRM" ],
+                  [ "...", "LOCK" ],
+                  [ "...", "LOCKT" ],
+                  [ "...", "LOCKU" ],
+                  [ "...", "ACCESS" ],
+                  [ "...", "GETATTR" ],
+                  [ "...", "LOOKUP" ],
+                  [ "...", "LOOKUP_ROOT" ],
+                  [ "...", "REMOVE" ],
+                  [ "...", "RENAME" ],
+                  [ "...", "LINK" ],
+                  [ "...", "SYMLINK" ],
+                  [ "...", "CREATE" ],
+                  [ "...", "PATHCONF" ],
+                  [ "...", "STATFS" ],
+                  [ "...", "READLINK" ],
+                  [ "...", "READDIR" ],
+                  [ "...", "SERVER_CAPS" ],
+                  [ "...", "DELEGRETURN" ],
+                  [ "...", "GETACL" ],
+                  [ "...", "SETACL" ],
+                  [ "...", "FS_LOCATIONS" ],
+                  [ "...", "RELEASE_LOCKOWNER" ],
+                  [ "...", "SECINFO" ],
+                  [ "...", "FSID_PRESENT" ],
+                  [ "...", "EXCHANGE_ID" ],
+                  [ "...", "CREATE_SESSION" ],
+                  [ "...", "DESTROY_SESSION" ],
+                  [ "...", "SEQUENCE" ],
+                  [ "...", "GET_LEASE_TIME" ],
+                  [ "...", "RECLAIM_COMPLETE" ],
+                  [ "...", "LAYOUTGET" ],
+                  [ "...", "GETDEVICEINFO" ],
+                  [ "...", "LAYOUTCOMMIT" ],
+                  [ "...", "LAYOUTRETURN" ],
+                  [ "...", "SECINFO_NO_NAME" ],
+                  [ "...", "TEST_STATEID" ],
+                  [ "...", "FREE_STATEID" ],
+                  [ "...", "GETDEVICELIST" ],
+                  [ "...", "BIND_CONN_TO_SESSION" ],
+                  [ "...", "DESTROY_CLIENTID" ],
+                  [ "...", "SEEK" ],
+                  [ "...", "ALLOCATE" ],
+                  [ "...", "DEALLOCATE" ],
+                  [ "...", "LAYOUTSTATS" ],
+                  [ "...", "CLONE" ],
+                  [ "...", "COPY" ],
+                  [ "...", "COPY_NOTIFY" ],
+                  [ "...", "GETXATTR" ],
+                  [ "...", "LISTXATTRS" ],
+                  [ "...", "LOOKUPP" ],
+                  [ "...", "OFFLOAD_CANCEL" ],
+                  [ "...", "READ_PLUS" ],
+                  [ "...", "REMOVEXATTR" ],
+                  [ "...", "SETXATTR" ],
+                  [ "...", "LAYOUTERROR" ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS v4 Ops: Major Timeouts",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 16,
+          "y": 109,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
+                  [ "...", "READ" ],
+                  [ "...", "WRITE" ],
+                  [ "...", "COMMIT" ],
+                  [ "...", "OPEN" ],
+                  [ "...", "OPEN_CONFIRM" ],
+                  [ "...", "OPEN_NOATTR" ],
+                  [ "...", "OPEN_DOWNGRADE" ],
+                  [ "...", "CLOSE" ],
+                  [ "...", "SETATTR" ],
+                  [ "...", "FSINFO" ],
+                  [ "...", "RENEW" ],
+                  [ "...", "SETCLIENTID" ],
+                  [ "...", "SETCLIENTID_CONFIRM" ],
+                  [ "...", "LOCK" ],
+                  [ "...", "LOCKT" ],
+                  [ "...", "LOCKU" ],
+                  [ "...", "ACCESS" ],
+                  [ "...", "GETATTR" ],
+                  [ "...", "LOOKUP" ],
+                  [ "...", "LOOKUP_ROOT" ],
+                  [ "...", "REMOVE" ],
+                  [ "...", "RENAME" ],
+                  [ "...", "LINK" ],
+                  [ "...", "SYMLINK" ],
+                  [ "...", "CREATE" ],
+                  [ "...", "PATHCONF" ],
+                  [ "...", "STATFS" ],
+                  [ "...", "READLINK" ],
+                  [ "...", "READDIR" ],
+                  [ "...", "SERVER_CAPS" ],
+                  [ "...", "DELEGRETURN" ],
+                  [ "...", "GETACL" ],
+                  [ "...", "SETACL" ],
+                  [ "...", "FS_LOCATIONS" ],
+                  [ "...", "RELEASE_LOCKOWNER" ],
+                  [ "...", "SECINFO" ],
+                  [ "...", "FSID_PRESENT" ],
+                  [ "...", "EXCHANGE_ID" ],
+                  [ "...", "CREATE_SESSION" ],
+                  [ "...", "DESTROY_SESSION" ],
+                  [ "...", "SEQUENCE" ],
+                  [ "...", "GET_LEASE_TIME" ],
+                  [ "...", "RECLAIM_COMPLETE" ],
+                  [ "...", "LAYOUTGET" ],
+                  [ "...", "GETDEVICEINFO" ],
+                  [ "...", "LAYOUTCOMMIT" ],
+                  [ "...", "LAYOUTRETURN" ],
+                  [ "...", "SECINFO_NO_NAME" ],
+                  [ "...", "TEST_STATEID" ],
+                  [ "...", "FREE_STATEID" ],
+                  [ "...", "GETDEVICELIST" ],
+                  [ "...", "BIND_CONN_TO_SESSION" ],
+                  [ "...", "DESTROY_CLIENTID" ],
+                  [ "...", "SEEK" ],
+                  [ "...", "ALLOCATE" ],
+                  [ "...", "DEALLOCATE" ],
+                  [ "...", "LAYOUTSTATS" ],
+                  [ "...", "CLONE" ],
+                  [ "...", "COPY" ],
+                  [ "...", "COPY_NOTIFY" ],
+                  [ "...", "GETXATTR" ],
+                  [ "...", "LISTXATTRS" ],
+                  [ "...", "LOOKUPP" ],
+                  [ "...", "OFFLOAD_CANCEL" ],
+                  [ "...", "READ_PLUS" ],
+                  [ "...", "REMOVEXATTR" ],
+                  [ "...", "SETXATTR" ],
+                  [ "...", "LAYOUTERROR" ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS v4 Ops: Errors",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "text",
+          "x": 0,
+          "y": 117,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1106,7 +1616,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 93,
+          "y": 119,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1131,7 +1641,7 @@
       {
           "type": "metric",
           "x": 5,
-          "y": 93,
+          "y": 119,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1156,7 +1666,7 @@
       {
           "type": "metric",
           "x": 10,
-          "y": 93,
+          "y": 119,
           "width": 4,
           "height": 8,
           "properties": {
@@ -1180,7 +1690,7 @@
       {
           "type": "metric",
           "x": 14,
-          "y": 93,
+          "y": 119,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1207,7 +1717,7 @@
       {
           "type": "metric",
           "x": 19,
-          "y": 93,
+          "y": 119,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1232,7 +1742,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 101,
+          "y": 127,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1243,7 +1753,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 103,
+          "y": 129,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1279,7 +1789,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 103,
+          "y": 129,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1306,7 +1816,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 103,
+          "y": 129,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1343,7 +1853,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 103,
+          "y": 129,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1368,7 +1878,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 111,
+          "y": 137,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1399,7 +1909,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 111,
+          "y": 137,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1427,7 +1937,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 111,
+          "y": 137,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1453,7 +1963,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 111,
+          "y": 137,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1481,7 +1991,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 119,
+          "y": 145,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1492,20 +2002,20 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 121,
+          "y": 147,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_path" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "retry: get_path" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1524,20 +2034,20 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 121,
+          "y": 147,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_or_create_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_or_create_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_path" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_or_create_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_or_create_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_or_create_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "retry: get_path" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_or_create_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1546,27 +2056,27 @@
               "period": 60,
               "stat": "Average",
               "yAxis": {
-                "left": {
-                    "label": "Time/ms",
-                    "showUnits": false
-                }
-            }
+                  "left": {
+                      "label": "Time/ms",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
           "type": "metric",
           "x": 12,
-          "y": 121,
+          "y": 147,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: get_fsid" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: allocate_fsid" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: get_fsid" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: allocate_fsid" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: get_fsid" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: allocate_fsid" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: get_fsid" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: allocate_fsid" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1585,17 +2095,17 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 121,
+          "y": 147,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: get_fsid" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: allocate_fsid" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: get_fsid" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: allocate_fsid" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: get_fsid" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: allocate_fsid" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: get_fsid" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: allocate_fsid" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1604,27 +2114,27 @@
               "period": 60,
               "stat": "Average",
               "yAxis": {
-                "left": {
-                    "label": "Time/ms",
-                    "showUnits": false
-                }
-            }
+                  "left": {
+                      "label": "Time/ms",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
           "type": "metric",
           "x": 0,
-          "y": 129,
+          "y": 155,
           "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1642,17 +2152,17 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 129,
+          "y": 155,
           "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_or_create_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_or_create_fsidnum" } ],
-                [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_or_create_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_or_create_fsidnum" } ],
+                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1670,17 +2180,17 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 129,
+          "y": 155,
           "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_path" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
-                [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "ok: get_path" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_or_create_fsidnum" } ],
+                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum', 60))", "label": "not_found: get_path" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1698,7 +2208,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 137,
+          "y": 163,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1709,7 +2219,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 139,
+          "y": 165,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1733,7 +2243,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 139,
+          "y": 165,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1751,7 +2261,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 139,
+          "y": 165,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1774,7 +2284,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 147,
+          "y": 173,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1799,7 +2309,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 147,
+          "y": 173,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1837,7 +2347,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 147,
+          "y": 173,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1871,7 +2381,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 155,
+          "y": 181,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1889,7 +2399,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 155,
+          "y": 181,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1907,7 +2417,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 155,
+          "y": 181,
           "width": 8,
           "height": 8,
           "properties": {

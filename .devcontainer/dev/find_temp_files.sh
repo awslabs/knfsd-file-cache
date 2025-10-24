@@ -46,6 +46,8 @@ SEARCH_TARGETS=(
 	"*.drawio.dtmp"
 	"*.drawio.bkp"
 	"knfsd-metrics-agent.tar.gz"
+	"tutorial/nfs-proxy-startup-user-data.sh"
+	"tutorial/nfs-client-startup-user-data.sh"
 )
 
 cd ../..

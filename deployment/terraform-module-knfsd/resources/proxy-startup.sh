@@ -445,9 +445,14 @@ function init() {
 	mkdir -p /etc/exports.d
 	: > ${EXPORTS_FILE}
 
-	# Run the CUSTOM_PRE_STARTUP_SCRIPT
+	complete_command
+}
+
+# pre_startup() runs the CUSTOM_PRE_STARTUP_SCRIPT
+function pre_startup() {
+	begin_command "pre startup"
 	echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
-	echo "${CUSTOM_PRE_STARTUP_SCRIPT}" > /custom-pre-startup-script.sh
+	echo "${CUSTOM_PRE_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-pre-startup-script.sh
 	chmod +x /custom-pre-startup-script.sh
 	bash /custom-pre-startup-script.sh
 	echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
@@ -471,7 +476,8 @@ function create_fs_cache() {
 			| grep 'NVMe Instance Storage' \
 			| awk '{print $1}' \
 			| sort -V \
-			| tr '\n' ' ')
+			| tr '\n' ' ' \
+			| sed 's/[[:space:]]*$//')
 	else
 		echo "Detecting EBS volumes for FS-Cache..."
 		root_device=$(lsblk -pno PKNAME "$(findmnt -n -o SOURCE /)")
@@ -481,7 +487,8 @@ function create_fs_cache() {
 			| awk '{print $1}' \
 			| grep -v "^$root_device$" \
 			| sort -V \
-			| tr '\n' ' ')
+			| tr '\n' ' ' \
+			| sed 's/[[:space:]]*$//')
 	fi
 
 	NUMDEVICES=$(echo "${DEVICESLIST}" | wc -w)
@@ -799,20 +806,24 @@ function start_metrics() {
 # post_startup() runs the CUSTOM_POST_STARTUP_SCRIPT
 function post_startup() {
 	begin_command "post startup"
-	# Run the CUSTOM_POST_STARTUP_SCRIPT
 	echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
-	echo "${CUSTOM_POST_STARTUP_SCRIPT}" > /custom-post-startup-script.sh
+	echo "${CUSTOM_POST_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-post-startup-script.sh
 	chmod +x /custom-post-startup-script.sh
 	bash /custom-post-startup-script.sh
 	echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
+	complete_command
+}
 
+# completed_startup() updates the status to "ready",
+# prints the NFS mounts and exports,
+# and sets the startup_complete flag to "yes"
+function completed_startup() {
 	echo -e "${SHELL_YELLOW}### NFS Mounts ###${SHELL_DEFAULT}"
 	findmnt -ut nfs,nfs4
 
 	echo -e "${SHELL_YELLOW}### NFS Exports ###${SHELL_DEFAULT}"
 	exportfs -s
 
-	complete_command
 	echo "INFO: Reached Proxy Startup Exit. Happy caching!"
 	update_status "ready"
 	startup_complete=yes
@@ -836,6 +847,7 @@ function cleanup() {
 # main() is the main function that is called when the script is executed
 function main() {
 	init
+	pre_startup
 	create_fs_cache
 
 	echo "MOUNT_OPTIONS: ${MOUNT_OPTIONS}"
@@ -853,6 +865,7 @@ function main() {
 	start_metrics
 
 	post_startup
+	completed_startup
 }
 
 # Do not execute the main() function if this script has been loaded for

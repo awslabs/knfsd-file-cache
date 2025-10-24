@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
+source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.11"
 ```
 
 ## Prerequisites
@@ -42,7 +42,7 @@ provider "aws" {
 }
 
 module "nfs_proxy" {
-  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.10"
+  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.11"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg"
@@ -140,7 +140,7 @@ If using the NetApp Exports Auto-Discovery feature, please also read the [NetApp
 | `METRICS_AGENT_CONFIG`             | Custom YAML configuration for the metrics agent. The configuration *is not* validated by Terraform when using a custom config, please check the proxy startup log. See the custom configuration section in the [metrics documentation](docs/metrics.md) for more details.                                                                                                                                                                                      | False    | `""`                            |
 | `CUSTOM_PRE_STARTUP_SCRIPT`        | Optional bash script to run BEFORE the [proxy-startup.sh](terraform-module-knfsd/resources/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                              | False    | empty script                    |
 | `CUSTOM_POST_STARTUP_SCRIPT`       | Optional bash script to run AFTER the [proxy-startup.sh](terraform-module-knfsd/resources/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                               | False    | empty script                    |
-| `INSTANCE_TYPE`                    | The AWS EC2 instance type to use for the KNFSD cache.                                                                                                                                                                                                                                                                                                                                                                                                          | False    | `i3en.3xlarge`                  |
+| `INSTANCE_TYPE`                    | The AWS EC2 instance type to use for the KNFSD cache.                                                                                                                                                                                                                                                                                                                                                                                                          | False    | `i3en.6xlarge`                  |
 | `ROOT_DISK_SIZE`                   | The size of the root disk in GB.                                                                                                                                                                                                                                                                                                                                                                                                                               | False    | `20`                            |
 | `ENABLE_KNFSD_AGENT`               | Enable the [KNFSD HTTP Agent](../image/resources/knfsd-agent/README.md).                                                                                                                                                                                                                                                                                                                                                                                       | False    | `true`                          |
 | `ENABLE_STATUS_CHECK`              | Whether to enable the status check that waits for all EC2 instances to be KNFSD status: `ready` during Terraform deployment. Must be `true` for `fanout` deployments.                                                                                                                                                                                                                                                                                          | False    | `false`                         |

@@ -19,86 +19,42 @@ attributes:
     description: NFS Proxy instance
     type: string
 
-  server:
-    description: NFS mount's server
-    type: string
-
   operation:
     description: NFS operation name
+    type: string
+
+  server:
+    description: NFS mount's server
     type: string
 
 metrics:
   # TODO: Change metrics to use a cumulative sum (counter) instead of a gauge
 
-  nfs.mount.read_exe:
+  nfs.mount.operation.errors:
     enabled: true
-    description: nfsiostat Mount Read EXE
-    extended_documentation: The average read operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: ms
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.read_rtt:
-    enabled: true
-    description: nfsiostat Mount Read RTT
-    extended_documentation: The average read operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: ms
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.write_exe:
-    enabled: true
-    description: nfsiostat Mount Write EXE
-    extended_documentation: The average write operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: ms
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.write_rtt:
-    enabled: true
-    description: nfsiostat Mount Write RTT
-    extended_documentation: The average write operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: ms
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.ops_per_second:
-    enabled: true
-    description: nfsiostat Mount Operations Per Second
-    extended_documentation: The number of NFS operations per second per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: "{count}"
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.rpc_backlog:
-    enabled: true
-    description: "nfsiostat Mount RPC Backlog"
-    extended_documentation: The RPC Backlog per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
-    unit: "{count}"
-    attributes: [server, instance]
-    gauge:
-      value_type: double
-
-  nfs.mount.read_bytes:
-    enabled: true
-    description: Bytes read from remote NFS server
-    unit: By
-    attributes: [server, instance]
+    description: Number of requests that complete with tk_status < 0
+    unit: "{errors}"
+    attributes: [server, instance, operation]
     sum:
       value_type: int
       monotonic: true
       aggregation_temporality: cumulative
 
-  nfs.mount.write_bytes:
+  nfs.mount.operation.major_timeouts:
     enabled: true
-    description: Bytes wrote to remote NFS server
+    description: Number of times a request has had a major timeout
+    unit: "{timeouts}"
+    attributes: [server, instance, operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.mount.operation.received_bytes:
+    enabled: true
+    description: Total bytes received for these operations, including RPC headers and payload
     unit: By
-    attributes: [server, instance]
+    attributes: [server, instance, operation]
     sum:
       value_type: int
       monotonic: true
@@ -124,32 +80,76 @@ metrics:
       monotonic: true
       aggregation_temporality: cumulative
 
-  nfs.mount.operation.received_bytes:
+  nfs.mount.ops_per_second:
     enabled: true
-    description: Total bytes received for these operations, including RPC headers and payload
+    description: nfsiostat Mount Operations Per Second
+    extended_documentation: The number of NFS operations per second per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: "{count}"
+    attributes: [server, instance]
+    gauge:
+      value_type: double
+
+  nfs.mount.read_bytes:
+    enabled: true
+    description: Bytes read from remote NFS server
     unit: By
-    attributes: [server, instance, operation]
+    attributes: [server, instance]
     sum:
       value_type: int
       monotonic: true
       aggregation_temporality: cumulative
 
-  nfs.mount.operation.major_timeouts:
+  nfs.mount.read_exe:
     enabled: true
-    description: Number of times a request has had a major timeout
-    unit: "{timeouts}"
-    attributes: [server, instance, operation]
+    description: nfsiostat Mount Read EXE
+    extended_documentation: The average read operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: ms
+    attributes: [server, instance]
+    gauge:
+      value_type: double
+
+  nfs.mount.read_rtt:
+    enabled: true
+    description: nfsiostat Mount Read RTT
+    extended_documentation: The average read operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: ms
+    attributes: [server, instance]
+    gauge:
+      value_type: double
+
+  nfs.mount.rpc_backlog:
+    enabled: true
+    description: "nfsiostat Mount RPC Backlog"
+    extended_documentation: The RPC Backlog per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: "{count}"
+    attributes: [server, instance]
+    gauge:
+      value_type: double
+
+  nfs.mount.write_bytes:
+    enabled: true
+    description: Bytes wrote to remote NFS server
+    unit: By
+    attributes: [server, instance]
     sum:
       value_type: int
       monotonic: true
       aggregation_temporality: cumulative
 
-  nfs.mount.operation.errors:
+  nfs.mount.write_exe:
     enabled: true
-    description: Number of requests that complete with tk_status < 0
-    unit: "{errors}"
-    attributes: [server, instance, operation]
-    sum:
-      value_type: int
-      monotonic: true
-      aggregation_temporality: cumulative
+    description: nfsiostat Mount Write EXE
+    extended_documentation: The average write operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: ms
+    attributes: [server, instance]
+    gauge:
+      value_type: double
+
+  nfs.mount.write_rtt:
+    enabled: true
+    description: nfsiostat Mount Write RTT
+    extended_documentation: The average write operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
+    unit: ms
+    attributes: [server, instance]
+    gauge:
+      value_type: double

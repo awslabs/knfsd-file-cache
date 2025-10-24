@@ -2,13 +2,11 @@
 
 cloudbuild.yaml
 /image/smoke-tests
-/tutorial
 /testing
 
 ## DOCS ##
 
 /image/smoke-tests/README.md
-/tutorial/README.md
 /testing/examples/README.md
 /testing/modules/cloudbuild/README.md
 /docs/tests/recovery-load-balancer.md

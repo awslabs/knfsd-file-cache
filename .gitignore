@@ -81,3 +81,7 @@ knfsd-metrics-agent.tar.gz
 
 # debug files
 debug/
+
+# tutorial files
+tutorial/nfs-client-startup-user-data.sh
+tutorial/nfs-proxy-startup-user-data.sh

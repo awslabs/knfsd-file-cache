@@ -375,10 +375,10 @@ The pipeline extensively uses the [GitLab Dependency Proxy](https://docs.gitlab.
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.25.2
+image: golang:1.25.3
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.25.2
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.25.3
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

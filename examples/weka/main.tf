@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.15.0"
+      version = "~> 6.18.0"
     }
   }
 }
@@ -62,7 +62,7 @@ module "software" {
 
   INSTANCE_TAGS = { "knfsd-file-cache:examples" = "weka-software" }
 
-  INSTANCE_TYPE  = "i3en.3xlarge"
+  INSTANCE_TYPE  = "i3en.6xlarge"
   PROXY_AMI      = var.PROXY_AMI
   PROXY_BASENAME = "software"
   KNFSD_NODES    = 1 # set to 0 to disable cluster
