@@ -3,7 +3,7 @@ module examples
 go 1.25
 
 require (
-	github.com/gruntwork-io/terratest v0.51.0
+	github.com/gruntwork-io/terratest v0.52.0
 	github.com/stretchr/testify v1.11.1
 )
 

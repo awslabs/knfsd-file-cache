@@ -91,10 +91,6 @@
         "dependsOn": [
           "knfsd-file-cache",
           "tf/terraform-module-knfsd",
-          "tf/database",
-          "tf/module/dns-round-robin",
-          "tf/module/loadbalancer",
-          "tf/metrics",
           "go/filter-exports",
           "go/knfsd-agent",
           "go/knfsd-fsidd",
@@ -150,122 +146,6 @@
         },
         "options": {
           "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "tf/database",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/deployment/database"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "tf/module/dns-round-robin",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd/modules/dns_round_robin"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "tf/module/loadbalancer",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd/modules/loadbalancer"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "tf/metrics",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/deployment/metrics"
         },
         "isBackground": true,
         "problemMatcher": [],

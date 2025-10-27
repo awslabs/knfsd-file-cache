@@ -7,7 +7,7 @@ require github.com/awslabs/knfsd-file-cache/image/resources/knfsd-agent v0.0.0
 replace github.com/awslabs/knfsd-file-cache/image/resources/knfsd-agent => ../resources/knfsd-agent
 
 require (
-	github.com/gruntwork-io/terratest v0.51.0
+	github.com/gruntwork-io/terratest v0.52.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.37.0
 )

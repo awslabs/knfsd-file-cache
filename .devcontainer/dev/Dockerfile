@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.11"
+ARG VERSION="1.1.0-alpha.12"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -153,13 +153,13 @@ ARG KNFSD_BATS_CORE_VERSION=1.12.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=25.9.0
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.40.47
+ARG KNFSD_BOTO3_VERSION=1.40.59
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.474
+ARG KNFSD_CHECKOV_VERSION=3.2.488
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.4.0
+ARG KNFSD_EDITORCONFIG_VERSION=3.4.1
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.5.0
 # https://go.dev/dl/
@@ -171,11 +171,11 @@ ARG KNFSD_PACKER_VERSION=1.14.2
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.3.0
 # https://pypi.org/project/psycopg/
-ARG KNFSD_PSYCOPG_VERSION=3.2.10
+ARG KNFSD_PSYCOPG_VERSION=3.2.12
 # https://github.com/pylint-dev/pylint/tags
-ARG KNFSD_PYLINT_VERSION=3.3.9
+ARG KNFSD_PYLINT_VERSION=4.0.2
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.139.0
+ARG KNFSD_SEMGREP_VERSION=1.141.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -183,13 +183,13 @@ ARG KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=0.89.1
+ARG KNFSD_TERRAGRUNT_VERSION=0.91.5
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.59.1
 # https://github.com/aquasecurity/tfsec/releases
 ARG KNFSD_TFSEC_VERSION=1.28.14
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.67.0
+ARG KNFSD_TRIVY_VERSION=0.67.2
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN set -eux \

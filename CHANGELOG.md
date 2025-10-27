@@ -1,5 +1,17 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.12
+
+* Updated `metrics` documentation.
+* Added `docs/nfs-client-setup.md` documentation to explain recommended client setup for KNFSD.
+* Updated `THIRD-PARTY-LICENSES` file.
+* Improved `update-version.sh` script to update all version strings in the repository.
+* Minor Golang package updates.
+* Updated to KICS v2.1.15.
+* Updated to Python v3.13.9.
+* Removed unused terminals in `.devcontainer` for improved performance.
+* Silenced false-positive in `semgrep` check.
+
 ## v1.1.0-alpha.11
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

@@ -76,6 +76,7 @@ function create_fs_cache() {
 		| tr '\n' ' ' \
 		| sed 's/[[:space:]]*$//')
 
+	# nosemgrep: unquoted-variable-expansion-in-command
 	if ! has_fs $dev; then
 		echo "Creating filesystem on ${dev}..."
 		# nosemgrep: unquoted-variable-expansion-in-command

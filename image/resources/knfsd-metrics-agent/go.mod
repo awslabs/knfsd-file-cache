@@ -1,6 +1,6 @@
 module github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent
 
-go 1.25.0
+go 1.25.3
 
 // openshift removed all tags from their repo, use hash from latest commit: Oct 1, 2025
 replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20251001133852-bfcb56b39056
@@ -28,7 +28,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.138.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.138.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.138.0
-	github.com/prometheus/procfs v0.18.0
+	github.com/prometheus/procfs v0.19.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/cmd/mdatagen v0.138.0
 	go.opentelemetry.io/collector/component v1.44.0

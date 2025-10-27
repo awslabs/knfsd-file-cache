@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.11"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.12"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -181,7 +181,9 @@ AWS-native service metrics from Amazon CloudWatch.
 
 | Metric Name                                                 | Description                                          | Stat    | Unit                   | Period |
 | ----------------------------------------------------------- | ---------------------------------------------------- | ------- | ---------------------- | ------ |
-| `AWS/EC2.CPUUtilization`                                    | EC2 instance CPU utilization                         | Average | Percent                | 60s    |
+| `AWS/EC2.CPUUtilization`                                    | EC2 instance CPU utilization                         | Average | Percent                | 300s   |
+| `AWS/EC2.NetworkIn`                                         | Network bytes received                               | Sum     | Bytes                  | 300s   |
+| `AWS/EC2.NetworkOut`                                        | Network bytes transmitted                            | Sum     | Bytes                  | 300s   |
 | `AWS/AutoScaling.GroupDesiredCapacity`                      | Desired capacity of Auto Scaling Group               | Average | Count                  | 60s    |
 | `AWS/AutoScaling.GroupInServiceInstances`                   | Number of instances in service in Auto Scaling Group | Maximum | Count                  | 60s    |
 | `AWS/AutoScaling.GroupTotalInstances`                       | Total number of instances in Auto Scaling Group      | Maximum | Count                  | 60s    |
@@ -239,12 +241,13 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 
 Network activity for KNFSD proxy nodes showing data flow to/from clients and source filers.
 
-| Widget                       | Metrics                               | Description                                        | Stat    | Period |
-| ---------------------------- | ------------------------------------- | -------------------------------------------------- | ------- | ------ |
-| Proxy Ingress Traffic        | `net_bytes_recv`                      | Total bytes received (data from on-premise/source) | Sum     | 60s    |
-| Proxy Egress Traffic         | `net_bytes_sent`                      | Total bytes sent (data to NFS clients)             | Sum     | 60s    |
-| Proxy NFS Client Connections | `knfsd/nfs_connections`               | Number of connected NFS clients                    | Maximum | 60s    |
-| TCP/UDP Connection State     | `netstat_tcp_*`, `netstat_udp_socket` | TCP and UDP connection states                      | Average | 60s    |
+| Widget                       | Metrics                                   | Description                                        | Stat    | Period |
+| ---------------------------- | ----------------------------------------- | -------------------------------------------------- | ------- | ------ |
+| Proxy Ingress Traffic        | `net_bytes_recv`                          | Total bytes received (data from on-premise/source) | Sum     | 60s    |
+| Proxy Egress Traffic         | `net_bytes_sent`                          | Total bytes sent (data to NFS clients)             | Sum     | 60s    |
+| Proxy Network Throughput     | `AWS/EC2.NetworkIn`, `AWS/EC2.NetworkOut` | Network throughput (converted to Mbps/Gbps)        | Sum     | 300s   |
+| Proxy NFS Client Connections | `knfsd/nfs_connections`                   | Number of connected NFS clients                    | Maximum | 60s    |
+| TCP/UDP Connection State     | `netstat_tcp_*`, `netstat_udp_socket`     | TCP and UDP connection states                      | Average | 60s    |
 
 ### Data Transfer
 
@@ -272,7 +275,7 @@ Performance metrics for NFS operations between proxy and source filer.
 
 **Note:** RTT = Round Trip Time (network time), EXE = Execution Time (RTT + kernel processing time)
 
-### NFS Operations
+### NFS v3/v4 Operations
 
 Detailed breakdown of NFS operations by operation type (GETATTR, READ, WRITE, etc.).
 
@@ -284,7 +287,9 @@ Detailed breakdown of NFS operations by operation type (GETATTR, READ, WRITE, et
 | NFS Ops: Major Timeouts | `knfsd/mount/operation/major_timeouts` (by operation) | Major timeouts for each NFS operation type     | Sum  | 60s    |
 | NFS Ops: Errors         | `knfsd/mount/operation/errors` (by operation)         | Errors for each NFS operation type             | Sum  | 60s    |
 
-**Supported Operations:** NULL, GETATTR, SETATTR, LOOKUP, ACCESS, READLINK, READ, WRITE, CREATE, MKDIR, SYMLINK, MKNOD, REMOVE, RMDIR, RENAME, LINK, READDIR, READDIRPLUS, FSSTAT, FSINFO, PATHCONF, COMMIT
+**Supported NFS v3 Operations:** NULL, GETATTR, SETATTR, LOOKUP, ACCESS, READLINK, READ, WRITE, CREATE, MKDIR, SYMLINK, MKNOD, REMOVE, RMDIR, RENAME, LINK, READDIR, READDIRPLUS, FSSTAT, FSINFO, PATHCONF, COMMIT
+
+**Supported NFS v4 Operations:** NULL, READ, WRITE, COMMIT, OPEN, OPEN_CONFIRM, OPEN_NOATTR, OPEN_DOWNGRADE, CLOSE, SETATTR, FSINFO, RENEW, SETCLIENTID, SETCLIENTID_CONFIRM, LOCK, LOCKT, LOCKU, ACCESS, GETATTR, LOOKUP, LOOKUP_ROOT, REMOVE, RENAME, LINK, SYMLINK, CREATE, PATHCONF, STATFS, READLINK, READDIR, SERVER_CAPS, DELEGRETURN, GETACL, SETACL, FS_LOCATIONS, RELEASE_LOCKOWNER, SECINFO
 
 ### Disk IO Performance
 
@@ -304,7 +309,7 @@ General EC2 instance performance metrics.
 
 | Widget                       | Metrics                                 | Description                                    | Stat    | Period |
 | ---------------------------- | --------------------------------------- | ---------------------------------------------- | ------- | ------ |
-| CPU Utilization              | `AWS/EC2.CPUUtilization`                | EC2 instance CPU utilization                   | Average | 60s    |
+| CPU Utilization              | `AWS/EC2.CPUUtilization`                | EC2 instance CPU utilization                   | Average | 300s   |
 | CPU Usage                    | `cpu_usage_active`, `cpu_usage_iowait`  | Detailed CPU usage breakdown                   | Average | 60s    |
 | Memory/Swap Utilization      | `mem_used_percent`, `swap_used_percent` | Memory and swap usage                          | Average | 60s    |
 | Memory Metrics               | `mem_buffered`, `mem_cached`            | Memory used for buffers and cache              | Average | 60s    |

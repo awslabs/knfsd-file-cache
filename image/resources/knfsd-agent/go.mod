@@ -6,7 +6,7 @@ require (
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/aws/aws-sdk-go-v2/config v1.31.15
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.11
-	github.com/prometheus/procfs v0.18.0
+	github.com/prometheus/procfs v0.19.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.37.0
 )
