@@ -68,5 +68,6 @@ The following additional NFS mount options are suggested for optimal performance
 
 ```bash
 nproc=$(("$(nproc)/2"))
+[ $nproc -gt 16 ] && nproc=16 # nconnect limit is 16, so cap at 16 if the client has more than 32 vCPUs
 mount -t nfs -o vers=3,nconnect=${nproc},rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,fsc "<remote_ip>:<remote_export>" <local_mount_point>
 ```

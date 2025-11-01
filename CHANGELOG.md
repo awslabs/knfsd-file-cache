@@ -1,6 +1,17 @@
 # KNFSD-File-Cache
 
-## v1.1.0-alpha.12
+## v1.1.0-alpha.13
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Fixed bug in `30_post_build.sh` script where `/etc/machine-id` file must exist for systemd dependencies at boot.
+* Packer: Added `proxy.golang.org` to `GOPROXY` environment variable to handle situations where a VCS based git repo is unavailable, causing the image build process to fail (continue to use `direct` only in the devcontainer/build environment to ensure golang dependencies/versions are working correctly).
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.6.0.
+* Updated to Terraform AWS provider v6.19.0.
+* Minor Golang package updates.
+* Improved documentation in various places, including [nfs-client-setup.md](docs/nfs-client-setup.md).
+
+## v1.1.0-alpha.12 (broken)
 
 * Updated `metrics` documentation.
 * Added `docs/nfs-client-setup.md` documentation to explain recommended client setup for KNFSD.

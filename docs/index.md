@@ -43,6 +43,7 @@
 
 * [CHANGELOG](../CHANGELOG.md)
 * [Check Proxy Startup](check-startup.md)
+* [NFS Client Setup](nfs-client-setup.md)
 * [Client Metrics](client-metrics.md)
 * [Culling](culling.md)
 * [FAQ](faq.md)

@@ -21,8 +21,7 @@ import (
 )
 
 const (
-	KernelVersion = "6.4.0-060400-knfsd"
-	TestSSHUser   = "test"
+	TestSSHUser = "test"
 )
 
 var cloudbuild bool = os.Getenv("CI") == "cloudbuild"

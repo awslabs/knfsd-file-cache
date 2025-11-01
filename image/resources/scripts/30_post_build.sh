@@ -56,7 +56,7 @@ function cleanup_image() (
 	apt-get clean -y
 	rm -rf "/var/lib/apt/lists/*"
 	find /root -mindepth 1 -delete
-	rm -f "/etc/machine-id"
+	truncate -s 0 /etc/machine-id
 	complete_command
 )
 

@@ -28,7 +28,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.138.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.138.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.138.0
-	github.com/prometheus/procfs v0.19.1
+	github.com/prometheus/procfs v0.19.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/cmd/mdatagen v0.138.0
 	go.opentelemetry.io/collector/component v1.44.0

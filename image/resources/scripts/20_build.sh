@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.12"
+VERSION="1.1.0-alpha.13"
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -23,7 +23,7 @@ export NAME=build EMAIL=build
 # golang build cache
 export GOCACHE="/mnt/build/go/.cache/go-build"
 export GOMODCACHE="/mnt/build/go/pkg/mod"
-export GOPROXY=direct
+export GOPROXY=https://proxy.golang.org,direct
 
 # set the working directory to "/mnt/build"
 cd "$(dirname "$0")"/../
