@@ -9,12 +9,26 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.13"
+VERSION="1.1.0-alpha.14"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
+
+## disable unattended-upgrades.service
+systemctl disable unattended-upgrades.service
+
+## update amazon-ssm-agent
+# wait up to 5 mins for snap seeding to complete before proceeding
+if ! snap debug seeding | grep -q "^seeded: *true$"; then
+	echo "Waiting for snap seeding to complete..."
+	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
+fi
+snap stop amazon-ssm-agent
+snap switch --channel=candidate amazon-ssm-agent
+snap refresh amazon-ssm-agent
+snap start amazon-ssm-agent
 
 ## OS update, upgrade, install apt pkgs
 apt-get -y -q update && apt-get -y -q upgrade \
@@ -128,17 +142,17 @@ KNFSD_BATS_CORE_VERSION=1.12.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=25.9.0
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.40.59
+KNFSD_BOTO3_VERSION=1.40.67
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.2.488
+KNFSD_CHECKOV_VERSION=3.2.490
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=3.4.1
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.5.0
+KNFSD_GOLANGCI_LINT_VERSION=2.6.1
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.25.3
+KNFSD_GOLANG_VERSION=1.25.4
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=1.18.2
 # https://github.com/hashicorp/packer/releases
@@ -150,7 +164,7 @@ KNFSD_PSYCOPG_VERSION=3.2.12
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.2
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.141.0
+KNFSD_SEMGREP_VERSION=1.142.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -158,7 +172,7 @@ KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-KNFSD_TERRAGRUNT_VERSION=0.91.5
+KNFSD_TERRAGRUNT_VERSION=0.93.3
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.59.1
 # https://github.com/aquasecurity/tfsec/releases

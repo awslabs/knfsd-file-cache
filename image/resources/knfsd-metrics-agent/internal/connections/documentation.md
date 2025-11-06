@@ -16,6 +16,6 @@ metrics:
 
 The number of NFS Clients connected to the KNFSD filer (used for autoscaling)
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {count} | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {count} | Gauge | Int | Alpha |

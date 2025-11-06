@@ -37,6 +37,8 @@ TerraformOptions.json
 *.auto.pkrvars.json
 packer.log
 *.pem
+install-chronicle.sh
+install-chronicle.yaml
 
 # Exclude Specific Packer Variables File
 !/image/cloudbuild.pkrvars.hcl

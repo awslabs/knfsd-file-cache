@@ -8,9 +8,11 @@ For details of the modifications that are made to the base image, see [resources
 
 ## Customizing the image
 
-If you need to add custom steps before the build process, you can add them to the [10_pre_build.sh](resources/scripts/10_pre_build.sh) file.
+If you need to add custom steps before the build process, you can provide a path to a bash script file via the `CUSTOM_PRE_BUILD_SCRIPT` variable.
 
-If you need to customize the image post build (e.g. installing custom metric agents), then you can add any custom steps to the [40_custom.sh](resources/scripts/40_custom.sh) file.
+If you need to customize the image post build (e.g. installing custom metric agents), then you can provide a path to a bash script file via the `CUSTOM_POST_BUILD_SCRIPT` variable.
+
+> NOTE: If your custom scripts need to access AWS resources, you must provide an IAM instance profile via the `IAM_INSTANCE_PROFILE` variable. This profile should have the necessary permissions for your scripts to execute successfully.
 
 Alternatively, if your build procedure is more complex, you can replace the customization step(s) with your own process.
 
@@ -55,6 +57,9 @@ Enter at least the following 2 required variables:
 * `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Default: `"packer-knfsd-proxy-{VERSION}-{TIMESTAMP}"`.
 * `IMAGE_NAME` (string) - The unique name of the resulting image. Default: `"knfsd-proxy-{VERSION}"`.
 * `SKIP_CREATE_IMAGE` (bool) - Skip creating the image. Useful for setting to `true` during a build test stage. Default: `false`.
+* `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources. Default: `""`.
+* `CUSTOM_PRE_BUILD_SCRIPT` (string) - Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
+* `CUSTOM_POST_BUILD_SCRIPT` (string) - Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
 
 #### Example: `image.pkrvars.hcl`
 
@@ -302,7 +307,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.13"
+VERSION="1.1.0-alpha.14"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -395,13 +400,11 @@ ssh -i /path/to/$KNFSD_KEYPAIR ubuntu@$KNFSD_INSTANCE_PUBLIC_IP
 cd /mnt/build
 tar -zxf resources.tgz
 chmod +x scripts/*.sh
-# execute pre build script
-sudo bash scripts/10_pre_build.sh
 # execute build script
-sudo bash scripts/20_build.sh 2>&1
+sudo bash scripts/10_build.sh 2>&1
 ```
 
-When the `20_build.sh` script completes you should see:
+When the `10_build.sh` script completes you should see:
 
 ```text
 ---- SUCCESS: Finished build image script. Reboot(ing) for new kernel to take effect
@@ -426,19 +429,12 @@ device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '20G' | awk '{print $1}' |
 sudo mount "/dev/$device" /mnt/build
 cd /mnt/build
 # execute post build script
-sudo bash scripts/30_post_build.sh 2>&1
+sudo bash scripts/20_post_build.sh 2>&1
 ```
 
 ### Customize the Image
 
 If you have custom build steps, run them now.
-
-If you have added your custom build steps to the `40_custom.sh` script file, run:
-
-```bash
-# execute custom script
-sudo bash scripts/40_custom.sh
-```
 
 ### Finalize the Image
 
@@ -448,7 +444,7 @@ Once the clean up is complete, the instance will shutdown.
 
 ```bash
 # execute finalize script
-sudo bash scripts/50_finalize.sh 2>&1
+sudo bash scripts/30_finalize.sh 2>&1
 cd ~
 sudo umount /mnt/build
 sudo rm -rf /mnt/build

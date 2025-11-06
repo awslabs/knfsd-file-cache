@@ -6,6 +6,20 @@
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
 
+## disable unattended-upgrades.service
+systemctl disable unattended-upgrades.service
+
+## update amazon-ssm-agent
+# wait up to 5 mins for snap seeding to complete before proceeding
+if ! snap debug seeding | grep -q "^seeded: *true$"; then
+	echo "Waiting for snap seeding to complete..."
+	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
+fi
+snap stop amazon-ssm-agent
+snap switch --channel=candidate amazon-ssm-agent
+snap refresh amazon-ssm-agent
+snap start amazon-ssm-agent
+
 ## setup docker apt repo
 install -m 0755 -d /etc/apt/keyrings \
 	&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \

@@ -67,3 +67,21 @@ variable "SKIP_CREATE_IMAGE" {
   type        = bool
   default     = false
 }
+
+variable "IAM_INSTANCE_PROFILE" {
+  description = "(Optional) The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources. Default: \"\"."
+  type        = string
+  default     = ""
+}
+
+variable "CUSTOM_PRE_BUILD_SCRIPT" {
+  description = "(Optional) Path to a bash script file to run BEFORE the \"10_build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
+  type        = string
+  default     = ""
+}
+
+variable "CUSTOM_POST_BUILD_SCRIPT" {
+  description = "(Optional) Path to a bash script file to run AFTER the \"20_post_build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
+  type        = string
+  default     = ""
+}

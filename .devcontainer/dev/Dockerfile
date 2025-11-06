@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.13"
+ARG VERSION="1.1.0-alpha.14"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -153,17 +153,17 @@ ARG KNFSD_BATS_CORE_VERSION=1.12.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=25.9.0
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.40.59
+ARG KNFSD_BOTO3_VERSION=1.40.67
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.488
+ARG KNFSD_CHECKOV_VERSION=3.2.490
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 ARG KNFSD_EDITORCONFIG_VERSION=3.4.1
 # https://github.com/golangci/golangci-lint/releases
-ARG KNFSD_GOLANGCI_LINT_VERSION=2.5.0
+ARG KNFSD_GOLANGCI_LINT_VERSION=2.6.1
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.25.3
+ARG KNFSD_GOLANG_VERSION=1.25.4
 # https://github.com/python/mypy/tags
 ARG KNFSD_MYPY_VERSION=1.18.2
 # https://github.com/hashicorp/packer/releases
@@ -175,7 +175,7 @@ ARG KNFSD_PSYCOPG_VERSION=3.2.12
 # https://github.com/pylint-dev/pylint/tags
 ARG KNFSD_PYLINT_VERSION=4.0.2
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.141.0
+ARG KNFSD_SEMGREP_VERSION=1.142.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -183,7 +183,7 @@ ARG KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=0.91.5
+ARG KNFSD_TERRAGRUNT_VERSION=0.93.3
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.59.1
 # https://github.com/aquasecurity/tfsec/releases

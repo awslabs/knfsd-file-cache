@@ -1,10 +1,24 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.14
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Refactored pre-build & post-build scripts to be Packer variables, similar to the Terraform module.
+* Packer: Added `CUSTOM_PRE_BUILD_SCRIPT` and `CUSTOM_POST_BUILD_SCRIPT` variables to allow for custom build steps.
+* Packer: Added `IAM_INSTANCE_PROFILE` variable to allow for custom IAM instance role to be used during image build.
+* Updated to Golang 1.25.4.
+* Minor Golang package updates.
+* Fixed Open-Telemetry upstream golang dependency package issue in `knfsd-metrics-agent`.
+* Added `proxy.golang.org` to GitLab CI jobs.
+* Enhanced `Makefile` to support `pre-commit autoupdate`.
+* Added AWS SSM agent to `remote-ssh` and `remote-docker` install scripts.
+
 ## v1.1.0-alpha.13
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Packer: Fixed bug in `30_post_build.sh` script where `/etc/machine-id` file must exist for systemd dependencies at boot.
+* Packer: Fixed bug in `20_post_build.sh` script where `/etc/machine-id` file must exist for systemd dependencies at boot.
 * Packer: Added `proxy.golang.org` to `GOPROXY` environment variable to handle situations where a VCS based git repo is unavailable, causing the image build process to fail (continue to use `direct` only in the devcontainer/build environment to ensure golang dependencies/versions are working correctly).
 * Packer: Updated `hashicorp/packer-plugin-amazon` to v1.6.0.
 * Updated to Terraform AWS provider v6.19.0.
@@ -23,7 +37,7 @@
 * Removed unused terminals in `.devcontainer` for improved performance.
 * Silenced false-positive in `semgrep` check.
 
-## v1.1.0-alpha.11
+## v1.1.0-alpha.11 (broken)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -70,9 +84,9 @@
 * Updated to Golang 1.25.1.
 * Minor Golang package updates.
 * Fixed issue where the CloudWatch log group for the `static-ip` Lambda function can be re-created by an EC2 instance terminating slowly after its ASG is deleted during a Terraform destroy.
-* Re-factored the handling of the secondary `static-ip` ENI when an EC2 instance is terminated for any reason other than a scale-in event.
+* Refactored the handling of the secondary `static-ip` ENI when an EC2 instance is terminated for any reason other than a scale-in event.
 * Exposed Terraform `KNFSD_NODES` and `INSTANCE_TYPE` variables to the `fsx-zfs` example.
-* Re-factored `proxy-startup.sh` to be stateless.
+* Refactored `proxy-startup.sh` to be stateless.
 * Added support for KNFSD machine reboot, `/var/cache/fscache` data persists between reboots (shutdown not supported).
 * KNFSD specific NFS exports are now stored in `/etc/exports.d/knfsd.exports`, leaving default `/etc/exports` untouched.
 * Ensure `resources` directory is writable by all users in `../deployment/database/resources/docker-build.sh`.
@@ -126,7 +140,7 @@
 
 * Minor Golang package updates.
 * Minor Terraform provider version updates.
-* Re-factored `knfsd-fsidd` to always use a new `iam-auth` TOKEN for a new database connection.
+* Refactored `knfsd-fsidd` to always use a new `iam-auth` TOKEN for a new database connection.
 * Added debug logging to `knfsd-fsidd` to validate the local database cache is working as expected.
 * Added initial metrics changes to OTEL `*.yaml` config files.
 
@@ -155,7 +169,7 @@
 * Fixed a bug in Eventbridge rules for `dns_round_robin` module where the rules were not being created with unique names per cluster, causing a conflict in the `fanout` architecture.
 * Fixed a bug in `dns_round_robin` module where secondary ENI TAG `knfsd-file-cache:instance-id` could be misrepresented in an `ec2.describe_network_interfaces` filter.
 * Split the default FQDN for `dns_round_robin` module into two parts for Amazon Route 53: `name=knfsd` and `zone=<PROXY_BASENAME>.aws.internal.`, ensuring unique zone names per cluster deployment.
-* Re-factored `DNS_NAME` to allow users to specify their own private FQDN for the KNFSD proxy cluster.
+* Refactored `DNS_NAME` to allow users to specify their own private FQDN for the KNFSD proxy cluster.
   * If `var.DNS_NAME` is `""` (default), a private DNS zone (`aws.internal.`) is created, and A or CNAME record(s) (`knfsd.<PROXY_BASENAME>.aws.internal.`) are created via the Amazon R53 service.
   * If `var.DNS_NAME` is a FQDN, including trailing dot `.` (R53 private zone already exists), then A or CNAME record(s) (`<CUSTOM_NAME>.<CUSTOM_DOMAIN>.`) are created in the existing Amazon R53 zone.
 * Removed `var.PRIVATE_HOSTED_ZONE` from all modules.

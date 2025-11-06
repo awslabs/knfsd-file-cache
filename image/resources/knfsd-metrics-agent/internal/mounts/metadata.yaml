@@ -32,6 +32,8 @@ metrics:
 
   nfs.mount.operation.errors:
     enabled: true
+    stability:
+      level: alpha
     description: Number of requests that complete with tk_status < 0
     unit: "{errors}"
     attributes: [server, instance, operation]
@@ -42,6 +44,8 @@ metrics:
 
   nfs.mount.operation.major_timeouts:
     enabled: true
+    stability:
+      level: alpha
     description: Number of times a request has had a major timeout
     unit: "{timeouts}"
     attributes: [server, instance, operation]
@@ -52,6 +56,8 @@ metrics:
 
   nfs.mount.operation.received_bytes:
     enabled: true
+    stability:
+      level: alpha
     description: Total bytes received for these operations, including RPC headers and payload
     unit: By
     attributes: [server, instance, operation]
@@ -62,6 +68,8 @@ metrics:
 
   nfs.mount.operation.requests:
     enabled: true
+    stability:
+      level: alpha
     description: Number of requests
     unit: "{requests}"
     attributes: [server, instance, operation]
@@ -72,6 +80,8 @@ metrics:
 
   nfs.mount.operation.sent_bytes:
     enabled: true
+    stability:
+      level: alpha
     description: Total bytes sent for these operations, including RPC headers and payload
     unit: By
     attributes: [server, instance, operation]
@@ -82,6 +92,8 @@ metrics:
 
   nfs.mount.ops_per_second:
     enabled: true
+    stability:
+      level: alpha
     description: nfsiostat Mount Operations Per Second
     extended_documentation: The number of NFS operations per second per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: "{count}"
@@ -91,6 +103,8 @@ metrics:
 
   nfs.mount.read_bytes:
     enabled: true
+    stability:
+      level: alpha
     description: Bytes read from remote NFS server
     unit: By
     attributes: [server, instance]
@@ -101,6 +115,8 @@ metrics:
 
   nfs.mount.read_exe:
     enabled: true
+    stability:
+      level: alpha
     description: nfsiostat Mount Read EXE
     extended_documentation: The average read operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: ms
@@ -110,6 +126,8 @@ metrics:
 
   nfs.mount.read_rtt:
     enabled: true
+    stability:
+      level: alpha
     description: nfsiostat Mount Read RTT
     extended_documentation: The average read operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: ms
@@ -119,6 +137,8 @@ metrics:
 
   nfs.mount.rpc_backlog:
     enabled: true
+    stability:
+      level: alpha
     description: "nfsiostat Mount RPC Backlog"
     extended_documentation: The RPC Backlog per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: "{count}"
@@ -128,6 +148,8 @@ metrics:
 
   nfs.mount.write_bytes:
     enabled: true
+    stability:
+      level: alpha
     description: Bytes wrote to remote NFS server
     unit: By
     attributes: [server, instance]
@@ -138,6 +160,8 @@ metrics:
 
   nfs.mount.write_exe:
     enabled: true
+    stability:
+      level: alpha
     description: nfsiostat Mount Write EXE
     extended_documentation: The average write operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: ms
@@ -147,6 +171,8 @@ metrics:
 
   nfs.mount.write_rtt:
     enabled: true
+    stability:
+      level: alpha
     description: nfsiostat Mount Write RTT
     extended_documentation: The average write operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer)
     unit: ms

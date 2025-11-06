@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.13"
+  version       = "1.1.0-alpha.14"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   ami_name      = "knfsd-proxy-${local.version}-${local.timestamp}"
   temp_vol_size = 20
@@ -27,6 +27,16 @@ locals {
     var.IMAGE_NAME == "" ?
     "knfsd-proxy-${local.version}" :
     var.IMAGE_NAME
+  )
+  custom_pre_build_script = (
+    var.CUSTOM_PRE_BUILD_SCRIPT != "" ?
+    file(var.CUSTOM_PRE_BUILD_SCRIPT) :
+    "echo 'No action taken'"
+  )
+  custom_post_build_script = (
+    var.CUSTOM_POST_BUILD_SCRIPT != "" ?
+    file(var.CUSTOM_POST_BUILD_SCRIPT) :
+    "echo 'No action taken'"
   )
 }
 
@@ -52,8 +62,9 @@ source "amazon-ebs" "nfs-proxy" {
   subnet_id = var.SUBNET
 
   # Build machine
-  source_ami    = data.amazon-parameterstore.base-ami.value
-  instance_type = var.INSTANCE_TYPE
+  source_ami           = data.amazon-parameterstore.base-ami.value
+  instance_type        = var.INSTANCE_TYPE
+  iam_instance_profile = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
   run_tags = {
     "Name"                            = local.build_name
     "knfsd-file-cache:version"        = local.version
@@ -184,15 +195,17 @@ build {
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
-      "chmod +x /mnt/build/scripts/*.sh",
-      "/mnt/build/scripts/10_pre_build.sh"
+      "echo '${base64gzip(local.custom_pre_build_script)}' | base64 -d | gzip -d > /mnt/build/scripts/custom-pre-build-script.sh",
+      "chmod +x /mnt/build/scripts/custom-pre-build-script.sh",
+      "/mnt/build/scripts/custom-pre-build-script.sh"
     ]
   }
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
-      "/mnt/build/scripts/20_build.sh 2>&1",
+      "chmod +x /mnt/build/scripts/*.sh",
+      "/mnt/build/scripts/10_build.sh 2>&1",
       "reboot"
     ]
     expect_disconnect = true
@@ -205,20 +218,24 @@ build {
     inline = [
       "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
       "mount /dev/$device /mnt/build",
-      "/mnt/build/scripts/30_post_build.sh 2>&1"
+      "/mnt/build/scripts/20_post_build.sh 2>&1"
     ]
     timeout = "5m"
   }
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
-    inline          = ["/mnt/build/scripts/40_custom.sh"]
+    inline = [
+      "echo '${base64gzip(local.custom_post_build_script)}' | base64 -d | gzip -d > /mnt/build/scripts/custom-post-build-script.sh",
+      "chmod +x /mnt/build/scripts/custom-post-build-script.sh",
+      "/mnt/build/scripts/custom-post-build-script.sh"
+    ]
   }
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
-      "/mnt/build/scripts/50_finalize.sh 2>&1",
+      "/mnt/build/scripts/30_finalize.sh 2>&1",
       "umount /mnt/build",
       "rm -rf /mnt/build"
     ]

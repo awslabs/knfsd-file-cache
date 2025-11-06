@@ -18,9 +18,9 @@ Dentry Cache Active Objects
 
 The number of active objects in the Linux Dentry Cache
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {count} | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {count} | Gauge | Int | Alpha |
 
 ### slab.dentry_cache.objsize
 
@@ -28,9 +28,9 @@ Dentry Cache Object Size
 
 The total size of the objects in the Linux Dentry Cache
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {size} | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {size} | Gauge | Int | Alpha |
 
 ### slab.nfs_inode_cache.active_objects
 
@@ -38,9 +38,9 @@ NFS inode Cache Cache Active Objects
 
 The number of active objects in the Linux NFS inode Cache
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {count} | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {count} | Gauge | Int | Alpha |
 
 ### slab.nfs_inode_cache.objsize
 
@@ -48,6 +48,6 @@ NFS inode Cache Object Size
 
 The total size of the objects in the Linux NFS inode Cache
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {size} | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {size} | Gauge | Int | Alpha |

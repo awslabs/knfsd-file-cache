@@ -17,6 +17,8 @@ status:
 metrics:
   nfs.connections:
     enabled: true
+    stability:
+      level: alpha
     description: The number of NFS Clients connected to the KNFSD filer (used for autoscaling)
     unit: "{count}"
     gauge:

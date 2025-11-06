@@ -37,6 +37,10 @@ image-debug:
 pre-commit precommit pc:
 	@pre-commit run --all-files
 
+.PHONY: pre-commit-update precommit-update pc-update autoupdate
+pre-commit-update precommit-update pc-update autoupdate:
+	@pre-commit autoupdate
+
 .PHONY: lic-scan
 lic-scan:
 	@echo "[license scan]"
