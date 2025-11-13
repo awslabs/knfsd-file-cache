@@ -34,6 +34,8 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
+* `INSTANCE_TYPE` - (Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: `i3en.12xlarge`.
+
 ## Outputs
 
 * `load_balancer_dns_address` - The DNS address of the Network Load Balancer that the NFS clients will connect to. Example: `lb-knfsd.nfsproxy-cluster.aws.internal`.

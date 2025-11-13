@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.19.0"
+      version = "~> 6.20.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -333,6 +333,9 @@ resource "null_resource" "trigger_lambda_after_rds" {
   provisioner "local-exec" {
     when    = create
     command = <<-EOF
+      set -e
+      echo "Starting database setup..."
+
       # Check if role assumption is required
       if [ -n "${local.assume_role_arn}" ]; then
         echo "Assuming role: ${local.assume_role_arn}"
@@ -345,7 +348,31 @@ resource "null_resource" "trigger_lambda_after_rds" {
       else
         echo "No role assumption required, using existing AWS credentials"
       fi
+
+      echo "Invoking Lambda function..."
       aws lambda invoke --region ${local.region} --function-name ${aws_lambda_function.db_setup.function_name} response.json
+
+      # Check if the Lambda invocation itself succeeded
+      if [ $? -ne 0 ]; then
+        echo "ERROR: Lambda invocation failed"
+        rm -f response.json
+        exit 1
+      fi
+
+      # Parse the Lambda response and check statusCode
+      STATUS_CODE=$(jq -r '.statusCode' response.json)
+
+      if [ "$STATUS_CODE" != "200" ]; then
+        echo "ERROR: Lambda function returned error status: $STATUS_CODE"
+        echo "Response body:"
+        jq -r '.body' response.json
+        rm -f response.json
+        exit 1
+      fi
+
+      echo "Lambda function executed successfully"
+      jq -r '.body' response.json
+      rm -f response.json
     EOF
   }
 }

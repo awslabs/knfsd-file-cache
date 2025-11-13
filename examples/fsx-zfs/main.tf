@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.19.0"
+      version = "~> 6.20.0"
     }
   }
 }
@@ -152,6 +152,37 @@ resource "aws_security_group" "fsx_sg" {
   }
 }
 
+# Validate that the proxy AMI exists and is accessible.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_exists" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+}
+
+# Validate AMI architecture matches instance type before deployment.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_arch" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+
+  lifecycle {
+    postcondition {
+      condition = (
+        can(regex("^[a-z]+[0-9]g[a-z]*\\.", var.INSTANCE_TYPE))
+        ? self.architecture == "arm64"
+        : self.architecture == "x86_64"
+      )
+      error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
+  }
+}
+
 module "proxy" {
   source                  = "../../deployment/terraform-module-knfsd"
   SUBNET                  = var.SUBNET
@@ -167,7 +198,9 @@ module "proxy" {
   EXPORT_OPTIONS          = "insecure"                               # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
   NFS_MOUNT_VERSION       = "3"                                      # Mount the source filer as NFSv3
   DISABLED_NFS_VERSIONS   = "4.0,4.1,4.2"                            # Ensure NFS v3 is used ("showmount" auto-discovery)
-  depends_on = [                                                     # Wait for FSxZ source filer to be available
+  depends_on = [
+    data.aws_ami.proxy_exists, # Ensure proxy AMI exists
+    data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type
     aws_fsx_openzfs_file_system.zfs,
     aws_fsx_openzfs_volume.vol2,
     aws_fsx_openzfs_volume.vol3

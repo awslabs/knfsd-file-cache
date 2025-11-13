@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.19.0"
+      version = "~> 6.20.0"
     }
   }
 }
@@ -114,6 +114,37 @@ resource "aws_security_group" "fsx_sg" {
   }
 }
 
+# Validate that the proxy AMI exists and is accessible.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_exists" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+}
+
+# Validate AMI architecture matches instance type before deployment.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_arch" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+
+  lifecycle {
+    postcondition {
+      condition = (
+        can(regex("^[a-z]+[0-9]g[a-z]*\\.", var.INSTANCE_TYPE))
+        ? self.architecture == "arm64"
+        : self.architecture == "x86_64"
+      )
+      error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
+  }
+}
+
 module "nfs_proxy_fanout" {
   source                    = "../../deployment/terraform-module-knfsd"
   SUBNET                    = var.SUBNET
@@ -121,7 +152,7 @@ module "nfs_proxy_fanout" {
   KEY_NAME                  = var.KEY_NAME
   PROXY_AMI                 = var.PROXY_AMI
   INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
-  INSTANCE_TYPE             = "i3en.12xlarge"                                         # Use a higher CPU and Memory machine type to increase fanout performance
+  INSTANCE_TYPE             = var.INSTANCE_TYPE                                       # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES               = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
   EXPORT_MAP                = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
   PROXY_BASENAME            = "nfsproxy-fanout"                                       # Give this proxy a unique base name
@@ -129,6 +160,10 @@ module "nfs_proxy_fanout" {
   DISABLED_NFS_VERSIONS     = "4.0,4.1,4.2"                                           # Allow NFS v3 only as we use 'showmount' in the next cluster for export discovery
   ENABLE_STATUS_CHECK       = true                                                    # Enable status check to hold the deployment until all EC2 instances are status:ready
   FSID_DB_SUBNET_GROUP_NAME = "default"                                               # Use the default database subnet group (non-default VPCs may require a custom DB subnet group)
+  depends_on = [
+    data.aws_ami.proxy_exists, # Ensure proxy AMI exists
+    data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type
+  ]
 }
 
 module "nfs_proxy_cluster" {

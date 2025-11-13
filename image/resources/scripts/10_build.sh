@@ -11,7 +11,17 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.14"
+VERSION="1.1.0-alpha.15"
+
+# identify the architecture
+export ARCH=$(uname -m)
+
+# set the architecture alternative for tools that use uname-style naming
+if [ "$ARCH" = "x86_64" ]; then
+	export ARCH_ALT="amd64"
+elif [ "$ARCH" = "aarch64" ]; then
+	export ARCH_ALT="arm64"
+fi
 
 # env vars
 export NEEDRESTART_MODE=a
@@ -143,8 +153,8 @@ function install_cachefilesd() (
 
 	cd ..
 	apt-get install -y \
-		./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb \
-		./cachefilesd-dbgsym_0.10.10-0.2ubuntu1+knfsd1_amd64.ddeb
+		./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_${ARCH_ALT}.deb \
+		./cachefilesd-dbgsym_0.10.10-0.2ubuntu1+knfsd1_${ARCH_ALT}.ddeb
 
 	systemctl disable cachefilesd
 	echo "RUN=yes" >> /etc/default/cachefilesd
@@ -159,20 +169,20 @@ function download_nfs-utils() (
 	# Jammy Jellyfish (Ubuntu 22.04) has nfs-common 2.6.1
 	# Noble Numbat (Ubuntu 24.04) has nfs-common 2.6.4
 	# Plucky Puffin (Ubuntu 25.04) has nfs-common 2.8.2
-	curl -o nfs-utils-2.8.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.3/nfs-utils-2.8.3.tar.gz
-	tar xf nfs-utils-2.8.3.tar.gz
+	curl -o nfs-utils-2.8.4.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.4/nfs-utils-2.8.4.tar.gz
+	tar xf nfs-utils-2.8.4.tar.gz
 	complete_command
 )
 
 # build and install nfs-utils from source
 function build_install_nfs-utils() (
 	begin_command "Building and installing nfs-utils"
-	cd nfs-utils-2.8.3
+	cd nfs-utils-2.8.4
 	# https://launchpad.net/ubuntu/+source/nfs-utils
 	# Using build options for nfs-utils 1:2.8.2-2ubuntu1 amd64.
 	# https://launchpad.net/ubuntu/+source/nfs-utils/1:2.8.2-2ubuntu1/+build/30327487
 	./configure \
-		--build=x86_64-linux-gnu \
+		--build=${ARCH}-linux-gnu \
 		--prefix=/usr \
 		--includedir="\${prefix}"/include \
 		--mandir="\${prefix}"/share/man \
@@ -181,7 +191,7 @@ function build_install_nfs-utils() (
 		--localstatedir=/var \
 		--disable-option-checking \
 		--disable-silent-rules \
-		--libdir="\${prefix}"/lib/x86_64-linux-gnu \
+		--libdir="\${prefix}"/lib/${ARCH}-linux-gnu \
 		--runstatedir=/run \
 		--disable-maintainer-mode \
 		--disable-dependency-tracking \
@@ -189,7 +199,7 @@ function build_install_nfs-utils() (
 		--enable-libmount-mount \
 		--enable-junction \
 		--enable-svcgss \
-		--with-pluginpath=/usr/lib/x86_64-linux-gnu/libnfsidmap \
+		--with-pluginpath=/usr/lib/${ARCH}-linux-gnu/libnfsidmap \
 		--with-tcp-wrappers \
 		--with-systemd \
 		--disable-sbin-override
@@ -237,7 +247,7 @@ function install_aws_cli() (
 	begin_command "Installing aws-cli"
 	mkdir -p aws-cli
 	cd aws-cli
-	curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -i).zip" -o "awscliv2.zip"
+	curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip"
 	unzip -q awscliv2.zip
 	./aws/install
 	complete_command
@@ -268,7 +278,7 @@ function install_amazon_ec2_net_utils() (
 function install_cloudwatch_agent() (
 	begin_command "Installing cloudwatch agent"
 	cd cloudwatch-agent
-	curl -sSO https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+	curl -sSO https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/${ARCH_ALT}/latest/amazon-cloudwatch-agent.deb
 	dpkg -i -E amazon-cloudwatch-agent.deb
 	systemctl disable amazon-cloudwatch-agent
 	cp amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
@@ -279,9 +289,9 @@ function install_cloudwatch_agent() (
 function install_rust() (
 	begin_command "Installing rust"
 	# https://forge.rust-lang.org/infra/other-installation-methods.html#standalone
-	curl -sSO https://static.rust-lang.org/dist/rust-1.88.0-x86_64-unknown-linux-gnu.tar.xz
-	tar xf rust-1.88.0-x86_64-unknown-linux-gnu.tar.xz
-	cd rust-1.88.0-x86_64-unknown-linux-gnu
+	curl -sSO https://static.rust-lang.org/dist/rust-1.88.0-${ARCH}-unknown-linux-gnu.tar.xz
+	tar xf rust-1.88.0-${ARCH}-unknown-linux-gnu.tar.xz
+	cd rust-1.88.0-${ARCH}-unknown-linux-gnu
 	./install.sh
 	complete_command
 )
@@ -299,9 +309,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.25.4.linux-amd64.tar.gz https://dl.google.com/go/go1.25.4.linux-amd64.tar.gz
+	curl -o go1.25.4.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.4.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz
+	tar -C /usr/local -xzf go1.25.4.linux-${ARCH_ALT}.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
 	complete_command
 )

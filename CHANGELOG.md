@@ -1,5 +1,19 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.15
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added ARM support. Graviton EC2 instances can now be used to build & run KNFSD-File-Cache.
+* Packer: Enabled parallel builds for both AMD64 and ARM64 architectures.
+* Packer: `ARCH` variable can be set to `["amd64"]`, `["arm64"]`, or `["amd64", "arm64"]` to build only the specified architectures. Default: `["amd64", "arm64"]`.
+* Added `PROXY_AMI` checks in `terraform-module-knfsd` root module to validate the proxy AMI exists and uses the correct `amd64/arm64` architecture for the given instance type.
+* Added `PROXY_AMI` checks in `./examples` to validate the proxy AMI exists and uses the correct `amd64/arm64` architecture for the instance type.
+* Fail earlier if the `db_setup.py` Lambda function fails to execute successfully.
+* Updated to Terraform AWS provider v6.20.0.
+* Updated to `nfs-utils` v2.8.4.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.14
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

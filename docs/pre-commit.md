@@ -77,7 +77,7 @@ The root [`Makefile`](../Makefile) provides the following targets:
 | `make codespell` | Check spelling in code and docs  | [Codespell](https://github.com/codespell-project/codespell)                          | [`.codespellrc`](../.codespellrc)   | [Codespell Documentation](https://github.com/codespell-project/codespell)            |
 | `make shfmt`     | Format shell scripts             | [shfmt](https://github.com/mvdan/sh)                                                 | [`.editorconfig`](../.editorconfig) | [shfmt Documentation](https://github.com/mvdan/sh/blob/master/cmd/shfmt/shfmt.1.scd) |
 | `make shellcheck`| Lint shell scripts               | [ShellCheck](https://github.com/koalaman/shellcheck)                                 | Built-in rules                      | [ShellCheck Documentation](https://www.shellcheck.net/)                              |
-| `make black`     | Format Python code               | [Black](https://github.com/psf/black)                                                | Python 3.13 target                  | [Black Documentation](https://black.readthedocs.io/)                                 |
+| `make black`     | Format Python code               | [Black](https://github.com/psf/black)                                                | Python 3.14 target                  | [Black Documentation](https://black.readthedocs.io/)                                 |
 | `make mypy`      | Type check Python code           | [MyPy](https://github.com/python/mypy)                                               | Built-in configuration              | [MyPy Documentation](https://mypy.readthedocs.io/)                                   |
 | `make pylint`    | Lint Python code                 | [Pylint](https://github.com/pylint-dev/pylint)                                       | Built-in configuration              | [Pylint Documentation](https://pylint.pycqa.org/)                                    |
 
@@ -182,7 +182,7 @@ These hooks use the project's Makefile targets:
 - **codespell** - Checks spelling in code and documentation
 - **shfmt** - Formats shell scripts
 - **shellcheck** - Lints shell scripts for common issues
-- **black** - Formats Python code to Python 3.13 standards
+- **black** - Formats Python code to Python 3.14 standards
 - **mypy** - Performs static type checking on Python code
 - **pylint** - Lints Python code for style and quality issues
 - **packer-format** - Formats Packer HCL files

@@ -6,4 +6,5 @@
 # SC2088 (warning): Tilde does not expand in quotes. Use $HOME.
 # SC2016 (info): Expressions don't expand in single quotes, use double quotes for that.
 # SC2086 (info): Double quote to prevent globbing and word splitting.
-disable=SC1091,SC2001,SC2034,SC2044,SC2088,SC2016,SC2086
+# SC2155 (warning): Declare and assign separately to avoid masking return values.
+disable=SC1091,SC2001,SC2034,SC2044,SC2088,SC2016,SC2086,SC2155

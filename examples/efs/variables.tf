@@ -50,3 +50,20 @@ variable "KEY_NAME" {
   nullable    = false
   default     = ""
 }
+
+variable "INSTANCE_TYPE" {
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.6xlarge\"."
+  type        = string
+  default     = "i3en.6xlarge"
+  validation {
+    condition     = can(regex("^[a-z0-9-]+\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
+  }
+}
+
+variable "KNFSD_NODES" {
+  description = "(Optional) The number of KNFSD instances to deploy as part of the cluster. Default: \"1\"."
+  type        = number
+  nullable    = false
+  default     = 1
+}

@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.14"
+  default     = "1.1.0-alpha.15"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.14\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.15\"."
   }
 }
 
@@ -279,7 +279,7 @@ variable "EXPORT_CIDR" {
 }
 
 variable "PROXY_AMI" {
-  description = "(Required) The AMI ID of the KNFSD image, built by Packer. No default."
+  description = "(Required) The AMI ID of the KNFSD image, built by Packer. Must match the architecture of INSTANCE_TYPE. No default."
   type        = string
   nullable    = false
   validation {
@@ -357,11 +357,11 @@ variable "CUSTOM_POST_STARTUP_SCRIPT" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.6xlarge\"."
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Must match PROXY_AMI architecture. Default: \"i3en.6xlarge\"."
   type        = string
   default     = "i3en.6xlarge"
   validation {
-    condition     = can(regex("^[a-z][0-9]?[a-z]*\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    condition     = can(regex("^[a-z0-9-]+\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
   }
 }

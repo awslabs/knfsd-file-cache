@@ -34,9 +34,6 @@ misconfigurations:
   - id: AVD-AWS-0177
     paths:
       - "deployment/database/main.tf"
-  - id: AVD-AWS-0344
-    paths:
-      - "deployment/terraform-module-knfsd/validations.tf"
   - id: AVD-GCP-0029
   - id: AVD-GCP-0030
   - id: AVD-GCP-0033

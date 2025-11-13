@@ -56,7 +56,7 @@ variable "INSTANCE_TYPE" {
   type        = string
   default     = "i3en.6xlarge"
   validation {
-    condition     = can(regex("^[a-z][0-9]?[a-z]*\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    condition     = can(regex("^[a-z0-9-]+\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
   }
 }

@@ -53,9 +53,9 @@ Enter at least the following 2 required variables:
 * `SECURITY_GROUP_IDS` (list(string)) - A list of security group IDs to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `[]`.
 * `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` (list(string)) - A list of CIDR blocks to allow access from when creating a temporary security group. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP`. Example: `["10.0.0.0/8", "172.16.0.0/12"]`. Default: `[]`.
 * `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` (bool) - Whether to allow access from the public IP address of the machine running Packer when creating a temporary security group. Only used when `SECURITY_GROUP_ID`, `SECURITY_GROUP_IDS`, and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` are not specified. Default: `true`.
-* `INSTANCE_TYPE` (string) - The EC2 instance type used to build the image. This can be changed to improve build speeds. Default: `"c6in.2xlarge"`. If this instance type is unavailable in your region, try changing to `"m6i.2xlarge"`, `"c5.2xlarge"`, or `"m5.2xlarge"`.
-* `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Default: `"packer-knfsd-proxy-{VERSION}-{TIMESTAMP}"`.
-* `IMAGE_NAME` (string) - The unique name of the resulting image. Default: `"knfsd-proxy-{VERSION}"`.
+* `ARCH` (list(string)) - List of architectures to build. Valid values: `["amd64"]`, `["arm64"]`, or `["amd64", "arm64"]`. Default: `["amd64", "arm64"]` (builds both architectures in parallel).
+* `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"packer-knfsd-proxy-{VERSION}-{ARCH}-{TIMESTAMP}"`.
+* `IMAGE_NAME` (string) - The unique name of the resulting image. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"knfsd-proxy-{VERSION}-{ARCH}"`.
 * `SKIP_CREATE_IMAGE` (bool) - Skip creating the image. Useful for setting to `true` during a build test stage. Default: `false`.
 * `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources. Default: `""`.
 * `CUSTOM_PRE_BUILD_SCRIPT` (string) - Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
@@ -142,9 +142,12 @@ Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/has
 
 ### AWS Service Quotas
 
-By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the `c6in.2xlarge` instance type used in the build process, which requires 8 vCPUs.
+By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the instance types used in the build process:
 
-You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the `c6in.2xlarge` instance type.
+* `c6in.2xlarge` (amd64 builds) requires 8 vCPUs
+* `c6gn.2xlarge` (arm64 builds) requires 8 vCPUs
+
+You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the appropriate instance types.
 
 See [AWS Service Quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for more information.
 
@@ -307,17 +310,17 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.14"
+VERSION="1.1.0-alpha.15"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
 export KNFSD_SUBNET=<subnet-id>
 export KNFSD_KEYPAIR=<keypair-name>
+export KNFSD_ARCH=<amd64-or-arm64>  # Choose: amd64 or arm64
 
-export KNFSD_INSTANCE_TYPE=c6in.2xlarge
-export KNFSD_BUILD_NAME="build-knfsd-proxy-${VERSION}-${TIMESTAMP}"
-export KNFSD_AMI_NAME="knfsd-proxy-${VERSION}-${TIMESTAMP}"
-export KNFSD_IMAGE_NAME="knfsd-proxy-${VERSION}"
+export KNFSD_BUILD_NAME="build-knfsd-proxy-${VERSION}-${KNFSD_ARCH}-${TIMESTAMP}"
+export KNFSD_AMI_NAME="knfsd-proxy-${VERSION}-${KNFSD_ARCH}-${TIMESTAMP}"
+export KNFSD_IMAGE_NAME="knfsd-proxy-${VERSION}-${KNFSD_ARCH}"
 ```
 
 ### (Optional) Create Security Group for SSH Access
@@ -348,13 +351,23 @@ aws ec2 authorize-security-group-ingress \
 
 ### Create Build Machine
 
-The default instance type is a `c6in.2xlarge`, if this is unavailable try changing the `KNFSD_INSTANCE_TYPE` to `m6i.2xlarge`, `c5.2xlarge` or `m5.2xlarge`.
+The instance type used depends on your architecture choice:
+
+* `c6in.2xlarge` for amd64 builds
+* `c6gn.2xlarge` for arm64 builds
 
 **Note**: You will need to provide an `$KNFSD_SECURITY_GROUP_ID` to create the build machine.
 
 ```bash
+# Set instance type based on architecture
+if [ "$KNFSD_ARCH" = "amd64" ]; then
+  KNFSD_INSTANCE_TYPE="c6in.2xlarge"
+elif [ "$KNFSD_ARCH" = "arm64" ]; then
+  KNFSD_INSTANCE_TYPE="c6gn.2xlarge"
+fi
+
 export KNFSD_INSTANCE_ID=$(aws ec2 run-instances \
-  --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+  --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/${KNFSD_ARCH}/hvm/ebs-gp3/ami-id \
   --instance-type $KNFSD_INSTANCE_TYPE \
   --key-name $KNFSD_KEYPAIR \
   --subnet-id $KNFSD_SUBNET \

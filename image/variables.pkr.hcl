@@ -44,10 +44,16 @@ variable "TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP" {
   default     = true
 }
 
-variable "INSTANCE_TYPE" {
-  description = "(Optional) The EC2 instance type used to build the image. This can be changed to improve build speeds. Default: \"c6in.2xlarge\". If this instance type is unavailable in your region, try changing to \"m6i.2xlarge\", \"c5.2xlarge\", or \"m5.2xlarge\"."
-  type        = string
-  default     = "c6in.2xlarge"
+variable "ARCH" {
+  description = "(Optional) List of architectures to build. Valid values: [\"amd64\"], [\"arm64\"], or [\"amd64\", \"arm64\"]. Default: [\"amd64\", \"arm64\"]."
+  type        = list(string)
+  default     = ["amd64", "arm64"]
+  validation {
+    condition = alltrue([
+      for arch in var.ARCH : contains(["amd64", "arm64"], arch)
+    ]) && length(var.ARCH) > 0
+    error_message = "ARCH must contain only 'amd64' and/or 'arm64'."
+  }
 }
 
 variable "BUILD_NAME" {

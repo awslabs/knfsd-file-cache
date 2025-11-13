@@ -175,7 +175,7 @@ The most compute and/or network intensive CI jobs are configured with a `2xlarge
 
 - **Purpose**: Python code formatting validation
 - **Tool**: [Black](https://github.com/psf/black)
-- **Target**: Python 3.13 compatibility
+- **Target**: Python 3.14 compatibility
 - **Reference**: [Black Documentation](https://black.readthedocs.io/)
 - **Failure Policy**: Blocking
 

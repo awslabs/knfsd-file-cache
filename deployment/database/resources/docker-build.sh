@@ -9,7 +9,7 @@
 # always use x86_64 only for the DB setup image
 ARCH="linux/amd64"
 PIP_PLATFORM="manylinux2014_x86_64"
-KNFSD_PYTHON_VERSION="3.13.9"
+KNFSD_PYTHON_VERSION="3.13.9" # must match the Lambda function runtime
 KNFSD_PSYCOPG_VERSION="3.2.12"
 
 # ensure resources directory is writable by all users

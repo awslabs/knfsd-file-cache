@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.19.0"
+      version = "~> 6.20.0"
     }
   }
 }
@@ -93,18 +93,54 @@ resource "aws_efs_mount_target" "efs_mt" {
   security_groups = [aws_security_group.efs_mt_sg.id]
 }
 
+# Validate that the proxy AMI exists and is accessible.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_exists" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+}
+
+# Validate AMI architecture matches instance type before deployment.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_arch" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+
+  lifecycle {
+    postcondition {
+      condition = (
+        can(regex("^[a-z]+[0-9]g[a-z]*\\.", var.INSTANCE_TYPE))
+        ? self.architecture == "arm64"
+        : self.architecture == "x86_64"
+      )
+      error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
+  }
+}
+
 module "proxy" {
   source                = "../../deployment/terraform-module-knfsd"
   SUBNET                = var.SUBNET
-  KNFSD_NODES           = 1
+  KNFSD_NODES           = var.KNFSD_NODES
   PROXY_AMI             = var.PROXY_AMI
   PROXY_BASENAME        = var.PROXY_BASENAME
   TRAFFIC_MODE          = "dns_round_robin"
   KEY_NAME              = var.KEY_NAME
   FSID_MODE             = "static" # this should not be used in production or with more than a single node
+  INSTANCE_TYPE         = var.INSTANCE_TYPE
   EXPORT_MAP            = local.export_map
   NFS_MOUNT_VERSION     = "4.1"       # EFS only supports NFS v4.1
   DISABLED_NFS_VERSIONS = "3,4.0,4.2" # EFS only supports NFS v4.1
   MOUNT_OPTIONS         = "noresvport"
   INSTANCE_TAGS         = { "knfsd-file-cache:examples" = "efs" }
+  depends_on = [
+    data.aws_ami.proxy_exists, # Ensure proxy AMI exists
+    data.aws_ami.proxy_arch    # Ensure proxy AMI architecture matches instance type
+  ]
 }

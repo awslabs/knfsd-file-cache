@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.14"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.15"
   SUBNET = "subnet-038e337f0ff4cd53f"
 }
 

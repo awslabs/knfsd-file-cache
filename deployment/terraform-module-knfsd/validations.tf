@@ -5,11 +5,33 @@
 
 # Validate that the proxy AMI exists and is accessible.
 # "Error: Your query returned no results. Please change your search criteria and try again."
-# tflint-ignore: terraform_unused_declarations
-data "aws_ami" "proxy" {
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_exists" {
+  owners = ["self"]
   filter {
     name   = "image-id"
     values = [var.PROXY_AMI]
+  }
+}
+
+# Validate AMI architecture matches instance type before deployment.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ami" "proxy_arch" {
+  owners = ["self"]
+  filter {
+    name   = "image-id"
+    values = [var.PROXY_AMI]
+  }
+
+  lifecycle {
+    postcondition {
+      condition = (
+        can(regex("^[a-z]+[0-9]g[a-z]*\\.", var.INSTANCE_TYPE))
+        ? self.architecture == "arm64"
+        : self.architecture == "x86_64"
+      )
+      error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
   }
 }
 
