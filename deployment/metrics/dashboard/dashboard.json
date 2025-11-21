@@ -2230,6 +2230,8 @@
               ],
               "view": "timeSeries",
               "stacked": false,
+              "stat": "Average",
+              "period": 60,
               "region": "${region_filter}",
               "title": "DB Load",
               "yAxis": {

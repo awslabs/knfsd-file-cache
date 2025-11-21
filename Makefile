@@ -41,6 +41,10 @@ pre-commit precommit pc:
 pre-commit-update precommit-update pc-update autoupdate:
 	@pre-commit autoupdate
 
+.PHONY: clean delete del
+clean delete del:
+	@cd $(ROOT_DIR)/.devcontainer/dev && ./find_temp_files.sh -d
+
 .PHONY: lic-scan
 lic-scan:
 	@echo "[license scan]"

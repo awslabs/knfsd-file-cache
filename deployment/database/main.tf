@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.20.0"
+      version = "~> 6.22.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -69,7 +69,7 @@ resource "aws_db_instance" "fsids" {
   identifier               = local.name
   db_name                  = local.db_name
   engine                   = "postgres"
-  engine_version           = "17.6"
+  engine_version           = "18.1"
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   parameter_group_name     = aws_db_parameter_group.fsids_pg.name
   username                 = var.MASTER_USERNAME # master db user
@@ -138,7 +138,7 @@ resource "aws_vpc_security_group_egress_rule" "db_egress" {
 resource "aws_db_parameter_group" "fsids_pg" {
   name        = "${local.name}-pg"
   description = "DB parameter group for ${local.name}"
-  family      = "postgres17"
+  family      = "postgres18"
   tags        = local.tags
 }
 
@@ -235,7 +235,7 @@ resource "aws_lambda_function" "db_setup" {
   role          = aws_iam_role.lambda_db_setup.arn
   handler       = "db_setup.lambda_handler"
   architectures = ["x86_64"] # always use x86_64 only
-  runtime       = "python3.13"
+  runtime       = "python3.14"
   timeout       = 15
   filename      = "${path.module}/resources/db_setup.zip"
   # nosemgrep: aws-lambda-environment-unencrypted

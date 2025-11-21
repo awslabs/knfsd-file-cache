@@ -121,10 +121,11 @@ resource "aws_launch_template" "nfsproxy_template" {
   MIME-Version: 1.0
   Content-Transfer-Encoding: 7bit
 
-  #!/bin/bash
+  #!/usr/bin/env bash
   export CLUSTER_NAME="${local.name}"
   export CUSTOM_PRE_STARTUP_SCRIPT='${base64gzip(var.CUSTOM_PRE_STARTUP_SCRIPT)}'
   export CUSTOM_POST_STARTUP_SCRIPT='${base64gzip(var.CUSTOM_POST_STARTUP_SCRIPT)}'
+  rm -f /tmp/proxy-startup.sh
   echo '${base64gzip(file("${path.module}/resources/proxy-startup.sh"))}' | base64 -d | gzip -d > /tmp/proxy-startup.sh
   chmod +x /tmp/proxy-startup.sh
   /tmp/proxy-startup.sh

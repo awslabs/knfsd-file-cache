@@ -15,6 +15,7 @@ import (
 
 func TestShouldRetry(t *testing.T) {
 	t.Run("ErrNoRows", func(t *testing.T) {
+		t.Parallel()
 		// ErrNoRows should not be retried, as this is used by get_fsid and
 		// get_path to signal that there's no record to return.
 		assert.False(t, ShouldRetry(pgx.ErrNoRows))

@@ -26,6 +26,7 @@ var teapot http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestTransport(t *testing.T) {
+	t.Parallel()
 	server := newTLSServer(testcert.LocalhostCert, teapot)
 	defer server.Close()
 
@@ -63,6 +64,7 @@ func TestTransportHttpRequiresInsecure(t *testing.T) {
 	}
 
 	t.Run("insecure false", func(t *testing.T) {
+		t.Parallel()
 		status, err := query(false)
 
 		assert.Equal(t, 0, status)
@@ -73,6 +75,7 @@ func TestTransportHttpRequiresInsecure(t *testing.T) {
 	})
 
 	t.Run("insecure true", func(t *testing.T) {
+		t.Parallel()
 		status, err := query(true)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTeapot, status)
@@ -96,6 +99,7 @@ func TestTransportInsecureIgnoresServerCertificate(t *testing.T) {
 	}
 
 	t.Run("insecure false", func(t *testing.T) {
+		t.Parallel()
 		status, err := query(false)
 
 		assert.Equal(t, 0, status)
@@ -107,6 +111,7 @@ func TestTransportInsecureIgnoresServerCertificate(t *testing.T) {
 	})
 
 	t.Run("insecure true", func(t *testing.T) {
+		t.Parallel()
 		status, err := query(true)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTeapot, status)
@@ -137,6 +142,7 @@ func TestTransportCommonName(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			server := newTLSServer(testcert.CommonNameCert, teapot)
 			defer server.Close()
 

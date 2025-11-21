@@ -68,6 +68,7 @@ func TestServer(t *testing.T) {
 }
 
 func TestNewServerFromFile(t *testing.T) {
+	t.Parallel()
 	l, err := net.Listen("unixpacket", "")
 	require.NoError(t, err)
 	defer l.Close()

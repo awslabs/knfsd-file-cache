@@ -50,7 +50,7 @@ resource "aws_lambda_function" "static_ip" {
   role          = aws_iam_role.lambda_static_ip.arn
   handler       = "static_ip.lambda_handler"
   architectures = ["arm64"]
-  runtime       = "python3.13"
+  runtime       = "python3.14"
   timeout       = 600
   filename      = "${path.module}/resources/static_ip.zip"
   # nosemgrep: aws-lambda-environment-unencrypted

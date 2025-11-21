@@ -55,6 +55,7 @@ func TestInt64(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result := Int64(tc.input)
 			if result != tc.expected {
 				t.Errorf("Int64(%d): expected %d, got %d",

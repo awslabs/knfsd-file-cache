@@ -138,6 +138,7 @@ func TestFSIDCache(t *testing.T) {
 	// call to any of these methods should go to the source.
 
 	t.Run("GetFSID", func(t *testing.T) {
+		t.Parallel()
 		test := newTest(t)
 		test.GetFSID("/foo").Ok(1).WasCalled(OpGetFSID{"/foo"})
 
@@ -149,6 +150,7 @@ func TestFSIDCache(t *testing.T) {
 	})
 
 	t.Run("AllocatedFSID", func(t *testing.T) {
+		t.Parallel()
 		test := newTest(t)
 		test.AllocateFSID("/foo").Ok(1).WasCalled(OpAllocateFSID{"/foo"})
 
@@ -160,6 +162,7 @@ func TestFSIDCache(t *testing.T) {
 	})
 
 	t.Run("GetPath", func(t *testing.T) {
+		t.Parallel()
 		test := newTest(t)
 		test.GetPath(1).Ok("/foo").WasCalled(OpGetPath{1})
 
@@ -171,6 +174,7 @@ func TestFSIDCache(t *testing.T) {
 	})
 
 	t.Run("errors not cached", func(t *testing.T) {
+		t.Parallel()
 		test := newTest(t)
 
 		// Error responses should not be cached, so calling the same method

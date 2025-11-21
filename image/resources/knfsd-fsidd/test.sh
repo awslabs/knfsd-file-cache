@@ -62,8 +62,6 @@ case "$1" in
 	# Shortcut for:
 	#   ./test.sh up && ./test.sh run; ./test.sh down
 	"")
-		go vet ./... || exit 1
-
 		trap cleanup EXIT
 		if ! start_postgres; then
 			printf 'ERROR: Failed to start postgres\n'
@@ -82,7 +80,6 @@ case "$1" in
 	# ./test.sh down
 	run)
 		shift
-		go vet ./... || exit 1
 		run_tests "$@"
 		;;
 

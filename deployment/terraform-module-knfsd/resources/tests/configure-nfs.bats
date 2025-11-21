@@ -35,11 +35,11 @@ function setup() {
 }
 
 @test "set RPC thread count" {
-	export NUM_NFS_THREADS=42
+	export NUM_NFS_THREADS=64
 
 	run configure_nfs
 	assert_success
 
 	assert [ -f /etc/nfs.conf.d/knfsd.conf ]
-	assert_equal "$(nfsconf --get nfsd threads)" 42
+	assert_equal "$(nfsconf --get nfsd threads)" 64
 }

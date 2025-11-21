@@ -51,6 +51,7 @@ func TestFetchPage(t *testing.T) {
 
 	for file, expected := range tests {
 		t.Run(file, func(t *testing.T) {
+			t.Parallel()
 			json, err := os.ReadFile(file)
 			require.NoError(t, err)
 
@@ -74,6 +75,7 @@ func TestFetchPage(t *testing.T) {
 }
 
 func TestFetchPage_Auth(t *testing.T) {
+	t.Parallel()
 	invoked := false
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
@@ -94,6 +96,7 @@ func TestFetchPage_Auth(t *testing.T) {
 }
 
 func TestFetchPage_HttpError(t *testing.T) {
+	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 	}))
@@ -107,6 +110,7 @@ func TestFetchPage_HttpError(t *testing.T) {
 }
 
 func TestFetchPage_InvalidJson(t *testing.T) {
+	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("<html><body>Something went wrong</body></html>"))
 	}))
@@ -120,6 +124,7 @@ func TestFetchPage_InvalidJson(t *testing.T) {
 }
 
 func TestFetchAll(t *testing.T) {
+	t.Parallel()
 	type response struct {
 		expectedURI string
 		jsonFile    string

@@ -18,6 +18,7 @@ import (
 )
 
 func TestListExports(t *testing.T) {
+	t.Parallel()
 	json, err := os.ReadFile("testdata/responses/simple.json")
 	require.NoError(t, err)
 

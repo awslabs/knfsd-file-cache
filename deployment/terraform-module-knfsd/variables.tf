@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.15"
+  default     = "1.1.0-alpha.16"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.15\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.16\"."
   }
 }
 
@@ -288,6 +288,13 @@ variable "PROXY_AMI" {
   }
 }
 
+variable "PROXY_AMI_OWNERS" {
+  description = "(Optional) List of AMI owners to limit AMI search. Valid values: an AWS \"account ID\", \"self\" (the current account), or an AWS owner alias (\"amazon\", \"aws-marketplace\"). Default: [\"self\"]."
+  type        = list(string)
+  nullable    = false
+  default     = ["self"]
+}
+
 variable "KEY_NAME" {
   description = "(Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: \"\"."
   type        = string
@@ -315,10 +322,14 @@ variable "INSTANCE_TAGS" {
 }
 
 variable "VFS_CACHE_PRESSURE" {
-  description = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"100\"."
-  type        = string
+  description = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
+  type        = number
   nullable    = false
-  default     = "100"
+  default     = 1
+  validation {
+    condition     = var.VFS_CACHE_PRESSURE >= 0 && var.VFS_CACHE_PRESSURE <= 100
+    error_message = "VFS_CACHE_PRESSURE must be between 0 and 100."
+  }
 }
 
 variable "READ_AHEAD" {
@@ -437,9 +448,13 @@ variable "CACHEFILESD_EBS_THROUGHPUT" {
 
 variable "NCONNECT" {
   description = "(Optional) The number of TCP connections to use when connecting to the source. Default: \"16\"."
-  type        = string
+  type        = number
   nullable    = false
-  default     = "16"
+  default     = 16
+  validation {
+    condition     = var.NCONNECT >= 1 && var.NCONNECT <= 16
+    error_message = "NCONNECT must be between 1 and 16."
+  }
 }
 
 variable "ACREGMIN" {
@@ -471,14 +486,14 @@ variable "ACDIRMAX" {
 }
 
 variable "RSIZE" {
-  description = "(Optional) The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\"."
+  description = "(Optional) The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\" (1 MiB)."
   type        = number
   nullable    = false
   default     = 1048576
 }
 
 variable "WSIZE" {
-  description = "(Optional) The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\"."
+  description = "(Optional) The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\" (1 MiB)."
   type        = number
   nullable    = false
   default     = 1048576
@@ -503,6 +518,28 @@ variable "NFS_MOUNT_VERSION" {
   }
 }
 
+variable "TCP_SLOT_TABLE_ENTRIES" {
+  description = "(Optional) The initial number of RPC slot table entries for TCP connections to the source NFS server. Controls how many simultaneous RPC requests the proxy can send to the source filer. Default: \"128\"."
+  type        = number
+  nullable    = false
+  default     = 128
+  validation {
+    condition     = var.TCP_SLOT_TABLE_ENTRIES >= 2 && var.TCP_SLOT_TABLE_ENTRIES <= 65536
+    error_message = "TCP_SLOT_TABLE_ENTRIES must be between 2 and 65536."
+  }
+}
+
+variable "TCP_MAX_SLOT_TABLE_ENTRIES" {
+  description = "(Optional) The maximum number of RPC slot table entries for TCP connections to the source NFS server. Sets the upper limit on concurrent RPC requests the proxy can send to the source filer. Default: \"128\"."
+  type        = number
+  nullable    = false
+  default     = 128
+  validation {
+    condition     = var.TCP_MAX_SLOT_TABLE_ENTRIES >= 2 && var.TCP_MAX_SLOT_TABLE_ENTRIES <= 65536
+    error_message = "TCP_MAX_SLOT_TABLE_ENTRIES must be between 2 and 65536."
+  }
+}
+
 variable "DISABLED_NFS_VERSIONS" {
   description = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
   type        = string
@@ -511,10 +548,10 @@ variable "DISABLED_NFS_VERSIONS" {
 }
 
 variable "NUM_NFS_THREADS" {
-  description = "(Optional) The number of NFS Threads to use for KNFSD. Default: \"512\"."
+  description = "(Optional) The number of NFS threads to use for KNFSD. Default: \"256\"."
   type        = number
   nullable    = false
-  default     = 512
+  default     = 256
 }
 
 variable "NOHIDE" {

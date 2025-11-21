@@ -51,6 +51,7 @@ func (ft filterTest) run(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/simple/inputs",
 		includes: "",
@@ -61,6 +62,7 @@ func TestEmpty(t *testing.T) {
 }
 
 func TestIncludes(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/simple/inputs",
 		includes: "testdata/simple/patterns",
@@ -71,6 +73,7 @@ func TestIncludes(t *testing.T) {
 }
 
 func TestExcludes(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/simple/inputs",
 		includes: "",
@@ -81,6 +84,7 @@ func TestExcludes(t *testing.T) {
 }
 
 func TestExcludeParent(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/exclude-parent/inputs",
 		includes: "",
@@ -91,6 +95,7 @@ func TestExcludeParent(t *testing.T) {
 }
 
 func TestFields(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/fields/inputs",
 		includes: "testdata/fields/includes",
@@ -102,6 +107,7 @@ func TestFields(t *testing.T) {
 }
 
 func TestCombined(t *testing.T) {
+	t.Parallel()
 	ft := filterTest{
 		inputs:   "testdata/combined/inputs",
 		includes: "testdata/combined/includes",

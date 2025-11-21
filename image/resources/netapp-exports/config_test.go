@@ -19,6 +19,7 @@ func TestParseConfig(t *testing.T) {
 	assert.Len(t, c.Servers, 3)
 
 	t.Run("basic-attributes", func(t *testing.T) {
+		t.Parallel()
 		s := findServer(t, c, "basic-attributes")
 		assert.Equal(t, "https://10.0.0.2:8080", s.URL)
 		assert.Equal(t, "nfs-proxy", s.User)
@@ -33,6 +34,7 @@ func TestParseConfig(t *testing.T) {
 	})
 
 	t.Run("tls", func(t *testing.T) {
+		t.Parallel()
 		s := findServer(t, c, "tls")
 		require.NotNil(t, s.TLS)
 		assert.Equal(t, "NetApp CA Certificate", s.TLS.CACertificate)
@@ -41,6 +43,7 @@ func TestParseConfig(t *testing.T) {
 	})
 
 	t.Run("empty-tls", func(t *testing.T) {
+		t.Parallel()
 		s := findServer(t, c, "empty-tls")
 		require.NotNil(t, s.TLS)
 		assert.Equal(t, "", s.TLS.CACertificate)
@@ -54,6 +57,7 @@ func TestParseConfig_AWSSecret(t *testing.T) {
 	assert.Len(t, c.Servers, 4)
 
 	t.Run("all-attributes", func(t *testing.T) {
+		t.Parallel()
 		s := findAWSSecret(t, c, "all-attributes")
 		assert.Equal(t, "eu-west-2", s.Region)
 		assert.Equal(t, "netapp-password", s.Name)
@@ -61,18 +65,21 @@ func TestParseConfig_AWSSecret(t *testing.T) {
 	})
 
 	t.Run("minimal", func(t *testing.T) {
+		t.Parallel()
 		s := findAWSSecret(t, c, "minimal")
 		assert.Equal(t, "netapp-password", s.Name)
 		assert.Equal(t, "", s.Version)
 	})
 
 	t.Run("previous-version", func(t *testing.T) {
+		t.Parallel()
 		s := findAWSSecret(t, c, "previous-version")
 		assert.Equal(t, "netapp-password", s.Name)
 		assert.Equal(t, "AWSPREVIOUS", s.Version)
 	})
 
 	t.Run("remote-secret", func(t *testing.T) {
+		t.Parallel()
 		s := findAWSSecret(t, c, "remote-secret")
 		assert.Equal(t, "us-east-1", s.Region)
 		assert.Equal(t, "password", s.Name)

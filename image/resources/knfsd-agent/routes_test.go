@@ -45,6 +45,7 @@ func TestJSONHandler(t *testing.T) {
 	}
 
 	t.Run("response", func(t *testing.T) {
+		t.Parallel()
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return &Body{"Hello World"}, nil
 		})
@@ -56,6 +57,7 @@ func TestJSONHandler(t *testing.T) {
 	})
 
 	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return nil, nil
 		})
@@ -67,6 +69,7 @@ func TestJSONHandler(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
+		t.Parallel()
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return nil, errors.New("handler generated error")
 		})
@@ -78,6 +81,7 @@ func TestJSONHandler(t *testing.T) {
 	})
 
 	t.Run("invalid method", func(t *testing.T) {
+		t.Parallel()
 		// handlers only allow GET requests
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return &Body{"Hello World"}, nil
@@ -90,6 +94,7 @@ func TestJSONHandler(t *testing.T) {
 	})
 
 	t.Run("HEAD request", func(t *testing.T) {
+		t.Parallel()
 		// should also support HEAD requests for any endpoint that supports GET
 		handler := JSONHandler(func(r *http.Request) (*Body, error) {
 			return &Body{Message: "Hello World"}, nil

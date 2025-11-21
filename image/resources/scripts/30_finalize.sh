@@ -15,4 +15,7 @@ echo -e "${SHELL_YELLOW}---- SYSTEM INFO${SHELL_DEFAULT}"
 lsb_release -d -r -c
 echo -e "Kernel:\t${SHELL_YELLOW}$(uname -r)${SHELL_DEFAULT}"
 
+# clean cloud-init state/logs before AMI creation
+cloud-init clean --logs --seed
+
 echo -e "\n${SHELL_YELLOW}---- SUCCESS: Finished finalize image script${SHELL_DEFAULT}"

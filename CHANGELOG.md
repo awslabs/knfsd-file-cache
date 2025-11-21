@@ -1,5 +1,31 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.16
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added `TCP_SLOT_TABLE_ENTRIES` and `TCP_MAX_SLOT_TABLE_ENTRIES` variables to `terraform-module-knfsd` module. These kernel tunables control the number of simultaneous RPC requests, per TCP connection, the proxy can send to the source filer. Default: `128`.
+* Reduced default value for `NUM_NFS_THREADS` from `512` to `256` in `terraform-module-knfsd` module.
+* Reduced default value for `VFS_CACHE_PRESSURE` from `100` to `1` in `terraform-module-knfsd` module.
+* Added `PROXY_AMI_OWNERS` variable to `terraform-module-knfsd` module. This allows you to specify the AMI owners to limit the AMI search. Default: `["self"]`. If your AMI is created by Packer in a different AWS account, you can specify the AWS account ID here.
+* Removed `owners = ["self"]` from `./examples` to simplify the examples.
+* Converted incorrect Terraform data type (string -> number) for `VFS_CACHE_PRESSURE` and `NCONNECT` variables in `terraform-module-knfsd` module.
+* Added Terraform validation checks to ensure `VFS_CACHE_PRESSURE` is between `0` and `100`, and `NCONNECT` is between `1` and `16`.
+* Refactored how metadata (IMDSv2) is retrieved during instance startup, improving reliability and reducing startup time.
+* Ensure all services are stopped silently before configuration, preventing any potential conflicts with the startup process.
+* Fixed a bug where the RAID array was not being reassembled correctly during KNFSD instance reboot.
+* Refactored `proxy-startup.sh` to improve error logging and function stack tracing during KNFSD instance startup failures.
+* Added total execution time to `proxy-startup.sh` script for benchmarking/debugging purposes.
+* Downgraded default database instance type from `db.t4g.medium` to `db.t4g.small`.
+* Packer: run `cloud-init clean --logs --seed` during image build to ensure a clean state/logs in the AMI.
+* Ensure consistent shebang across all shell scripts in the project.
+* Updated to Python v3.14.0.
+* Updated to PostgreSQL v18.1.
+* Updated to Terraform AWS provider v6.22.0.
+* Minor Golang package updates.
+* Removed pinned OpenShift API Golang dependency in `knfsd-metrics-agent`.
+* Added parallelism (where feasible) to all Golang unit tests, reduced GitLab CI Golang jobs runtime by >50%.
+
 ## v1.1.0-alpha.15
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

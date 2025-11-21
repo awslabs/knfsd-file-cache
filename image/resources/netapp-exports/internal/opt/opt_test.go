@@ -61,6 +61,7 @@ func TestOptsBool(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			flags := flag.NewFlagSet("", flag.ContinueOnError)
 			args := NewOptSet(flags)
 			args.LookupEnv = tc.input.lookup
@@ -92,6 +93,7 @@ func TestOptsString(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			flags := flag.NewFlagSet("", flag.ContinueOnError)
 			args := NewOptSet(flags)
 			args.LookupEnv = tc.input.lookup
@@ -107,6 +109,7 @@ func TestOptsString(t *testing.T) {
 }
 
 func TestOptsError(t *testing.T) {
+	t.Parallel()
 	input := makeopts().env("X", "bob")
 	var x bool
 

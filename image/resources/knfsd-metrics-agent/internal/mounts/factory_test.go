@@ -15,6 +15,7 @@ import (
 )
 
 func TestNewFactory(t *testing.T) {
+	t.Parallel()
 	factory := NewFactory()
 	_, err := factory.CreateMetrics(
 		context.Background(),

@@ -18,6 +18,7 @@ import (
 )
 
 func TestMetricTransformsMatch(t *testing.T) {
+	t.Parallel()
 	type Transform struct {
 		Action    string `yaml:"action"`
 		Include   string `yaml:"include"`
@@ -56,6 +57,7 @@ func TestMetricTransformsMatch(t *testing.T) {
 }
 
 func TestNoDuplicateNames(t *testing.T) {
+	t.Parallel()
 	names, err := findAllMetricNames()
 	require.NoError(t, err)
 

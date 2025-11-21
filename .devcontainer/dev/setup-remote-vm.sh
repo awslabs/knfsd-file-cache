@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.15"
+VERSION="1.1.0-alpha.16"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}
@@ -138,13 +138,13 @@ curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -i).zip" -o /t
 
 ## build version args
 # https://github.com/bats-core/bats-core/releases
-KNFSD_BATS_CORE_VERSION=1.12.0
+KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
-KNFSD_BLACK_VERSION=25.9.0
+KNFSD_BLACK_VERSION=25.11.0
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.40.67
+KNFSD_BOTO3_VERSION=1.40.72
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.2.490
+KNFSD_CHECKOV_VERSION=3.2.493
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
@@ -158,13 +158,13 @@ KNFSD_MYPY_VERSION=1.18.2
 # https://github.com/hashicorp/packer/releases
 KNFSD_PACKER_VERSION=1.14.2
 # https://github.com/pre-commit/pre-commit/releases
-KNFSD_PRECOMMIT_VERSION=4.3.0
+KNFSD_PRECOMMIT_VERSION=4.4.0
 # https://pypi.org/project/psycopg/
 KNFSD_PSYCOPG_VERSION=3.2.12
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.2
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.142.0
+KNFSD_SEMGREP_VERSION=1.143.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -172,7 +172,7 @@ KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-KNFSD_TERRAGRUNT_VERSION=0.93.3
+KNFSD_TERRAGRUNT_VERSION=0.93.8
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.59.1
 # https://github.com/aquasecurity/tfsec/releases

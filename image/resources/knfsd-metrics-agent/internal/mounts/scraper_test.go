@@ -13,6 +13,7 @@ import (
 )
 
 func TestSplitNFSDevice(t *testing.T) {
+	t.Parallel()
 	var server, path string
 
 	server, path = splitNFSDevice("example.com:/files/assets")

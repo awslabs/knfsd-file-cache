@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.20.0"
+      version = "~> 6.22.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -317,7 +317,6 @@ resource "aws_security_group" "fsx_sg" {
 # Validate that the proxy AMI exists and is accessible.
 # tflint-ignore: terraform_unused_declarations
 data "aws_ami" "proxy_exists" {
-  owners = ["self"]
   filter {
     name   = "image-id"
     values = [var.PROXY_AMI]
@@ -327,7 +326,6 @@ data "aws_ami" "proxy_exists" {
 # Validate AMI architecture matches instance type before deployment.
 # tflint-ignore: terraform_unused_declarations
 data "aws_ami" "proxy_arch" {
-  owners = ["self"]
   filter {
     name   = "image-id"
     values = [var.PROXY_AMI]

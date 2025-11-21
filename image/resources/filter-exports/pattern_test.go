@@ -123,6 +123,7 @@ func testSinglePattern(t *testing.T, tc testPattern) {
 func TestSinglePatterns(t *testing.T) {
 	for _, tc := range testPatterns {
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
 			testSinglePattern(t, tc)
 		})
 	}

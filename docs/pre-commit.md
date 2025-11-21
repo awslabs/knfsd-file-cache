@@ -119,11 +119,11 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 The following commands operate across all Go projects in the repository:
 
-| Command       | Aliases    | Purpose                       | Reference                                                                                                       |
-|---------------|------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `make golint` | -          | Lint all Go projects          | [golangci-lint Documentation](https://golangci-lint.run/)                                                       |
-| `make gotidy` | -          | Tidy Go modules               | [Go Modules](https://golang.org/ref/mod)                                                                        |
-| `make goget`  | `goupdate` | Update Go dependencies        | [Go Modules](https://golang.org/ref/mod)                                                                        |
+| Command       | Aliases    | Purpose                       | Reference                                                 |
+|---------------|------------|-------------------------------|-----------------------------------------------------------|
+| `make golint` | -          | Lint all Go projects          | [golangci-lint Documentation](https://golangci-lint.run/) |
+| `make gotidy` | -          | Tidy Go modules               | [Go Modules](https://golang.org/ref/mod)                  |
+| `make goget`  | `goupdate` | Update Go dependencies        | [Go Modules](https://golang.org/ref/mod)                  |
 
 ## Go Project Makefiles
 
@@ -141,12 +141,12 @@ Each Go project has its own Makefile with standardized targets:
 
 ### Standard Go Targets
 
-| Target               | Purpose                          | Tools Used                                                                                                      |
-|----------------------|----------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `golint`             | Lint Go code                     | [golangci-lint](https://golangci-lint.run/) with [`.golangci.yaml`](../.golangci.yaml)                          |
-| `gotidy`             | Clean up Go module dependencies  | `go mod tidy`                                                                                                   |
-| `goget` / `goupdate` | Update Go dependencies           | `go get -t -u ./...`                                                                                            |
-| `test`               | Run Go tests with race detection | `go test -race -cover -vet=all -v ./...`                                                                        |
+| Target               | Purpose                          | Tools Used                                                                             |
+|----------------------|----------------------------------|----------------------------------------------------------------------------------------|
+| `golint`             | Lint Go code                     | [golangci-lint](https://golangci-lint.run/) with [`.golangci.yaml`](../.golangci.yaml) |
+| `gotidy`             | Clean up Go module dependencies  | `go mod tidy`                                                                          |
+| `goget` / `goupdate` | Update Go dependencies           | `go get -t -u ./...`                                                                   |
+| `test`               | Run Go tests with code coverage  | `go test -cover -vet=all -v ./...`                                                     |
 
 ### Special Targets
 

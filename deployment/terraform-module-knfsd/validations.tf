@@ -7,7 +7,7 @@
 # "Error: Your query returned no results. Please change your search criteria and try again."
 # tflint-ignore: terraform_unused_declarations
 data "aws_ami" "proxy_exists" {
-  owners = ["self"]
+  owners = var.PROXY_AMI_OWNERS
   filter {
     name   = "image-id"
     values = [var.PROXY_AMI]
@@ -17,7 +17,7 @@ data "aws_ami" "proxy_exists" {
 # Validate AMI architecture matches instance type before deployment.
 # tflint-ignore: terraform_unused_declarations
 data "aws_ami" "proxy_arch" {
-  owners = ["self"]
+  owners = var.PROXY_AMI_OWNERS
   filter {
     name   = "image-id"
     values = [var.PROXY_AMI]
@@ -38,6 +38,10 @@ data "aws_ami" "proxy_arch" {
 # To maintain Tf v1.2 support, we need to use null_resource to validate cross-referencing variables.
 resource "null_resource" "validations" {
   lifecycle {
+    precondition {
+      condition     = var.TCP_SLOT_TABLE_ENTRIES <= var.TCP_MAX_SLOT_TABLE_ENTRIES
+      error_message = "TCP_SLOT_TABLE_ENTRIES (${var.TCP_SLOT_TABLE_ENTRIES}) must be less than or equal to TCP_MAX_SLOT_TABLE_ENTRIES (${var.TCP_MAX_SLOT_TABLE_ENTRIES})."
+    }
     precondition {
       condition     = var.HEALTHCHECK_TIMEOUT_SECONDS <= var.HEALTHCHECK_INTERVAL_SECONDS
       error_message = "HEALTHCHECK_TIMEOUT_SECONDS (${var.HEALTHCHECK_TIMEOUT_SECONDS}) must be less than or equal to HEALTHCHECK_INTERVAL_SECONDS (${var.HEALTHCHECK_INTERVAL_SECONDS})."

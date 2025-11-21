@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2020 Google Inc.
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -11,18 +11,13 @@ shopt -s lastpipe
 
 declare -A PARAMETERS
 
+SHELL_RED='\033[0;31m'
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 EXPORTS_FILE="/etc/exports.d/knfsd.exports"
-
-# get metadata from IMDSv2
-function get_metadata() {
-	local token
-	token=$(curl -s --retry 5 --retry-max-time 30 -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 3600" "http://169.254.169.254/latest/api/token")
-	REGION=$(curl -s --retry 5 --retry-max-time 30 -H "X-aws-ec2-metadata-token:${token}" "http://169.254.169.254/latest/meta-data/placement/region")
-	INSTANCE_ID=$(curl -s --retry 5 --retry-max-time 30 -H "X-aws-ec2-metadata-token:${token}" "http://169.254.169.254/latest/meta-data/instance-id")
-}
+REGION=$(cloud-init query region)
+INSTANCE_ID=$(cloud-init query instance_id)
 
 # update_status() updates the tag:"knfsd-file-cache:status" of the instance
 # @param (str) $1 message
@@ -321,6 +316,12 @@ function trim_slash() {
 	sed '\|^/$| !s|/*$||'
 }
 
+# stop_services_silently() stops one or more services using systemctl.
+# Any errors are ignored.
+function stop_services_silently() {
+	systemctl stop "$@" 2> /dev/null || true
+}
+
 # stop_services() stops one or more services using systemctl.
 # If there is an error stopping the services systemctl is used to check the
 # status and view the most recent log entries.
@@ -358,20 +359,22 @@ function start_services() {
 }
 
 function init() {
-	get_metadata
-	begin_command "initialize"
 	# Set any variables cleanup depends upon as blank before setting the trap.
 	# This prevents stray environment variables causing unexpected behaviour.
 	startup_complete=
 	WORKDIR=
 	trap cleanup EXIT
 
-	# load parameters
+	begin_command "initialize"
 	load_parameters
 
 	# reload systemd daemon to pick up any service file changes from image build
 	echo "Reloading systemd daemon..."
 	systemctl daemon-reload
+
+	# stop services in case of a machine reboot
+	echo "Stopping services..."
+	stop_services_silently cachefilesd fsidd knfsd-fsidd.socket knfsd-fsidd knfsd-agent knfsd-metrics-agent portmap nfs-kernel-server
 
 	WORKDIR="$(mktemp -d)"
 	# get_parameter INCLUDED_EXPORTS | split >"${WORKDIR}/include-filters"
@@ -389,6 +392,9 @@ function init() {
 
 	MOUNT_OPTIONS="$(build_mount_options)"
 	EXPORT_OPTIONS="$(build_export_options)"
+
+	TCP_SLOT_TABLE_ENTRIES=$(get_parameter TCP_SLOT_TABLE_ENTRIES)
+	TCP_MAX_SLOT_TABLE_ENTRIES=$(get_parameter TCP_MAX_SLOT_TABLE_ENTRIES)
 
 	NUM_NFS_THREADS=$(get_parameter NUM_NFS_THREADS)
 	VFS_CACHE_PRESSURE=$(get_parameter VFS_CACHE_PRESSURE)
@@ -459,6 +465,14 @@ function pre_startup() {
 	complete_command
 }
 
+# configure_kernel() configures custom kernel settings
+function configure_kernel() {
+	begin_command "configure kernel"
+	sysctl sunrpc.tcp_slot_table_entries="${TCP_SLOT_TABLE_ENTRIES}"
+	sysctl sunrpc.tcp_max_slot_table_entries="${TCP_MAX_SLOT_TABLE_ENTRIES}"
+	complete_command
+}
+
 # create_fs_cache() creates a RAID 0 array from local NVMe
 # or EBS volumes and mounts it to /var/cache/fscache
 function create_fs_cache() {
@@ -521,13 +535,24 @@ function create_fs_cache() {
 		# multiple (NVMe or EBS) devices -> mdraid0 on /dev/md127
 		local raid_dev=/dev/md127
 
+		# always attempt to assemble RAID array from config (fail-safe)
+		mdadm --assemble --scan 2> /dev/null || true
+
+		# create RAID array if device doesn't exist
 		if [[ ! -e $raid_dev ]]; then
-			echo "Creating RAID array on $raid_dev..."
+			echo "Creating new RAID array on $raid_dev..."
 			# nosemgrep: unquoted-variable-expansion-in-command
 			mdadm --create $raid_dev --level=0 --force --quiet --assume-clean --raid-devices=${NUMDEVICES} ${DEVICESLIST}
+			# persist RAID array configuration
+			mkdir -p /etc/mdadm
+			mdadm --detail --scan > /etc/mdadm/mdadm.conf
+			update-initramfs -u
 			echo "Finished creating RAID array"
+		else
+			echo "RAID array $raid_dev already exists"
 		fi
 
+		# create filesystem on RAID array if needed
 		if ! has_fs $raid_dev; then
 			echo "Creating filesystem on ${raid_dev}..."
 			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${raid_dev}
@@ -536,12 +561,10 @@ function create_fs_cache() {
 			echo "Filesystem already present on ${raid_dev}; skipping mkfs"
 		fi
 
+		# mount RAID array to FS-Cache directory
 		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
 		mount -o discard,defaults,nobarrier,init_itable=0 ${raid_dev} "${mount_point}"
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
-
-		# persist mdadm config for reliable RAID assembly
-		mdadm --detail --scan || true | tee /etc/mdadm/mdadm.conf > /dev/null || true
 
 		start_fs_cache
 	fi
@@ -575,18 +598,18 @@ function start_fsidd() {
 	case "${FSID_MODE}" in
 		static)
 			echo "Skipping fsidd service"
-			stop_and_disable_services fsidd.service knfsd-fsidd.socket knfsd-fsidd.service
+			stop_and_disable_services fsidd knfsd-fsidd.socket knfsd-fsidd
 			;;
 		local)
 			echo "Starting fsidd..."
-			stop_and_disable_services knfsd-fsidd.socket knfsd-fsidd.service
-			start_services fsidd.service
+			stop_and_disable_services knfsd-fsidd.socket knfsd-fsidd
+			start_services fsidd
 			echo "Finished starting fsidd"
 			;;
 		external)
 			echo "Starting knfsd-fsidd..."
-			stop_and_disable_services fsidd.service
-			start_services knfsd-fsidd.socket knfsd-fsidd.service
+			stop_and_disable_services fsidd
+			start_services knfsd-fsidd.socket knfsd-fsidd
 			echo "Finished starting knfsd-fsidd"
 			;;
 		*)
@@ -693,7 +716,6 @@ function configure_read_ahead() {
 function configure_nfs() {
 	begin_command "configure nfs"
 	# set VFS Cache Pressure
-	echo "Setting VFS Cache Pressure to: ${VFS_CACHE_PRESSURE}"
 	sysctl vm.vfs_cache_pressure="${VFS_CACHE_PRESSURE}"
 
 	# build Flags to Disable NFS Versions
@@ -824,30 +846,70 @@ function completed_startup() {
 	echo -e "${SHELL_YELLOW}### NFS Exports ###${SHELL_DEFAULT}"
 	exportfs -s
 
+	# calculate and print total execution time
+	local end_time duration hours minutes seconds
+	end_time=$(date +%s)
+	duration=$((SCRIPT_START_TIME > 0 ? end_time - SCRIPT_START_TIME : 0))
+	hours=$((duration / 3600))
+	minutes=$(((duration % 3600) / 60))
+	seconds=$((duration % 60))
+
 	echo "INFO: Reached Proxy Startup Exit. Happy caching!"
+	printf "INFO: %dh%02dm%02ds\n" "$hours" "$minutes" "$seconds"
+
 	update_status "ready"
 	startup_complete=yes
 }
 
 # Do not call cleanup explicitly, the init function sets an exit trap
 function cleanup() {
+	local exit_code=$?
 	# If the script exits unexpectedly print an error message. This makes it
 	# easier when searching the logs to know if the start up script has
 	# terminated.
 	if [[ $startup_complete != yes ]]; then
+		echo -e "${SHELL_RED}" >&2
 		echo "ERROR: Failed to start proxy" >&2
-		update_status "error: failed to start proxy"
+		echo "Exit Code: ${exit_code}" >&2
+
+		# capture line number where failure occurred
+		if [[ -n "${BASH_LINENO:-}" ]]; then
+			echo "Line: ${BASH_LINENO[0]}" >&2
+		fi
+
+		# capture the command that failed
+		if [[ -n "${BASH_COMMAND:-}" ]]; then
+			echo "Failed Command: ${BASH_COMMAND}" >&2
+		fi
+
+		# print function stack for context
+		if [[ ${#FUNCNAME[@]} -gt 1 ]]; then
+			echo "Function Stack:" >&2
+			for ((i = 1; i < ${#FUNCNAME[@]}; i++)); do
+				echo "  ${i}: ${FUNCNAME[$i]} (line ${BASH_LINENO[$((i - 1))]})" >&2
+			done
+		fi
+
+		# reset color to default
+		echo -e "${SHELL_DEFAULT}" >&2
+
+		update_status "error: failed to start proxy" 2> /dev/null
 	fi
 
 	if [[ -n ${WORKDIR} ]] && [[ -d ${WORKDIR} ]]; then
 		rm -rf "${WORKDIR}" || true
 	fi
+
+	exit "${exit_code}"
 }
 
 # main() is the main function that is called when the script is executed
 function main() {
+	SCRIPT_START_TIME=$(date +%s)
 	init
 	pre_startup
+
+	configure_kernel
 	create_fs_cache
 
 	echo "MOUNT_OPTIONS: ${MOUNT_OPTIONS}"

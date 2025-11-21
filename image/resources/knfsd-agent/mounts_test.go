@@ -17,6 +17,7 @@ import (
 )
 
 func TestReadMounts(t *testing.T) {
+	t.Parallel()
 	fs, err := procfs.NewFS("./testdata/proc/")
 	require.NoError(t, err)
 
@@ -35,6 +36,7 @@ func TestReadMounts(t *testing.T) {
 }
 
 func TestReadMountStats(t *testing.T) {
+	t.Parallel()
 	fs, err := procfs.NewFS("./testdata/proc/")
 	require.NoError(t, err)
 

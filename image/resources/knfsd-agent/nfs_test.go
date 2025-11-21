@@ -41,6 +41,7 @@ func TestReadNFSClientStats(t *testing.T) {
 }
 
 func TestReadNFSServerStats(t *testing.T) {
+	t.Parallel()
 	fs, err := nfs.NewFS("testdata/proc")
 	require.NoError(t, err)
 

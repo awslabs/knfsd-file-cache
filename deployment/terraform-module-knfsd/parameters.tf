@@ -26,14 +26,14 @@ locals {
     NETAPP_CA                 = "(Optional) PEM encoded certificate containing the root certificate for the NetApp REST API. This can also include intermediate certificates to provide the full certificate chain. To read this from a file use the Terraform file function. Default: \"\"."
     NETAPP_ALLOW_COMMON_NAME  = "(Optional) Allows using the Common Name (CN) field of the certificate as a DNS name when the certificate does not include a Subject Alternate Name (SAN) field. Default: \"false\"."
 
-    # mount options
+    # nfs options
     NCONNECT          = "(Optional) The number of TCP connections to use when connecting to the source. Default: \"16\"."
     ACDIRMIN          = "(Optional) The minimum time (in seconds) that the NFS client caches attributes of a directory. Default: \"600\"."
     ACDIRMAX          = "(Optional) The maximum time (in seconds) that the NFS client caches attributes of a directory. This can be reduced to improve the cache coherency for \"readdir\" operations (e.g \"ls\") at the cost of increasing metadata requests to the source. Default: \"600\"."
     ACREGMIN          = "(Optional) The minimum time (in seconds) that the NFS client caches attributes of a regular file. Default: \"600\"."
     ACREGMAX          = "(Optional) The maximum time (in seconds) that the NFS client caches attributes of a regular file. Default: \"600\"."
-    RSIZE             = "(Optional) The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\"."
-    WSIZE             = "(Optional) The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\"."
+    RSIZE             = "(Optional) The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\" (1 MiB)."
+    WSIZE             = "(Optional) The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\" (1 MiB)."
     NOHIDE            = "(Optional) When \"true\", adds the \"nohide\" option to all the exports. Overridden by AUTO_REEXPORT. Default: \"true\"."
     MOUNT_OPTIONS     = "(Optional) Any additional NFS mount options not covered by existing variables. These options will be applied to all NFS mounts. Default: \"\"."
     EXPORT_OPTIONS    = "(Optional) Any custom NFS exports options. These options will be applied to all NFS exports. Default: \"\"."
@@ -45,10 +45,12 @@ locals {
     FSID_DATABASE_CONFIG = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\". Default: \"\"."
 
     # system
-    NUM_NFS_THREADS       = "(Optional) The number of NFS Threads to use for KNFSD. Default: \"512\"."
-    VFS_CACHE_PRESSURE    = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"100\"."
-    DISABLED_NFS_VERSIONS = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
-    READ_AHEAD            = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
+    TCP_SLOT_TABLE_ENTRIES     = "(Optional) The initial number of RPC slot table entries for TCP connections to the source NFS server. Controls how many simultaneous RPC requests the proxy can send to the source filer. Default: \"128\"."
+    TCP_MAX_SLOT_TABLE_ENTRIES = "(Optional) The maximum number of RPC slot table entries for TCP connections to the source NFS server. Sets the upper limit on concurrent RPC requests the proxy can send to the source filer. Default: \"128\"."
+    NUM_NFS_THREADS            = "(Optional) The number of NFS threads to use for KNFSD. Default: \"256\"."
+    VFS_CACHE_PRESSURE         = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
+    DISABLED_NFS_VERSIONS      = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
+    READ_AHEAD                 = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = "(Optional) The disk type to use for the cachefiles directory. Can be either \"local-nvme\", \"ebs-gp3\" or \"ebs-io2\". Local ephemeral NVMe provides the highest performance, whilst EBS can provide data persistence. Default: \"local-nvme\"."
@@ -81,7 +83,7 @@ resource "aws_ssm_parameter" "settings" {
     NETAPP_CA                 = var.NETAPP_CA
     NETAPP_ALLOW_COMMON_NAME  = var.NETAPP_ALLOW_COMMON_NAME
 
-    # mount options
+    # nfs options
     NCONNECT          = var.NCONNECT
     ACDIRMIN          = var.ACDIRMIN
     ACDIRMAX          = var.ACDIRMAX
@@ -100,10 +102,12 @@ resource "aws_ssm_parameter" "settings" {
     FSID_DATABASE_CONFIG = local.fsid_database_config
 
     # system
-    NUM_NFS_THREADS       = var.NUM_NFS_THREADS
-    VFS_CACHE_PRESSURE    = var.VFS_CACHE_PRESSURE
-    DISABLED_NFS_VERSIONS = var.DISABLED_NFS_VERSIONS
-    READ_AHEAD            = var.READ_AHEAD
+    TCP_SLOT_TABLE_ENTRIES     = var.TCP_SLOT_TABLE_ENTRIES
+    TCP_MAX_SLOT_TABLE_ENTRIES = var.TCP_MAX_SLOT_TABLE_ENTRIES
+    NUM_NFS_THREADS            = var.NUM_NFS_THREADS
+    VFS_CACHE_PRESSURE         = var.VFS_CACHE_PRESSURE
+    DISABLED_NFS_VERSIONS      = var.DISABLED_NFS_VERSIONS
+    READ_AHEAD                 = var.READ_AHEAD
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = var.CACHEFILESD_DISK_TYPE
