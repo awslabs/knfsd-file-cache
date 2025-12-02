@@ -13,7 +13,7 @@ locals {
     EXPORT_HOST_AUTO_DETECT = "(Optional) A list of IP addresses or hostnames of NFS filers that respond to the \"showmount\" command. KNFSD will automatically detect and re-export mounts from this filer. Exports paths on the cache will match the export path on the source filer. Default: \"\"."
     EXCLUDED_EXPORTS        = "(Optional) A list of filter patterns to be excluded from auto-discovery (see Filter Patterns). Auto-discovery will ignore any exports that match any of the exclude patterns. Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
     INCLUDED_EXPORTS        = "(Optional) If set, auto-discovery will only include paths matching a filter pattern from the include list (see Filter Patterns). Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
-    EXPORT_CIDR             = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export (VPC CIDR of \"SUBNET\" is used if not specified). Default: \"\"."
+    VPC_CIDR                = "(Optional) List of CIDR blocks to use in security group rules and \"/etc/exports\". If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: \"\"."
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = "(Optional) Enables automatic discovery of exports using the NetApp REST API. Default: \"false\"."
@@ -47,7 +47,7 @@ locals {
     # system
     TCP_SLOT_TABLE_ENTRIES     = "(Optional) The initial number of RPC slot table entries for TCP connections to the source NFS server. Controls how many simultaneous RPC requests the proxy can send to the source filer. Default: \"128\"."
     TCP_MAX_SLOT_TABLE_ENTRIES = "(Optional) The maximum number of RPC slot table entries for TCP connections to the source NFS server. Sets the upper limit on concurrent RPC requests the proxy can send to the source filer. Default: \"128\"."
-    NUM_NFS_THREADS            = "(Optional) The number of NFS threads to use for KNFSD. Default: \"256\"."
+    NUM_NFS_THREADS            = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
     VFS_CACHE_PRESSURE         = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
     DISABLED_NFS_VERSIONS      = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
     READ_AHEAD                 = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
@@ -70,7 +70,7 @@ resource "aws_ssm_parameter" "settings" {
     EXPORT_HOST_AUTO_DETECT = var.EXPORT_HOST_AUTO_DETECT
     EXCLUDED_EXPORTS        = join("\n", var.EXCLUDED_EXPORTS)
     INCLUDED_EXPORTS        = join("\n", var.INCLUDED_EXPORTS)
-    EXPORT_CIDR             = local.export_cidr
+    VPC_CIDR                = join("\n", local.vpc_cidr)
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = var.ENABLE_NETAPP_AUTO_DETECT

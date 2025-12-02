@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.22.0"
+      version = "~> 6.23.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -43,10 +43,21 @@ data "aws_route53_zone" "existing" {
 
 # local variables
 locals {
-  tags           = { "knfsd-file-cache:version" = var.VERSION }
-  vpc_id         = data.aws_vpc.selected.id
-  vpc_cidr_block = data.aws_vpc.selected.cidr_block
-  dns_name       = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.aws.internal."))
+  tags     = { "knfsd-file-cache:version" = var.VERSION }
+  vpc_id   = data.aws_vpc.selected.id
+  dns_name = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.aws.internal."))
+  port_cidr_rules = {
+    for item in flatten([
+      for port_key, port_value in var.NFS_PORTS : [
+        for idx, cidr in var.VPC_CIDR : {
+          key  = "${port_key}-cidr${idx}"
+          port = port_value.port
+          name = port_value.name
+          cidr = cidr
+        }
+      ]
+    ]) : item.key => item
+  }
 }
 
 # network load balancer; name=32 chars max (29 chars) + "-lb" (3 suffix)
@@ -75,34 +86,35 @@ resource "aws_security_group" "nfsproxy_lb_sg" {
 
 # lb sg ingress rule: TCP
 resource "aws_vpc_security_group_ingress_rule" "nfsproxy_lb_ingress_tcp" {
-  for_each          = var.NFS_PORTS
+  for_each          = local.port_cidr_rules
   security_group_id = aws_security_group.nfsproxy_lb_sg.id
   description       = "Allow inbound TCP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "tcp"
   from_port         = each.value.port
   to_port           = each.value.port
-  cidr_ipv4         = local.vpc_cidr_block
+  cidr_ipv4         = each.value.cidr
   tags              = merge(local.tags, { Name = "tcp-${each.value.port}-${each.value.name}" })
 }
 
 # lb sg ingress rule: UDP
 resource "aws_vpc_security_group_ingress_rule" "nfsproxy_lb_ingress_udp" {
-  for_each          = var.NFS_PORTS
+  for_each          = local.port_cidr_rules
   security_group_id = aws_security_group.nfsproxy_lb_sg.id
   description       = "Allow inbound UDP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "udp"
   from_port         = each.value.port
   to_port           = each.value.port
-  cidr_ipv4         = local.vpc_cidr_block
+  cidr_ipv4         = each.value.cidr
   tags              = merge(local.tags, { Name = "udp-${each.value.port}-${each.value.name}" })
 }
 
 # lb sg egress rule
 resource "aws_vpc_security_group_egress_rule" "nfsproxy_lb_egress" {
+  for_each          = { for idx, cidr in var.VPC_CIDR : tostring(idx) => cidr }
   security_group_id = aws_security_group.nfsproxy_lb_sg.id
   description       = "Allow all outbound traffic to KNFSD proxy security group"
   ip_protocol       = "-1" # all protocols
-  cidr_ipv4         = local.vpc_cidr_block
+  cidr_ipv4         = each.value
   tags              = merge(local.tags, { Name = "egress-all-vpc" })
 }
 

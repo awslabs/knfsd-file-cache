@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.22.0"
+      version = "~> 6.23.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -51,8 +51,7 @@ locals {
   az                   = data.aws_subnet.selected.availability_zone
   region               = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
   vpc_id               = data.aws_vpc.selected.id
-  vpc_cidr_block       = data.aws_vpc.selected.cidr_block
-  export_cidr          = var.EXPORT_CIDR == "" ? local.vpc_cidr_block : var.EXPORT_CIDR
+  vpc_cidr             = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
   is_windows           = can(env("USERPROFILE"))
   name                 = var.PROXY_BASENAME != "nfsproxy" ? var.PROXY_BASENAME : random_id.name.hex
   asg_name             = "${local.name}-asg"
@@ -88,6 +87,7 @@ module "fsid_database" {
   NAME                      = "${local.name}-fsids"
   DELETION_PROTECTION       = false
   ASSUME_ROLE_ARN           = var.ASSUME_ROLE_ARN
+  VPC_CIDR                  = local.vpc_cidr
 }
 
 # this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution

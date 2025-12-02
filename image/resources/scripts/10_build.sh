@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.16"
+VERSION="1.1.0-alpha.17"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -374,7 +374,7 @@ function update_kernel() (
 	DEBIAN_FRONTEND=noninteractive apt-get purge -yq linux-image-"${version}" linux-headers-"${version}" linux-modules-"${version}"
 	apt-get autoremove -y
 	# install Linux HWE kernel: pinned to known good version
-	apt-get -o DPkg::Lock::Timeout=60 install -y linux-image-6.14.0-29-generic linux-headers-6.14.0-29-generic linux-modules-6.14.0-29-generic
+	apt-get -o DPkg::Lock::Timeout=60 install -y linux-image-6.14.0-36-generic linux-headers-6.14.0-36-generic linux-modules-6.14.0-36-generic
 	complete_command
 )
 

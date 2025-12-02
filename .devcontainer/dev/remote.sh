@@ -22,7 +22,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.16"
+VERSION="1.1.0-alpha.17"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -37,7 +37,7 @@ ARCH=${BUILDARCH:-"amd64"} # amd64 or arm64
 VOL_TYPE="ebs-gp3"
 # ec2 settings
 USER_DATA_SCRIPT="setup-remote-vm.sh" # run as EC2 VM
-INSTANCE_TYPE="c6in.2xlarge" # c6in.2xlarge (default) or c6gn.2xlarge (arm64)
+INSTANCE_TYPE="c5n.2xlarge" # c6in.2xlarge (amd64) or c6gn.2xlarge (arm64)
 # use smaller c5n.large to save cost when heavy go downloading/compiling not required
 VOLUME_SIZE=30
 

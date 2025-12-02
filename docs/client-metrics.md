@@ -252,11 +252,11 @@ You should see output similar to:
              └─606 /usr/local/bin/knfsd-metrics-agent --config /etc/knfsd-metrics-agent/common.yaml --config /etc/knfsd-metrics-agent/client.yaml --config /etc/knfsd-metrics-agent/custom.yaml
 
     Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
-    2025-06-04T20:52:40.888+0100    info    service@v0.127.0/service.go:199 Setting up own telemetry...     {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.127.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.16", "NumCPU": 8}
+    2025-06-04T20:52:40.888+0100    info    service@v0.140.0/service.go:199 Setting up own telemetry...     {"resource": {}}
+    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
+    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.17", "NumCPU": 8}
     2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
-    2025-06-04T20:52:40.950+0100    info    service@v0.127.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
+    2025-06-04T20:52:40.950+0100    info    service@v0.140.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```
 
 Before viewing the metrics you will need to generate some NFS traffic. Mount an NFS share (via a KNFSD Proxy instance) and then read some data from the share.

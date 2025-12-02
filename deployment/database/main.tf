@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.22.0"
+      version = "~> 6.23.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -56,7 +56,7 @@ locals {
   az              = data.aws_subnet.selected.availability_zone
   region          = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
   vpc_id          = data.aws_vpc.selected.id
-  vpc_cidr_block  = data.aws_vpc.selected.cidr_block
+  vpc_cidr        = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
   is_windows      = can(env("USERPROFILE"))
   assume_role_arn = var.ASSUME_ROLE_ARN != null ? var.ASSUME_ROLE_ARN : ""
 }
@@ -116,21 +116,23 @@ resource "aws_security_group" "db_sg" {
 
 # db ingress rule
 resource "aws_vpc_security_group_ingress_rule" "db_ingress" {
+  for_each          = { for idx, cidr in local.vpc_cidr : tostring(idx) => cidr }
   security_group_id = aws_security_group.db_sg.id
-  description       = "Allow PostgreSQL access from knfsd security group"
+  description       = "Allow PostgreSQL access from VPC"
   ip_protocol       = "tcp"
   from_port         = 5432
   to_port           = 5432
-  cidr_ipv4         = local.vpc_cidr_block
+  cidr_ipv4         = each.value
   tags              = merge(local.tags, { Name = "tcp-5432-postgres" })
 }
 
 # db egress rule
 resource "aws_vpc_security_group_egress_rule" "db_egress" {
+  for_each          = { for idx, cidr in local.vpc_cidr : tostring(idx) => cidr }
   security_group_id = aws_security_group.db_sg.id
-  description       = "Allow all outbound traffic to knfsd security group"
+  description       = "Allow all outbound traffic to VPC"
   ip_protocol       = "-1" # all protocols
-  cidr_ipv4         = local.vpc_cidr_block
+  cidr_ipv4         = each.value
   tags              = merge(local.tags, { Name = "egress-all-vpc" })
 }
 
@@ -222,7 +224,7 @@ resource "aws_security_group" "lambda_db_setup_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = [local.vpc_cidr_block]
+    cidr_blocks = local.vpc_cidr
     description = "Allow all outbound traffic to VPC"
   }
 }

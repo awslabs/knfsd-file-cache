@@ -1,5 +1,24 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.17
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: `var.EXPORT_CIDR` has been renamed to `var.VPC_CIDR` and is now `type = list(string)` with `default = []`. Users who currently set `EXPORT_CIDR = "172.31.0.0/16"` must update to `VPC_CIDR = ["172.31.0.0/16"]`. When empty, the primary VPC CIDR block is used for security group rules and NFS exports. For secondary VPC CIDRs, you must explicitly provide the full list. For example: `VPC_CIDR = ["172.31.0.0/16", "172.32.0.0/16"]`.
+
+> BREAKING CHANGES: `var.ASG_EGRESS_CIDR_BLOCK` has been renamed to `var.ASG_EGRESS_CIDR`.
+
+* Major overhaul of CIDR handling across all modules. Multiple CIDR blocks can now be specified for security group rules and NFS exports. By default, the primary VPC CIDR block is used. For secondary VPC CIDRs, users must explicitly provide the full list via: `VPC_CIDR`.
+* Terraform `database` module now supports cross-VPC access with VPC peering.
+* Pinned Linux HWE kernel to v6.14.0-36-generic.
+* Substantial improvements to CloudWatch `metrics` dashboard. KNFSD Monitoring Dashboard updated to `v5`.
+* Reduced default value for `NUM_NFS_THREADS` from `256` to `128` in `terraform-module-knfsd` module.
+* Added the `otelcol.Factories.Telemetry` field which is now required by OpenTelemetry v0.140.0 in `knfsd-metrics-agent`.
+* Removed unused VS Code extensions from `.devcontainer/dev`.
+* Added `uv` to `.devcontainer/dev` for Python package management.
+* Updated to Terraform AWS provider v6.23.0.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.16
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

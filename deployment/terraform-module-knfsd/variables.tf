@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.16"
+  default     = "1.1.0-alpha.17"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.16\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.17\"."
   }
 }
 
@@ -57,7 +57,7 @@ variable "DNS_NAME" {
   }
 }
 
-variable "ASG_EGRESS_CIDR_BLOCK" {
+variable "ASG_EGRESS_CIDR" {
   description = "(Optional) The IPv4 CIDR block to use for the Auto Scaling Group (ASG) EGRESS rule for KNFSD proxy instances. Default: \"0.0.0.0/0\"."
   type        = string
   nullable    = false
@@ -271,11 +271,11 @@ variable "PROXY_BASENAME" {
   }
 }
 
-variable "EXPORT_CIDR" {
-  description = "(Optional) The CIDR to use in \"/etc/exports\" of the KNFSD proxy for filesystem re-export (VPC CIDR of \"SUBNET\" is used if not specified). Default: \"\"."
-  type        = string
+variable "VPC_CIDR" {
+  description = "(Optional) List of CIDR blocks to use in security group rules and \"/etc/exports\". If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: []."
+  type        = list(string)
   nullable    = false
-  default     = ""
+  default     = []
 }
 
 variable "PROXY_AMI" {
@@ -548,10 +548,10 @@ variable "DISABLED_NFS_VERSIONS" {
 }
 
 variable "NUM_NFS_THREADS" {
-  description = "(Optional) The number of NFS threads to use for KNFSD. Default: \"256\"."
+  description = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
   type        = number
   nullable    = false
-  default     = 256
+  default     = 128
 }
 
 variable "NOHIDE" {

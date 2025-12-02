@@ -90,8 +90,8 @@ def lambda_handler(event, context):
                 f"GRANT rds_iam TO {db_user};",
                 f"GRANT CONNECT ON DATABASE {db_name} TO {db_user};",
                 f"GRANT USAGE, CREATE ON SCHEMA public TO {db_user};",
-                f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, \
-                INSERT, UPDATE, DELETE ON TABLES TO {db_user};",
+                # pylint: disable=line-too-long
+                f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {db_user};",
             ]
 
             for command in sql_commands:

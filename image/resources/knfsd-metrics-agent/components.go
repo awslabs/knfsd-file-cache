@@ -14,6 +14,7 @@ import (
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/slab"
 
 	"go.opentelemetry.io/collector/otelcol"
+	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
 
 	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -83,6 +84,7 @@ func components() (otelcol.Factories, error) {
 		Processors: processors,
 		Exporters:  exporters,
 		Extensions: extensions,
+		Telemetry:  otelconftelemetry.NewFactory(),
 	}
 	return factories, errs
 }

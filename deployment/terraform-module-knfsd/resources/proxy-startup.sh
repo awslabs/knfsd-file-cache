@@ -264,7 +264,12 @@ function add_nfs_export() {
 	fi
 
 	echo "Creating NFS share export for $1..."
-	echo "$1   ${EXPORT_CIDR}(${EXPORT_OPTIONS},${FSID})" >> "${EXPORTS_FILE}"
+
+	# write one export line per CIDR
+	while IFS= read -r cidr; do
+		[[ -n "$cidr" ]] && echo "$1   ${cidr}(${EXPORT_OPTIONS},${FSID})" >> "${EXPORTS_FILE}"
+	done <<< "$VPC_CIDR"
+
 	echo "Finished creating NFS share export for $1"
 }
 
@@ -384,7 +389,7 @@ function init() {
 
 	EXPORT_MAP=$(get_parameter EXPORT_MAP)
 	EXPORT_HOST_AUTO_DETECT=$(get_parameter EXPORT_HOST_AUTO_DETECT)
-	EXPORT_CIDR=$(get_parameter EXPORT_CIDR)
+	VPC_CIDR=$(get_parameter VPC_CIDR)
 
 	AUTO_REEXPORT="$(get_parameter AUTO_REEXPORT)"
 	FSID_MODE="$(get_parameter FSID_MODE)"

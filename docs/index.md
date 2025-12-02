@@ -64,6 +64,14 @@
 * [FSx for OpenZFS Fanout (Network Load Balancer)](../examples/fsx-zfs-fanout-loadbalancer/README.md)
 * [Weka NFS Gateway](../examples/weka/README.md)
 
+## Test Plans
+
+* [README](tests/README.md)
+* [Directory Listing](tests/directory-listing.md)
+* [Recovery Network Load Balancer](tests/recovery-load-balancer.md)
+* [Recovery Source](tests/recovery-source.md)
+* [Recovery Proxy](tests/recovery-proxy.md)
+
 ## Developer Reference
 
 * [Advanced/Developer](developer.md)

@@ -14,6 +14,8 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
     **INFO:** AWS mandates that the DB subnet group must contain at least 2 subnets, each in a different availability zone, just in case you want to convert the database to a multi-AZ deployment in the future or in the case of AZ failure, you will have the ability to failover manually to another AZ.
 
+* `VPC_CIDR` - (Optional) List of CIDR blocks to allow in security group rules. If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs or cross-VPC access with VPC peering, you must explicitly provide the full list. Defaults to `[]`.
+
 * `NAME_PREFIX` - (Optional) Prefix to use when generating a RDS DB instance name. The name will be suffixed with a hyphen and 8 random letters/digits. Defaults to `fsids`.
 
 * `NAME` - (Optional) The name of the RDS DB instance. If the name is left blank a random name will be generated based on `NAME_PREFIX`.

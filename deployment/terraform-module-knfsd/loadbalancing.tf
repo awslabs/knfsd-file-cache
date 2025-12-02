@@ -12,6 +12,7 @@ module "loadbalancer" {
   DNS_NAME                        = var.DNS_NAME
   LOADBALANCER_IP                 = var.LOADBALANCER_IP
   NFS_PORTS                       = var.NFS_PORTS
+  VPC_CIDR                        = local.vpc_cidr
   HEALTHCHECK_INTERVAL_SECONDS    = var.HEALTHCHECK_INTERVAL_SECONDS
   HEALTHCHECK_TIMEOUT_SECONDS     = var.HEALTHCHECK_TIMEOUT_SECONDS
   HEALTHCHECK_HEALTHY_THRESHOLD   = var.HEALTHCHECK_HEALTHY_THRESHOLD

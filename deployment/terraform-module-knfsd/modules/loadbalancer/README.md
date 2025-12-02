@@ -18,6 +18,8 @@ These prerequisites are normally created by the main KNFSD proxy module.
 
 * `NFS_PORTS` - (Required) The list of NFS ports (TCP & UDP) to use with the Network Load Balancer.
 
+* `VPC_CIDR` - (Required) List of CIDR blocks to allow in security group ingress/egress rules.
+
 * `LOADBALANCER_IP` - (Optional) The static private IPv4 address to use for the Network Load Balancer. If not specified, a random IP address will be assigned from the subnet.
 
 ## Outputs

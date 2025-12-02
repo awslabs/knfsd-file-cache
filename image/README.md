@@ -252,11 +252,11 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.3 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.14.0-29-generic
+amazon-ebs.nfs-proxy: Kernel:       6.14.0-36-generic
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
-==> Wait completed after 20 minutes 58 seconds
+==> Wait completed after 19 minutes 36 seconds
 ...
 ==> Builds finished. The artifacts of successful builds are:
 --> amazon-ebs.nfs-proxy: AMIs were created:
@@ -310,7 +310,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.16"
+VERSION="1.1.0-alpha.17"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -473,7 +473,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.3 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.14.0-29-generic
+Kernel:       6.14.0-36-generic
 ---- SUCCESS: Finished finalize image script
 ```
 
