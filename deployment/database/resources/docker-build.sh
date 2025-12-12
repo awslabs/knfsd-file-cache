@@ -9,8 +9,8 @@
 # always use x86_64 only for the DB setup image
 ARCH="linux/amd64"
 PIP_PLATFORM="manylinux2014_x86_64"
-KNFSD_PYTHON_VERSION="3.14.0" # must match the Lambda function runtime
-KNFSD_PSYCOPG_VERSION="3.2.12"
+KNFSD_PYTHON_VERSION="3.14.2" # must match the MAJOR.MINOR version of the Lambda function runtime
+KNFSD_PSYCOPG_VERSION="3.3.2" # https://pypi.org/project/psycopg/
 
 # ensure resources directory is writable by all users
 chmod 0777 resources

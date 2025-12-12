@@ -228,7 +228,7 @@ function mount_nfs_server() {
 	fi
 }
 
-# add_nfs_export() adds an entry to /etc/exports
+# add_nfs_export() adds an entry to /etc/exports.d/knfsd.exports
 # @param (str) Local Directory
 NEXT_FSID=1
 function add_nfs_export() {
@@ -268,7 +268,7 @@ function add_nfs_export() {
 	# write one export line per CIDR
 	while IFS= read -r cidr; do
 		[[ -n "$cidr" ]] && echo "$1   ${cidr}(${EXPORT_OPTIONS},${FSID})" >> "${EXPORTS_FILE}"
-	done <<< "$VPC_CIDR"
+	done <<< "$EXPORT_CIDR"
 
 	echo "Finished creating NFS share export for $1"
 }
@@ -389,7 +389,7 @@ function init() {
 
 	EXPORT_MAP=$(get_parameter EXPORT_MAP)
 	EXPORT_HOST_AUTO_DETECT=$(get_parameter EXPORT_HOST_AUTO_DETECT)
-	VPC_CIDR=$(get_parameter VPC_CIDR)
+	EXPORT_CIDR=$(get_parameter EXPORT_CIDR)
 
 	AUTO_REEXPORT="$(get_parameter AUTO_REEXPORT)"
 	FSID_MODE="$(get_parameter FSID_MODE)"
@@ -400,6 +400,7 @@ function init() {
 
 	TCP_SLOT_TABLE_ENTRIES=$(get_parameter TCP_SLOT_TABLE_ENTRIES)
 	TCP_MAX_SLOT_TABLE_ENTRIES=$(get_parameter TCP_MAX_SLOT_TABLE_ENTRIES)
+	SVC_RPC_PER_CONNECTION_LIMIT=$(get_parameter SVC_RPC_PER_CONNECTION_LIMIT)
 
 	NUM_NFS_THREADS=$(get_parameter NUM_NFS_THREADS)
 	VFS_CACHE_PRESSURE=$(get_parameter VFS_CACHE_PRESSURE)
@@ -475,6 +476,7 @@ function configure_kernel() {
 	begin_command "configure kernel"
 	sysctl sunrpc.tcp_slot_table_entries="${TCP_SLOT_TABLE_ENTRIES}"
 	sysctl sunrpc.tcp_max_slot_table_entries="${TCP_MAX_SLOT_TABLE_ENTRIES}"
+	echo ${SVC_RPC_PER_CONNECTION_LIMIT} > /sys/module/sunrpc/parameters/svc_rpc_per_connection_limit
 	complete_command
 }
 
@@ -524,7 +526,7 @@ function create_fs_cache() {
 		if ! has_fs $dev; then
 			echo "Creating filesystem on ${dev}..."
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${dev}
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${dev}
 			echo "Finished formatting ${dev}"
 		else
 			echo "Filesystem already present on ${dev}; skipping mkfs"
@@ -532,7 +534,7 @@ function create_fs_cache() {
 
 		echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount -o discard,defaults,nobarrier,init_itable=0 ${dev} "${mount_point}"
+		mount ${dev} "${mount_point}"
 		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
 		start_fs_cache
@@ -560,7 +562,7 @@ function create_fs_cache() {
 		# create filesystem on RAID array if needed
 		if ! has_fs $raid_dev; then
 			echo "Creating filesystem on ${raid_dev}..."
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${raid_dev}
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${raid_dev}
 			echo "Finished formatting ${raid_dev}"
 		else
 			echo "Filesystem already present on ${raid_dev}; skipping mkfs"
@@ -568,7 +570,7 @@ function create_fs_cache() {
 
 		# mount RAID array to FS-Cache directory
 		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
-		mount -o discard,defaults,nobarrier,init_itable=0 ${raid_dev} "${mount_point}"
+		mount ${raid_dev} "${mount_point}"
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
 
 		start_fs_cache
@@ -759,46 +761,23 @@ function start_nfs() {
 	complete_command
 }
 
-# update_cloudwatch_diskio_resources() dynamically configures CW Agent JSON file
-# with the actual block devices detected for FS-Cache, excluding the root volume.
-# Only runs on first boot before the agent converts JSON to TOML.
+# update_cloudwatch_diskio_resources() configures CW Agent JSON with the
+# FS-Cache block device: md127 for RAID array, or the single device otherwise
 function update_cloudwatch_diskio_resources() {
 	local cw_config="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+	local device="*"
 
 	echo "Updating CloudWatch Agent diskio resources..."
 
-	# build JSON array of device names
-	local devices_json=""
-	local first=true
-
-	# add individual storage devices (already detected in create_fs_cache)
-	if [[ -n "${DEVICESLIST}" ]]; then
-		for dev in ${DEVICESLIST}; do
-			local dev_name
-			dev_name=$(basename "$dev")
-
-			if [[ "$first" == "true" ]]; then
-				devices_json="\"$dev_name\""
-				first=false
-			else
-				devices_json="${devices_json}, \"$dev_name\""
-			fi
-		done
+	if [[ "$NUMDEVICES" -gt 1 ]]; then
+		device="\"md127\""
+	elif [[ -n "${DEVICESLIST}" ]]; then
+		device="\"$(basename "${DEVICESLIST}")\""
 	fi
 
-	# add md127 if RAID array exists (created when NUMDEVICES > 1)
-	if [[ -e /dev/md127 ]]; then
-		if [[ "$first" == "true" ]]; then
-			devices_json="\"md127\""
-		else
-			devices_json="${devices_json}, \"md127\""
-		fi
-	fi
+	echo "Detected block device: [$device]"
 
-	echo "Detected block devices: [$devices_json]"
-
-	# update "resources" array in diskio section
-	jq ".metrics.metrics_collected.diskio.resources = [$devices_json]" \
+	jq ".metrics.metrics_collected.diskio.resources = [$device]" \
 		"$cw_config" > "${cw_config}.tmp" \
 		&& mv "${cw_config}.tmp" "$cw_config"
 

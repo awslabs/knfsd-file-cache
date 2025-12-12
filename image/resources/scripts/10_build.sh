@@ -11,7 +11,7 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.17"
+VERSION="1.1.0-alpha.18"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -309,9 +309,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.25.4.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.4.linux-${ARCH_ALT}.tar.gz
+	curl -o go1.25.5.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.5.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.25.4.linux-${ARCH_ALT}.tar.gz
+	tar -C /usr/local -xzf go1.25.5.linux-${ARCH_ALT}.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
 	complete_command
 )
@@ -368,10 +368,8 @@ function install_netapp_exports() (
 function update_kernel() (
 	begin_command "Updating kernel"
 	# remove AWS-specific kernel packages and current running kernel
-	local version
-	version=$(uname -r)
 	apt-get purge -yq linux-image-aws linux-headers-aws linux-aws
-	DEBIAN_FRONTEND=noninteractive apt-get purge -yq linux-image-"${version}" linux-headers-"${version}" linux-modules-"${version}"
+	DEBIAN_FRONTEND=noninteractive apt-get purge -yq linux-image-"$(uname -r)" linux-headers-"$(uname -r)" linux-modules-"$(uname -r)"
 	apt-get autoremove -y
 	# install Linux HWE kernel: pinned to known good version
 	apt-get -o DPkg::Lock::Timeout=60 install -y linux-image-6.14.0-36-generic linux-headers-6.14.0-36-generic linux-modules-6.14.0-36-generic

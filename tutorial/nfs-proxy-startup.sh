@@ -80,7 +80,7 @@ function create_fs_cache() {
 	if ! has_fs $dev; then
 		echo "Creating filesystem on ${dev}..."
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mkfs.ext4 -m 0 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -O sparse_super ${dev}
+		mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${dev}
 		echo "Finished formatting ${dev}"
 	else
 		echo "Filesystem already present on ${dev}; skipping mkfs"
@@ -88,7 +88,7 @@ function create_fs_cache() {
 
 	echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
 	# nosemgrep: unquoted-variable-expansion-in-command
-	mount -o discard,defaults,nobarrier,init_itable=0 ${dev} "${mount_point}"
+	mount ${dev} "${mount_point}"
 	echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
 	start_fs_cache

@@ -365,7 +365,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_read_bytes\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))", "label": "${LABEL}" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_read_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -389,7 +389,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_write_bytes\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))", "label": "${LABEL}" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_write_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1626,8 +1626,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_reads\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_writes\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_reads\"', 'Sum')))" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_writes\"', 'Sum')))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1651,8 +1651,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_read_bytes\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_write_bytes\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')))" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_read_bytes\"', 'Sum')))" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_write_bytes\"', 'Sum')))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1676,7 +1676,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_io_time\" (name=\"nvme0n1\" OR name=\"nvme1n1\" OR name=\"md127\")', 'Sum')", "label": "${LABEL}" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_io_time\"', 'Sum')", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,

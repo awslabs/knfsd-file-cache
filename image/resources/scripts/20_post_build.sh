@@ -49,6 +49,13 @@ function install_ena_driver() (
 	complete_command
 )
 
+# remove unnecessary packages, reduce syslog noise
+function remove_packages() (
+	begin_command "Removing packages"
+	apt-get purge -yq multipath-tools
+	complete_command
+)
+
 # cleanup the image before capture
 function cleanup_image() (
 	begin_command "Cleaning up image"
@@ -62,6 +69,7 @@ function cleanup_image() (
 
 # run post build
 install_ena_driver
+remove_packages
 cleanup_image
 
 echo -e "\n${SHELL_YELLOW}---- SUCCESS: Finished post build image script${SHELL_DEFAULT}"

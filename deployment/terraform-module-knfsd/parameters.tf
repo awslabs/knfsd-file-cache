@@ -13,7 +13,7 @@ locals {
     EXPORT_HOST_AUTO_DETECT = "(Optional) A list of IP addresses or hostnames of NFS filers that respond to the \"showmount\" command. KNFSD will automatically detect and re-export mounts from this filer. Exports paths on the cache will match the export path on the source filer. Default: \"\"."
     EXCLUDED_EXPORTS        = "(Optional) A list of filter patterns to be excluded from auto-discovery (see Filter Patterns). Auto-discovery will ignore any exports that match any of the exclude patterns. Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
     INCLUDED_EXPORTS        = "(Optional) If set, auto-discovery will only include paths matching a filter pattern from the include list (see Filter Patterns). Does not apply to mounts specified in the \"EXPORT_MAP\". Paths filtered from auto-discovery can be explicitly exported using \"EXPORT_MAP\", this can be used to change the export path. Default: \"\"."
-    VPC_CIDR                = "(Optional) List of CIDR blocks to use in security group rules and \"/etc/exports\". If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: \"\"."
+    EXPORT_CIDR             = "(Optional) List of CIDR blocks to use in NFSD \"/etc/exports.d/knfsd.exports\" file. If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: \"\"."
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = "(Optional) Enables automatic discovery of exports using the NetApp REST API. Default: \"false\"."
@@ -45,12 +45,13 @@ locals {
     FSID_DATABASE_CONFIG = "(Optional) Allows overriding the default FSID database configuration when \"FSID_MODE\" is set to \"external\". Default: \"\"."
 
     # system
-    TCP_SLOT_TABLE_ENTRIES     = "(Optional) The initial number of RPC slot table entries for TCP connections to the source NFS server. Controls how many simultaneous RPC requests the proxy can send to the source filer. Default: \"128\"."
-    TCP_MAX_SLOT_TABLE_ENTRIES = "(Optional) The maximum number of RPC slot table entries for TCP connections to the source NFS server. Sets the upper limit on concurrent RPC requests the proxy can send to the source filer. Default: \"128\"."
-    NUM_NFS_THREADS            = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
-    VFS_CACHE_PRESSURE         = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
-    DISABLED_NFS_VERSIONS      = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
-    READ_AHEAD                 = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
+    TCP_SLOT_TABLE_ENTRIES       = "(Optional) The initial number of RPC slot table entries for TCP connections to the source NFS server. Controls how many simultaneous RPC requests the proxy can send to the source filer. Default: \"128\"."
+    TCP_MAX_SLOT_TABLE_ENTRIES   = "(Optional) The maximum number of RPC slot table entries for TCP connections to the source NFS server. Sets the upper limit on concurrent RPC requests the proxy can send to the source filer. Default: \"128\"."
+    SVC_RPC_PER_CONNECTION_LIMIT = "(Optional) The number of RPC requests that the server will process in parallel from a single connection. The default value is 0 (no limit). Default: \"0\"."
+    NUM_NFS_THREADS              = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
+    VFS_CACHE_PRESSURE           = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
+    DISABLED_NFS_VERSIONS        = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
+    READ_AHEAD                   = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = "(Optional) The disk type to use for the cachefiles directory. Can be either \"local-nvme\", \"ebs-gp3\" or \"ebs-io2\". Local ephemeral NVMe provides the highest performance, whilst EBS can provide data persistence. Default: \"local-nvme\"."
@@ -70,7 +71,7 @@ resource "aws_ssm_parameter" "settings" {
     EXPORT_HOST_AUTO_DETECT = var.EXPORT_HOST_AUTO_DETECT
     EXCLUDED_EXPORTS        = join("\n", var.EXCLUDED_EXPORTS)
     INCLUDED_EXPORTS        = join("\n", var.INCLUDED_EXPORTS)
-    VPC_CIDR                = join("\n", local.vpc_cidr)
+    EXPORT_CIDR             = join("\n", local.export_cidr)
 
     # NetApp auto-discovery
     ENABLE_NETAPP_AUTO_DETECT = var.ENABLE_NETAPP_AUTO_DETECT
@@ -102,12 +103,13 @@ resource "aws_ssm_parameter" "settings" {
     FSID_DATABASE_CONFIG = local.fsid_database_config
 
     # system
-    TCP_SLOT_TABLE_ENTRIES     = var.TCP_SLOT_TABLE_ENTRIES
-    TCP_MAX_SLOT_TABLE_ENTRIES = var.TCP_MAX_SLOT_TABLE_ENTRIES
-    NUM_NFS_THREADS            = var.NUM_NFS_THREADS
-    VFS_CACHE_PRESSURE         = var.VFS_CACHE_PRESSURE
-    DISABLED_NFS_VERSIONS      = var.DISABLED_NFS_VERSIONS
-    READ_AHEAD                 = var.READ_AHEAD
+    TCP_SLOT_TABLE_ENTRIES       = var.TCP_SLOT_TABLE_ENTRIES
+    TCP_MAX_SLOT_TABLE_ENTRIES   = var.TCP_MAX_SLOT_TABLE_ENTRIES
+    SVC_RPC_PER_CONNECTION_LIMIT = var.SVC_RPC_PER_CONNECTION_LIMIT
+    NUM_NFS_THREADS              = var.NUM_NFS_THREADS
+    VFS_CACHE_PRESSURE           = var.VFS_CACHE_PRESSURE
+    DISABLED_NFS_VERSIONS        = var.DISABLED_NFS_VERSIONS
+    READ_AHEAD                   = var.READ_AHEAD
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = var.CACHEFILESD_DISK_TYPE

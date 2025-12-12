@@ -1,5 +1,20 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.18
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Added `SVC_RPC_PER_CONNECTION_LIMIT` variable to `terraform-module-knfsd` module. This allows users to specify the number of RPC requests that the server will process in parallel from a single connection. Default: `0` (no limit).
+* Re-introduced `EXPORT_CIDR` variable to `terraform-module-knfsd` module. This allows users to specify custom CIDR blocks to use in the NFSD `/etc/exports.d/knfsd.exports` file. By default, the primary VPC CIDR block is used. For secondary VPC CIDRs, users must explicitly provide the full list via: `EXPORT_CIDR`.
+* Packer: Removed `multipath-tools` package from AMI to reduce syslog noise from `multipathd` service, which is irrelevant to KNFSD instances on AWS.
+* Packer: Added log rotation with `size` limit for `/var/log/*.log`, `/var/log/syslog`, and `/var/log/journal/` files. See [rsyslog](image/resources/etc/logrotate.d/rsyslog) and [99-size-limit.conf](image/resources/etc/systemd/journald.conf.d/99-size-limit.conf) for exact configuration.
+* Updated KNFSD Monitoring Dashboard to `v6`. Lots of minor improvements.
+* Updated to Golang 1.25.5.
+* Updated to Terraform AWS provider v6.26.0.
+* Minor Golang package updates.
+* Updated to Python v3.14.2.
+* Updated to Psycopg3 v3.3.1.
+
 ## v1.1.0-alpha.17
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

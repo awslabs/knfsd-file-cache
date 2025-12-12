@@ -45,6 +45,7 @@ misconfigurations:
   - id: AVD-GCP-0030
   - id: AVD-GCP-0033
   - id: AVD-GCP-0034
+  - id: AVD-GCP-0036
   - id: AVD-GCP-0041
   - id: AVD-GCP-0045
   - id: AVD-GCP-0067

@@ -16,7 +16,7 @@ status:
 
 attributes:
   instance:
-    description: NFS Proxy instance
+    description: NFS proxy instance
     type: string
 
   operation:
@@ -24,7 +24,7 @@ attributes:
     type: string
 
   server:
-    description: NFS mount's server
+    description: NFS source server
     type: string
 
 metrics:

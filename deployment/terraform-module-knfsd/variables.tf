@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.17"
+  default     = "1.1.0-alpha.18"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.17\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.18\"."
   }
 }
 
@@ -272,7 +272,14 @@ variable "PROXY_BASENAME" {
 }
 
 variable "VPC_CIDR" {
-  description = "(Optional) List of CIDR blocks to use in security group rules and \"/etc/exports\". If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: []."
+  description = "(Optional) List of CIDR blocks to use in security group rules. If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: []."
+  type        = list(string)
+  nullable    = false
+  default     = []
+}
+
+variable "EXPORT_CIDR" {
+  description = "(Optional) List of CIDR blocks to use in NFSD \"/etc/exports.d/knfsd.exports\" file. If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs, you must explicitly provide the full list. Default: []."
   type        = list(string)
   nullable    = false
   default     = []
@@ -552,6 +559,13 @@ variable "NUM_NFS_THREADS" {
   type        = number
   nullable    = false
   default     = 128
+}
+
+variable "SVC_RPC_PER_CONNECTION_LIMIT" {
+  description = "(Optional) The number of RPC requests that the server will process in parallel from a single connection. The default value is 0 (no limit). Default: \"0\"."
+  type        = number
+  nullable    = false
+  default     = 0
 }
 
 variable "NOHIDE" {

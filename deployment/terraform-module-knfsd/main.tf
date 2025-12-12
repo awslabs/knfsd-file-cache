@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.23.0"
+      version = "~> 6.26.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -52,6 +52,7 @@ locals {
   region               = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
   vpc_id               = data.aws_vpc.selected.id
   vpc_cidr             = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
+  export_cidr          = length(var.EXPORT_CIDR) > 0 ? var.EXPORT_CIDR : local.vpc_cidr
   is_windows           = can(env("USERPROFILE"))
   name                 = var.PROXY_BASENAME != "nfsproxy" ? var.PROXY_BASENAME : random_id.name.hex
   asg_name             = "${local.name}-asg"

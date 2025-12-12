@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.17"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.18"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -227,8 +227,8 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 | Cluster Size                    | `AWS/AutoScaling.GroupInServiceInstances`, `GroupTotalInstances` | Number of active and total proxy instances                      | Maximum | 60s    | -            |
 | FS-Cache Disk Used %            | `disk_used_percent` (path: `/var/cache/fscache`)                 | Percentage of FS-Cache disk space used                          | Maximum | 60s    | Percent %    |
 | FS-Cache Disk Free Space        | `disk_free` (path: `/var/cache/fscache`)                         | Free space available in FS-Cache                                | Minimum | 60s    | Size         |
-| FS-Cache Read Throughput        | `diskio_read_bytes` (nvme0n1, nvme1n1, md127)                    | Disk read throughput for cache storage                          | Sum     | 60s    | Bytes/Second |
-| FS-Cache Write Throughput       | `diskio_write_bytes` (nvme0n1, nvme1n1, md127)                   | Disk write throughput for cache storage                         | Sum     | 60s    | Bytes/Second |
+| FS-Cache Read Throughput        | `diskio_read_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`)  | Disk read throughput for cache storage                          | Sum     | 60s    | Bytes/Second |
+| FS-Cache Write Throughput       | `diskio_write_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`) | Disk write throughput for cache storage                         | Sum     | 60s    | Bytes/Second |
 | NFS Inode Cache Active Objects  | `knfsd/nfs_inode_cache_active_objects`                           | Number of cached NFS inodes                                     | Maximum | 60s    | Count        |
 | NFS Inode Cache Object Size     | `knfsd/nfs_inode_cache_objsize`                                  | Total size of NFS inode cache                                   | Maximum | 60s    | Size         |
 | NFS Dentry Cache Active Objects | `knfsd/dentry_cache_active_objects`                              | Number of cached directory entries                              | Maximum | 60s    | Count        |
