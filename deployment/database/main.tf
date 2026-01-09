@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.26.0"
+      version = "~> 6.28.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,6 +19,11 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.2.4"
     }
+  }
+  provider_meta "aws" {
+    user_agent = [
+      "knfsd-file-cache/database/1.1.0-alpha.19"
+    ]
   }
 }
 
@@ -333,8 +338,10 @@ resource "null_resource" "trigger_lambda_after_rds" {
   # This is useful for CI/CD pipelines where you need to assume a specific role for
   # AWS CLI commands while Terraform uses a different role via the AWS provider.
   provisioner "local-exec" {
-    when    = create
-    command = <<-EOF
+    when        = create
+    working_dir = path.module
+    interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
+    command     = <<-EOF
       set -e
       echo "Starting database setup..."
 

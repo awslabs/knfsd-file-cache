@@ -22,7 +22,14 @@ The following custom metrics are exported currently:
 
 | Metric Name                              | Description                                                                                                     |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **knfsd/nfs_connections**                | The number of NFS clients connected to the KNFSD proxy (used for autoscaling).                                  |
+| **knfsd/nfs_connections**                | The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling).        |
+| **knfsd/nfs_clients**                    | The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state).             |
+| **knfsd/nfs_packets_arrived**            | The number of NFS packets arrived to the proxy.                                                                 |
+| **knfsd/nfs_packets_deferred**           | The number of NFS packets deferred by the proxy.                                                                |
+| **knfsd/nfs_sockets_enqueued**           | The number of times an NFS transport is enqueued to wait for an NFS thread to service.                          |
+| **knfsd/nfs_threads**                    | The number of current KNFSD server threads.                                                                     |
+| **knfsd/nfs_threads_timedout**           | The number of times an NFS thread triggered an idle timeout.                                                    |
+| **knfsd/nfs_threads_woken**              | The number of times an idle NFS thread is woken to receive some data from an NFS transport.                     |
 | **knfsd/nfs_inode_cache_active_objects** | The number of active objects in the Linux NFS inode cache.                                                      |
 | **knfsd/dentry_cache_active_objects**    | The number of active objects in the Linux dentry cache.                                                         |
 | **knfsd/nfs_inode_cache_objsize**        | The total size of the objects in the Linux NFS inode cache in bytes.                                            |
@@ -61,7 +68,7 @@ Providing the metrics config from a file:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.18"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.19"
 
   METRICS_AGENT_CONFIG = file("metrics-config.yaml")
 }
@@ -71,7 +78,7 @@ Providing the metrics config inline using heredoc syntax:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.18"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.19"
 
   METRICS_AGENT_CONFIG = <<- EOT
     receivers:

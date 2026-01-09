@@ -15,11 +15,20 @@ status:
   unsupported_platforms: [windows]
 
 metrics:
+  nfs.clients:
+    enabled: true
+    stability:
+      level: alpha
+    description: The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state)
+    unit: "{count}"
+    gauge:
+      value_type: int
+
   nfs.connections:
     enabled: true
     stability:
       level: alpha
-    description: The number of NFS Clients connected to the KNFSD filer (used for autoscaling)
+    description: The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling)
     unit: "{count}"
     gauge:
       value_type: int

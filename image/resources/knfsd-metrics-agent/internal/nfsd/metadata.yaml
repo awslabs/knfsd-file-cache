@@ -1,0 +1,77 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: nfsd
+
+scope_name: knfsd-metrics-agent/nfsd
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  nfs.packets.arrived:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of NFS packets arrived
+    unit: "{packets}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.packets.deferred:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of NFS packets deferred
+    unit: "{packets}"
+    gauge:
+      value_type: int
+
+  nfs.sockets.enqueued:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of times an NFS transport is enqueued to wait for an NFS thread to service
+    unit: "{count}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.threads:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of current KNFSD server threads
+    unit: "{threads}"
+    gauge:
+      value_type: int
+
+  nfs.threads.timedout:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of times an NFS thread triggered an idle timeout
+    unit: "{count}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  nfs.threads.woken:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of times an idle NFS thread is woken to receive some data from an NFS transport
+    unit: "{count}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative

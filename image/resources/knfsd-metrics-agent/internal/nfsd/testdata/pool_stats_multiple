@@ -1,0 +1,3 @@
+# pool packets-arrived sockets-enqueued threads-woken threads-timedout
+0 100 5 90 2
+1 200 10 180 4

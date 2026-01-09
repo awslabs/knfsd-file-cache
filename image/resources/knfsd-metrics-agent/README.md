@@ -68,6 +68,21 @@ receivers:
           - /files/home
 ```
 
+#### NFSD
+
+Reports Kernel NFS server thread statistics and thread pool metrics from `/proc/fs/nfsd/pool_stats`.
+
+See [nfsd/metadata.yaml](internal/nfsd/metadata.yaml)
+
+* `collection_interval` (default = `1m`): Collection interval. Valid time units are s, m, h.
+* `pool_stats_path` (default = `/proc/fs/nfsd/pool_stats`): Path to pool_stats file.
+
+```yaml
+receivers:
+  nfsd:
+    collection_interval: 30s
+```
+
 #### Exports
 
 Reports on NFS export statistics such as total number of operations, read and write bytes.
@@ -159,8 +174,9 @@ receivers:
   # Declare the receivers with default options.
   # Note the colon as these are objects.
   connections:
-  mounts:
   exports:
+  mounts:
+  nfsd:
   oldestfile:
   slabinfo:
 
@@ -205,7 +221,9 @@ service:
     metrics: # name of the pipeline
       receivers:
         - connections
+        - exports
         - mounts
+        - nfsd
         - slabinfo
       processors:
         - resourcedetection
@@ -261,8 +279,9 @@ service:
       receivers:
         - otlp
         - connections
-        - mounts
         - exports
+        - mounts
+        - nfsd
         # - slabinfo removed
 ```
 
@@ -275,8 +294,9 @@ service:
       receivers:
         - otlp
         - connections
-        - mounts
         - exports
+        - mounts
+        - nfsd
         - slabinfo
         - oldestfile # added
 ```

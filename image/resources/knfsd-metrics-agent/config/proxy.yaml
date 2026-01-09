@@ -16,13 +16,10 @@ exporters:
       - dimensions:
           - [AutoScalingGroupName, InstanceId]
         metric_name_selectors:
-          - "^knfsd/nfs_connections$"
-          - "^knfsd/nfs_inode_cache_active_objects$"
-          - "^knfsd/nfs_inode_cache_objsize$"
-          - "^knfsd/dentry_cache_active_objects$"
-          - "^knfsd/dentry_cache_objsize$"
-          - "^knfsd/fscache_oldest_file$"
+          - "^knfsd/nfs_.+"
+          - "^knfsd/dentry_.+"
           - "^knfsd/exports/.+"
+          - "^knfsd/fscache_oldest_file$"
           - "^knfsd/fsid/.+"
 
       # per-mount metrics
@@ -59,6 +56,6 @@ exporters:
 service:
   pipelines:
     metrics:
-      receivers: [otlp, connections, mounts, exports, slabinfo]
+      receivers: [otlp, connections, mounts, nfsd, exports, slabinfo]
       processors: [resourcedetection, transform, metricstransform]
       exporters: [awsemf]

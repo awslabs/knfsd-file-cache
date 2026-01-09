@@ -94,7 +94,10 @@
         "resources": [
           "*"
         ],
-        "metrics_collection_interval": 30
+        "metrics_collection_interval": 10,
+        "append_dimensions": {
+          "fscdevice": ""
+        }
       },
       "ethtool": {
         "metrics_include": [
@@ -109,7 +112,7 @@
         "measurement": [
           "mem_cached",
           "mem_buffered",
-          "mem_used_percent"
+          "mem_available_percent"
         ]
       },
       "net": {
@@ -142,11 +145,6 @@
           "processes_total",
           "processes_total_threads",
           "processes_zombies"
-        ]
-      },
-      "swap": {
-        "measurement": [
-          "swap_used_percent"
         ]
       }
     }

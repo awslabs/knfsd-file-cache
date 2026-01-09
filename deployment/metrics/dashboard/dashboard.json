@@ -155,7 +155,7 @@
           "label": "Auto Scaling Group Name",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_used_percent\"",
+          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_available_percent\"",
           "populateFrom": "AutoScalingGroupName"
       },
       {
@@ -166,7 +166,7 @@
           "label": "Instance ID",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_used_percent\"",
+          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_available_percent\"",
           "populateFrom": "InstanceId"
       },
       {
@@ -198,7 +198,7 @@
           "x": 0,
           "y": 0,
           "width": 6,
-          "height": 3,
+          "height": 4,
           "properties": {
               "markdown": "## Cache Overview\nThese graphs show information on the KNFSD caching layers. KNFSD implements two primary caching layers:\n- **L1 Cache:** The standard Linux filesystem cache, handles most of the metadata caching\n- **L2 Cache:** A filesystem caching layer implemented by FS-Cache, handles the majority of the file caching",
               "background": "transparent"
@@ -209,7 +209,7 @@
           "x": 6,
           "y": 0,
           "width": 3,
-          "height": 3,
+          "height": 4,
           "properties": {
               "metrics": [
                   [ { "expression": "SELECT SUM(\"knfsd/exports/total_read_bytes\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}" } ]
@@ -225,7 +225,7 @@
           "x": 9,
           "y": 0,
           "width": 3,
-          "height": 3,
+          "height": 4,
           "properties": {
               "metrics": [
                   [ { "expression": "SELECT SUM(\"knfsd/exports/total_write_bytes\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}" } ]
@@ -241,7 +241,7 @@
           "x": 12,
           "y": 0,
           "width": 3,
-          "height": 3,
+          "height": 4,
           "properties": {
               "metrics": [
                   [ { "expression": "SELECT SUM(\"knfsd/exports/total_operations\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}" } ]
@@ -258,7 +258,7 @@
           "x": 15,
           "y": 0,
           "width": 3,
-          "height": 3,
+          "height": 4,
           "properties": {
               "metrics": [
                   [ "knfsd/metrics", "knfsd/mount/read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", { "id": "m1", "visible": false, "stat": "Sum" } ],
@@ -278,7 +278,7 @@
           "x": 18,
           "y": 0,
           "width": 6,
-          "height": 3,
+          "height": 4,
           "properties": {
               "metrics": [
                   [ "AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", "ASG_FILTER", { "label": "Active Instances" } ],
@@ -295,7 +295,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 3,
+          "y": 4,
           "width": 6,
           "height": 8,
           "properties": {
@@ -336,7 +336,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 3,
+          "y": 4,
           "width": 6,
           "height": 8,
           "properties": {
@@ -360,18 +360,18 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 3,
+          "y": 4,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_read_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
               "title": "FS-Cache (/var/cache/fscache) Read Throughput",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -384,18 +384,18 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 3,
+          "y": 4,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"diskio_write_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
+                [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
               "title": "FS-Cache (/var/cache/fscache) Write Throughput",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -408,7 +408,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 11,
+          "y": 12,
           "width": 6,
           "height": 8,
           "properties": {
@@ -432,7 +432,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 11,
+          "y": 12,
           "width": 6,
           "height": 8,
           "properties": {
@@ -456,7 +456,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 11,
+          "y": 12,
           "width": 6,
           "height": 8,
           "properties": {
@@ -480,7 +480,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 11,
+          "y": 12,
           "width": 6,
           "height": 8,
           "properties": {
@@ -504,7 +504,210 @@
       {
           "type": "text",
           "x": 0,
-          "y": 19,
+          "y": 20,
+          "width": 24,
+          "height": 2,
+          "properties": {
+              "markdown": "## NFS Server Metrics\n\nThe following graphs show information on the Kernel NFS server activity.",
+              "background": "transparent"
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 22,
+          "width": 12,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_connections\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "Proxy NFS Connections [established/active]",
+              "period": 60,
+              "stat": "Maximum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 22,
+          "width": 12,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_clients\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": true,
+              "region": "${region_filter}",
+              "title": "Proxy NFS Clients [connected/unique]",
+              "period": 60,
+              "stat": "Maximum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 30,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_packets_arrived\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Packets Arrived",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 8,
+          "y": 30,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_packets_deferred\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Packets Deferred",
+              "period": 30,
+              "stat": "Maximum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 16,
+          "y": 30,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_sockets_enqueued\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Sockets Enqueued",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 38,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_threads\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Threads",
+              "period": 30,
+              "stat": "Maximum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 8,
+          "y": 38,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_timedout\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Threads Timed Out",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 16,
+          "y": 38,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_woken\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NFS Threads Woken",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Count"
+                  }
+              }
+          }
+      },
+      {
+          "type": "text",
+          "x": 0,
+          "y": 46,
           "width": 24,
           "height": 3,
           "properties": {
@@ -515,7 +718,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 22,
+          "y": 49,
           "width": 12,
           "height": 8,
           "properties": {
@@ -541,7 +744,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 22,
+          "y": 49,
           "width": 12,
           "height": 8,
           "properties": {
@@ -567,49 +770,25 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 30,
-          "width": 7,
-          "height": 8,
-          "properties": {
-              "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_connections\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "region": "${region_filter}",
-              "title": "Proxy NFS Client Connections",
-              "period": 60,
-              "stat": "Maximum",
-              "yAxis": {
-                  "left": {
-                      "label": "Count",
-                      "showUnits": false
-                  }
-              }
-          }
-      },
-      {
-          "type": "metric",
-          "x": 7,
-          "y": 30,
-          "width": 10,
+          "y": 57,
+          "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
                   [ "AWS/EC2", "NetworkIn", "InstanceId", "INSTANCE_FILTER", { "id": "m1", "visible": false } ],
                   [ "AWS/EC2", "NetworkOut", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false } ],
-                  [ { "expression": "IF(DIFF_TIME(m1) > 0, m1/DIFF_TIME(m1), 0)", "label": "INSTANCE_FILTER: IN" } ],
-                  [ { "expression": "IF(DIFF_TIME(m2) > 0, m2/DIFF_TIME(m2), 0)", "label": "INSTANCE_FILTER: OUT" } ]
+                  [ { "expression": "IF(DIFF_TIME(m1) > 0, (m1/DIFF_TIME(m1))*8, 0)", "label": "INSTANCE_FILTER: IN" } ],
+                  [ { "expression": "IF(DIFF_TIME(m2) > 0, (m2/DIFF_TIME(m2))*8, 0)", "label": "INSTANCE_FILTER: OUT" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
               "region": "${region_filter}",
-              "title": "Proxy Network Throughput",
+              "title": "Proxy Network Bandwidth",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "label": "Bytes/Second",
+                      "label": "Bits/Second",
                       "showUnits": false
                   }
               }
@@ -617,9 +796,9 @@
       },
       {
           "type": "metric",
-          "x": 17,
-          "y": 30,
-          "width": 7,
+          "x": 12,
+          "y": 57,
+          "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
@@ -633,7 +812,7 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "TCP/UDP Connection State",
+              "title": "Proxy TCP/UDP Connection State",
               "period": 60,
               "stat": "Average",
               "yAxis": {
@@ -645,9 +824,20 @@
           }
       },
       {
+          "type": "text",
+          "x": 0,
+          "y": 65,
+          "width": 24,
+          "height": 3,
+          "properties": {
+              "markdown": "## Data Transfer\n\nThe following graphs show NFS data transfer metrics (in bytes/second) for the KNFSD proxy layer.\n\n- **Proxy to Source:** Data read from and written to the source NFS server by the KNFSD proxy.\n- **Client to Proxy:** Data served to and received from downstream NFS clients running in AWS.",
+              "background": "transparent"
+          }
+      },
+      {
           "type": "metric",
           "x": 0,
-          "y": 38,
+          "y": 68,
           "width": 12,
           "height": 8,
           "properties": {
@@ -672,7 +862,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 38,
+          "y": 68,
           "width": 12,
           "height": 8,
           "properties": {
@@ -697,7 +887,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 46,
+          "y": 76,
           "width": 12,
           "height": 8,
           "properties": {
@@ -722,7 +912,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 46,
+          "y": 76,
           "width": 12,
           "height": 8,
           "properties": {
@@ -747,18 +937,18 @@
       {
           "type": "text",
           "x": 0,
-          "y": 54,
+          "y": 84,
           "width": 24,
           "height": 3,
           "properties": {
-              "markdown": "## NFS Latency & Stats\n\nThe following graphs show information on the NFS latency and operations between both proxy to source, and clients to proxy.\n\n- **RTT** - Round Trip Time, time taken between the kernel sending a request and receiving the response.\n- **EXE** - Execution Time, RTT including the time taken by the kernel to process the request/response.",
+              "markdown": "## NFS Latency & Stats\n\nThe following graphs show information on the NFS latency and operations between both proxy to source, and clients to proxy.\n\n- **RTT**: Round Trip Time, time taken between the kernel sending a request and receiving the response.\n- **EXE**: Execution Time, RTT including the time taken by the kernel to process the request/response.",
               "background": "transparent"
           }
       },
       {
           "type": "metric",
           "x": 0,
-          "y": 57,
+          "y": 87,
           "width": 12,
           "height": 8,
           "properties": {
@@ -783,12 +973,13 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 57,
+          "y": 87,
           "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfsiostat_rpc_backlog\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SERVER_FILTER' GROUP BY InstanceId", "label": "${LABEL}" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfsiostat_rpc_backlog\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SERVER_FILTER' GROUP BY InstanceId", "id": "m1", "visible": false } ],
+                  [ { "expression": "FLOOR(m1)", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -807,7 +998,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 65,
+          "y": 95,
           "width": 12,
           "height": 8,
           "properties": {
@@ -831,7 +1022,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 65,
+          "y": 95,
           "width": 12,
           "height": 8,
           "properties": {
@@ -855,7 +1046,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 73,
+          "y": 103,
           "width": 12,
           "height": 8,
           "properties": {
@@ -879,7 +1070,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 73,
+          "y": 103,
           "width": 12,
           "height": 8,
           "properties": {
@@ -903,7 +1094,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 81,
+          "y": 111,
           "width": 24,
           "height": 2,
           "properties": {
@@ -914,7 +1105,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 83,
+          "y": 113,
           "width": 12,
           "height": 8,
           "properties": {
@@ -959,7 +1150,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 83,
+          "y": 113,
           "width": 12,
           "height": 8,
           "properties": {
@@ -1004,7 +1195,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 91,
+          "y": 121,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1049,7 +1240,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 91,
+          "y": 121,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1094,7 +1285,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 91,
+          "y": 121,
           "width": 8,
           "height": 8,
           "properties": {
@@ -1139,7 +1330,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 99,
+          "y": 129,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1150,7 +1341,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 101,
+          "y": 131,
           "width": 12,
           "height": 8,
           "properties": {
@@ -1242,7 +1433,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 101,
+          "y": 131,
           "width": 12,
           "height": 8,
           "properties": {
@@ -1334,9 +1525,9 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 109,
+          "y": 139,
           "width": 8,
-          "height": 8,
+          "height": 11,
           "properties": {
               "metrics": [
                   [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
@@ -1426,9 +1617,9 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 109,
+          "y": 139,
           "width": 8,
-          "height": 8,
+          "height": 11,
           "properties": {
               "metrics": [
                   [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
@@ -1518,9 +1709,9 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 109,
+          "y": 139,
           "width": 8,
-          "height": 8,
+          "height": 11,
           "properties": {
               "metrics": [
                   [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
@@ -1610,7 +1801,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 117,
+          "y": 150,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1621,19 +1812,19 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 119,
+          "y": 152,
           "width": 5,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_reads\"', 'Sum')))" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_writes\"', 'Sum')))" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_reads\"', 'Sum')))" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_writes\"', 'Sum')))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
               "title": "Disk IOPS",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -1646,19 +1837,19 @@
       {
           "type": "metric",
           "x": 5,
-          "y": 119,
+          "y": 152,
           "width": 5,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_read_bytes\"', 'Sum')))" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_write_bytes\"', 'Sum')))" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum')))" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
               "title": "Bytes Transferred",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -1671,18 +1862,18 @@
       {
           "type": "metric",
           "x": 10,
-          "y": 119,
+          "y": 152,
           "width": 4,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_io_time\"', 'Sum')", "label": "${LABEL}" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_io_time\"', 'Sum')", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
               "title": "I/O Requests Queued",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -1693,36 +1884,36 @@
           }
       },
       {
-        "type": "metric",
-        "x": 14,
-        "y": 119,
-        "width": 5,
-        "height": 8,
-        "properties": {
-            "metrics": [
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops" } ]
-            ],
-            "view": "timeSeries",
-            "stacked": false,
-            "region": "${region_filter}",
-            "title": "Instance Performance Exceeded",
-            "period": 60,
-            "stat": "Sum",
-            "yAxis": {
-                "left": {
-                    "label": "Count/Second",
-                    "showUnits": false
-                }
-            }
-        }
+          "type": "metric",
+          "x": 14,
+          "y": 152,
+          "width": 5,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "Instance Performance Exceeded",
+              "period": 10,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count/Second",
+                      "showUnits": false
+                  }
+              }
+          }
       },
       {
           "type": "metric",
           "x": 19,
-          "y": 119,
+          "y": 152,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1734,7 +1925,7 @@
               "stacked": false,
               "region": "${region_filter}",
               "title": "Volume Queue Length",
-              "period": 60,
+              "period": 10,
               "stat": "Sum",
               "yAxis": {
                   "left": {
@@ -1747,7 +1938,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 127,
+          "y": 160,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1758,7 +1949,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 129,
+          "y": 162,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1794,7 +1985,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 129,
+          "y": 162,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1805,7 +1996,7 @@
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "CPU Usage",
+              "title": "CPU Usage (Active/IO Wait)",
               "period": 60,
               "stat": "Average",
               "yAxis": {
@@ -1821,27 +2012,26 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 129,
+          "y": 162,
           "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "mem_used_percent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_used %" } ],
-                  [ "knfsd/ec2", "swap_used_percent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "swap_used %" } ]
+                  [ "knfsd/ec2", "mem_available_percent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_available %" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "Memory/Swap Utilization",
+              "title": "Memory Available",
               "period": 60,
               "stat": "Average",
               "annotations": {
                   "horizontal": [
                       {
                           "label": "Memory",
-                          "value": 80,
+                          "value": 5,
                           "color": "#cb0000",
-                          "fill": "above"
+                          "fill": "below"
                       }
                   ]
               },
@@ -1858,7 +2048,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 129,
+          "y": 162,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1883,7 +2073,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 137,
+          "y": 170,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1920,37 +2110,37 @@
           }
       },
       {
-        "type": "metric",
-        "x": 6,
-        "y": 137,
-        "width": 6,
-        "height": 8,
-        "properties": {
-            "metrics": [
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_out_allowance_exceeded\"','Sum'))))", "label": "bw_out_allowance_exceeded" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_in_allowance_exceeded\"','Sum'))))", "label": "bw_in_allowance_exceeded" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_pps_allowance_exceeded\"','Sum'))))", "label": "pps_allowance_exceeded" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_conntrack_allowance_exceeded\"','Sum'))))", "label": "conntrack_allowance_exceeded" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_linklocal_allowance_exceeded\"','Sum'))))", "label": "linklocal_allowance_exceeded" } ]
-            ],
-            "view": "timeSeries",
-            "stacked": false,
-            "region": "${region_filter}",
-            "title": "ENA Performance (packets queued/dropped)",
-            "period": 60,
-            "stat": "Sum",
-            "yAxis": {
-                "left": {
-                    "label": "Events/Second",
-                    "showUnits": false
-                }
-            }
-        }
+          "type": "metric",
+          "x": 6,
+          "y": 170,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_out_allowance_exceeded\"','Sum'))))", "label": "bw_out_allowance_exceeded" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_in_allowance_exceeded\"','Sum'))))", "label": "bw_in_allowance_exceeded" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_pps_allowance_exceeded\"','Sum'))))", "label": "pps_allowance_exceeded" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_conntrack_allowance_exceeded\"','Sum'))))", "label": "conntrack_allowance_exceeded" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_linklocal_allowance_exceeded\"','Sum'))))", "label": "linklocal_allowance_exceeded" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "ENA Performance (packets queued/dropped)",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Events/Second",
+                      "showUnits": false
+                  }
+              }
+          }
       },
       {
           "type": "metric",
           "x": 12,
-          "y": 137,
+          "y": 170,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1976,7 +2166,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 137,
+          "y": 170,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2004,7 +2194,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 145,
+          "y": 178,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2015,7 +2205,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 147,
+          "y": 180,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2047,7 +2237,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 147,
+          "y": 180,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2079,7 +2269,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 147,
+          "y": 180,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2108,7 +2298,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 147,
+          "y": 180,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2137,7 +2327,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 155,
+          "y": 188,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2166,7 +2356,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 155,
+          "y": 188,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2195,7 +2385,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 155,
+          "y": 188,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2224,7 +2414,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 163,
+          "y": 196,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2235,7 +2425,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 165,
+          "y": 198,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2261,7 +2451,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 165,
+          "y": 198,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2279,7 +2469,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 165,
+          "y": 198,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2303,8 +2493,8 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 173,
-          "width": 8,
+          "y": 206,
+          "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
@@ -2328,32 +2518,37 @@
       },
       {
           "type": "metric",
-          "x": 8,
-          "y": 173,
-          "width": 8,
+          "x": 6,
+          "y": 206,
+          "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUCreditUsage", "DBInstanceIdentifier", "DB_FILTER" ]
+                  [ "AWS/RDS", "CPUCreditBalance", "DBInstanceIdentifier", "DB_FILTER" ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Average",
-              "period": 60,
+              "period": 300,
               "region": "${region_filter}",
-              "title": "DB EC2 CPU Credits",
+              "title": "DB EC2 CPU Credits (Credit Balance)",
               "annotations": {
                   "horizontal": [
                       {
-                          "label": "Low Credit Warning",
-                          "value": 70,
+                          "label": "Max (db.t4g.micro: 100%)",
+                          "value": 288,
+                          "color": "#2ca02c"
+                      },
+                      {
+                          "label": "Low Credit Warning (20%)",
+                          "value": 58,
                           "color": "#ffa500"
                       },
                       {
-                          "label": "Critical Credit Level",
-                          "value": 90,
+                          "label": "Critical Credit Level (10%)",
+                          "value": 29,
                           "color": "#cb0000",
-                          "fill": "above"
+                          "fill": "below"
                       }
                   ]
               },
@@ -2367,26 +2562,30 @@
       },
       {
           "type": "metric",
-          "x": 16,
-          "y": 173,
-          "width": 8,
+          "x": 12,
+          "y": 206,
+          "width": 6,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUSurplusCreditBalance", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "CPUSurplusCreditsCharged", ".", "." ]
+                  [ "AWS/RDS", "CPUCreditUsage", "DBInstanceIdentifier", "DB_FILTER" ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Average",
-              "period": 60,
+              "period": 300,
               "region": "${region_filter}",
-              "title": "DB EC2 CPU Unlimited Credits",
+              "title": "DB EC2 CPU Credit Usage (Spend Rate)",
               "annotations": {
                   "horizontal": [
                       {
-                          "label": "Unlimited Credit Warning",
-                          "value": 10,
+                          "label": "Baseline Earn Rate (db.t4g.micro: 1.0/5min)",
+                          "value": 1,
+                          "color": "#2ca02c"
+                      },
+                      {
+                          "label": "High Burst Warning (5x baseline)",
+                          "value": 5,
                           "color": "#ffa500",
                           "fill": "above"
                       }
@@ -2402,8 +2601,48 @@
       },
       {
           "type": "metric",
+          "x": 18,
+          "y": 206,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "AWS/RDS", "CPUSurplusCreditBalance", "DBInstanceIdentifier", "DB_FILTER" ],
+                  [ ".", "CPUSurplusCreditsCharged", ".", "." ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "stat": "Average",
+              "period": 300,
+              "region": "${region_filter}",
+              "title": "DB EC2 CPU Unlimited Credits",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "Charge Threshold (db.t4g.micro: 100%)",
+                          "value": 288,
+                          "color": "#cb0000",
+                          "fill": "above"
+                      },
+                      {
+                          "label": "Unlimited Credit Warning (25%)",
+                          "value": 72,
+                          "color": "#ffa500"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "showUnits": false,
+                      "label": "Credits (vCPU-minutes)"
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
           "x": 0,
-          "y": 181,
+          "y": 214,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2422,7 +2661,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 181,
+          "y": 214,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2441,7 +2680,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 181,
+          "y": 214,
           "width": 8,
           "height": 8,
           "properties": {

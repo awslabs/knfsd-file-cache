@@ -1,5 +1,27 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.19
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Downgraded default database instance type from `db.t4g.small` to `db.t4g.micro`, reducing RDS database infrastructure cost by 50%.
+* CloudWatch metrics dashboard improvements, improved burst CPU credit balance/usage/unlimited-mode tracking on RDS DB instance.
+* CloudWatch metrics: remove `swap_percent` (unused), replace `mem_used_percent` with `mem_available_percent` (memory available for use) in `knfsd/ec2` namespace.
+* Added `knfsd/nfs_clients` metric to count the number of unique NFS client IP addresses connected to a KNFSD proxy.
+* Added new CW widget to track the number of EC2 instances (NFS clients) mounted to each KNFSD proxy.
+* Introduced `nfsd` Open Telemetry `receiver/component` to track the performance of the KNFSD server. See [KNFSD Server Metrics](deployment/metrics/README.md#nfs-server-metrics) and [Kernel NFS Server Statistics](https://www.kernel.org/doc/html/latest/filesystems/nfs/knfsd-stats.html) for more information.
+* Added `knfsd/nfs_packets_arrived`, `knfsd/nfs_packets_deferred`, `knfsd/nfs_sockets_enqueued`, `knfsd/nfs_threads`, `knfsd/nfs_threads_timedout`, and `knfsd/nfs_threads_woken` metrics.
+* Added `fscdevice` dimension to `diskio` metrics in `knfsd/ec2` namespace in `amazon-cloudwatch-agent.json` file.
+* Refactored CloudWatch custom `metrics` dashboard to use `fscdevice` dimension for certain `diskio` metric filtering.
+* Increased collection interval of `diskio` metrics from 30s to 10s in `knfsd/ec2` namespace in `amazon-cloudwatch-agent.json` file.
+* Updated KNFSD Monitoring Dashboard to `v7`.
+* Fixed Windows host machine being able to deploy the RDS DB in the `database` module.
+* Updated `prerequisites` documentation to declare `bash` and `jq` as being required which are already vendored in the `.devcontainer/dev` and `.devcontainer/prod` environments.
+* Fixed issue where the AWS IAM role `AutoScalingServiceLinkedRole` needs to be created once in a brand new AWS account when using `TRAFFIC_MODE="loadbalancer"` in the `terraform-module-knfsd` module.
+* Updated to Terraform AWS provider v6.28.0.
+* Added `provider_meta` to all Terraform AWS provider blocks with `USER_AGENT` string.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.18
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

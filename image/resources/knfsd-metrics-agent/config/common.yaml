@@ -5,6 +5,11 @@
 receivers:
   connections:
     collection_interval: 1m
+    # metrics:
+    #   nfs.clients:
+    #     enabled: false
+    #   nfs.connections:
+    #     enabled: false
 
   mounts:
     collection_interval: 1m
@@ -34,6 +39,22 @@ receivers:
     #   nfs.mount.read_exe:
     #     enabled: false
     #   nfs.mount.read_rtt:
+    #     enabled: false
+
+  nfsd:
+    collection_interval: 30s
+    # metrics:
+    #   nfs.packets.arrived:
+    #     enabled: false
+    #   nfs.packets.deferred:
+    #     enabled: false
+    #   nfs.sockets.enqueued:
+    #     enabled: false
+    #   nfs.threads:
+    #     enabled: false
+    #   nfs.threads.timedout:
+    #     enabled: false
+    #   nfs.threads.woken:
     #     enabled: false
 
   exports:
@@ -104,6 +125,10 @@ processors:
   metricstransform:
     transforms:
       - action: update
+        include: nfs.clients
+        new_name: nfs_clients
+
+      - action: update
         include: nfs.connections
         new_name: nfs_connections
 
@@ -158,6 +183,30 @@ processors:
       - action: update
         include: nfs.mount.operation.errors
         new_name: mount/operation/errors
+
+      - action: update
+        include: nfs.packets.arrived
+        new_name: nfs_packets_arrived
+
+      - action: update
+        include: nfs.packets.deferred
+        new_name: nfs_packets_deferred
+
+      - action: update
+        include: nfs.sockets.enqueued
+        new_name: nfs_sockets_enqueued
+
+      - action: update
+        include: nfs.threads
+        new_name: nfs_threads
+
+      - action: update
+        include: nfs.threads.timedout
+        new_name: nfs_threads_timedout
+
+      - action: update
+        include: nfs.threads.woken
+        new_name: nfs_threads_woken
 
       - action: update
         include: nfs.exports.total_operations

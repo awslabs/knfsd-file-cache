@@ -27,6 +27,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					NfsClients:     MetricConfig{Enabled: true},
 					NfsConnections: MetricConfig{Enabled: true},
 				},
 			},
@@ -35,6 +36,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					NfsClients:     MetricConfig{Enabled: false},
 					NfsConnections: MetricConfig{Enabled: false},
 				},
 			},

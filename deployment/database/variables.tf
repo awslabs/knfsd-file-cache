@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.18"
+  default     = "1.1.0-alpha.19"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.18\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.19\"."
   }
 }
 
@@ -61,14 +61,14 @@ variable "NAME" {
 }
 
 variable "INSTANCE_CLASS" {
-  description = "(Optional) The EC2 instance type to use. Must be a supported RDS PostgreSQL instance class. Default: \"db.t4g.small\"."
+  description = "(Optional) The EC2 instance type to use. Must be a supported RDS PostgreSQL instance class. Default: \"db.t4g.micro\"."
   type        = string
   nullable    = false
-  default     = "db.t4g.small"
+  default     = "db.t4g.micro"
 
   validation {
     condition     = can(regex("^db\\.", var.INSTANCE_CLASS))
-    error_message = "INSTANCE_CLASS must start with \"db.\". For example: \"db.t4g.small\"."
+    error_message = "INSTANCE_CLASS must start with \"db.\". For example: \"db.t4g.micro\"."
   }
 }
 

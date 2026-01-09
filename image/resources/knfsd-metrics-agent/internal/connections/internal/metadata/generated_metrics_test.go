@@ -61,6 +61,10 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordNfsClientsDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordNfsConnectionsDataPoint(ts, 1)
 
 			res := pcommon.NewResource()
@@ -85,12 +89,24 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
+				case "nfs.clients":
+					assert.False(t, validatedMetrics["nfs.clients"], "Found a duplicate in the metrics slice: nfs.clients")
+					validatedMetrics["nfs.clients"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state)", ms.At(i).Description())
+					assert.Equal(t, "{count}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
 				case "nfs.connections":
 					assert.False(t, validatedMetrics["nfs.connections"], "Found a duplicate in the metrics slice: nfs.connections")
 					validatedMetrics["nfs.connections"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "The number of NFS Clients connected to the KNFSD filer (used for autoscaling)", ms.At(i).Description())
+					assert.Equal(t, "The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling)", ms.At(i).Description())
 					assert.Equal(t, "{count}", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())

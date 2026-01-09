@@ -20,7 +20,7 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
 * `NAME` - (Optional) The name of the RDS DB instance. If the name is left blank a random name will be generated based on `NAME_PREFIX`.
 
-* `INSTANCE_CLASS` - (Optional) The EC2 instance type to use. Must be a supported RDS PostgreSQL instance class. Defaults to `db.t4g.small`.
+* `INSTANCE_CLASS` - (Optional) The EC2 instance type to use. Must be a supported RDS PostgreSQL instance class. Defaults to `db.t4g.micro`.
 
 * `DELETION_PROTECTION` - (Optional) Whether or not to allow Terraform to destroy the instance. Unless this field is set to false in Terraform state, a `terraform destroy` or `terraform apply` command that deletes the instance will fail. Defaults to `true`.
 

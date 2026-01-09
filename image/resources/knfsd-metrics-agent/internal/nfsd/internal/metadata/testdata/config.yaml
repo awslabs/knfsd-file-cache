@@ -1,0 +1,29 @@
+default:
+all_set:
+  metrics:
+    nfs.packets.arrived:
+      enabled: true
+    nfs.packets.deferred:
+      enabled: true
+    nfs.sockets.enqueued:
+      enabled: true
+    nfs.threads:
+      enabled: true
+    nfs.threads.timedout:
+      enabled: true
+    nfs.threads.woken:
+      enabled: true
+none_set:
+  metrics:
+    nfs.packets.arrived:
+      enabled: false
+    nfs.packets.deferred:
+      enabled: false
+    nfs.sockets.enqueued:
+      enabled: false
+    nfs.threads:
+      enabled: false
+    nfs.threads.timedout:
+      enabled: false
+    nfs.threads.woken:
+      enabled: false

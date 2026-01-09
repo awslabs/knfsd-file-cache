@@ -12,9 +12,17 @@ metrics:
     enabled: false
 ```
 
+### nfs.clients
+
+The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state)
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {count} | Gauge | Int | Alpha |
+
 ### nfs.connections
 
-The number of NFS Clients connected to the KNFSD filer (used for autoscaling)
+The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling)
 
 | Unit | Metric Type | Value Type | Stability |
 | ---- | ----------- | ---------- | --------- |

@@ -6,7 +6,7 @@
 # Usage: ./run-kics.sh <path>[optional]
 
 # https://github.com/Checkmarx/kics/releases
-KNFSD_KICS_VERSION=2.1.17
+KNFSD_KICS_VERSION=2.1.18
 
 KICS_IMAGE=checkmarx/kics:v${KNFSD_KICS_VERSION}
 

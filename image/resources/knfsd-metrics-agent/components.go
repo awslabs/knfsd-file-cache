@@ -10,6 +10,7 @@ import (
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/connections"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/exports"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/mounts"
+	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/nfsd"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/oldestfile"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/slab"
 
@@ -45,6 +46,7 @@ func components() (otelcol.Factories, error) {
 		otlpreceiver.NewFactory(),
 		connections.NewFactory(),
 		mounts.NewFactory(),
+		nfsd.NewFactory(),
 		exports.NewFactory(),
 		oldestfile.NewFactory(),
 		slab.NewFactory(),

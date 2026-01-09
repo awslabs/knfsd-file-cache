@@ -2,6 +2,8 @@
 
 Before deploying KNFSD to Amazon Web Services, there are a number of prerequisites that you should ensure are met. These are detailed below. Once you have verified the prerequisites, you can continue with the [infrastructure deployment steps](../README.md).
 
+We assume [bash](https://www.gnu.org/software/bash/) and [jq](https://stedolan.github.io/jq/download/) are installed by default on most Linux and macOS systems. Windows machines should be checked.
+
 ## Minimum Requirements
 
 - [Git](https://git-scm.com/downloads)
@@ -29,9 +31,11 @@ Docker engine is required to deploy the Amazon RDS `database` module.
 
 > NOTE: Ensure you start Docker Desktop at least once to accept the terms and conditions.
 
-If you wish to use the `.devcontainer/prod` configuration (which is recommended and already contains `AWS CLI` and `Terraform` as well as an optimized environment for KNFSD build and deployment), you should install Docker Desktop (which includes `docker` engine) and the VS Code [Dev Containers Extension](vscode:extension/ms-vscode-remote.remote-containers).
+If you wish to use the `.devcontainer/prod` configuration (which is recommended and already contains all required components as well as an optimized environment for KNFSD build and deployment), you should install Docker Desktop (which includes `docker` engine) and the VS Code [Dev Containers Extension](vscode:extension/ms-vscode-remote.remote-containers).
 
 For KNFSD developers, you can use either VS Code or Cursor to run a `.devcontainer/dev` workspace. See [developer.md](../../docs/developer.md) for detailed steps.
+
+> **NOTE**: Cursor now maintains its own Dev Containers Extension. You should use it instead of the VS Code Dev Containers Extension.
 
 ## AWS Service Quotas
 

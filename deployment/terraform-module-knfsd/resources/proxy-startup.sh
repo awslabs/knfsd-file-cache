@@ -762,26 +762,33 @@ function start_nfs() {
 }
 
 # update_cloudwatch_diskio_resources() configures CW Agent JSON with the
-# FS-Cache block device: md127 for RAID array, or the single device otherwise
+# FS-Cache block devices and fscdevice dimension for RAID or single device
 function update_cloudwatch_diskio_resources() {
 	local cw_config="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
-	local device="*"
+	local fscdevice resources
 
-	echo "Updating CloudWatch Agent diskio resources..."
+	echo "Updating CloudWatch Agent diskio configuration..."
 
+	# convert device paths to quoted basenames, comma-separated
+	resources=$(printf '%s\n' ${DEVICESLIST} | xargs -n1 basename | sed 's/.*/"&"/' | paste -sd,)
+
+	# determine FS-Cache device and resources list
 	if [[ "$NUMDEVICES" -gt 1 ]]; then
-		device="\"md127\""
-	elif [[ -n "${DEVICESLIST}" ]]; then
-		device="\"$(basename "${DEVICESLIST}")\""
+		fscdevice="md127"
+		resources="\"md127\",${resources}"
+	else
+		fscdevice=$(basename "${DEVICESLIST}")
 	fi
 
-	echo "Detected block device: [$device]"
+	echo "Diskio block devices: [${resources}]"
+	echo "FS-Cache device: ${fscdevice}"
 
-	jq ".metrics.metrics_collected.diskio.resources = [$device]" \
+	jq ".metrics.metrics_collected.diskio.resources = [${resources}] |
+		.metrics.metrics_collected.diskio.append_dimensions.fscdevice = \"${fscdevice}\"" \
 		"$cw_config" > "${cw_config}.tmp" \
 		&& mv "${cw_config}.tmp" "$cw_config"
 
-	echo "CloudWatch Agent diskio resources updated successfully"
+	echo "CloudWatch Agent diskio configuration updated successfully"
 }
 
 # start_metrics() enables the Metrics Agent & CloudWatch Agent

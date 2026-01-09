@@ -27,11 +27,15 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for connections metrics.
 type MetricsConfig struct {
+	NfsClients     MetricConfig `mapstructure:"nfs.clients"`
 	NfsConnections MetricConfig `mapstructure:"nfs.connections"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		NfsClients: MetricConfig{
+			Enabled: true,
+		},
 		NfsConnections: MetricConfig{
 			Enabled: true,
 		},

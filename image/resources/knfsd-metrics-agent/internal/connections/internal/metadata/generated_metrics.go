@@ -12,17 +12,70 @@ import (
 )
 
 var MetricsInfo = metricsInfo{
+	NfsClients: metricInfo{
+		Name: "nfs.clients",
+	},
 	NfsConnections: metricInfo{
 		Name: "nfs.connections",
 	},
 }
 
 type metricsInfo struct {
+	NfsClients     metricInfo
 	NfsConnections metricInfo
 }
 
 type metricInfo struct {
 	Name string
+}
+
+type metricNfsClients struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.clients metric with initial data.
+func (m *metricNfsClients) init() {
+	m.data.SetName("nfs.clients")
+	m.data.SetDescription("The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state)")
+	m.data.SetUnit("{count}")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricNfsClients) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsClients) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsClients) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsClients(cfg MetricConfig) metricNfsClients {
+	m := metricNfsClients{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricNfsConnections struct {
@@ -34,7 +87,7 @@ type metricNfsConnections struct {
 // init fills nfs.connections metric with initial data.
 func (m *metricNfsConnections) init() {
 	m.data.SetName("nfs.connections")
-	m.data.SetDescription("The number of NFS Clients connected to the KNFSD filer (used for autoscaling)")
+	m.data.SetDescription("The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling)")
 	m.data.SetUnit("{count}")
 	m.data.SetEmptyGauge()
 }
@@ -82,6 +135,7 @@ type MetricsBuilder struct {
 	metricsCapacity      int                  // maximum observed number of metrics per resource.
 	metricsBuffer        pmetric.Metrics      // accumulates metrics data before emitting.
 	buildInfo            component.BuildInfo  // contains version information.
+	metricNfsClients     metricNfsClients
 	metricNfsConnections metricNfsConnections
 }
 
@@ -108,6 +162,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		startTime:            pcommon.NewTimestampFromTime(time.Now()),
 		metricsBuffer:        pmetric.NewMetrics(),
 		buildInfo:            settings.BuildInfo,
+		metricNfsClients:     newMetricNfsClients(mbc.Metrics.NfsClients),
 		metricNfsConnections: newMetricNfsConnections(mbc.Metrics.NfsConnections),
 	}
 
@@ -174,6 +229,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricNfsClients.emit(ils.Metrics())
 	mb.metricNfsConnections.emit(ils.Metrics())
 
 	for _, op := range options {
@@ -194,6 +250,11 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
+}
+
+// RecordNfsClientsDataPoint adds a data point to nfs.clients metric.
+func (mb *MetricsBuilder) RecordNfsClientsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricNfsClients.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordNfsConnectionsDataPoint adds a data point to nfs.connections metric.

@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.18"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.19"
   SUBNET = "subnet-038e337f0ff4cd53f"
 }
 
@@ -124,7 +124,7 @@ output "master_username" {
 
 ### Amazon RDS PostgreSQL configuration
 
-The FSID service is not resource intensive, and does not require much storage. As such the minimum database instance type of `db.t4g.small` should be sufficient for most configurations.
+The FSID service is not resource intensive, and does not require much storage. As such the minimum database instance type of `db.t4g.micro` should be sufficient for most configurations.
 
 By default, the RDS database is deployed with IAM authentication enabled and deletion protection disabled.
 

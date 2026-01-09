@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.18"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.19"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -93,7 +93,7 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `ethtool_pps_allowance_exceeded`                    | Packets queued/dropped due to PPS allowance exceeded                | Count        | 60s    |
 | `mem_cached`                                        | Memory used for filesystem cache                                    | Bytes        | 60s    |
 | `mem_buffered`                                      | Memory used for buffers                                             | Bytes        | 60s    |
-| `mem_used_percent`                                  | Percentage of memory used                                           | Percent      | 60s    |
+| `mem_available_percent`                             | Percentage of memory available for use                              | Percent      | 60s    |
 | `net_bytes_recv`                                    | Total bytes received on network interface                           | Bytes        | 60s    |
 | `net_bytes_sent`                                    | Total bytes sent on network interface                               | Bytes        | 60s    |
 | `net_drop_in`                                       | Inbound packets dropped                                             | Count        | 60s    |
@@ -111,17 +111,10 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `processes_total`                                   | Total number of processes                                           | Count        | 60s    |
 | `processes_total_threads`                           | Total number of threads                                             | Count        | 60s    |
 | `processes_zombies`                                 | Number of zombie processes                                          | Count        | 60s    |
-| `swap_used_percent`                                 | Percentage of swap space used                                       | Percent      | 60s    |
 
 ### OpenTelemetry Metrics (`knfsd/metrics` namespace)
 
 OpenTelemetry metrics are collected by the `knfsd-metrics-agent` and provide NFS-specific performance data.
-
-#### NFS Connections
-
-| Metric Name             | Description                                                               | Stat    | Unit  | Period |
-| ----------------------- | ------------------------------------------------------------------------- | ------- | ----- | ------ |
-| `knfsd/nfs_connections` | Number of NFS clients connected to the KNFSD proxy (used for autoscaling) | Maximum | Count | 60s    |
 
 #### Cache Metrics
 
@@ -131,6 +124,27 @@ OpenTelemetry metrics are collected by the `knfsd-metrics-agent` and provide NFS
 | `knfsd/nfs_inode_cache_objsize`        | Total size of objects in the Linux NFS inode cache    | Maximum | Bytes | 60s    |
 | `knfsd/dentry_cache_active_objects`    | Number of active objects in the Linux dentry cache    | Maximum | Count | 60s    |
 | `knfsd/dentry_cache_objsize`           | Total size of objects in the Linux dentry cache       | Maximum | Bytes | 60s    |
+
+#### NFS Server Metrics
+
+| Metric Name                  | Description                                                                                         | Stat    | Unit  | Period |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- | ------- | ----- | ------ |
+| `knfsd/nfs_connections`      | Number of active (ESTAB) NFS connections to the KNFSD proxy (1-16 per client, used for autoscaling) | Maximum | Count | 60s    |
+| `knfsd/nfs_clients`          | Number of unique NFS client IP addresses connected to the KNFSD proxy (in any connected state)      | Maximum | Count | 60s    |
+| `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived                                                                       | Sum     | Count | 30s    |
+| `knfsd/nfs_packets_deferred` | Number of NFS packets deferred                                                                      | Maximum | Count | 30s    |
+| `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service                   | Sum     | Count | 30s    |
+| `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                              | Maximum | Count | 30s    |
+| `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                             | Sum     | Count | 30s    |
+| `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport              | Sum     | Count | 30s    |
+
+* **packets-arrived**: Provides an accurate, workload-independent measure of the CPU load placed on the SUNRPC server layer due to NFS network traffic. Due to network stack effects, the value may differ from the actual NFS call count.
+* **packets-deferred**: Indicates packets temporarily deferred because the NFS transport was already in use by an NFSD thread. This is inferred from: `packets-deferred = packets-arrived - ( sockets-enqueued + threads-woken )`.
+* **sockets-enqueued**: The ideal rate of change is zero. Significantly non-zero values indicate a performance limitation: the workload is thread-limited. Configuring more NFSD threads will likely improve NFS performance when this counter is increasing.
+* **threads-timedout**: Indicates more NFSD threads are configured than the workload requires. However, this is only a clue since the idle timeout is 60 minutes, making it less useful unless workload remains constant for hours. It's generally wise to maintain some slack for future load spikes.
+* **threads-woken**: Tracks circumstances where incoming NFS work is being handled quickly (a good thing). The ideal rate of change should be close to, but less than, the `packets-arrived` rate.
+
+See [Kernel NFS Server Statistics](https://www.kernel.org/doc/html/latest/filesystems/nfs/knfsd-stats.html) for more information.
 
 #### NFS Mount Metrics (Proxy to Source Filer)
 
@@ -200,9 +214,10 @@ AWS-native service metrics from Amazon CloudWatch.
 | `AWS/RDS.IamDbAuthConnectionFailureInvalidToken`            | IAM auth failures due to invalid tokens              | Sum     | Count                  | 60s    |
 | `AWS/RDS.IamDbAuthConnectionFailureInsufficientPermissions` | IAM auth failures due to insufficient permissions    | Sum     | Count                  | 60s    |
 | `AWS/RDS.CPUUtilization`                                    | RDS instance CPU utilization                         | Average | Percent                | 60s    |
-| `AWS/RDS.CPUCreditUsage`                                    | CPU credits consumed                                 | Average | Credits (vCPU-minutes) | 60s    |
-| `AWS/RDS.CPUSurplusCreditBalance`                           | Surplus CPU credits available                        | Average | Credits (vCPU-minutes) | 60s    |
-| `AWS/RDS.CPUSurplusCreditsCharged`                          | Surplus CPU credits charged                          | Average | Credits (vCPU-minutes) | 60s    |
+| `AWS/RDS.CPUCreditBalance`                                  | Accrued CPU credits available for bursting           | Average | Credits (vCPU-minutes) | 300s   |
+| `AWS/RDS.CPUCreditUsage`                                    | CPU credits spent per measurement period             | Average | Credits (vCPU-minutes) | 300s   |
+| `AWS/RDS.CPUSurplusCreditBalance`                           | Surplus CPU credits spent (unlimited mode)           | Average | Credits (vCPU-minutes) | 300s   |
+| `AWS/RDS.CPUSurplusCreditsCharged`                          | Surplus CPU credits incurring charges                | Average | Credits (vCPU-minutes) | 300s   |
 | `AWS/RDS.WriteIOPS`                                         | Write IOPS                                           | Average | Count/Second           | 60s    |
 | `AWS/RDS.ReadIOPS`                                          | Read IOPS                                            | Average | Count/Second           | 60s    |
 | `AWS/RDS.NetworkTransmitThroughput`                         | Network bytes transmitted                            | Average | Bytes/Second           | 60s    |
@@ -238,17 +253,31 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 
 * FS-Cache Disk Used: 80% (brun/frun warning), 93% (bcull/fcull critical)
 
+### NFS Server Metrics
+
+Performance metrics for the KNFSD server.
+
+| Widget                                     | Metrics                      | Description                                                                                   | Stat    | Period | Label |
+| ------------------------------------------ | ---------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ | ----- |
+| Proxy NFS Connections [established/active] | `knfsd/nfs_connections`      | Number of active (ESTAB) NFS connections to the proxy (1-16 per client, used for autoscaling) | Maximum | 60s    | Count |
+| Proxy NFS Clients [connected/unique]       | `knfsd/nfs_clients`          | Number of unique NFS client IP addresses connected to the proxy (in any connected state)      | Maximum | 60s    | Count |
+| NFS Packets Arrived                        | `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived to the proxy                                                    | Sum     | 30s    | Count |
+| NFS Packets Deferred                       | `knfsd/nfs_packets_deferred` | Number of NFS packets deferred by the proxy                                                   | Maximum | 30s    | Count |
+| NFS Sockets Enqueued                       | `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service             | Sum     | 30s    | Count |
+| NFS Threads                                | `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                        | Maximum | 30s    | Count |
+| NFS Threads Timed Out                      | `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                       | Sum     | 30s    | Count |
+| NFS Threads Woken                          | `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport        | Sum     | 30s    | Count |
+
 ### Networking Activity
 
 Network activity for KNFSD proxy nodes showing data flow to/from clients and source filers.
 
-| Widget                       | Metrics                                   | Description                                        | Stat    | Period | Label        |
-| ---------------------------- | ----------------------------------------- | -------------------------------------------------- | ------- | ------ | ------------ |
-| Proxy Ingress Traffic        | `net_bytes_recv`                          | Total bytes received (data from on-premise/source) | Sum     | 60s    | Bytes        |
-| Proxy Egress Traffic         | `net_bytes_sent`                          | Total bytes sent (data to NFS clients)             | Sum     | 60s    | Bytes        |
-| Proxy NFS Client Connections | `knfsd/nfs_connections`                   | Number of connected NFS clients                    | Maximum | 60s    | Count        |
-| Proxy Network Throughput     | `AWS/EC2.NetworkIn`, `AWS/EC2.NetworkOut` | Network throughput (converted to Bytes/Second)     | Sum     | 60s    | Bytes/Second |
-| TCP/UDP Connection State     | `netstat_tcp_*`, `netstat_udp_socket`     | TCP and UDP connection states                      | Average | 60s    | Count        |
+| Widget                   | Metrics                                   | Description                                        | Stat    | Period | Label        |
+| ------------------------ | ----------------------------------------- | -------------------------------------------------- | ------- | ------ | ------------ |
+| Proxy Ingress Traffic    | `net_bytes_recv`                          | Total bytes received (data from on-premise/source) | Sum     | 60s    | Bytes        |
+| Proxy Egress Traffic     | `net_bytes_sent`                          | Total bytes sent (data to NFS clients)             | Sum     | 60s    | Bytes        |
+| Proxy Network Bandwidth  | `AWS/EC2.NetworkIn`, `AWS/EC2.NetworkOut` | Network throughput (converted to Bytes/Second)     | Sum     | 60s    | Bytes/Second |
+| TCP/UDP Connection State | `netstat_tcp_*`, `netstat_udp_socket`     | TCP and UDP connection states                      | Average | 60s    | Count        |
 
 ### Data Transfer
 
@@ -312,7 +341,7 @@ General EC2 instance performance metrics.
 | ---------------------------- | --------------------------------------- | ---------------------------------------------- | ------- | ------ | ------------- |
 | CPU Utilization              | `AWS/EC2.CPUUtilization`                | EC2 instance CPU utilization                   | Average | 60s    | Percent %     |
 | CPU Usage                    | `cpu_usage_active`, `cpu_usage_iowait`  | Detailed CPU usage breakdown                   | Average | 60s    | Percent %     |
-| Memory/Swap Utilization      | `mem_used_percent`, `swap_used_percent` | Memory and swap usage                          | Average | 60s    | Percent %     |
+| Memory Available             | `mem_available_percent`                 | Memory available for use                       | Average | 60s    | Percent %     |
 | Memory Metrics               | `mem_buffered`, `mem_cached`            | Memory used for buffers and cache              | Average | 60s    | Bytes         |
 | Network I/O                  | `net_drop_*`, `net_err_*`               | Network packet drops and errors                | Sum     | 60s    | Events/Second |
 | ENA Performance              | `ethtool_*_allowance_exceeded`          | Packets queued/dropped due to allowance limits | Sum     | 60s    | Events/Second |
@@ -322,7 +351,7 @@ General EC2 instance performance metrics.
 **Thresholds:**
 
 * CPU Utilization: 80% (warning)
-* Memory Utilization: 80% (warning)
+* Memory Available: 5% (warning)
 
 ### FSID Performance
 
@@ -346,19 +375,23 @@ KNFSD FSID daemon performance metrics for filesystem ID management.
 
 PostgreSQL RDS performance metrics for the FSID database.
 
-| Widget                       | Metrics                                                         | Description                                 | Stat    | Period | Label                  |
-| ---------------------------- | --------------------------------------------------------------- | ------------------------------------------- | ------- | ------ | ---------------------- |
-| DB Load                      | `AWS/RDS.DBLoad`, `DBLoadCPU`, `DBLoadNonCPU`                   | Database active sessions                    | Average | 60s    | Active Sessions        |
-| DB Connections               | `AWS/RDS.DatabaseConnections`                                   | Number of database connections              | Average | 60s    | Count                  |
-| DB IAM Auth                  | `AWS/RDS.IamDbAuth*`                                            | IAM authentication requests and results     | Sum     | 60s    | Count                  |
-| DB CPU Utilization           | `AWS/RDS.CPUUtilization`                                        | RDS instance CPU utilization                | Average | 60s    | Percent %              |
-| DB EC2 CPU Credits           | `AWS/RDS.CPUCreditUsage`                                        | CPU credits consumed                        | Average | 60s    | Credits (vCPU-minutes) |
-| DB EC2 CPU Unlimited Credits | `AWS/RDS.CPUSurplus*`                                           | Surplus CPU credits for unlimited mode      | Average | 60s    | Credits (vCPU-minutes) |
-| DB IOPS                      | `AWS/RDS.ReadIOPS`, `WriteIOPS`                                 | Read and write IOPS                         | Average | 60s    | Count/Second           |
-| DB Network Throughput        | `AWS/RDS.NetworkTransmitThroughput`, `NetworkReceiveThroughput` | Network throughput                          | Average | 60s    | Bytes/Second           |
-| DB Memory                    | `AWS/RDS.FreeableMemory`, `SwapUsage`                           | Available memory and swap usage             | Average | 60s    | Bytes                  |
+| Widget                               | Metrics                                                         | Description                                | Stat    | Period | Label                  |
+| ------------------------------------ | --------------------------------------------------------------- | ------------------------------------------ | ------- | ------ | ---------------------- |
+| DB Load                              | `AWS/RDS.DBLoad`, `DBLoadCPU`, `DBLoadNonCPU`                   | Database active sessions                   | Average | 60s    | Active Sessions        |
+| DB Connections                       | `AWS/RDS.DatabaseConnections`                                   | Number of database connections             | Average | 60s    | Count                  |
+| DB IAM Auth                          | `AWS/RDS.IamDbAuth*`                                            | IAM authentication requests and results    | Sum     | 60s    | Count                  |
+| DB CPU Utilization                   | `AWS/RDS.CPUUtilization`                                        | RDS instance CPU utilization               | Average | 60s    | Percent %              |
+| DB EC2 CPU Credits (Credit Balance)  | `AWS/RDS.CPUCreditBalance`                                      | Accrued CPU credits available for bursting | Average | 300s   | Credits (vCPU-minutes) |
+| DB EC2 CPU Credit Usage (Spend Rate) | `AWS/RDS.CPUCreditUsage`                                        | CPU credits spent per measurement period   | Average | 300s   | Credits (vCPU-minutes) |
+| DB EC2 CPU Unlimited Credits         | `AWS/RDS.CPUSurplusCreditBalance`, `CPUSurplusCreditsCharged`   | Surplus CPU credits for unlimited mode     | Average | 300s   | Credits (vCPU-minutes) |
+| DB IOPS                              | `AWS/RDS.ReadIOPS`, `WriteIOPS`                                 | Read and write IOPS                        | Average | 60s    | Count/Second           |
+| DB Network Throughput                | `AWS/RDS.NetworkTransmitThroughput`, `NetworkReceiveThroughput` | Network throughput                         | Average | 60s    | Bytes/Second           |
+| DB Memory                            | `AWS/RDS.FreeableMemory`, `SwapUsage`                           | Available memory and swap usage            | Average | 60s    | Bytes                  |
 
-**Thresholds:**
+**Thresholds (`db.t4g.micro`):**
 
-* CPU Credits: 70% (warning), 90% (critical)
-* Surplus Credits: 10+ (warning for additional charges)
+* CPU Credit Balance: 288 (max), 58 (20% warning), 29 (10% critical - fill below)
+* CPU Credit Usage: 1.0/5min (baseline earn rate), 5.0 (5x baseline burst warning - fill above)
+* Surplus Credits: 72 (25% warning), 288 (charge threshold - fill above)
+
+> **Note:** Thresholds are configured for `db.t4g.micro` instance type which earns 12 credits/hour (1.0 per 5-minute period) with a maximum accrual of 288 credits (24-hour earn limit). CPU credit metrics are only available at 5-minute frequency. In unlimited mode, surplus credits exceeding 288 will incur additional charges. See [AWS T4g Instance Types](https://aws.amazon.com/ec2/instance-types/t4/) and [Burstable Performance Instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) for details.

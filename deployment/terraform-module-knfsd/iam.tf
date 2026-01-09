@@ -158,3 +158,25 @@ resource "aws_iam_role_policy_attachment" "knfsd_instance_role_netapp_exports_po
   role       = aws_iam_role.knfsd_instance_role.name
   policy_arn = aws_iam_policy.knfsd_instance_role_netapp_exports_policy[0].arn
 }
+
+# ensure Auto Scaling service-linked role exists (TRAFFIC_MODE="loadbalancer")
+resource "null_resource" "autoscaling_slr" {
+  count = var.TRAFFIC_MODE == "loadbalancer" ? 1 : 0
+
+  provisioner "local-exec" {
+    when        = create
+    working_dir = path.module
+    interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
+    command     = <<-EOF
+      set -e
+      if aws iam get-role --role-name AWSServiceRoleForAutoScaling 2> /dev/null > /dev/null; then
+        echo "Auto Scaling service-linked role already exists"
+      else
+        echo "Creating Auto Scaling service-linked role..."
+        aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com
+        echo "Waiting 10s for IAM propagation..."
+        sleep 10
+      fi
+    EOF
+  }
+}

@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.18"
+  version       = "1.1.0-alpha.19"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   temp_vol_size = 20
 
