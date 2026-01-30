@@ -1,0 +1,686 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: fscache
+
+scope_name: knfsd-metrics-agent/fscache
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  fscache.acquire.ok:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of acquire requests that succeeded
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.acquire.oom:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of acquire requests that failed due to ENOMEM
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.acquire.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of acquire cookie requests
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.cookies.data:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of data storage cookies allocated
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.cookies.volume:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of volume index cookies allocated
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.cookies.volume_collisions:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of volume index key collisions
+    unit: "{collisions}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.cookies.volume_oom:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of OOM events when allocating volume cookies
+    unit: "{events}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.invalidations:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of invalidations
+    unit: "{invalidations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.io.misfit:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of DIO misfit operations
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.io.read:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read operations in the cache
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.io.write:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write operations in the cache
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.lru.count:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cookies currently on the LRU
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.lru.dropped:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of LRU'd cookies relinquished or withdrawn
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.lru.expired:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cookies expired off of the LRU
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.lru.removed:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cookies removed from the LRU
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.nospace.create:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of create requests refused due to lack of space
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.nospace.cull:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of objects culled to make space
+    unit: "{objects}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.nospace.write:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write requests refused due to lack of space
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.relinquish.drop:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cookies no longer blocking re-acquisition
+    unit: "{cookies}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.relinquish.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of relinquish cookie requests
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.relinquish.retire:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of relinquish requests with retire=true
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.updates.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of update cookie requests
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.updates.resize:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of resize requests
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  fscache.updates.resize_skipped:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of skipped resize requests
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_read.done:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache read operations completed (netfs_n_rh_read_done)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_read.failed:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache read operations failed (netfs_n_rh_read_failed)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_read.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache read requests (netfs_n_rh_read)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_write.done:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache write operations completed (netfs_n_wh_write_done)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_write.failed:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache write operations failed (netfs_n_wh_write_failed)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.cache_write.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of cache write requests (netfs_n_wh_write)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.download.done:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of download operations completed (netfs_n_rh_download_done)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.download.failed:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of download operations failed (netfs_n_rh_download_failed)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.download.instead:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of download instead of cache operations (netfs_n_rh_download_instead)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.download.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of download requests (netfs_n_rh_download)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.objects.folio_queue:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of folio queue objects (netfs_n_folioq)
+    unit: "{objects}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.objects.read_reqs:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read request objects (netfs_n_rh_rreq)
+    unit: "{objects}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.objects.subreqs:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of subrequest objects (netfs_n_rh_sreq)
+    unit: "{objects}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.objects.write_conflicts:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write stream conflicts (netfs_n_wh_wstream_conflict)
+    unit: "{conflicts}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.direct:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of direct I/O read requests (netfs_n_rh_dio_read)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.folio:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read folio requests (netfs_n_rh_read_folio)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.readahead:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of readahead requests (netfs_n_rh_readahead)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.single:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read single requests (netfs_n_rh_read_single)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.write_begin:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write begin requests (netfs_n_rh_write_begin)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.reads.write_zskip:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write zero skip operations (netfs_n_rh_write_zskip)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.retries.read_req:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read request retries (netfs_n_rh_retry_read_req)
+    unit: "{retries}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.retries.read_subreq:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of read subrequest retries (netfs_n_rh_retry_read_subreq)
+    unit: "{retries}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.retries.write_req:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write request retries (netfs_n_wh_retry_write_req)
+    unit: "{retries}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.retries.write_subreq:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write subrequest retries (netfs_n_wh_retry_write_subreq)
+    unit: "{retries}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.upload.done:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of upload operations completed (netfs_n_wh_upload_done)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.upload.failed:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of upload operations failed (netfs_n_wh_upload_failed)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.upload.requests:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of upload requests (netfs_n_wh_upload)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.wblock.skip:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of writeback lock skips (netfs_n_wb_lock_skip)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.wblock.wait:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of writeback lock waits (netfs_n_wb_lock_wait)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.writes.buffered:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of buffered write requests (netfs_n_wh_buffered_write)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.writes.copy_to_cache:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of copy to cache requests (netfs_n_wh_copy_to_cache)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.writes.direct:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of direct I/O write requests (netfs_n_wh_dio_write)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.writes.pages:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of write pages requests (netfs_n_wh_writepages)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.writes.writethrough:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of writethrough requests (netfs_n_wh_writethrough)
+    unit: "{requests}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.zero_ops.short:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of short read operations (netfs_n_rh_short_read)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.zero_ops.skip:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of skip operations (netfs_n_rh_write_zskip)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+
+  netfs.zero_ops.zero:
+    enabled: true
+    stability:
+      level: alpha
+    description: Number of zero read operations (netfs_n_rh_zero)
+    unit: "{operations}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative

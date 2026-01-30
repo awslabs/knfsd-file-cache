@@ -158,7 +158,7 @@ The most compute and/or network intensive CI jobs are configured with a `2xlarge
 - **Purpose**: Advanced Terraform linting and best practices validation
 - **Tool**: [TFLint](https://github.com/terraform-linters/tflint)
 - **Configuration**: Uses `.tflint.hcl` configuration file
-- **Reference**: [TFLint Documentation](https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/usage.md)
+- **Reference**: [TFLint Documentation](https://github.com/terraform-linters/tflint/blob/master/README.md)
 - **Failure Policy**: Blocking
 
 #### `tf-validate`
@@ -375,10 +375,10 @@ The pipeline extensively uses the [GitLab Dependency Proxy](https://docs.gitlab.
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.25.5
+image: golang:1.25.6
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.25.5
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.25.6
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

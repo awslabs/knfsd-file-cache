@@ -144,8 +144,8 @@ Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/has
 
 By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the instance types used in the build process:
 
-* `c6in.2xlarge` (amd64 builds) requires 8 vCPUs
-* `c6gn.2xlarge` (arm64 builds) requires 8 vCPUs
+* `c6in.16xlarge` (amd64 builds) requires 64 vCPUs
+* `c7g.16xlarge` (arm64 builds) requires 64 vCPUs
 
 You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the appropriate instance types.
 
@@ -252,11 +252,11 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.3 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.14.0-36-generic
+amazon-ebs.nfs-proxy: Kernel:       6.19.0-rc7-knfsd
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
-==> Wait completed after 19 minutes 36 seconds
+==> Wait completed after 29 minutes 36 seconds
 ...
 ==> Builds finished. The artifacts of successful builds are:
 --> amazon-ebs.nfs-proxy: AMIs were created:
@@ -310,7 +310,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.19"
+VERSION="1.1.0-alpha.20"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -353,17 +353,17 @@ aws ec2 authorize-security-group-ingress \
 
 The instance type used depends on your architecture choice:
 
-* `c6in.2xlarge` for amd64 builds
-* `c6gn.2xlarge` for arm64 builds
+* `c6in.16xlarge` for amd64 builds
+* `c7g.16xlarge` for arm64 builds
 
 **Note**: You will need to provide an `$KNFSD_SECURITY_GROUP_ID` to create the build machine.
 
 ```bash
 # Set instance type based on architecture
 if [ "$KNFSD_ARCH" = "amd64" ]; then
-  KNFSD_INSTANCE_TYPE="c6in.2xlarge"
+  KNFSD_INSTANCE_TYPE="c6in.16xlarge"
 elif [ "$KNFSD_ARCH" = "arm64" ]; then
-  KNFSD_INSTANCE_TYPE="c6gn.2xlarge"
+  KNFSD_INSTANCE_TYPE="c7g.16xlarge"
 fi
 
 export KNFSD_INSTANCE_ID=$(aws ec2 run-instances \
@@ -473,7 +473,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.3 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.14.0-36-generic
+Kernel:       6.19.0-rc7-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

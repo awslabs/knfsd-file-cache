@@ -40,11 +40,11 @@ We ensure that the `nfs_proxy_cluster` module is deployed after the `nfs_proxy_f
 1. The module `nfs_proxy_fanout` defines the single KNFSD proxy responsible for connecting to on-premise/source.
 2. The module `nfs_proxy_cluster` defines the three KNFSD proxies that connect to the fanout proxy. Downstream NFS clients all connect to these cluster proxies.
 
-The [fsx-zfs-fanout](../../examples/fsx-zfs-fanout/README.md) example provides a `ZFS (source) <-> tier-1 (fanout) <-> NLB <-> tier-2 (cluster) <-> NLB` example of the fanout architecture. The below code block shows the relevant sections of a generic fanout implementation in a `main.tf` file.
+The [fsx-zfs-fanout-loadbalancer](../../examples/fsx-zfs-fanout-loadbalancer/README.md) example provides a `ZFS (source) <-> tier-1 (fanout) <-> NLB <-> tier-2 (cluster) <-> NLB` example of the fanout architecture. The below code block shows the relevant sections of a generic fanout implementation in a `main.tf` file.
 
 ```terraform
 module "nfs_proxy_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.19"
+  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
@@ -59,7 +59,7 @@ module "nfs_proxy_fanout" {
 }
 
 module "nfs_proxy_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.19"
+  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI

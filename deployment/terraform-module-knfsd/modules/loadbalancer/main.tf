@@ -9,16 +9,16 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.28.0"
+      version = "~> 6.30.0"
     }
     dns = {
       source  = "hashicorp/dns"
-      version = "~> 3.4.3"
+      version = "~> 3.5.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/loadbalancer/1.1.0-alpha.19"
+      "knfsd-file-cache/modules/loadbalancer/1.1.0-alpha.20"
     ]
   }
 }

@@ -11,7 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.19"
+VERSION="1.1.0-alpha.20"
+KERNEL="6.19-rc7"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -29,7 +30,7 @@ export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 export QUILT_PATCHES=debian/patches
-export NAME=build EMAIL=build
+
 # golang build cache
 export GOCACHE="/mnt/build/go/.cache/go-build"
 export GOMODCACHE="/mnt/build/go/pkg/mod"
@@ -84,6 +85,7 @@ function update_amazon_ssm_agent() (
 	snap stop amazon-ssm-agent
 	snap switch --channel=candidate amazon-ssm-agent
 	snap refresh amazon-ssm-agent
+	mkdir -p /etc/amazon/ssm
 	snap start amazon-ssm-agent
 	complete_command
 )
@@ -133,7 +135,7 @@ function install_build_dependencies() (
 		libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
 		libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
 		gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
-		libreadline-dev
+		libreadline-dev libdw-dev
 	complete_command
 )
 
@@ -309,9 +311,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.25.5.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.5.linux-${ARCH_ALT}.tar.gz
+	curl -o go1.25.6.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.6.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.25.5.linux-${ARCH_ALT}.tar.gz
+	tar -C /usr/local -xzf go1.25.6.linux-${ARCH_ALT}.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
 	complete_command
 )
@@ -376,6 +378,81 @@ function update_kernel() (
 	complete_command
 )
 
+# download kernel source
+function download_kernel() (
+	begin_command "Downloading Linux kernel: ${KERNEL}"
+	curl -fsSL --retry 5 --retry-delay 5 -o linux-${KERNEL}.tar.gz \
+		https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${KERNEL}.tar.gz
+	tar -xf linux-${KERNEL}.tar.gz
+	complete_command
+)
+
+# configure and build kernel
+function build_kernel() (
+	begin_command "Building Linux kernel: ${KERNEL}-knfsd"
+	cd linux-${KERNEL}
+
+	# map architecture for kernel build (kernel uses arm64, not aarch64)
+	if [ "$ARCH" = "aarch64" ]; then
+		export ARCH="arm64"
+	fi
+
+	# copy running kernel config as base
+	cp /boot/config-"$(uname -r)" .config
+
+	# apply custom patches using quilt
+	# uses global QUILT_PATCHES=debian/patches set at top of script
+	mkdir -p debian/patches
+	quilt import "${PATCHES}"/kernel/*.patch
+	quilt push -a
+
+	# disable keys that reference non-existent Ubuntu cert files
+	scripts/config --disable CONFIG_SYSTEM_TRUSTED_KEYS
+	scripts/config --disable CONFIG_SYSTEM_REVOCATION_KEYS
+
+	# disable debug info to reduce build time and disk space
+	scripts/config --disable CONFIG_DEBUG_INFO
+	scripts/config --disable CONFIG_DEBUG_INFO_DWARF5
+	scripts/config --disable CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+
+	# set local version suffix (visible in uname -r)
+	scripts/config --set-str CONFIG_LOCALVERSION "-knfsd"
+
+	# update config with defaults for new options
+	make olddefconfig
+
+	# build binary debian packages
+	local nproc
+	nproc=$(nproc)
+	make -j "${nproc}" bindeb-pkg
+
+	complete_command
+)
+
+# install custom kernel
+function install_kernel() (
+	begin_command "Installing Linux kernel: ${KERNEL}-knfsd"
+	cd linux-${KERNEL}/..
+
+	# debug disk usage
+	# echo "Disk usage (/mnt/build): $(df -h /mnt/build | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')"
+
+	# remove old kernel packages
+	apt-get purge -yq linux-image-aws linux-headers-aws linux-aws 2> /dev/null || true
+	DEBIAN_FRONTEND=noninteractive apt-get purge -yq \
+		linux-image-"$(uname -r)" \
+		linux-headers-"$(uname -r)" \
+		linux-modules-"$(uname -r)" 2> /dev/null || true
+	apt-get autoremove -y
+
+	# install new kernel packages
+	dpkg -i linux-image-*-knfsd*.deb
+	dpkg -i linux-headers-*-knfsd*.deb
+	dpkg -i linux-libc-dev*.deb
+
+	complete_command
+)
+
 # copy various configuration files
 function copy_config() (
 	begin_command "Copying config"
@@ -411,7 +488,10 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
-update_kernel
+# update_kernel
+download_kernel
+build_kernel
+install_kernel
 copy_config
 
 echo -e "\n${SHELL_YELLOW}---- SUCCESS: Finished build image script. Reboot(ing) for new kernel to take effect${SHELL_DEFAULT}"

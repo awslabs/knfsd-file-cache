@@ -1,0 +1,19 @@
+Reads  : DR=0 RA=0 RF=0 RS=0 WB=0 WBZ=0
+Writes : BW=0 WT=0 DW=0 WP=0 2C=0
+ZeroOps: ZR=0 sh=0 sk=0
+DownOps: DL=0 ds=0 df=0 di=0
+CaRdOps: RD=0 rs=0 rf=0
+UpldOps: UL=0 us=0 uf=0
+CaWrOps: WR=0 ws=0 wf=0
+Retries: rq=0 rs=0 wq=0 ws=0
+Objs   : rr=0 sr=0 foq=0 wsc=0
+WbLock : skip=0 wait=0
+-- FS-Cache statistics --
+Cookies: n=0 v=0 vcol=0 voom=0
+Acquire: n=0 ok=0 oom=0
+LRU    : n=0 exp=0 rmv=0 drp=0 at=0
+Invals : n=0
+Updates: n=0 rsz=0 rsn=0
+Relinqs: n=0 rtr=0 drop=0
+NoSpace: nwr=0 ncr=0 cull=0
+IO     : rd=0 wr=0 mis=0

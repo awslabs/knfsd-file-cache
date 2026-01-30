@@ -1,0 +1,249 @@
+default:
+all_set:
+  metrics:
+    fscache.acquire.ok:
+      enabled: true
+    fscache.acquire.oom:
+      enabled: true
+    fscache.acquire.requests:
+      enabled: true
+    fscache.cookies.data:
+      enabled: true
+    fscache.cookies.volume:
+      enabled: true
+    fscache.cookies.volume_collisions:
+      enabled: true
+    fscache.cookies.volume_oom:
+      enabled: true
+    fscache.invalidations:
+      enabled: true
+    fscache.io.misfit:
+      enabled: true
+    fscache.io.read:
+      enabled: true
+    fscache.io.write:
+      enabled: true
+    fscache.lru.count:
+      enabled: true
+    fscache.lru.dropped:
+      enabled: true
+    fscache.lru.expired:
+      enabled: true
+    fscache.lru.removed:
+      enabled: true
+    fscache.nospace.create:
+      enabled: true
+    fscache.nospace.cull:
+      enabled: true
+    fscache.nospace.write:
+      enabled: true
+    fscache.relinquish.drop:
+      enabled: true
+    fscache.relinquish.requests:
+      enabled: true
+    fscache.relinquish.retire:
+      enabled: true
+    fscache.updates.requests:
+      enabled: true
+    fscache.updates.resize:
+      enabled: true
+    fscache.updates.resize_skipped:
+      enabled: true
+    netfs.cache_read.done:
+      enabled: true
+    netfs.cache_read.failed:
+      enabled: true
+    netfs.cache_read.requests:
+      enabled: true
+    netfs.cache_write.done:
+      enabled: true
+    netfs.cache_write.failed:
+      enabled: true
+    netfs.cache_write.requests:
+      enabled: true
+    netfs.download.done:
+      enabled: true
+    netfs.download.failed:
+      enabled: true
+    netfs.download.instead:
+      enabled: true
+    netfs.download.requests:
+      enabled: true
+    netfs.objects.folio_queue:
+      enabled: true
+    netfs.objects.read_reqs:
+      enabled: true
+    netfs.objects.subreqs:
+      enabled: true
+    netfs.objects.write_conflicts:
+      enabled: true
+    netfs.reads.direct:
+      enabled: true
+    netfs.reads.folio:
+      enabled: true
+    netfs.reads.readahead:
+      enabled: true
+    netfs.reads.single:
+      enabled: true
+    netfs.reads.write_begin:
+      enabled: true
+    netfs.reads.write_zskip:
+      enabled: true
+    netfs.retries.read_req:
+      enabled: true
+    netfs.retries.read_subreq:
+      enabled: true
+    netfs.retries.write_req:
+      enabled: true
+    netfs.retries.write_subreq:
+      enabled: true
+    netfs.upload.done:
+      enabled: true
+    netfs.upload.failed:
+      enabled: true
+    netfs.upload.requests:
+      enabled: true
+    netfs.wblock.skip:
+      enabled: true
+    netfs.wblock.wait:
+      enabled: true
+    netfs.writes.buffered:
+      enabled: true
+    netfs.writes.copy_to_cache:
+      enabled: true
+    netfs.writes.direct:
+      enabled: true
+    netfs.writes.pages:
+      enabled: true
+    netfs.writes.writethrough:
+      enabled: true
+    netfs.zero_ops.short:
+      enabled: true
+    netfs.zero_ops.skip:
+      enabled: true
+    netfs.zero_ops.zero:
+      enabled: true
+none_set:
+  metrics:
+    fscache.acquire.ok:
+      enabled: false
+    fscache.acquire.oom:
+      enabled: false
+    fscache.acquire.requests:
+      enabled: false
+    fscache.cookies.data:
+      enabled: false
+    fscache.cookies.volume:
+      enabled: false
+    fscache.cookies.volume_collisions:
+      enabled: false
+    fscache.cookies.volume_oom:
+      enabled: false
+    fscache.invalidations:
+      enabled: false
+    fscache.io.misfit:
+      enabled: false
+    fscache.io.read:
+      enabled: false
+    fscache.io.write:
+      enabled: false
+    fscache.lru.count:
+      enabled: false
+    fscache.lru.dropped:
+      enabled: false
+    fscache.lru.expired:
+      enabled: false
+    fscache.lru.removed:
+      enabled: false
+    fscache.nospace.create:
+      enabled: false
+    fscache.nospace.cull:
+      enabled: false
+    fscache.nospace.write:
+      enabled: false
+    fscache.relinquish.drop:
+      enabled: false
+    fscache.relinquish.requests:
+      enabled: false
+    fscache.relinquish.retire:
+      enabled: false
+    fscache.updates.requests:
+      enabled: false
+    fscache.updates.resize:
+      enabled: false
+    fscache.updates.resize_skipped:
+      enabled: false
+    netfs.cache_read.done:
+      enabled: false
+    netfs.cache_read.failed:
+      enabled: false
+    netfs.cache_read.requests:
+      enabled: false
+    netfs.cache_write.done:
+      enabled: false
+    netfs.cache_write.failed:
+      enabled: false
+    netfs.cache_write.requests:
+      enabled: false
+    netfs.download.done:
+      enabled: false
+    netfs.download.failed:
+      enabled: false
+    netfs.download.instead:
+      enabled: false
+    netfs.download.requests:
+      enabled: false
+    netfs.objects.folio_queue:
+      enabled: false
+    netfs.objects.read_reqs:
+      enabled: false
+    netfs.objects.subreqs:
+      enabled: false
+    netfs.objects.write_conflicts:
+      enabled: false
+    netfs.reads.direct:
+      enabled: false
+    netfs.reads.folio:
+      enabled: false
+    netfs.reads.readahead:
+      enabled: false
+    netfs.reads.single:
+      enabled: false
+    netfs.reads.write_begin:
+      enabled: false
+    netfs.reads.write_zskip:
+      enabled: false
+    netfs.retries.read_req:
+      enabled: false
+    netfs.retries.read_subreq:
+      enabled: false
+    netfs.retries.write_req:
+      enabled: false
+    netfs.retries.write_subreq:
+      enabled: false
+    netfs.upload.done:
+      enabled: false
+    netfs.upload.failed:
+      enabled: false
+    netfs.upload.requests:
+      enabled: false
+    netfs.wblock.skip:
+      enabled: false
+    netfs.wblock.wait:
+      enabled: false
+    netfs.writes.buffered:
+      enabled: false
+    netfs.writes.copy_to_cache:
+      enabled: false
+    netfs.writes.direct:
+      enabled: false
+    netfs.writes.pages:
+      enabled: false
+    netfs.writes.writethrough:
+      enabled: false
+    netfs.zero_ops.short:
+      enabled: false
+    netfs.zero_ops.skip:
+      enabled: false
+    netfs.zero_ops.zero:
+      enabled: false

@@ -90,7 +90,6 @@
         "dependsOrder": "sequence",
         "dependsOn": [
           "knfsd-file-cache",
-          "tf/terraform-module-knfsd",
           "go/filter-exports",
           "go/knfsd-agent",
           "go/knfsd-fsidd",
@@ -117,35 +116,6 @@
         },
         "options": {
           "cwd": "${workspaceFolder}"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "tf/terraform-module-knfsd",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/deployment/terraform-module-knfsd"
         },
         "isBackground": true,
         "problemMatcher": [],

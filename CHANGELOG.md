@@ -1,5 +1,25 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.20
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Switched to use compiled from source, Linux kernel v6.19.0-rc7 and NFS kernel patches for KNFSD AMI.
+* Introduced `fscache` Open Telemetry `receiver/component` to track the performance of the FS-Cache and Netfslib. See [FS-Cache Metrics](deployment/metrics/README.md#fs-cache-metrics) and [Netfs Metrics](deployment/metrics/README.md#netfs-metrics) for more information.
+* Added 37 x `NetfsLib` and 24 x `FS-Cache` metrics to CloudWatch `metrics` dashboard.
+* Added `REMOVE_EMPTY` function to CloudWatch `SEARCH` expressions in metrics dashboard to remove any `NaN` values.
+* Added `Total BW` widget to CloudWatch metrics dashboard to track the total bandwidth used by clients to all proxies in the ASG.
+* Added `Cluster Network Bandwidth` widget to CloudWatch metrics dashboard to track the network throughput of the entire cluster.
+* Consolidated the NFS v3 and NFS v4 CloudWatch metrics widgets.
+* Updated KNFSD Monitoring Dashboard to `v8`.
+* Fixed some dead/404 links in the documentation.
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.0.
+* Packer: Created `/etc/amazon/ssm` directory in build process to silence SSM agent log noise.
+* Updated to Golang 1.25.6.
+* Updated to Terraform DNS provider v3.5.0.
+* Updated to Terraform AWS provider v6.30.0.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.19
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

@@ -8,13 +8,13 @@ packer {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = "~> 1.6.0"
+      version = "~> 1.8.0"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-alpha.19"
+  version       = "1.1.0-alpha.20"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   temp_vol_size = 20
 
@@ -86,7 +86,7 @@ source "amazon-ebs" "nfs-proxy-amd64" {
 
   # Build machine
   source_ami           = data.amazon-parameterstore.base-ami-amd64.value
-  instance_type        = "c6in.2xlarge"
+  instance_type        = "c6in.16xlarge"
   iam_instance_profile = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
   run_tags = {
     "Name"                            = local.build_name_amd64
@@ -207,7 +207,7 @@ source "amazon-ebs" "nfs-proxy-arm64" {
 
   # Build machine
   source_ami           = data.amazon-parameterstore.base-ami-arm64.value
-  instance_type        = "c7g.2xlarge"
+  instance_type        = "c7g.16xlarge"
   iam_instance_profile = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
   run_tags = {
     "Name"                            = local.build_name_arm64

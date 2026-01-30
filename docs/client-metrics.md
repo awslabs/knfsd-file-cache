@@ -189,9 +189,9 @@ Wait for the instance to be `Running` and `3/3 checks passed` in AWS Console.
 There are other methods to install Go. For simplicity, this example will install Go based on the [standard Go instructions](https://go.dev/doc/install).
 
   ```bash
-  curl -fSLO https://go.dev/dl/go1.25.5.linux-amd64.tar.gz
+  curl -fSLO https://go.dev/dl/go1.25.6.linux-amd64.tar.gz
   sudo rm -rf /usr/local/go
-  sudo tar -C /usr/local -xzf go1.25.5.linux-amd64.tar.gz
+  sudo tar -C /usr/local -xzf go1.25.6.linux-amd64.tar.gz
   ```
 
 Add Go to your path:
@@ -254,7 +254,7 @@ You should see output similar to:
     Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
     2025-06-04T20:52:40.888+0100    info    service@v0.140.0/service.go:199 Setting up own telemetry...     {"resource": {}}
     2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.19", "NumCPU": 8}
+    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.20", "NumCPU": 8}
     2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
     2025-06-04T20:52:40.950+0100    info    service@v0.140.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```

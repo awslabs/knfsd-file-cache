@@ -36,7 +36,6 @@
         "EditorConfig.EditorConfig",
         "SirTori.indenticator",
         "Tyriar.sort-lines",
-        "ckolkman.vscode-postgres",
         "coolbear.systemd-unit-file",
         "donjayamanne.githistory",
         "golang.go",
@@ -47,8 +46,7 @@
         "ms-azuretools.vscode-docker",
         "oderwat.indent-rainbow",
         "redhat.vscode-yaml",
-        "hashicorp.hcl",
-        "tfsec.tfsec"
+        "hashicorp.hcl"
       ]
     }
   },
@@ -60,6 +58,7 @@
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
+    "source=knfsd-dev-cursor-cache,target=/home/ubuntu/.cursor,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"

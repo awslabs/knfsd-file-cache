@@ -8,11 +8,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.28.0"
+      version = "~> 6.30.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.7.2"
+      version = "~> 3.8.0"
     }
     http = {
       source  = "hashicorp/http"
@@ -25,7 +25,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.19"
+      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.20"
     ]
   }
 }

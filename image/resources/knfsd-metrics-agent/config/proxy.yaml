@@ -19,7 +19,8 @@ exporters:
           - "^knfsd/nfs_.+"
           - "^knfsd/dentry_.+"
           - "^knfsd/exports/.+"
-          - "^knfsd/fscache_oldest_file$"
+          - "^knfsd/fscache/.+"
+          - "^knfsd/netfs/.+"
           - "^knfsd/fsid/.+"
 
       # per-mount metrics
@@ -56,6 +57,6 @@ exporters:
 service:
   pipelines:
     metrics:
-      receivers: [otlp, connections, mounts, nfsd, exports, slabinfo]
+      receivers: [otlp, connections, mounts, nfsd, fscache, exports, slabinfo]
       processors: [resourcedetection, transform, metricstransform]
       exporters: [awsemf]

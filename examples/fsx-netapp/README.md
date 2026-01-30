@@ -1,6 +1,6 @@
 # FSx for NetApp ONTAP Example with Automated Export Discovery
 
-Amazon [FSx for NetApp ONTAP](https://docs.aws.amazon.com/fsx/latest/NetAppONTAPGuide/what-is-fsx-ontap.html) is a fully managed file storage service that supports the industry-standard NFS protocol (v3, v4.0, v4.1, v4.2).
+Amazon [FSx for NetApp ONTAP](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/what-is-fsx-ontap.html) is a fully managed file storage service that supports the industry-standard NFS protocol (v3, v4.0, v4.1, v4.2).
 
 This advanced example provides a single KNFSD proxy connecting to a single-AZ FSx for NetApp ONTAP filesystem to act as the source filer. We enforce NFS v4.1 throughout the deployment, as the increase in filehandle size mandates the use of NFSv4.1.
 
@@ -143,7 +143,7 @@ data "http" "aws_ca_bundle" {
 
 ## Additional Notes
 
-Depending on your chosen AWS region, you may be able to deploy the FSx for NetApp ONTAP filesystem with a different deployment type, such as `SINGLE_AZ_2` which provides a single-AZ (non-HA) deployment with NVMe L2ARC cache. See [AWS Regions](https://docs.aws.amazon.com/fsx/latest/NetAppONAPGuide/available-aws-regions.html) for more details.
+Depending on your chosen AWS region, you may be able to deploy the FSx for NetApp ONTAP filesystem with a different deployment type, such as `SINGLE_AZ_2` which provides a single-AZ (non-HA) deployment with NVMe L2ARC cache. See [AWS Regions](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/available-aws-regions.html) for more details.
 
 Previously AWS authored blog posts on FSx for NetApp ONTAP, including the alternative `FlexCache` deployment approach using native NetApp ONTAP features, which now supports write-back mode:
 

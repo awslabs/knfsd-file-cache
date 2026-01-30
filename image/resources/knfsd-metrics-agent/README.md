@@ -83,6 +83,26 @@ receivers:
     collection_interval: 30s
 ```
 
+#### FS-Cache
+
+Reports FS-Cache and Netfslib statistics from `/proc/fs/fscache/stats`.
+
+The metrics are split into two categories:
+
+* **Netfslib metrics** (`netfs.*`): Low-level network filesystem operations including reads, writes, downloads, uploads, cache operations, and retries.
+* **FS-Cache metrics** (`fscache.*`): Cache-level statistics including cookie management, LRU operations, space management, and I/O counts.
+
+See [fscache/metadata.yaml](internal/fscache/metadata.yaml) for the complete list of metrics.
+
+* `collection_interval` (default = `30s`): Collection interval. Valid time units are s, m, h.
+* `stats_path` (default = `/proc/fs/fscache/stats`): Path to the fscache stats file.
+
+```yaml
+receivers:
+  fscache:
+    collection_interval: 30s
+```
+
 #### Exports
 
 Reports on NFS export statistics such as total number of operations, read and write bytes.
@@ -175,6 +195,7 @@ receivers:
   # Note the colon as these are objects.
   connections:
   exports:
+  fscache:
   mounts:
   nfsd:
   oldestfile:
@@ -222,6 +243,7 @@ service:
       receivers:
         - connections
         - exports
+        - fscache
         - mounts
         - nfsd
         - slabinfo
@@ -280,6 +302,7 @@ service:
         - otlp
         - connections
         - exports
+        - fscache
         - mounts
         - nfsd
         # - slabinfo removed
@@ -295,6 +318,7 @@ service:
         - otlp
         - connections
         - exports
+        - fscache
         - mounts
         - nfsd
         - slabinfo

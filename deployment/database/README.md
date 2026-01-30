@@ -1,6 +1,6 @@
 # KNFSD FSID Database
 
-This module deploys an Amazon RDS PostgreSQL database for use with the [external fsidd service](../auto-reexport.md).
+This module deploys an Amazon RDS PostgreSQL database for use with the [external fsidd service](../docs/fsids.md) and [auto re-export](../docs/auto-re-export.md).
 
 > NOTE: This module is deployed automatically by `terraform-module-knfsd` when `FSID_MODE="external"` (unless you disable `FSID_DATABASE_DEPLOY`).
 

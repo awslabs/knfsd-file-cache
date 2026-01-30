@@ -45,7 +45,6 @@
 * [Check Proxy Startup](check-startup.md)
 * [NFS Client Setup](nfs-client-setup.md)
 * [Client Metrics](client-metrics.md)
-* [Culling](culling.md)
 * [FAQ](faq.md)
 * [Known Issues](known-issues.md)
 
@@ -86,11 +85,12 @@
 
 ## Project Reference
 
+* [LICENSE](../LICENSE)
+* [THIRD-PARTY-LICENSES](../THIRD-PARTY-LICENSES)
 * [ACKNOWLEDGEMENTS](../ACKNOWLEDGEMENTS)
 * [Code of Conduct](CODE_OF_CONDUCT.md)
 * [Contributing](CONTRIBUTING.md)
 * [Security](SECURITY.md)
-* [THIRD-PARTY-LICENSES](../THIRD-PARTY-LICENSES)
 
 ## External Documentation
 

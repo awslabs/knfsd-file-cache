@@ -1,0 +1,19 @@
+Reads  : DR=100 RA=200 RF=300 RS=50 WB=400 WBZ=500
+Writes : BW=10 WT=20 DW=30 WP=40 2C=50
+ZeroOps: ZR=5 sh=6 sk=7
+DownOps: DL=1000 ds=990 df=10 di=5
+CaRdOps: RD=500 rs=490 rf=10
+UpldOps: UL=200 us=195 uf=5
+CaWrOps: WR=300 ws=295 wf=5
+Retries: rq=2 rs=3 wq=1 ws=2
+Objs   : rr=1000 sr=2000 foq=500 wsc=10
+WbLock : skip=50 wait=25
+-- FS-Cache statistics --
+Cookies: n=1000 v=50 vcol=2 voom=1
+Acquire: n=1050 ok=1048 oom=2
+LRU    : n=500 exp=100 rmv=200 drp=50 at=12345
+Invals : n=10
+Updates: n=100 rsz=20 rsn=5
+Relinqs: n=200 rtr=50 drop=10
+NoSpace: nwr=5 ncr=3 cull=100
+IO     : rd=10000 wr=5000 mis=10

@@ -13,7 +13,7 @@ SHELL_DEFAULT='\033[0m'
 # print system info
 echo -e "${SHELL_YELLOW}---- SYSTEM INFO${SHELL_DEFAULT}"
 lsb_release -d -r -c
-echo -e "Kernel:\t${SHELL_YELLOW}$(uname -r)${SHELL_DEFAULT}"
+printf "%-16s${SHELL_YELLOW}%s${SHELL_DEFAULT}\n" "Kernel:" "$(uname -r)"
 
 # clean cloud-init state/logs before AMI creation
 cloud-init clean --logs --seed

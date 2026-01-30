@@ -99,6 +99,7 @@ resource "aws_launch_template" "nfsproxy_template" {
     instance_metadata_tags = "enabled"
   }
 
+  # enable CloudWatch detailed monitoring (60s granularity)
   monitoring {
     enabled = true
   }

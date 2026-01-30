@@ -57,6 +57,150 @@ receivers:
     #   nfs.threads.woken:
     #     enabled: false
 
+  fscache:
+    collection_interval: 30s
+    # metrics:
+    #   # Netfslib Reads
+    #   netfs.reads.direct:
+    #     enabled: false
+    #   netfs.reads.readahead:
+    #     enabled: false
+    #   netfs.reads.folio:
+    #     enabled: false
+    #   netfs.reads.single:
+    #     enabled: false
+    #   netfs.reads.write_begin:
+    #     enabled: false
+    #   netfs.reads.write_zskip:
+    #     enabled: false
+    #   # Netfslib Writes
+    #   netfs.writes.buffered:
+    #     enabled: false
+    #   netfs.writes.writethrough:
+    #     enabled: false
+    #   netfs.writes.direct:
+    #     enabled: false
+    #   netfs.writes.pages:
+    #     enabled: false
+    #   netfs.writes.copy_to_cache:
+    #     enabled: false
+    #   # Netfslib ZeroOps
+    #   netfs.zero_ops.zero:
+    #     enabled: false
+    #   netfs.zero_ops.short:
+    #     enabled: false
+    #   netfs.zero_ops.skip:
+    #     enabled: false
+    #   # Netfslib DownOps
+    #   netfs.download.requests:
+    #     enabled: false
+    #   netfs.download.done:
+    #     enabled: false
+    #   netfs.download.failed:
+    #     enabled: false
+    #   netfs.download.instead:
+    #     enabled: false
+    #   # Netfslib CaRdOps
+    #   netfs.cache_read.requests:
+    #     enabled: false
+    #   netfs.cache_read.done:
+    #     enabled: false
+    #   netfs.cache_read.failed:
+    #     enabled: false
+    #   # Netfslib UpldOps
+    #   netfs.upload.requests:
+    #     enabled: false
+    #   netfs.upload.done:
+    #     enabled: false
+    #   netfs.upload.failed:
+    #     enabled: false
+    #   # Netfslib CaWrOps
+    #   netfs.cache_write.requests:
+    #     enabled: false
+    #   netfs.cache_write.done:
+    #     enabled: false
+    #   netfs.cache_write.failed:
+    #     enabled: false
+    #   # Netfslib Retries
+    #   netfs.retries.read_req:
+    #     enabled: false
+    #   netfs.retries.read_subreq:
+    #     enabled: false
+    #   netfs.retries.write_req:
+    #     enabled: false
+    #   netfs.retries.write_subreq:
+    #     enabled: false
+    #   # Netfslib Objs
+    #   netfs.objects.read_reqs:
+    #     enabled: false
+    #   netfs.objects.subreqs:
+    #     enabled: false
+    #   netfs.objects.folio_queue:
+    #     enabled: false
+    #   netfs.objects.write_conflicts:
+    #     enabled: false
+    #   # Netfslib WbLock
+    #   netfs.wblock.skip:
+    #     enabled: false
+    #   netfs.wblock.wait:
+    #     enabled: false
+    #   # FS-Cache Cookies
+    #   fscache.cookies.data:
+    #     enabled: false
+    #   fscache.cookies.volume:
+    #     enabled: false
+    #   fscache.cookies.volume_collisions:
+    #     enabled: false
+    #   fscache.cookies.volume_oom:
+    #     enabled: false
+    #   # FS-Cache Acquire
+    #   fscache.acquire.requests:
+    #     enabled: false
+    #   fscache.acquire.ok:
+    #     enabled: false
+    #   fscache.acquire.oom:
+    #     enabled: false
+    #   # FS-Cache LRU
+    #   fscache.lru.count:
+    #     enabled: false
+    #   fscache.lru.expired:
+    #     enabled: false
+    #   fscache.lru.removed:
+    #     enabled: false
+    #   fscache.lru.dropped:
+    #     enabled: false
+    #   # FS-Cache Invals
+    #   fscache.invalidations:
+    #     enabled: false
+    #   # FS-Cache Updates
+    #   fscache.updates.requests:
+    #     enabled: false
+    #   fscache.updates.resize:
+    #     enabled: false
+    #   fscache.updates.resize_skipped:
+    #     enabled: false
+    #   # FS-Cache Relinqs
+    #   fscache.relinquish.requests:
+    #     enabled: false
+    #   fscache.relinquish.retire:
+    #     enabled: false
+    #   fscache.relinquish.drop:
+    #     enabled: false
+    #   # FS-Cache NoSpace
+    #   fscache.nospace.write:
+    #     enabled: false
+    #   fscache.nospace.create:
+    #     enabled: false
+    #   fscache.nospace.cull:
+    #     enabled: false
+    #   # FS-Cache IO
+    #   fscache.io.read:
+    #     enabled: false
+    #   fscache.io.write:
+    #     enabled: false
+    #   fscache.io.misfit:
+    #     enabled: false
+
   exports:
     collection_interval: 1m
     # metrics:
@@ -238,7 +382,253 @@ processors:
 
       - action: update
         include: fscache.oldest_file
-        new_name: fscache_oldest_file
+        new_name: fscache/oldest_file
+
+      # FS-Cache metrics (from /proc/fs/fscache/stats)
+      - action: update
+        include: fscache.acquire.ok
+        new_name: fscache/acquire/ok
+
+      - action: update
+        include: fscache.acquire.oom
+        new_name: fscache/acquire/oom
+
+      - action: update
+        include: fscache.acquire.requests
+        new_name: fscache/acquire/requests
+
+      - action: update
+        include: fscache.cookies.data
+        new_name: fscache/cookies/data
+
+      - action: update
+        include: fscache.cookies.volume
+        new_name: fscache/cookies/volume
+
+      - action: update
+        include: fscache.cookies.volume_collisions
+        new_name: fscache/cookies/volume_collisions
+
+      - action: update
+        include: fscache.cookies.volume_oom
+        new_name: fscache/cookies/volume_oom
+
+      - action: update
+        include: fscache.invalidations
+        new_name: fscache/invalidations
+
+      - action: update
+        include: fscache.io.misfit
+        new_name: fscache/io/misfit
+
+      - action: update
+        include: fscache.io.read
+        new_name: fscache/io/read
+
+      - action: update
+        include: fscache.io.write
+        new_name: fscache/io/write
+
+      - action: update
+        include: fscache.lru.count
+        new_name: fscache/lru/count
+
+      - action: update
+        include: fscache.lru.dropped
+        new_name: fscache/lru/dropped
+
+      - action: update
+        include: fscache.lru.expired
+        new_name: fscache/lru/expired
+
+      - action: update
+        include: fscache.lru.removed
+        new_name: fscache/lru/removed
+
+      - action: update
+        include: fscache.nospace.create
+        new_name: fscache/nospace/create
+
+      - action: update
+        include: fscache.nospace.cull
+        new_name: fscache/nospace/cull
+
+      - action: update
+        include: fscache.nospace.write
+        new_name: fscache/nospace/write
+
+      - action: update
+        include: fscache.relinquish.drop
+        new_name: fscache/relinquish/drop
+
+      - action: update
+        include: fscache.relinquish.requests
+        new_name: fscache/relinquish/requests
+
+      - action: update
+        include: fscache.relinquish.retire
+        new_name: fscache/relinquish/retire
+
+      - action: update
+        include: fscache.updates.requests
+        new_name: fscache/updates/requests
+
+      - action: update
+        include: fscache.updates.resize
+        new_name: fscache/updates/resize
+
+      - action: update
+        include: fscache.updates.resize_skipped
+        new_name: fscache/updates/resize_skipped
+
+      # Netfslib metrics (from /proc/fs/fscache/stats)
+      - action: update
+        include: netfs.cache_read.done
+        new_name: netfs/cache_read/done
+
+      - action: update
+        include: netfs.cache_read.failed
+        new_name: netfs/cache_read/failed
+
+      - action: update
+        include: netfs.cache_read.requests
+        new_name: netfs/cache_read/requests
+
+      - action: update
+        include: netfs.cache_write.done
+        new_name: netfs/cache_write/done
+
+      - action: update
+        include: netfs.cache_write.failed
+        new_name: netfs/cache_write/failed
+
+      - action: update
+        include: netfs.cache_write.requests
+        new_name: netfs/cache_write/requests
+
+      - action: update
+        include: netfs.download.done
+        new_name: netfs/download/done
+
+      - action: update
+        include: netfs.download.failed
+        new_name: netfs/download/failed
+
+      - action: update
+        include: netfs.download.instead
+        new_name: netfs/download/instead
+
+      - action: update
+        include: netfs.download.requests
+        new_name: netfs/download/requests
+
+      - action: update
+        include: netfs.objects.folio_queue
+        new_name: netfs/objects/folio_queue
+
+      - action: update
+        include: netfs.objects.read_reqs
+        new_name: netfs/objects/read_reqs
+
+      - action: update
+        include: netfs.objects.subreqs
+        new_name: netfs/objects/subreqs
+
+      - action: update
+        include: netfs.objects.write_conflicts
+        new_name: netfs/objects/write_conflicts
+
+      - action: update
+        include: netfs.reads.direct
+        new_name: netfs/reads/direct
+
+      - action: update
+        include: netfs.reads.folio
+        new_name: netfs/reads/folio
+
+      - action: update
+        include: netfs.reads.readahead
+        new_name: netfs/reads/readahead
+
+      - action: update
+        include: netfs.reads.single
+        new_name: netfs/reads/single
+
+      - action: update
+        include: netfs.reads.write_begin
+        new_name: netfs/reads/write_begin
+
+      - action: update
+        include: netfs.reads.write_zskip
+        new_name: netfs/reads/write_zskip
+
+      - action: update
+        include: netfs.retries.read_req
+        new_name: netfs/retries/read_req
+
+      - action: update
+        include: netfs.retries.read_subreq
+        new_name: netfs/retries/read_subreq
+
+      - action: update
+        include: netfs.retries.write_req
+        new_name: netfs/retries/write_req
+
+      - action: update
+        include: netfs.retries.write_subreq
+        new_name: netfs/retries/write_subreq
+
+      - action: update
+        include: netfs.upload.done
+        new_name: netfs/upload/done
+
+      - action: update
+        include: netfs.upload.failed
+        new_name: netfs/upload/failed
+
+      - action: update
+        include: netfs.upload.requests
+        new_name: netfs/upload/requests
+
+      - action: update
+        include: netfs.wblock.skip
+        new_name: netfs/wblock/skip
+
+      - action: update
+        include: netfs.wblock.wait
+        new_name: netfs/wblock/wait
+
+      - action: update
+        include: netfs.writes.buffered
+        new_name: netfs/writes/buffered
+
+      - action: update
+        include: netfs.writes.copy_to_cache
+        new_name: netfs/writes/copy_to_cache
+
+      - action: update
+        include: netfs.writes.direct
+        new_name: netfs/writes/direct
+
+      - action: update
+        include: netfs.writes.pages
+        new_name: netfs/writes/pages
+
+      - action: update
+        include: netfs.writes.writethrough
+        new_name: netfs/writes/writethrough
+
+      - action: update
+        include: netfs.zero_ops.short
+        new_name: netfs/zero_ops/short
+
+      - action: update
+        include: netfs.zero_ops.skip
+        new_name: netfs/zero_ops/skip
+
+      - action: update
+        include: netfs.zero_ops.zero
+        new_name: netfs/zero_ops/zero
 
       # fsid daemon metrics, these are reported via the oltp receiver
       - action: update

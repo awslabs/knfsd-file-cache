@@ -18,8 +18,8 @@ import (
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/internal/metrics"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/log"
 
-	"github.com/go-ini/ini"
 	"go.uber.org/multierr"
+	"gopkg.in/ini.v1"
 )
 
 const (

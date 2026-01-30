@@ -244,12 +244,13 @@
           "height": 4,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_operations\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}" } ]
+                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" (MetricName=\"knfsd/exports/total_read_bytes\" OR MetricName=\"knfsd/exports/total_write_bytes\")', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "ABS(RATE(SUM(REMOVE_EMPTY(m1))))", "label": "ASG_FILTER" } ]
               ],
               "view": "singleValue",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "Total IOPS",
+              "title": "Total BW",
               "period": 60
           }
       },
@@ -261,8 +262,25 @@
           "height": 4,
           "properties": {
               "metrics": [
+                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_operations\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}" } ]
+              ],
+              "view": "singleValue",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "Total IOPS",
+              "period": 60
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 0,
+          "width": 3,
+          "height": 4,
+          "properties": {
+              "metrics": [
                   [ "knfsd/metrics", "knfsd/mount/read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", { "id": "m1", "visible": false, "stat": "Sum" } ],
-                  [ ".", "knfsd/exports/total_read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false, "stat": "Sum" } ],
+                  [ "knfsd/metrics", "knfsd/exports/total_read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false, "stat": "Sum" } ],
                   [ { "expression": "IF(m2 > 0, (1 - (m1/m2)) * 100, 0)", "label": "${PROP('Dim.InstanceId')}", "id": "e1", "color": "#ff7f0e" } ]
               ],
               "view": "singleValue",
@@ -275,14 +293,13 @@
       },
       {
           "type": "metric",
-          "x": 18,
+          "x": 21,
           "y": 0,
-          "width": 6,
+          "width": 3,
           "height": 4,
           "properties": {
               "metrics": [
-                  [ "AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", "ASG_FILTER", { "label": "Active Instances" } ],
-                  [ ".", "GroupTotalInstances", ".", ".", { "label": "Total Instances" } ]
+                  [ "AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", "ASG_FILTER", { "label": "Active Instances" } ]
               ],
               "view": "singleValue",
               "stacked": false,
@@ -389,7 +406,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -771,7 +788,34 @@
           "type": "metric",
           "x": 0,
           "y": 57,
-          "width": 12,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "AWS/EC2", "NetworkIn", "AutoScalingGroupName", "ASG_FILTER", { "id": "m1", "visible": false } ],
+                  [ "AWS/EC2", "NetworkOut", "AutoScalingGroupName", "ASG_FILTER", { "id": "m2", "visible": false } ],
+                  [ { "expression": "IF(DIFF_TIME(m1) > 0, (m1/DIFF_TIME(m1))*8, 0)", "label": "ASG_FILTER: IN" } ],
+                  [ { "expression": "IF(DIFF_TIME(m2) > 0, (m2/DIFF_TIME(m2))*8, 0)", "label": "ASG_FILTER: OUT" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": true,
+              "region": "${region_filter}",
+              "title": "Cluster Network Bandwidth",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Bits/Second",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 8,
+          "y": 57,
+          "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
@@ -796,9 +840,9 @@
       },
       {
           "type": "metric",
-          "x": 12,
+          "x": 16,
           "y": 57,
-          "width": 12,
+          "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
@@ -843,7 +887,7 @@
           "properties": {
               "metrics": [
                   [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId, server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SERVER_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
-                  [ { "expression": "ABS(RATE(m1))", "label": "${LABEL}" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
@@ -868,7 +912,7 @@
           "properties": {
               "metrics": [
                   [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
-                  [ { "expression": "ABS(RATE(m1))", "label": "${LABEL}" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
@@ -893,7 +937,7 @@
           "properties": {
               "metrics": [
                   [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId, server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SERVER_FILTER\" MetricName=\"knfsd/mount/write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
-                  [ { "expression": "ABS(RATE(m1))", "label": "${LABEL}" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
@@ -918,7 +962,7 @@
           "properties": {
               "metrics": [
                   [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
-                  [ { "expression": "ABS(RATE(m1))", "label": "${LABEL}" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
@@ -954,7 +998,7 @@
           "properties": {
               "metrics": [
                   [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SERVER_FILTER\" MetricName=\"knfsd/nfsiostat_ops_per_second\"', 'Sum')", "id": "m1", "visible": false } ],
-                  [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.InstanceId')}" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${PROP('Dim.InstanceId')}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1098,7 +1142,7 @@
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## NFS v3 Operations\n\nThe following graphs show KNFSD -> Source Filer operations for NFS v3.",
+              "markdown": "## NFS Operations\n\nThe following graphs show KNFSD -> Source Filer operations for NFS.",
               "background": "transparent"
           }
       },
@@ -1110,33 +1154,86 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "MKDIR" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "MKNOD" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RMDIR" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "READDIRPLUS" ],
-                  [ "...", "FSSTAT" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "COMMIT" ]
+                  [ "knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "...", "GETATTR", { "visible": false } ],
+                  [ "...", "SETATTR", { "visible": false } ],
+                  [ "...", "LOOKUP", { "visible": false } ],
+                  [ "...", "ACCESS", { "visible": false } ],
+                  [ "...", "READLINK", { "visible": false } ],
+                  [ "...", "READ", { "visible": false } ],
+                  [ "...", "WRITE", { "visible": false } ],
+                  [ "...", "CREATE", { "visible": false } ],
+                  [ "...", "MKDIR", { "visible": false } ],
+                  [ "...", "SYMLINK", { "visible": false } ],
+                  [ "...", "MKNOD", { "visible": false } ],
+                  [ "...", "REMOVE", { "visible": false } ],
+                  [ "...", "RMDIR", { "visible": false } ],
+                  [ "...", "RENAME", { "visible": false } ],
+                  [ "...", "LINK", { "visible": false } ],
+                  [ "...", "READDIR", { "visible": false } ],
+                  [ "...", "READDIRPLUS", { "visible": false } ],
+                  [ "...", "FSSTAT", { "visible": false } ],
+                  [ "...", "FSINFO", { "visible": false } ],
+                  [ "...", "PATHCONF", { "visible": false } ],
+                  [ "...", "COMMIT", { "visible": false } ],
+                  [ "...", "OPEN", { "visible": false } ],
+                  [ "...", "OPEN_CONFIRM", { "visible": false } ],
+                  [ "...", "OPEN_NOATTR", { "visible": false } ],
+                  [ "...", "OPEN_DOWNGRADE", { "visible": false } ],
+                  [ "...", "CLOSE", { "visible": false } ],
+                  [ "...", "RENEW", { "visible": false } ],
+                  [ "...", "SETCLIENTID", { "visible": false } ],
+                  [ "...", "SETCLIENTID_CONFIRM", { "visible": false } ],
+                  [ "...", "LOCK", { "visible": false } ],
+                  [ "...", "LOCKT", { "visible": false } ],
+                  [ "...", "LOCKU", { "visible": false } ],
+                  [ "...", "LOOKUP_ROOT", { "visible": false } ],
+                  [ "...", "STATFS", { "visible": false } ],
+                  [ "...", "SERVER_CAPS", { "visible": false } ],
+                  [ "...", "DELEGRETURN", { "visible": false } ],
+                  [ "...", "GETACL", { "visible": false } ],
+                  [ "...", "SETACL", { "visible": false } ],
+                  [ "...", "FS_LOCATIONS", { "visible": false } ],
+                  [ "...", "RELEASE_LOCKOWNER", { "visible": false } ],
+                  [ "...", "SECINFO", { "visible": false } ],
+                  [ "...", "FSID_PRESENT", { "visible": false } ],
+                  [ "...", "EXCHANGE_ID", { "visible": false } ],
+                  [ "...", "CREATE_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_SESSION", { "visible": false } ],
+                  [ "...", "SEQUENCE", { "visible": false } ],
+                  [ "...", "GET_LEASE_TIME", { "visible": false } ],
+                  [ "...", "RECLAIM_COMPLETE", { "visible": false } ],
+                  [ "...", "LAYOUTGET", { "visible": false } ],
+                  [ "...", "GETDEVICEINFO", { "visible": false } ],
+                  [ "...", "LAYOUTCOMMIT", { "visible": false } ],
+                  [ "...", "LAYOUTRETURN", { "visible": false } ],
+                  [ "...", "SECINFO_NO_NAME", { "visible": false } ],
+                  [ "...", "TEST_STATEID", { "visible": false } ],
+                  [ "...", "FREE_STATEID", { "visible": false } ],
+                  [ "...", "GETDEVICELIST", { "visible": false } ],
+                  [ "...", "BIND_CONN_TO_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_CLIENTID", { "visible": false } ],
+                  [ "...", "SEEK", { "visible": false } ],
+                  [ "...", "ALLOCATE", { "visible": false } ],
+                  [ "...", "DEALLOCATE", { "visible": false } ],
+                  [ "...", "LAYOUTSTATS", { "visible": false } ],
+                  [ "...", "CLONE", { "visible": false } ],
+                  [ "...", "COPY", { "visible": false } ],
+                  [ "...", "COPY_NOTIFY", { "visible": false } ],
+                  [ "...", "GETXATTR", { "visible": false } ],
+                  [ "...", "LISTXATTRS", { "visible": false } ],
+                  [ "...", "LOOKUPP", { "visible": false } ],
+                  [ "...", "OFFLOAD_CANCEL", { "visible": false } ],
+                  [ "...", "READ_PLUS", { "visible": false } ],
+                  [ "...", "REMOVEXATTR", { "visible": false } ],
+                  [ "...", "SETXATTR", { "visible": false } ],
+                  [ "...", "LAYOUTERROR", { "visible": false } ],
+                  [ { "expression": "ABS(REMOVE_EMPTY(METRICS()))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v3 Ops: Sent Bytes",
+              "title": "NFS Ops: Sent Bytes",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1155,33 +1252,86 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "MKDIR" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "MKNOD" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RMDIR" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "READDIRPLUS" ],
-                  [ "...", "FSSTAT" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "COMMIT" ]
+                  [ "knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "...", "GETATTR", { "visible": false } ],
+                  [ "...", "SETATTR", { "visible": false } ],
+                  [ "...", "LOOKUP", { "visible": false } ],
+                  [ "...", "ACCESS", { "visible": false } ],
+                  [ "...", "READLINK", { "visible": false } ],
+                  [ "...", "READ", { "visible": false } ],
+                  [ "...", "WRITE", { "visible": false } ],
+                  [ "...", "CREATE", { "visible": false } ],
+                  [ "...", "MKDIR", { "visible": false } ],
+                  [ "...", "SYMLINK", { "visible": false } ],
+                  [ "...", "MKNOD", { "visible": false } ],
+                  [ "...", "REMOVE", { "visible": false } ],
+                  [ "...", "RMDIR", { "visible": false } ],
+                  [ "...", "RENAME", { "visible": false } ],
+                  [ "...", "LINK", { "visible": false } ],
+                  [ "...", "READDIR", { "visible": false } ],
+                  [ "...", "READDIRPLUS", { "visible": false } ],
+                  [ "...", "FSSTAT", { "visible": false } ],
+                  [ "...", "FSINFO", { "visible": false } ],
+                  [ "...", "PATHCONF", { "visible": false } ],
+                  [ "...", "COMMIT", { "visible": false } ],
+                  [ "...", "OPEN", { "visible": false } ],
+                  [ "...", "OPEN_CONFIRM", { "visible": false } ],
+                  [ "...", "OPEN_NOATTR", { "visible": false } ],
+                  [ "...", "OPEN_DOWNGRADE", { "visible": false } ],
+                  [ "...", "CLOSE", { "visible": false } ],
+                  [ "...", "RENEW", { "visible": false } ],
+                  [ "...", "SETCLIENTID", { "visible": false } ],
+                  [ "...", "SETCLIENTID_CONFIRM", { "visible": false } ],
+                  [ "...", "LOCK", { "visible": false } ],
+                  [ "...", "LOCKT", { "visible": false } ],
+                  [ "...", "LOCKU", { "visible": false } ],
+                  [ "...", "LOOKUP_ROOT", { "visible": false } ],
+                  [ "...", "STATFS", { "visible": false } ],
+                  [ "...", "SERVER_CAPS", { "visible": false } ],
+                  [ "...", "DELEGRETURN", { "visible": false } ],
+                  [ "...", "GETACL", { "visible": false } ],
+                  [ "...", "SETACL", { "visible": false } ],
+                  [ "...", "FS_LOCATIONS", { "visible": false } ],
+                  [ "...", "RELEASE_LOCKOWNER", { "visible": false } ],
+                  [ "...", "SECINFO", { "visible": false } ],
+                  [ "...", "FSID_PRESENT", { "visible": false } ],
+                  [ "...", "EXCHANGE_ID", { "visible": false } ],
+                  [ "...", "CREATE_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_SESSION", { "visible": false } ],
+                  [ "...", "SEQUENCE", { "visible": false } ],
+                  [ "...", "GET_LEASE_TIME", { "visible": false } ],
+                  [ "...", "RECLAIM_COMPLETE", { "visible": false } ],
+                  [ "...", "LAYOUTGET", { "visible": false } ],
+                  [ "...", "GETDEVICEINFO", { "visible": false } ],
+                  [ "...", "LAYOUTCOMMIT", { "visible": false } ],
+                  [ "...", "LAYOUTRETURN", { "visible": false } ],
+                  [ "...", "SECINFO_NO_NAME", { "visible": false } ],
+                  [ "...", "TEST_STATEID", { "visible": false } ],
+                  [ "...", "FREE_STATEID", { "visible": false } ],
+                  [ "...", "GETDEVICELIST", { "visible": false } ],
+                  [ "...", "BIND_CONN_TO_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_CLIENTID", { "visible": false } ],
+                  [ "...", "SEEK", { "visible": false } ],
+                  [ "...", "ALLOCATE", { "visible": false } ],
+                  [ "...", "DEALLOCATE", { "visible": false } ],
+                  [ "...", "LAYOUTSTATS", { "visible": false } ],
+                  [ "...", "CLONE", { "visible": false } ],
+                  [ "...", "COPY", { "visible": false } ],
+                  [ "...", "COPY_NOTIFY", { "visible": false } ],
+                  [ "...", "GETXATTR", { "visible": false } ],
+                  [ "...", "LISTXATTRS", { "visible": false } ],
+                  [ "...", "LOOKUPP", { "visible": false } ],
+                  [ "...", "OFFLOAD_CANCEL", { "visible": false } ],
+                  [ "...", "READ_PLUS", { "visible": false } ],
+                  [ "...", "REMOVEXATTR", { "visible": false } ],
+                  [ "...", "SETXATTR", { "visible": false } ],
+                  [ "...", "LAYOUTERROR", { "visible": false } ],
+                  [ { "expression": "ABS(REMOVE_EMPTY(METRICS()))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v3 Ops: Received Bytes",
+              "title": "NFS Ops: Received Bytes",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1197,36 +1347,89 @@
           "x": 0,
           "y": 121,
           "width": 8,
-          "height": 8,
+          "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "MKDIR" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "MKNOD" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RMDIR" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "READDIRPLUS" ],
-                  [ "...", "FSSTAT" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "COMMIT" ]
+                  [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "...", "GETATTR", { "visible": false } ],
+                  [ "...", "SETATTR", { "visible": false } ],
+                  [ "...", "LOOKUP", { "visible": false } ],
+                  [ "...", "ACCESS", { "visible": false } ],
+                  [ "...", "READLINK", { "visible": false } ],
+                  [ "...", "READ", { "visible": false } ],
+                  [ "...", "WRITE", { "visible": false } ],
+                  [ "...", "CREATE", { "visible": false } ],
+                  [ "...", "MKDIR", { "visible": false } ],
+                  [ "...", "SYMLINK", { "visible": false } ],
+                  [ "...", "MKNOD", { "visible": false } ],
+                  [ "...", "REMOVE", { "visible": false } ],
+                  [ "...", "RMDIR", { "visible": false } ],
+                  [ "...", "RENAME", { "visible": false } ],
+                  [ "...", "LINK", { "visible": false } ],
+                  [ "...", "READDIR", { "visible": false } ],
+                  [ "...", "READDIRPLUS", { "visible": false } ],
+                  [ "...", "FSSTAT", { "visible": false } ],
+                  [ "...", "FSINFO", { "visible": false } ],
+                  [ "...", "PATHCONF", { "visible": false } ],
+                  [ "...", "COMMIT", { "visible": false } ],
+                  [ "...", "OPEN", { "visible": false } ],
+                  [ "...", "OPEN_CONFIRM", { "visible": false } ],
+                  [ "...", "OPEN_NOATTR", { "visible": false } ],
+                  [ "...", "OPEN_DOWNGRADE", { "visible": false } ],
+                  [ "...", "CLOSE", { "visible": false } ],
+                  [ "...", "RENEW", { "visible": false } ],
+                  [ "...", "SETCLIENTID", { "visible": false } ],
+                  [ "...", "SETCLIENTID_CONFIRM", { "visible": false } ],
+                  [ "...", "LOCK", { "visible": false } ],
+                  [ "...", "LOCKT", { "visible": false } ],
+                  [ "...", "LOCKU", { "visible": false } ],
+                  [ "...", "LOOKUP_ROOT", { "visible": false } ],
+                  [ "...", "STATFS", { "visible": false } ],
+                  [ "...", "SERVER_CAPS", { "visible": false } ],
+                  [ "...", "DELEGRETURN", { "visible": false } ],
+                  [ "...", "GETACL", { "visible": false } ],
+                  [ "...", "SETACL", { "visible": false } ],
+                  [ "...", "FS_LOCATIONS", { "visible": false } ],
+                  [ "...", "RELEASE_LOCKOWNER", { "visible": false } ],
+                  [ "...", "SECINFO", { "visible": false } ],
+                  [ "...", "FSID_PRESENT", { "visible": false } ],
+                  [ "...", "EXCHANGE_ID", { "visible": false } ],
+                  [ "...", "CREATE_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_SESSION", { "visible": false } ],
+                  [ "...", "SEQUENCE", { "visible": false } ],
+                  [ "...", "GET_LEASE_TIME", { "visible": false } ],
+                  [ "...", "RECLAIM_COMPLETE", { "visible": false } ],
+                  [ "...", "LAYOUTGET", { "visible": false } ],
+                  [ "...", "GETDEVICEINFO", { "visible": false } ],
+                  [ "...", "LAYOUTCOMMIT", { "visible": false } ],
+                  [ "...", "LAYOUTRETURN", { "visible": false } ],
+                  [ "...", "SECINFO_NO_NAME", { "visible": false } ],
+                  [ "...", "TEST_STATEID", { "visible": false } ],
+                  [ "...", "FREE_STATEID", { "visible": false } ],
+                  [ "...", "GETDEVICELIST", { "visible": false } ],
+                  [ "...", "BIND_CONN_TO_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_CLIENTID", { "visible": false } ],
+                  [ "...", "SEEK", { "visible": false } ],
+                  [ "...", "ALLOCATE", { "visible": false } ],
+                  [ "...", "DEALLOCATE", { "visible": false } ],
+                  [ "...", "LAYOUTSTATS", { "visible": false } ],
+                  [ "...", "CLONE", { "visible": false } ],
+                  [ "...", "COPY", { "visible": false } ],
+                  [ "...", "COPY_NOTIFY", { "visible": false } ],
+                  [ "...", "GETXATTR", { "visible": false } ],
+                  [ "...", "LISTXATTRS", { "visible": false } ],
+                  [ "...", "LOOKUPP", { "visible": false } ],
+                  [ "...", "OFFLOAD_CANCEL", { "visible": false } ],
+                  [ "...", "READ_PLUS", { "visible": false } ],
+                  [ "...", "REMOVEXATTR", { "visible": false } ],
+                  [ "...", "SETXATTR", { "visible": false } ],
+                  [ "...", "LAYOUTERROR", { "visible": false } ],
+                  [ { "expression": "ABS(REMOVE_EMPTY(METRICS()))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v3 Ops: Requests",
+              "title": "NFS Ops: Requests",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1242,36 +1445,89 @@
           "x": 8,
           "y": 121,
           "width": 8,
-          "height": 8,
+          "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "MKDIR" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "MKNOD" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RMDIR" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "READDIRPLUS" ],
-                  [ "...", "FSSTAT" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "COMMIT" ]
+                  [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "...", "GETATTR", { "visible": false } ],
+                  [ "...", "SETATTR", { "visible": false } ],
+                  [ "...", "LOOKUP", { "visible": false } ],
+                  [ "...", "ACCESS", { "visible": false } ],
+                  [ "...", "READLINK", { "visible": false } ],
+                  [ "...", "READ", { "visible": false } ],
+                  [ "...", "WRITE", { "visible": false } ],
+                  [ "...", "CREATE", { "visible": false } ],
+                  [ "...", "MKDIR", { "visible": false } ],
+                  [ "...", "SYMLINK", { "visible": false } ],
+                  [ "...", "MKNOD", { "visible": false } ],
+                  [ "...", "REMOVE", { "visible": false } ],
+                  [ "...", "RMDIR", { "visible": false } ],
+                  [ "...", "RENAME", { "visible": false } ],
+                  [ "...", "LINK", { "visible": false } ],
+                  [ "...", "READDIR", { "visible": false } ],
+                  [ "...", "READDIRPLUS", { "visible": false } ],
+                  [ "...", "FSSTAT", { "visible": false } ],
+                  [ "...", "FSINFO", { "visible": false } ],
+                  [ "...", "PATHCONF", { "visible": false } ],
+                  [ "...", "COMMIT", { "visible": false } ],
+                  [ "...", "OPEN", { "visible": false } ],
+                  [ "...", "OPEN_CONFIRM", { "visible": false } ],
+                  [ "...", "OPEN_NOATTR", { "visible": false } ],
+                  [ "...", "OPEN_DOWNGRADE", { "visible": false } ],
+                  [ "...", "CLOSE", { "visible": false } ],
+                  [ "...", "RENEW", { "visible": false } ],
+                  [ "...", "SETCLIENTID", { "visible": false } ],
+                  [ "...", "SETCLIENTID_CONFIRM", { "visible": false } ],
+                  [ "...", "LOCK", { "visible": false } ],
+                  [ "...", "LOCKT", { "visible": false } ],
+                  [ "...", "LOCKU", { "visible": false } ],
+                  [ "...", "LOOKUP_ROOT", { "visible": false } ],
+                  [ "...", "STATFS", { "visible": false } ],
+                  [ "...", "SERVER_CAPS", { "visible": false } ],
+                  [ "...", "DELEGRETURN", { "visible": false } ],
+                  [ "...", "GETACL", { "visible": false } ],
+                  [ "...", "SETACL", { "visible": false } ],
+                  [ "...", "FS_LOCATIONS", { "visible": false } ],
+                  [ "...", "RELEASE_LOCKOWNER", { "visible": false } ],
+                  [ "...", "SECINFO", { "visible": false } ],
+                  [ "...", "FSID_PRESENT", { "visible": false } ],
+                  [ "...", "EXCHANGE_ID", { "visible": false } ],
+                  [ "...", "CREATE_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_SESSION", { "visible": false } ],
+                  [ "...", "SEQUENCE", { "visible": false } ],
+                  [ "...", "GET_LEASE_TIME", { "visible": false } ],
+                  [ "...", "RECLAIM_COMPLETE", { "visible": false } ],
+                  [ "...", "LAYOUTGET", { "visible": false } ],
+                  [ "...", "GETDEVICEINFO", { "visible": false } ],
+                  [ "...", "LAYOUTCOMMIT", { "visible": false } ],
+                  [ "...", "LAYOUTRETURN", { "visible": false } ],
+                  [ "...", "SECINFO_NO_NAME", { "visible": false } ],
+                  [ "...", "TEST_STATEID", { "visible": false } ],
+                  [ "...", "FREE_STATEID", { "visible": false } ],
+                  [ "...", "GETDEVICELIST", { "visible": false } ],
+                  [ "...", "BIND_CONN_TO_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_CLIENTID", { "visible": false } ],
+                  [ "...", "SEEK", { "visible": false } ],
+                  [ "...", "ALLOCATE", { "visible": false } ],
+                  [ "...", "DEALLOCATE", { "visible": false } ],
+                  [ "...", "LAYOUTSTATS", { "visible": false } ],
+                  [ "...", "CLONE", { "visible": false } ],
+                  [ "...", "COPY", { "visible": false } ],
+                  [ "...", "COPY_NOTIFY", { "visible": false } ],
+                  [ "...", "GETXATTR", { "visible": false } ],
+                  [ "...", "LISTXATTRS", { "visible": false } ],
+                  [ "...", "LOOKUPP", { "visible": false } ],
+                  [ "...", "OFFLOAD_CANCEL", { "visible": false } ],
+                  [ "...", "READ_PLUS", { "visible": false } ],
+                  [ "...", "REMOVEXATTR", { "visible": false } ],
+                  [ "...", "SETXATTR", { "visible": false } ],
+                  [ "...", "LAYOUTERROR", { "visible": false } ],
+                  [ { "expression": "ABS(REMOVE_EMPTY(METRICS()))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v3 Ops: Major Timeouts",
+              "title": "NFS Ops: Major Timeouts",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1287,36 +1543,89 @@
           "x": 16,
           "y": 121,
           "width": 8,
-          "height": 8,
+          "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "MKDIR" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "MKNOD" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RMDIR" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "READDIRPLUS" ],
-                  [ "...", "FSSTAT" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "COMMIT" ]
+                  [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "...", "GETATTR", { "visible": false } ],
+                  [ "...", "SETATTR", { "visible": false } ],
+                  [ "...", "LOOKUP", { "visible": false } ],
+                  [ "...", "ACCESS", { "visible": false } ],
+                  [ "...", "READLINK", { "visible": false } ],
+                  [ "...", "READ", { "visible": false } ],
+                  [ "...", "WRITE", { "visible": false } ],
+                  [ "...", "CREATE", { "visible": false } ],
+                  [ "...", "MKDIR", { "visible": false } ],
+                  [ "...", "SYMLINK", { "visible": false } ],
+                  [ "...", "MKNOD", { "visible": false } ],
+                  [ "...", "REMOVE", { "visible": false } ],
+                  [ "...", "RMDIR", { "visible": false } ],
+                  [ "...", "RENAME", { "visible": false } ],
+                  [ "...", "LINK", { "visible": false } ],
+                  [ "...", "READDIR", { "visible": false } ],
+                  [ "...", "READDIRPLUS", { "visible": false } ],
+                  [ "...", "FSSTAT", { "visible": false } ],
+                  [ "...", "FSINFO", { "visible": false } ],
+                  [ "...", "PATHCONF", { "visible": false } ],
+                  [ "...", "COMMIT", { "visible": false } ],
+                  [ "...", "OPEN", { "visible": false } ],
+                  [ "...", "OPEN_CONFIRM", { "visible": false } ],
+                  [ "...", "OPEN_NOATTR", { "visible": false } ],
+                  [ "...", "OPEN_DOWNGRADE", { "visible": false } ],
+                  [ "...", "CLOSE", { "visible": false } ],
+                  [ "...", "RENEW", { "visible": false } ],
+                  [ "...", "SETCLIENTID", { "visible": false } ],
+                  [ "...", "SETCLIENTID_CONFIRM", { "visible": false } ],
+                  [ "...", "LOCK", { "visible": false } ],
+                  [ "...", "LOCKT", { "visible": false } ],
+                  [ "...", "LOCKU", { "visible": false } ],
+                  [ "...", "LOOKUP_ROOT", { "visible": false } ],
+                  [ "...", "STATFS", { "visible": false } ],
+                  [ "...", "SERVER_CAPS", { "visible": false } ],
+                  [ "...", "DELEGRETURN", { "visible": false } ],
+                  [ "...", "GETACL", { "visible": false } ],
+                  [ "...", "SETACL", { "visible": false } ],
+                  [ "...", "FS_LOCATIONS", { "visible": false } ],
+                  [ "...", "RELEASE_LOCKOWNER", { "visible": false } ],
+                  [ "...", "SECINFO", { "visible": false } ],
+                  [ "...", "FSID_PRESENT", { "visible": false } ],
+                  [ "...", "EXCHANGE_ID", { "visible": false } ],
+                  [ "...", "CREATE_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_SESSION", { "visible": false } ],
+                  [ "...", "SEQUENCE", { "visible": false } ],
+                  [ "...", "GET_LEASE_TIME", { "visible": false } ],
+                  [ "...", "RECLAIM_COMPLETE", { "visible": false } ],
+                  [ "...", "LAYOUTGET", { "visible": false } ],
+                  [ "...", "GETDEVICEINFO", { "visible": false } ],
+                  [ "...", "LAYOUTCOMMIT", { "visible": false } ],
+                  [ "...", "LAYOUTRETURN", { "visible": false } ],
+                  [ "...", "SECINFO_NO_NAME", { "visible": false } ],
+                  [ "...", "TEST_STATEID", { "visible": false } ],
+                  [ "...", "FREE_STATEID", { "visible": false } ],
+                  [ "...", "GETDEVICELIST", { "visible": false } ],
+                  [ "...", "BIND_CONN_TO_SESSION", { "visible": false } ],
+                  [ "...", "DESTROY_CLIENTID", { "visible": false } ],
+                  [ "...", "SEEK", { "visible": false } ],
+                  [ "...", "ALLOCATE", { "visible": false } ],
+                  [ "...", "DEALLOCATE", { "visible": false } ],
+                  [ "...", "LAYOUTSTATS", { "visible": false } ],
+                  [ "...", "CLONE", { "visible": false } ],
+                  [ "...", "COPY", { "visible": false } ],
+                  [ "...", "COPY_NOTIFY", { "visible": false } ],
+                  [ "...", "GETXATTR", { "visible": false } ],
+                  [ "...", "LISTXATTRS", { "visible": false } ],
+                  [ "...", "LOOKUPP", { "visible": false } ],
+                  [ "...", "OFFLOAD_CANCEL", { "visible": false } ],
+                  [ "...", "READ_PLUS", { "visible": false } ],
+                  [ "...", "REMOVEXATTR", { "visible": false } ],
+                  [ "...", "SETXATTR", { "visible": false } ],
+                  [ "...", "LAYOUTERROR", { "visible": false } ],
+                  [ { "expression": "ABS(REMOVE_EMPTY(METRICS()))" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v3 Ops: Errors",
+              "title": "NFS Ops: Errors",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -1330,101 +1639,38 @@
       {
           "type": "text",
           "x": 0,
-          "y": 129,
+          "y": 130,
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## NFS v4 Operations\n\nThe following graphs show KNFSD -> Source Filer operations for NFS v4.",
+              "markdown": "## Netfs Statistics\n\nThe following graphs show NetfsLib statistics (/proc/fs/netfs/stats).",
               "background": "transparent"
           }
       },
       {
           "type": "metric",
           "x": 0,
-          "y": 131,
+          "y": 132,
           "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "COMMIT" ],
-                  [ "...", "OPEN" ],
-                  [ "...", "OPEN_CONFIRM" ],
-                  [ "...", "OPEN_NOATTR" ],
-                  [ "...", "OPEN_DOWNGRADE" ],
-                  [ "...", "CLOSE" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "RENEW" ],
-                  [ "...", "SETCLIENTID" ],
-                  [ "...", "SETCLIENTID_CONFIRM" ],
-                  [ "...", "LOCK" ],
-                  [ "...", "LOCKT" ],
-                  [ "...", "LOCKU" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "LOOKUP_ROOT" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "STATFS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "SERVER_CAPS" ],
-                  [ "...", "DELEGRETURN" ],
-                  [ "...", "GETACL" ],
-                  [ "...", "SETACL" ],
-                  [ "...", "FS_LOCATIONS" ],
-                  [ "...", "RELEASE_LOCKOWNER" ],
-                  [ "...", "SECINFO" ],
-                  [ "...", "FSID_PRESENT" ],
-                  [ "...", "EXCHANGE_ID" ],
-                  [ "...", "CREATE_SESSION" ],
-                  [ "...", "DESTROY_SESSION" ],
-                  [ "...", "SEQUENCE" ],
-                  [ "...", "GET_LEASE_TIME" ],
-                  [ "...", "RECLAIM_COMPLETE" ],
-                  [ "...", "LAYOUTGET" ],
-                  [ "...", "GETDEVICEINFO" ],
-                  [ "...", "LAYOUTCOMMIT" ],
-                  [ "...", "LAYOUTRETURN" ],
-                  [ "...", "SECINFO_NO_NAME" ],
-                  [ "...", "TEST_STATEID" ],
-                  [ "...", "FREE_STATEID" ],
-                  [ "...", "GETDEVICELIST" ],
-                  [ "...", "BIND_CONN_TO_SESSION" ],
-                  [ "...", "DESTROY_CLIENTID" ],
-                  [ "...", "SEEK" ],
-                  [ "...", "ALLOCATE" ],
-                  [ "...", "DEALLOCATE" ],
-                  [ "...", "LAYOUTSTATS" ],
-                  [ "...", "CLONE" ],
-                  [ "...", "COPY" ],
-                  [ "...", "COPY_NOTIFY" ],
-                  [ "...", "GETXATTR" ],
-                  [ "...", "LISTXATTRS" ],
-                  [ "...", "LOOKUPP" ],
-                  [ "...", "OFFLOAD_CANCEL" ],
-                  [ "...", "READ_PLUS" ],
-                  [ "...", "REMOVEXATTR" ],
-                  [ "...", "SETXATTR" ],
-                  [ "...", "LAYOUTERROR" ]
+                  [ "knfsd/metrics", "knfsd/netfs/reads/direct", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DR: dio_read" } ],
+                  [ ".", "knfsd/netfs/reads/readahead", ".", ".", ".", ".", { "label": "RA: readahead" } ],
+                  [ ".", "knfsd/netfs/reads/folio", ".", ".", ".", ".", { "label": "RF: read_folio" } ],
+                  [ ".", "knfsd/netfs/reads/single", ".", ".", ".", ".", { "label": "RS: read_single" } ],
+                  [ ".", "knfsd/netfs/reads/write_begin", ".", ".", ".", ".", { "label": "WB: write_begin" } ],
+                  [ ".", "knfsd/netfs/reads/write_zskip", ".", ".", ".", ".", { "label": "WBZ: write_zskip" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v4 Ops: Sent Bytes",
-              "period": 60,
+              "title": "NetfsLib: Reads",
+              "period": 30,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "label": "Bytes",
+                      "label": "Count",
                       "showUnits": false
                   }
               }
@@ -1433,90 +1679,26 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 131,
+          "y": 132,
           "width": 12,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "COMMIT" ],
-                  [ "...", "OPEN" ],
-                  [ "...", "OPEN_CONFIRM" ],
-                  [ "...", "OPEN_NOATTR" ],
-                  [ "...", "OPEN_DOWNGRADE" ],
-                  [ "...", "CLOSE" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "RENEW" ],
-                  [ "...", "SETCLIENTID" ],
-                  [ "...", "SETCLIENTID_CONFIRM" ],
-                  [ "...", "LOCK" ],
-                  [ "...", "LOCKT" ],
-                  [ "...", "LOCKU" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "LOOKUP_ROOT" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "STATFS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "SERVER_CAPS" ],
-                  [ "...", "DELEGRETURN" ],
-                  [ "...", "GETACL" ],
-                  [ "...", "SETACL" ],
-                  [ "...", "FS_LOCATIONS" ],
-                  [ "...", "RELEASE_LOCKOWNER" ],
-                  [ "...", "SECINFO" ],
-                  [ "...", "FSID_PRESENT" ],
-                  [ "...", "EXCHANGE_ID" ],
-                  [ "...", "CREATE_SESSION" ],
-                  [ "...", "DESTROY_SESSION" ],
-                  [ "...", "SEQUENCE" ],
-                  [ "...", "GET_LEASE_TIME" ],
-                  [ "...", "RECLAIM_COMPLETE" ],
-                  [ "...", "LAYOUTGET" ],
-                  [ "...", "GETDEVICEINFO" ],
-                  [ "...", "LAYOUTCOMMIT" ],
-                  [ "...", "LAYOUTRETURN" ],
-                  [ "...", "SECINFO_NO_NAME" ],
-                  [ "...", "TEST_STATEID" ],
-                  [ "...", "FREE_STATEID" ],
-                  [ "...", "GETDEVICELIST" ],
-                  [ "...", "BIND_CONN_TO_SESSION" ],
-                  [ "...", "DESTROY_CLIENTID" ],
-                  [ "...", "SEEK" ],
-                  [ "...", "ALLOCATE" ],
-                  [ "...", "DEALLOCATE" ],
-                  [ "...", "LAYOUTSTATS" ],
-                  [ "...", "CLONE" ],
-                  [ "...", "COPY" ],
-                  [ "...", "COPY_NOTIFY" ],
-                  [ "...", "GETXATTR" ],
-                  [ "...", "LISTXATTRS" ],
-                  [ "...", "LOOKUPP" ],
-                  [ "...", "OFFLOAD_CANCEL" ],
-                  [ "...", "READ_PLUS" ],
-                  [ "...", "REMOVEXATTR" ],
-                  [ "...", "SETXATTR" ],
-                  [ "...", "LAYOUTERROR" ]
+                  [ "knfsd/metrics", "knfsd/netfs/writes/buffered", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "BW: buffered_write" } ],
+                  [ ".", "knfsd/netfs/writes/writethrough", ".", ".", ".", ".", { "label": "WT: writethrough" } ],
+                  [ ".", "knfsd/netfs/writes/direct", ".", ".", ".", ".", { "label": "DW: dio_write" } ],
+                  [ ".", "knfsd/netfs/writes/pages", ".", ".", ".", ".", { "label": "WP: writepages" } ],
+                  [ ".", "knfsd/netfs/writes/copy_to_cache", ".", ".", ".", ".", { "label": "2C: copy_to_cache" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v4 Ops: Received Bytes",
-              "period": 60,
+              "title": "NetfsLib: Writes",
+              "period": 30,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "label": "Bytes",
+                      "label": "Count",
                       "showUnits": false
                   }
               }
@@ -1525,275 +1707,209 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 139,
-          "width": 8,
-          "height": 11,
+          "y": 140,
+          "width": 6,
+          "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "COMMIT" ],
-                  [ "...", "OPEN" ],
-                  [ "...", "OPEN_CONFIRM" ],
-                  [ "...", "OPEN_NOATTR" ],
-                  [ "...", "OPEN_DOWNGRADE" ],
-                  [ "...", "CLOSE" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "RENEW" ],
-                  [ "...", "SETCLIENTID" ],
-                  [ "...", "SETCLIENTID_CONFIRM" ],
-                  [ "...", "LOCK" ],
-                  [ "...", "LOCKT" ],
-                  [ "...", "LOCKU" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "LOOKUP_ROOT" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "STATFS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "SERVER_CAPS" ],
-                  [ "...", "DELEGRETURN" ],
-                  [ "...", "GETACL" ],
-                  [ "...", "SETACL" ],
-                  [ "...", "FS_LOCATIONS" ],
-                  [ "...", "RELEASE_LOCKOWNER" ],
-                  [ "...", "SECINFO" ],
-                  [ "...", "FSID_PRESENT" ],
-                  [ "...", "EXCHANGE_ID" ],
-                  [ "...", "CREATE_SESSION" ],
-                  [ "...", "DESTROY_SESSION" ],
-                  [ "...", "SEQUENCE" ],
-                  [ "...", "GET_LEASE_TIME" ],
-                  [ "...", "RECLAIM_COMPLETE" ],
-                  [ "...", "LAYOUTGET" ],
-                  [ "...", "GETDEVICEINFO" ],
-                  [ "...", "LAYOUTCOMMIT" ],
-                  [ "...", "LAYOUTRETURN" ],
-                  [ "...", "SECINFO_NO_NAME" ],
-                  [ "...", "TEST_STATEID" ],
-                  [ "...", "FREE_STATEID" ],
-                  [ "...", "GETDEVICELIST" ],
-                  [ "...", "BIND_CONN_TO_SESSION" ],
-                  [ "...", "DESTROY_CLIENTID" ],
-                  [ "...", "SEEK" ],
-                  [ "...", "ALLOCATE" ],
-                  [ "...", "DEALLOCATE" ],
-                  [ "...", "LAYOUTSTATS" ],
-                  [ "...", "CLONE" ],
-                  [ "...", "COPY" ],
-                  [ "...", "COPY_NOTIFY" ],
-                  [ "...", "GETXATTR" ],
-                  [ "...", "LISTXATTRS" ],
-                  [ "...", "LOOKUPP" ],
-                  [ "...", "OFFLOAD_CANCEL" ],
-                  [ "...", "READ_PLUS" ],
-                  [ "...", "REMOVEXATTR" ],
-                  [ "...", "SETXATTR" ],
-                  [ "...", "LAYOUTERROR" ]
+                [ "knfsd/metrics", "knfsd/netfs/download/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DL: download" } ],
+                [ ".", "knfsd/netfs/download/done", ".", ".", ".", ".", { "label": "ds: download_done" } ],
+                [ ".", "knfsd/netfs/download/failed", ".", ".", ".", ".", { "label": "df: download_failed" } ],
+                [ ".", "knfsd/netfs/download/instead", ".", ".", ".", ".", { "label": "di: download_instead" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v4 Ops: Requests",
-              "period": 60,
+              "title": "NetfsLib: DownOps",
+              "period": 30,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Count"
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
       },
       {
           "type": "metric",
-          "x": 8,
-          "y": 139,
-          "width": 8,
-          "height": 11,
+          "x": 6,
+          "y": 140,
+          "width": 6,
+          "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "COMMIT" ],
-                  [ "...", "OPEN" ],
-                  [ "...", "OPEN_CONFIRM" ],
-                  [ "...", "OPEN_NOATTR" ],
-                  [ "...", "OPEN_DOWNGRADE" ],
-                  [ "...", "CLOSE" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "RENEW" ],
-                  [ "...", "SETCLIENTID" ],
-                  [ "...", "SETCLIENTID_CONFIRM" ],
-                  [ "...", "LOCK" ],
-                  [ "...", "LOCKT" ],
-                  [ "...", "LOCKU" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "LOOKUP_ROOT" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "STATFS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "SERVER_CAPS" ],
-                  [ "...", "DELEGRETURN" ],
-                  [ "...", "GETACL" ],
-                  [ "...", "SETACL" ],
-                  [ "...", "FS_LOCATIONS" ],
-                  [ "...", "RELEASE_LOCKOWNER" ],
-                  [ "...", "SECINFO" ],
-                  [ "...", "FSID_PRESENT" ],
-                  [ "...", "EXCHANGE_ID" ],
-                  [ "...", "CREATE_SESSION" ],
-                  [ "...", "DESTROY_SESSION" ],
-                  [ "...", "SEQUENCE" ],
-                  [ "...", "GET_LEASE_TIME" ],
-                  [ "...", "RECLAIM_COMPLETE" ],
-                  [ "...", "LAYOUTGET" ],
-                  [ "...", "GETDEVICEINFO" ],
-                  [ "...", "LAYOUTCOMMIT" ],
-                  [ "...", "LAYOUTRETURN" ],
-                  [ "...", "SECINFO_NO_NAME" ],
-                  [ "...", "TEST_STATEID" ],
-                  [ "...", "FREE_STATEID" ],
-                  [ "...", "GETDEVICELIST" ],
-                  [ "...", "BIND_CONN_TO_SESSION" ],
-                  [ "...", "DESTROY_CLIENTID" ],
-                  [ "...", "SEEK" ],
-                  [ "...", "ALLOCATE" ],
-                  [ "...", "DEALLOCATE" ],
-                  [ "...", "LAYOUTSTATS" ],
-                  [ "...", "CLONE" ],
-                  [ "...", "COPY" ],
-                  [ "...", "COPY_NOTIFY" ],
-                  [ "...", "GETXATTR" ],
-                  [ "...", "LISTXATTRS" ],
-                  [ "...", "LOOKUPP" ],
-                  [ "...", "OFFLOAD_CANCEL" ],
-                  [ "...", "READ_PLUS" ],
-                  [ "...", "REMOVEXATTR" ],
-                  [ "...", "SETXATTR" ],
-                  [ "...", "LAYOUTERROR" ]
+                [ "knfsd/metrics", "knfsd/netfs/cache_read/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "RD: read" } ],
+                [ ".", "knfsd/netfs/cache_read/done", ".", ".", ".", ".", { "label": "rs: read_done" } ],
+                [ ".", "knfsd/netfs/cache_read/failed", ".", ".", ".", ".", { "label": "rf: read_failed" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v4 Ops: Major Timeouts",
-              "period": 60,
+              "title": "NetfsLib: CaRdOps",
+              "period": 30,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Count"
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
       },
       {
           "type": "metric",
-          "x": 16,
-          "y": 139,
-          "width": 8,
-          "height": 11,
+          "x": 12,
+          "y": 140,
+          "width": 6,
+          "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SERVER_FILTER", "operation", "NULL" ],
-                  [ "...", "READ" ],
-                  [ "...", "WRITE" ],
-                  [ "...", "COMMIT" ],
-                  [ "...", "OPEN" ],
-                  [ "...", "OPEN_CONFIRM" ],
-                  [ "...", "OPEN_NOATTR" ],
-                  [ "...", "OPEN_DOWNGRADE" ],
-                  [ "...", "CLOSE" ],
-                  [ "...", "SETATTR" ],
-                  [ "...", "FSINFO" ],
-                  [ "...", "RENEW" ],
-                  [ "...", "SETCLIENTID" ],
-                  [ "...", "SETCLIENTID_CONFIRM" ],
-                  [ "...", "LOCK" ],
-                  [ "...", "LOCKT" ],
-                  [ "...", "LOCKU" ],
-                  [ "...", "ACCESS" ],
-                  [ "...", "GETATTR" ],
-                  [ "...", "LOOKUP" ],
-                  [ "...", "LOOKUP_ROOT" ],
-                  [ "...", "REMOVE" ],
-                  [ "...", "RENAME" ],
-                  [ "...", "LINK" ],
-                  [ "...", "SYMLINK" ],
-                  [ "...", "CREATE" ],
-                  [ "...", "PATHCONF" ],
-                  [ "...", "STATFS" ],
-                  [ "...", "READLINK" ],
-                  [ "...", "READDIR" ],
-                  [ "...", "SERVER_CAPS" ],
-                  [ "...", "DELEGRETURN" ],
-                  [ "...", "GETACL" ],
-                  [ "...", "SETACL" ],
-                  [ "...", "FS_LOCATIONS" ],
-                  [ "...", "RELEASE_LOCKOWNER" ],
-                  [ "...", "SECINFO" ],
-                  [ "...", "FSID_PRESENT" ],
-                  [ "...", "EXCHANGE_ID" ],
-                  [ "...", "CREATE_SESSION" ],
-                  [ "...", "DESTROY_SESSION" ],
-                  [ "...", "SEQUENCE" ],
-                  [ "...", "GET_LEASE_TIME" ],
-                  [ "...", "RECLAIM_COMPLETE" ],
-                  [ "...", "LAYOUTGET" ],
-                  [ "...", "GETDEVICEINFO" ],
-                  [ "...", "LAYOUTCOMMIT" ],
-                  [ "...", "LAYOUTRETURN" ],
-                  [ "...", "SECINFO_NO_NAME" ],
-                  [ "...", "TEST_STATEID" ],
-                  [ "...", "FREE_STATEID" ],
-                  [ "...", "GETDEVICELIST" ],
-                  [ "...", "BIND_CONN_TO_SESSION" ],
-                  [ "...", "DESTROY_CLIENTID" ],
-                  [ "...", "SEEK" ],
-                  [ "...", "ALLOCATE" ],
-                  [ "...", "DEALLOCATE" ],
-                  [ "...", "LAYOUTSTATS" ],
-                  [ "...", "CLONE" ],
-                  [ "...", "COPY" ],
-                  [ "...", "COPY_NOTIFY" ],
-                  [ "...", "GETXATTR" ],
-                  [ "...", "LISTXATTRS" ],
-                  [ "...", "LOOKUPP" ],
-                  [ "...", "OFFLOAD_CANCEL" ],
-                  [ "...", "READ_PLUS" ],
-                  [ "...", "REMOVEXATTR" ],
-                  [ "...", "SETXATTR" ],
-                  [ "...", "LAYOUTERROR" ]
+                [ "knfsd/metrics", "knfsd/netfs/upload/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "UL: upload" } ],
+                [ ".", "knfsd/netfs/upload/done", ".", ".", ".", ".", { "label": "us: upload_done" } ],
+                [ ".", "knfsd/netfs/upload/failed", ".", ".", ".", ".", { "label": "uf: upload_failed" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "NFS v4 Ops: Errors",
-              "period": 60,
+              "title": "NetfsLib: UpldOps",
+              "period": 30,
               "stat": "Sum",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Count"
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 140,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/netfs/cache_write/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "WR: write" } ],
+                [ ".", "knfsd/netfs/cache_write/done", ".", ".", ".", ".", { "label": "ws: write_done" } ],
+                [ ".", "knfsd/netfs/cache_write/failed", ".", ".", ".", ".", { "label": "wf: write_failed" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NetfsLib: CaWrOps",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+        "type": "metric",
+        "x": 0,
+        "y": 148,
+        "width": 6,
+        "height": 8,
+        "properties": {
+            "metrics": [
+              [ "knfsd/metrics", "knfsd/netfs/zero_ops/zero", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "ZR: zero" } ],
+              [ ".", "knfsd/netfs/zero_ops/short", ".", ".", ".", ".", { "label": "sh: short_read" } ],
+              [ ".", "knfsd/netfs/zero_ops/skip", ".", ".", ".", ".", { "label": "sk: write_zskip" } ]
+            ],
+            "view": "timeSeries",
+            "stacked": false,
+            "region": "${region_filter}",
+            "title": "NetfsLib: ZeroOps",
+            "period": 30,
+            "stat": "Sum",
+            "yAxis": {
+                "left": {
+                    "label": "Count",
+                    "showUnits": false
+                }
+            }
+        }
+      },
+      {
+          "type": "metric",
+          "x": 6,
+          "y": 148,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/netfs/retries/read_req", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rq: read_req" } ],
+                [ ".", "knfsd/netfs/retries/read_subreq", ".", ".", ".", ".", { "label": "rs: read_subreq" } ],
+                [ ".", "knfsd/netfs/retries/write_req", ".", ".", ".", ".", { "label": "wq: write_req" } ],
+                [ ".", "knfsd/netfs/retries/write_subreq", ".", ".", ".", ".", { "label": "ws: write_subreq" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NetfsLib: Retries",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 148,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/netfs/objects/read_reqs", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rr: read_req" } ],
+                [ ".", "knfsd/netfs/objects/subreqs", ".", ".", ".", ".", { "label": "sr: subreq" } ],
+                [ ".", "knfsd/netfs/objects/folio_queue", ".", ".", ".", ".", { "label": "foq: folio_queue" } ],
+                [ ".", "knfsd/netfs/objects/write_conflicts", ".", ".", ".", ".", { "label": "wsc: write_stream_conflicts" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NetfsLib: Objs",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 148,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/netfs/wblock/skip", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "skip: wb_lock_skip" } ],
+                [ ".", "knfsd/netfs/wblock/wait", ".", ".", ".", ".", { "label": "wait: wb_lock_wait" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "NetfsLib: WbLock",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
@@ -1801,7 +1917,226 @@
       {
           "type": "text",
           "x": 0,
-          "y": 150,
+          "y": 156,
+          "width": 24,
+          "height": 2,
+          "properties": {
+              "markdown": "## FS-Cache Statistics\n\nThe following graphs show FS-Cache statistics (/proc/fs/fscache/stats).",
+              "background": "transparent"
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 158,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/cookies/data", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: data" } ],
+                [ ".", "knfsd/fscache/cookies/volume", ".", ".", ".", ".", { "label": "v: volume" } ],
+                [ ".", "knfsd/fscache/cookies/volume_collisions", ".", ".", ".", ".", { "label": "vcol: volume_collisions" } ],
+                [ ".", "knfsd/fscache/cookies/volume_oom", ".", ".", ".", ".", { "label": "voom: volume_oom" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Cookies",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 6,
+          "y": 158,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/acquire/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: acquire_requests" } ],
+                [ ".", "knfsd/fscache/acquire/ok", ".", ".", ".", ".", { "label": "ok: acquire_ok" } ],
+                [ ".", "knfsd/fscache/acquire/oom", ".", ".", ".", ".", { "label": "oom: acquire_oom" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Acquire",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 158,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/lru/count", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: lru_count" } ],
+                [ ".", "knfsd/fscache/lru/expired", ".", ".", ".", ".", { "label": "exp: lru_expired" } ],
+                [ ".", "knfsd/fscache/lru/removed", ".", ".", ".", ".", { "label": "rmv: lru_removed" } ],
+                [ ".", "knfsd/fscache/lru/dropped", ".", ".", ".", ".", { "label": "drp: lru_dropped" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: LRU",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 158,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/invalidations", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: invalidations" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Invals",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 166,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/updates/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: update_requests" } ],
+                [ ".", "knfsd/fscache/updates/resize", ".", ".", ".", ".", { "label": "rsz: resize_requests" } ],
+                [ ".", "knfsd/fscache/updates/resize_skipped", ".", ".", ".", ".", { "label": "rsn: skipped_resize_requests" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Updates",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 6,
+          "y": 166,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/relinquish/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: relinquish_requests" } ],
+                [ ".", "knfsd/fscache/relinquish/retire", ".", ".", ".", ".", { "label": "rtr: relinquish_retire" } ],
+                [ ".", "knfsd/fscache/relinquish/drop", ".", ".", ".", ".", { "label": "drop: relinquish_drop" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Relinqs",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 166,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/nospace/write", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "nwr: write_requests" } ],
+                [ ".", "knfsd/fscache/nospace/create", ".", ".", ".", ".", { "label": "ncr: create_requests" } ],
+                [ ".", "knfsd/fscache/nospace/cull", ".", ".", ".", ".", { "label": "cull: culled_objects" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: NoSpace",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 166,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                [ "knfsd/metrics", "knfsd/fscache/io/read", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rd: read_ops" } ],
+                [ ".", "knfsd/fscache/io/write", ".", ".", ".", ".", { "label": "wr: write_ops" } ],
+                [ ".", "knfsd/fscache/io/misfit", ".", ".", ".", ".", { "label": "mis: dio_misfit_ops" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: IO",
+              "period": 30,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "text",
+          "x": 0,
+          "y": 174,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1812,7 +2147,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 152,
+          "y": 176,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1837,7 +2172,7 @@
       {
           "type": "metric",
           "x": 5,
-          "y": 152,
+          "y": 176,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1862,7 +2197,7 @@
       {
           "type": "metric",
           "x": 10,
-          "y": 152,
+          "y": 176,
           "width": 4,
           "height": 8,
           "properties": {
@@ -1886,7 +2221,7 @@
       {
           "type": "metric",
           "x": 14,
-          "y": 152,
+          "y": 176,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1913,7 +2248,7 @@
       {
           "type": "metric",
           "x": 19,
-          "y": 152,
+          "y": 176,
           "width": 5,
           "height": 8,
           "properties": {
@@ -1938,7 +2273,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 160,
+          "y": 184,
           "width": 24,
           "height": 2,
           "properties": {
@@ -1949,7 +2284,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 162,
+          "y": 186,
           "width": 6,
           "height": 8,
           "properties": {
@@ -1985,7 +2320,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 162,
+          "y": 186,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2012,7 +2347,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 162,
+          "y": 186,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2048,7 +2383,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 162,
+          "y": 186,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2073,7 +2408,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 170,
+          "y": 194,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2112,7 +2447,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 170,
+          "y": 194,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2140,7 +2475,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 170,
+          "y": 194,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2166,7 +2501,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 170,
+          "y": 194,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2194,7 +2529,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 178,
+          "y": 202,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2205,7 +2540,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 180,
+          "y": 204,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2237,7 +2572,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 180,
+          "y": 204,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2269,7 +2604,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 180,
+          "y": 204,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2298,7 +2633,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 180,
+          "y": 204,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2327,7 +2662,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 188,
+          "y": 212,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2356,7 +2691,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 188,
+          "y": 212,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2385,7 +2720,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 188,
+          "y": 212,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2414,7 +2749,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 196,
+          "y": 220,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2425,7 +2760,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 198,
+          "y": 222,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2451,7 +2786,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 198,
+          "y": 222,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2469,7 +2804,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 198,
+          "y": 222,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2493,7 +2828,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 206,
+          "y": 230,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2519,7 +2854,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 206,
+          "y": 230,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2563,7 +2898,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 206,
+          "y": 230,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2602,7 +2937,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 206,
+          "y": 230,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2642,7 +2977,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 214,
+          "y": 238,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2661,7 +2996,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 214,
+          "y": 238,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2680,7 +3015,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 214,
+          "y": 238,
           "width": 8,
           "height": 8,
           "properties": {

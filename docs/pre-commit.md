@@ -83,13 +83,13 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 ### Infrastructure as Code
 
-| Command           | Aliases     | Purpose                    | Tool                                                  | Configuration                   | Reference                                                                                                |
-|-------------------|-------------|----------------------------|-------------------------------------------------------|---------------------------------|----------------------------------------------------------------------------------------------------------|
-| `make packer-fmt` | `packer`    | Format Packer HCL files    | [Packer](https://www.packer.io/)                      | Built-in formatter              | [Packer fmt Command](https://developer.hashicorp.com/packer/docs/commands/fmt)                           |
-| `make packer-val` | `packer`    | Validate Packer templates  | [Packer](https://www.packer.io/)                      | Built-in validator              | [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)                 |
-| `make tf-fmt`     | `terraform` | Format Terraform files     | [Terraform](https://www.terraform.io/)                | Built-in formatter              | [Terraform fmt Command](https://developer.hashicorp.com/terraform/cli/commands/fmt)                      |
-| `make tf-lint`    | `terraform` | Lint Terraform code        | [TFLint](https://github.com/terraform-linters/tflint) | [`.tflint.hcl`](../.tflint.hcl) | [TFLint Documentation](https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/usage.md) |
-| `make tf-val`     | `terraform` | Validate Terraform syntax  | [Terraform](https://www.terraform.io/)                | Built-in validator              | [Terraform validate Command](https://developer.hashicorp.com/terraform/cli/commands/validate)            |
+| Command           | Aliases     | Purpose                    | Tool                                                  | Configuration                   | Reference                                                                                     |
+|-------------------|-------------|----------------------------|-------------------------------------------------------|---------------------------------|-----------------------------------------------------------------------------------------------|
+| `make packer-fmt` | `packer`    | Format Packer HCL files    | [Packer](https://www.packer.io/)                      | Built-in formatter              | [Packer fmt Command](https://developer.hashicorp.com/packer/docs/commands/fmt)                |
+| `make packer-val` | `packer`    | Validate Packer templates  | [Packer](https://www.packer.io/)                      | Built-in validator              | [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)      |
+| `make tf-fmt`     | `terraform` | Format Terraform files     | [Terraform](https://www.terraform.io/)                | Built-in formatter              | [Terraform fmt Command](https://developer.hashicorp.com/terraform/cli/commands/fmt)           |
+| `make tf-lint`    | `terraform` | Lint Terraform code        | [TFLint](https://github.com/terraform-linters/tflint) | [`.tflint.hcl`](../.tflint.hcl) | [TFLint Documentation](https://github.com/terraform-linters/tflint/blob/master/README.md)     |
+| `make tf-val`     | `terraform` | Validate Terraform syntax  | [Terraform](https://www.terraform.io/)                | Built-in validator              | [Terraform validate Command](https://developer.hashicorp.com/terraform/cli/commands/validate) |
 
 ### Testing
 
@@ -110,10 +110,10 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 ### License Scanning
 
-| Command               | Purpose                        | Tool                                           | Files Created                                     | Reference                                                                    |
-|-----------------------|--------------------------------|------------------------------------------------|---------------------------------------------------|------------------------------------------------------------------------------|
-| `make lic-scan`       | Scan dependencies for licenses | [Trivy](https://github.com/aquasecurity/trivy) | [`THIRD-PARTY-LICENSES`](../THIRD-PARTY-LICENSES) | [Trivy License Scanning](https://trivy.dev/docs/coverage/supported/license/) |
-| `make lic-scan-ignore`| License scan with ignore rules | [Trivy](https://github.com/aquasecurity/trivy) | [`THIRD-PARTY-LICENSES`](../THIRD-PARTY-LICENSES) | [Trivy License Scanning](https://trivy.dev/docs/coverage/supported/license/) |
+| Command               | Purpose                        | Tool                                           | Files Created                                     | Reference                                                                      |
+|-----------------------|--------------------------------|------------------------------------------------|---------------------------------------------------|--------------------------------------------------------------------------------|
+| `make lic-scan`       | Scan dependencies for licenses | [Trivy](https://github.com/aquasecurity/trivy) | [`THIRD-PARTY-LICENSES`](../THIRD-PARTY-LICENSES) | [Trivy License Scanning](https://trivy.dev/docs/latest/guide/scanner/license/) |
+| `make lic-scan-ignore`| License scan with ignore rules | [Trivy](https://github.com/aquasecurity/trivy) | [`THIRD-PARTY-LICENSES`](../THIRD-PARTY-LICENSES) | [Trivy License Scanning](https://trivy.dev/docs/latest/guide/scanner/license/) |
 
 ### Go-specific Commands
 

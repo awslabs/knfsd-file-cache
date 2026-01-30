@@ -249,7 +249,6 @@ Bind mounts are not possible over SSH, so we localize the source-code (`git clon
       "EditorConfig.EditorConfig",
       "SirTori.indenticator",
       "Tyriar.sort-lines",
-      "ckolkman.vscode-postgres",
       "coolbear.systemd-unit-file",
       "donjayamanne.githistory",
       "golang.go",
@@ -260,7 +259,6 @@ Bind mounts are not possible over SSH, so we localize the source-code (`git clon
       "ms-azuretools.vscode-docker",
       "oderwat.indent-rainbow",
       "redhat.vscode-yaml",
-      "tfsec.tfsec",
       "hashicorp.hcl"
     ]
   }
