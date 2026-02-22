@@ -17,8 +17,7 @@ status:
 metrics:
   nfs.exports.total_operations:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Total number of NFS operations received from clients
     unit: "{operations}"
     sum:
@@ -28,8 +27,7 @@ metrics:
 
   nfs.exports.total_read_bytes:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Total bytes read by the NFS clients
     unit: By
     sum:
@@ -39,8 +37,7 @@ metrics:
 
   nfs.exports.total_write_bytes:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Total bytes wrote by the NFS clients
     unit: By
     sum:

@@ -80,7 +80,7 @@ function create_fs_cache() {
 	if ! has_fs $dev; then
 		echo "Creating filesystem on ${dev}..."
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${dev}
+		mkfs.xfs -f -L fscache -m reflink=0 ${dev}
 		echo "Finished formatting ${dev}"
 	else
 		echo "Filesystem already present on ${dev}; skipping mkfs"

@@ -9,6 +9,3 @@ cloudbuild.yaml
 /image/smoke-tests/README.md
 /testing/examples/README.md
 /testing/modules/cloudbuild/README.md
-/docs/tests/recovery-load-balancer.md
-/docs/tests/recovery-source.md
-/docs/tests/recovery-proxy.md

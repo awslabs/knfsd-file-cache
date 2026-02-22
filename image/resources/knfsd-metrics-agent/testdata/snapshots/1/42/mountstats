@@ -40,7 +40,7 @@ device /dev/loop3 mounted on /snap/lxd/21835 with fstype squashfs
 device tmpfs mounted on /run/snapd/ns with fstype tmpfs
 device nsfs mounted on /run/snapd/ns/lxd.mnt with fstype nsfs
 device /dev/loop5 mounted on /snap/google-cloud-sdk/216 with fstype squashfs
-device /dev/md127 mounted on /var/cache/fscache with fstype ext4
+device /dev/md127 mounted on /var/cache/fscache with fstype xfs
 device 10.220.1.130:/files mounted on /files with fstype nfs statvers=1.1
 	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.220.1.130,mountvers=3,mountport=2050,mountproto=tcp,fsc,local_lock=none
 	age:	504359

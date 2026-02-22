@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.20"
+ARG VERSION="1.1.0-alpha.21"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -153,33 +153,35 @@ ARG KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.1.0
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.42.33
+ARG KNFSD_BOTO3_VERSION=1.42.54
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.497
+ARG KNFSD_CHECKOV_VERSION=3.2.505
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/go-delve/delve/tags
 ARG KNFSD_DLV_VERSION=1.26.0
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.6.0
+ARG KNFSD_EDITORCONFIG_VERSION=3.6.1
 # https://github.com/golangci/golangci-lint/releases
-ARG KNFSD_GOLANGCI_LINT_VERSION=2.8.0
+ARG KNFSD_GOLANGCI_LINT_VERSION=2.10.1
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.25.6
+ARG KNFSD_GOLANG_VERSION=1.26.0
+# https://github.com/securego/gosec/releases
+ARG KNFSD_GOSEC_VERSION=2.23.0
 # https://pkg.go.dev/golang.org/x/tools/gopls
-ARG KNFSD_GOPLS_VERSION=0.21.0
+ARG KNFSD_GOPLS_VERSION=0.21.1
 # https://github.com/python/mypy/tags
 ARG KNFSD_MYPY_VERSION=1.19.1
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.14.3
+ARG KNFSD_PACKER_VERSION=1.15.0
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.5.1
 # https://pypi.org/project/psycopg/
-ARG KNFSD_PSYCOPG_VERSION=3.3.2
+ARG KNFSD_PSYCOPG_VERSION=3.3.3
 # https://github.com/pylint-dev/pylint/tags
-ARG KNFSD_PYLINT_VERSION=4.0.4
+ARG KNFSD_PYLINT_VERSION=4.0.5
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.149.0
+ARG KNFSD_SEMGREP_VERSION=1.152.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -187,15 +189,15 @@ ARG KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=0.98.0
+ARG KNFSD_TERRAGRUNT_VERSION=0.99.4
 # https://github.com/terraform-linters/tflint/releases
-ARG KNFSD_TFLINT_VERSION=0.60.0
+ARG KNFSD_TFLINT_VERSION=0.61.0
 # https://github.com/aquasecurity/tfsec/releases
 ARG KNFSD_TFSEC_VERSION=1.28.14
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.68.2
+ARG KNFSD_TRIVY_VERSION=0.69.1
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.9.26
+ARG KNFSD_UV_VERSION=0.10.4
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN set -eux \
@@ -227,6 +229,7 @@ RUN --mount=type=cache,id=knfsd-golangci-lint-cache,target=/home/${USERNAME}/.ca
 RUN go install golang.org/x/tools/gopls@v${KNFSD_GOPLS_VERSION}
 RUN go install github.com/go-delve/delve/cmd/dlv@v${KNFSD_DLV_VERSION}
 RUN go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION}
+RUN go install github.com/securego/gosec/v2/cmd/gosec@f3e2fac4d58b7eca54307cd40ce2a836a12e4d95
 RUN go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION}
 ENV PATH="$PATH:/home/${USERNAME}/go/bin"
 

@@ -68,6 +68,13 @@ variable "KNFSD_NODES" {
   default     = 1
 }
 
+variable "NUM_NFS_THREADS" {
+  description = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
+  type        = number
+  nullable    = false
+  default     = 128
+}
+
 variable "FSID_MODE" {
   description = "(Optional) How to assign FSIDs (File System Identifiers) to each export. The options are \"static\", \"local\", or \"external\". Default: \"external\"."
   type        = string
@@ -76,5 +83,27 @@ variable "FSID_MODE" {
   validation {
     condition     = contains(["static", "local", "external"], var.FSID_MODE)
     error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
+  }
+}
+
+variable "FSX_STORAGE_CAPACITY" {
+  description = "(Optional) The storage capacity of the FSx for OpenZFS source filer in GiB. Default: \"1024\"."
+  type        = number
+  nullable    = false
+  default     = 1024
+  validation {
+    condition     = var.FSX_STORAGE_CAPACITY >= 64 && var.FSX_STORAGE_CAPACITY <= 524288
+    error_message = "FSX_STORAGE_CAPACITY must be between 64 GiB and 524288 GiB."
+  }
+}
+
+variable "FSX_THROUGHPUT_CAPACITY" {
+  description = "(Optional) The throughput capacity of the FSx for OpenZFS source filer in MB/s. Default: \"512\"."
+  type        = number
+  nullable    = false
+  default     = 512
+  validation {
+    condition     = var.FSX_THROUGHPUT_CAPACITY >= 64 && var.FSX_THROUGHPUT_CAPACITY <= 4096
+    error_message = "FSX_THROUGHPUT_CAPACITY must be between 64 MB/s and 4096 MB/s."
   }
 }

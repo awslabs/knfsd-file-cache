@@ -27,7 +27,7 @@ type AWSSecret struct {
 }
 
 var secretData struct {
-	SecretString string `json:"secret"`
+	SecretString string `json:"secret"` // #nosec G117 -- field used to unmarshal AWS Secrets Manager response
 }
 
 func (s *AWSSecret) validate() error {

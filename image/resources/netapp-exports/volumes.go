@@ -17,7 +17,7 @@ type API struct {
 	Client   *http.Client
 	BaseURL  string
 	User     string
-	Password string
+	Password string // #nosec G117 -- credential field required for NetApp API auth
 }
 
 type VolumePathList struct {
@@ -60,7 +60,7 @@ func (api *API) FetchNextPage(url string) (result VolumePathList, err error) {
 	}
 	req.SetBasicAuth(api.User, api.Password)
 
-	response, err := api.Client.Do(req)
+	response, err := api.Client.Do(req) // #nosec G704 -- URL is from trusted configuration, not user input
 	if err != nil {
 		return
 	}

@@ -79,6 +79,7 @@ func (m *metricSlabDentryCacheActiveObjects) emit(metrics pmetric.MetricSlice) {
 
 func newMetricSlabDentryCacheActiveObjects(cfg MetricConfig) metricSlabDentryCacheActiveObjects {
 	m := metricSlabDentryCacheActiveObjects{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -128,6 +129,7 @@ func (m *metricSlabDentryCacheObjsize) emit(metrics pmetric.MetricSlice) {
 
 func newMetricSlabDentryCacheObjsize(cfg MetricConfig) metricSlabDentryCacheObjsize {
 	m := metricSlabDentryCacheObjsize{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -177,6 +179,7 @@ func (m *metricSlabNfsInodeCacheActiveObjects) emit(metrics pmetric.MetricSlice)
 
 func newMetricSlabNfsInodeCacheActiveObjects(cfg MetricConfig) metricSlabNfsInodeCacheActiveObjects {
 	m := metricSlabNfsInodeCacheActiveObjects{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -226,6 +229,7 @@ func (m *metricSlabNfsInodeCacheObjsize) emit(metrics pmetric.MetricSlice) {
 
 func newMetricSlabNfsInodeCacheObjsize(cfg MetricConfig) metricSlabNfsInodeCacheObjsize {
 	m := metricSlabNfsInodeCacheObjsize{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

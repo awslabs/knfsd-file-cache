@@ -38,7 +38,6 @@ To enable this pipeline, you should:
 
     | Variable Name (Key)         | Environment   | Visibility | Expanded | Description                                                                                                                                   |
     |-----------------------------|---------------|------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-    | `DOCKER_AUTH_CONFIG`        | All (default) | Masked     | Yes      | A JSON object containing the authentication configuration for the Docker registry to reduce throttling from Docker Hub, as of April 1st 2025. |
     | `PACKER_GITHUB_API_TOKEN`   | All (default) | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `RENOVATE_GITHUB_COM_TOKEN`).                 |
     | `RENOVATE_GITHUB_COM_TOKEN` | `renovate`    | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `PACKER_GITHUB_API_TOKEN`).                   |
     | `RENOVATE_TOKEN`            | `renovate`    | Masked     | Yes      | A GitLab PAT (personal access token) with access to the `knfsd-file-cache` repository. Insert the `RENOVATE_TOKEN` value from step 2 above.   |
@@ -46,7 +45,6 @@ To enable this pipeline, you should:
 
     **URL Links:**
 
-    - [GitLab/Docker Auth Config](https://docs.gitlab.com/ci/docker/using_docker_images/#determine-your-docker_auth_config-data)
     - [Docker Hub Rate Limits](https://about.gitlab.com/blog/prepare-now-docker-hub-rate-limits-will-impact-gitlab-ci-cd/)
     - [GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
     - [GitLab PAT](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
@@ -357,6 +355,10 @@ The pipeline uses the [GitLab Container Registry](https://docs.gitlab.com/ee/use
 
 The pipeline extensively uses the [GitLab Dependency Proxy](https://docs.gitlab.com/ee/user/packages/dependency_proxy/) for all container image pulls:
 
+![GitLab CI Docker Hub Rate Limits](images/gitlab-ci-docker-hub-rate-limits.png)
+
+Ensure you configure GitLab Dependency Proxy in your GitLab group/project with [Docker Hub credentials](https://docs.gitlab.com/user/packages/dependency_proxy/#authenticate-with-docker-hub) to reduce throttling from [Docker Hub](https://about.gitlab.com/blog/prepare-now-docker-hub-rate-limits-will-impact-gitlab-ci-cd/). You can get your Docker Hub credentials from [Docker Hub](https://hub.docker.com/settings/security).
+
 ### Configuration
 
 - **Variable**: `CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX`
@@ -375,10 +377,10 @@ The pipeline extensively uses the [GitLab Dependency Proxy](https://docs.gitlab.
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.25.6
+image: golang:1.26.0
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.25.6
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.0
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

@@ -89,6 +89,7 @@ func (m *metricNfsPacketsArrived) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsPacketsArrived(cfg MetricConfig) metricNfsPacketsArrived {
 	m := metricNfsPacketsArrived{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -138,6 +139,7 @@ func (m *metricNfsPacketsDeferred) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsPacketsDeferred(cfg MetricConfig) metricNfsPacketsDeferred {
 	m := metricNfsPacketsDeferred{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -189,6 +191,7 @@ func (m *metricNfsSocketsEnqueued) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsSocketsEnqueued(cfg MetricConfig) metricNfsSocketsEnqueued {
 	m := metricNfsSocketsEnqueued{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -238,6 +241,7 @@ func (m *metricNfsThreads) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsThreads(cfg MetricConfig) metricNfsThreads {
 	m := metricNfsThreads{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -289,6 +293,7 @@ func (m *metricNfsThreadsTimedout) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsThreadsTimedout(cfg MetricConfig) metricNfsThreadsTimedout {
 	m := metricNfsThreadsTimedout{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -340,6 +345,7 @@ func (m *metricNfsThreadsWoken) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsThreadsWoken(cfg MetricConfig) metricNfsThreadsWoken {
 	m := metricNfsThreadsWoken{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

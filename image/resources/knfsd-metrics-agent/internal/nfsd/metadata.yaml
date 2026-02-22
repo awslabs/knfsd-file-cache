@@ -16,8 +16,7 @@ status:
 metrics:
   nfs.packets.arrived:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of NFS packets arrived
     unit: "{packets}"
     sum:
@@ -27,8 +26,7 @@ metrics:
 
   nfs.packets.deferred:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of NFS packets deferred
     unit: "{packets}"
     gauge:
@@ -36,8 +34,7 @@ metrics:
 
   nfs.sockets.enqueued:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of times an NFS transport is enqueued to wait for an NFS thread to service
     unit: "{count}"
     sum:
@@ -47,8 +44,7 @@ metrics:
 
   nfs.threads:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of current KNFSD server threads
     unit: "{threads}"
     gauge:
@@ -56,8 +52,7 @@ metrics:
 
   nfs.threads.timedout:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of times an NFS thread triggered an idle timeout
     unit: "{count}"
     sum:
@@ -67,8 +62,7 @@ metrics:
 
   nfs.threads.woken:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of times an idle NFS thread is woken to receive some data from an NFS transport
     unit: "{count}"
     sum:

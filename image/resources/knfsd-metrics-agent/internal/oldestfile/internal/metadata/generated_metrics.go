@@ -67,6 +67,7 @@ func (m *metricFscacheOldestFile) emit(metrics pmetric.MetricSlice) {
 
 func newMetricFscacheOldestFile(cfg MetricConfig) metricFscacheOldestFile {
 	m := metricFscacheOldestFile{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

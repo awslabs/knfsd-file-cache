@@ -46,7 +46,7 @@ func RunTests(m *testing.M, t testing.TestingT) (code int) {
 
 func TestBasicExample(t *testing.T) {
 	t.Parallel()
-	runExampleTest(t, "basic", func(o testing.Outputs) {
+	runExampleTest(t, "nfs-basic", func(o testing.Outputs) {
 		project := o.Project(t)
 		zone := o.Zone(t)
 		instanceGroupName := o.ProxyMIG(t)
@@ -62,7 +62,7 @@ func TestBasicExample(t *testing.T) {
 
 func TestStandardExample(t *testing.T) {
 	t.Parallel()
-	runExampleTest(t, "standard", func(o testing.Outputs) {
+	runExampleTest(t, "nfs-standard", func(o testing.Outputs) {
 		project := o.Project(t)
 		zone := o.Zone(t)
 		instanceGroupName := o.ProxyMIG(t)

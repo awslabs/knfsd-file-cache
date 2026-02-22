@@ -34,10 +34,12 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
 * `db_address` - The hostname of the RDS DB instance.
 
+* `db_iam_policy` - The ARN of the IAM policy for `rds-db:connect` database access.
+
+* `db_name` - The name of the PostgreSQL database.
+
 * `db_port` - The port of the RDS DB instance.
 
 * `db_user` - The DB username to access the PostgreSQL database.
-
-* `db_name` - The name of the PostgreSQL database.
 
 * `master_username` - The master username for the PostgreSQL database. Password is stored in AWS Secrets Manager.

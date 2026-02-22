@@ -37,17 +37,17 @@ cd knfsd-file-cache/image
 touch image.pkrvars.hcl
 ```
 
-Enter at least the following 2 required variables:
+Enter at least the following required variable (additional `SUBNET` variable is required only if using a non-default VPC):
 
 #### Required
 
 > NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
 
 * `REGION` (string) - The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. No default.
-* `SUBNET` (string) - The subnet in which to launch the EC2 instance to create the AMI. Example: `"subnet-0f90440e0e47728b8"`. No default.
 
 #### Optional
 
+* `SUBNET` (string) - The subnet in which to launch the EC2 instance to create the AMI. This is required if using a non-default VPC. Example: `"subnet-0f90440e0e47728b8"`. Default: `""`.
 * `ASSOCIATE_PUBLIC_IP_ADDRESS` (bool) - If using a non-default VPC, whether to forcefully associate a public IP address with the EC2 instance. Default: `null`.
 * `SECURITY_GROUP_ID` (string) - The ID of an existing, single security group to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `""`.
 * `SECURITY_GROUP_IDS` (list(string)) - A list of security group IDs to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `[]`.
@@ -249,10 +249,10 @@ packer build -var-file image/image.pkrvars.hcl image
 
 ```bash
 amazon-ebs.nfs-proxy: ---- SYSTEM INFO
-amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.3 LTS
+amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.19.0-rc7-knfsd
+amazon-ebs.nfs-proxy: Kernel:       6.19.3-knfsd
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
@@ -310,7 +310,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.20"
+VERSION="1.1.0-alpha.21"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -470,10 +470,10 @@ A successful build will output something similar to the following:
 
 ```bash
 ---- SYSTEM INFO
-Description:  Ubuntu 24.04.3 LTS
+Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.19.0-rc7-knfsd
+Kernel:       6.19.3-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

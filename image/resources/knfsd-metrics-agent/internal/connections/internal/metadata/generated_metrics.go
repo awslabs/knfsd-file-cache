@@ -71,6 +71,7 @@ func (m *metricNfsClients) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsClients(cfg MetricConfig) metricNfsClients {
 	m := metricNfsClients{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -120,6 +121,7 @@ func (m *metricNfsConnections) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsConnections(cfg MetricConfig) metricNfsConnections {
 	m := metricNfsConnections{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

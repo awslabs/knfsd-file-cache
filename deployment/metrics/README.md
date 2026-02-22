@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.20"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.21"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -47,12 +47,12 @@ terraform apply
 
 | Output           | Description                                                        |
 | ---------------- | ------------------------------------------------------------------ |
-| `dashboard_name` | Name of the created CloudWatch dashboard                           |
 | `dashboard_arn`  | The Amazon Resource Name (ARN) of the created CloudWatch dashboard |
+| `dashboard_name` | Name of the created CloudWatch dashboard                           |
 
 ## Filtering
 
-The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `RDS DB Instance Identifier`, and `Source NFS Filer` name pattern.
+The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `RDS DB Instance Identifier`, `Source NFS Filer`, and `Output NFS Filer` name pattern.
 
 ### Filtering Strategy
 
@@ -60,6 +60,7 @@ The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `R
 * **INSTANCE_FILTER**: Instance-level granularity available in applicable CloudWatch widgets
 * **RDS_FILTER**: RDS DB Instance Identifier (if used)
 * **SOURCE_FILTER**: Source NFS Filer
+* **OUTPUT_FILTER**: Output NFS Filer (if different from source)
 
 ## Metrics Sources
 
@@ -80,11 +81,13 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `diskio_reads`                                      | Number of read operations completed                                 | Count        | 10s    |
 | `diskio_writes`                                     | Number of write operations completed                                | Count        | 10s    |
 | `diskio_io_time`                                    | Time spent processing I/O requests                                  | Milliseconds | 10s    |
-| `diskio_ebs_ec2_instance_performance_exceeded_iops` | Time EBS IOPS exceeded EC2 instance performance limits              | Milliseconds | 10s    |
-| `diskio_ebs_ec2_instance_performance_exceeded_tp`   | Time EBS throughput exceeded EC2 instance performance limits        | Milliseconds | 10s    |
+| `diskio_read_time`                                  | Time spent waiting for read operations on disk                      | Milliseconds | 10s    |
+| `diskio_write_time`                                 | Time spent waiting for write operations on disk                     | Milliseconds | 10s    |
+| `diskio_ebs_ec2_instance_performance_exceeded_iops` | Time EBS IOPS exceeded EC2 instance performance limits              | Microseconds | 10s    |
+| `diskio_ebs_ec2_instance_performance_exceeded_tp`   | Time EBS throughput exceeded EC2 instance performance limits        | Microseconds | 10s    |
 | `diskio_ebs_volume_queue_length`                    | Number of I/O operations queued for EBS volumes                     | Count        | 10s    |
-| `diskio_instance_store_performance_exceeded_iops`   | Time instance store IOPS exceeded performance limits                | Milliseconds | 10s    |
-| `diskio_instance_store_performance_exceeded_tp`     | Time instance store throughput exceeded performance limits          | Milliseconds | 10s    |
+| `diskio_instance_store_performance_exceeded_iops`   | Time instance store IOPS exceeded performance limits                | Microseconds | 10s    |
+| `diskio_instance_store_performance_exceeded_tp`     | Time instance store throughput exceeded performance limits          | Microseconds | 10s    |
 | `diskio_instance_store_volume_queue_length`         | Number of I/O operations queued for instance store volumes          | Count        | 10s    |
 | `ethtool_bw_in_allowance_exceeded`                  | Packets queued/dropped due to inbound bandwidth allowance exceeded  | Count        | 60s    |
 | `ethtool_bw_out_allowance_exceeded`                 | Packets queued/dropped due to outbound bandwidth allowance exceeded | Count        | 60s    |
@@ -317,8 +320,8 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 | Cluster Size                    | `AWS/AutoScaling.GroupInServiceInstances`                        | Number of active proxy instances in ASG                         | Maximum | 60s    | Active Instances |
 | FS-Cache Disk Used %            | `disk_used_percent` (path: `/var/cache/fscache`)                 | Percentage of FS-Cache disk space used                          | Maximum | 60s    | Percent %        |
 | FS-Cache Disk Free Space        | `disk_free` (path: `/var/cache/fscache`)                         | Free space available in FS-Cache                                | Minimum | 60s    | Size             |
-| FS-Cache Read Throughput        | `diskio_read_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`)  | Disk read throughput for cache storage                          | Sum     | 10s    | Bytes/Second     |
-| FS-Cache Write Throughput       | `diskio_write_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`) | Disk write throughput for cache storage                         | Sum     | 10s    | Bytes/Second     |
+| FS-Cache Read Throughput        | `diskio_read_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`)  | Disk read throughput for cache storage                          | Sum     | auto   | Bytes/Second     |
+| FS-Cache Write Throughput       | `diskio_write_bytes` (device: `nvme0n1` or `nvme1n1` or `md127`) | Disk write throughput for cache storage                         | Sum     | auto   | Bytes/Second     |
 | NFS Inode Cache Active Objects  | `knfsd/nfs_inode_cache_active_objects`                           | Number of cached NFS inodes                                     | Maximum | 60s    | Count            |
 | NFS Inode Cache Object Size     | `knfsd/nfs_inode_cache_objsize`                                  | Total size of NFS inode cache                                   | Maximum | 60s    | Size             |
 | NFS Dentry Cache Active Objects | `knfsd/dentry_cache_active_objects`                              | Number of cached directory entries                              | Maximum | 60s    | Count            |
@@ -328,38 +331,6 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 
 * FS-Cache Disk Used: 80% (brun/frun warning), 93% (bcull/fcull critical)
 
-### Netfs Statistics
-
-Performance metrics for NetfsLib operations.
-
-| Widget            | Metrics                     | Description                                    | Stat | Period | Label |
-|------------------ |-----------------------------|------------------------------------------------|------|--------|-------|
-| NetfsLib: Reads   | `knfsd/netfs/reads/*`       | Direct, readahead, folio, single read requests | Sum  | 30s    | Count |
-| NetfsLib: Writes  | `knfsd/netfs/writes/*`      | Buffered, writethrough, direct write requests  | Sum  | 30s    | Count |
-| NetfsLib: DownOps | `knfsd/netfs/download/*`    | Download requests, done, failed, instead       | Sum  | 30s    | Count |
-| NetfsLib: CaRdOps | `knfsd/netfs/cache_read/*`  | Cache read requests, done, failed              | Sum  | 30s    | Count |
-| NetfsLib: UpldOps | `knfsd/netfs/upload/*`      | Upload requests, done, failed                  | Sum  | 30s    | Count |
-| NetfsLib: CaWrOps | `knfsd/netfs/cache_write/*` | Cache write requests, done, failed             | Sum  | 30s    | Count |
-| NetfsLib: ZeroOps | `knfsd/netfs/zero_ops/*`    | Zero, short, skip operations                   | Sum  | 30s    | Count |
-| NetfsLib: Retries | `knfsd/netfs/retries/*`     | Read/write request and subrequest retries      | Sum  | 30s    | Count |
-| NetfsLib: Objs    | `knfsd/netfs/objects/*`     | Read reqs, subreqs, folio queue, conflicts     | Sum  | 30s    | Count |
-| NetfsLib: WbLock  | `knfsd/netfs/wblock/*`      | Writeback lock skips and waits                 | Sum  | 30s    | Count |
-
-### FS-Cache Statistics
-
-Performance metrics for FS-Cache operations.
-
-| Widget            | Metrics                       | Description                                         | Stat | Period | Label |
-|-------------------|-------------------------------|-----------------------------------------------------|------|--------|-------|
-| FS-Cache: Cookies | `knfsd/fscache/cookies/*`     | Data and volume cookies allocated, collisions, OOM  | Sum  | 30s    | Count |
-| FS-Cache: Acquire | `knfsd/fscache/acquire/*`     | Cookie acquire requests, succeeded, failed (ENOMEM) | Sum  | 30s    | Count |
-| FS-Cache: LRU     | `knfsd/fscache/lru/*`         | LRU count, expired, removed, dropped cookies        | Sum  | 30s    | Count |
-| FS-Cache: Invals  | `knfsd/fscache/invalidations` | Number of cache invalidations                       | Sum  | 30s    | Count |
-| FS-Cache: Updates | `knfsd/fscache/updates/*`     | Update requests, resize, resize skipped             | Sum  | 30s    | Count |
-| FS-Cache: Relinqs | `knfsd/fscache/relinquish/*`  | Relinquish requests, retire, drop                   | Sum  | 30s    | Count |
-| FS-Cache: NoSpace | `knfsd/fscache/nospace/*`     | Write/create refused (no space), objects culled     | Sum  | 30s    | Count |
-| FS-Cache: IO      | `knfsd/fscache/io/*`          | Cache read, write, misfit operations                | Sum  | 30s    | Count |
-
 ### NFS Server Metrics
 
 Performance metrics for the KNFSD server.
@@ -368,12 +339,12 @@ Performance metrics for the KNFSD server.
 | ------------------------------------------ | ---------------------------- | --------------------------------------------------------------------------------------------- | ------- | ------ | ----- |
 | Proxy NFS Connections [established/active] | `knfsd/nfs_connections`      | Number of active (ESTAB) NFS connections to the proxy (1-16 per client, used for autoscaling) | Maximum | 60s    | Count |
 | Proxy NFS Clients [connected/unique]       | `knfsd/nfs_clients`          | Number of unique NFS client IP addresses connected to the proxy (in any connected state)      | Maximum | 60s    | Count |
-| NFS Packets Arrived                        | `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived to the proxy                                                    | Sum     | 30s    | Count |
-| NFS Packets Deferred                       | `knfsd/nfs_packets_deferred` | Number of NFS packets deferred by the proxy                                                   | Maximum | 30s    | Count |
-| NFS Sockets Enqueued                       | `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service             | Sum     | 30s    | Count |
-| NFS Threads                                | `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                        | Maximum | 30s    | Count |
-| NFS Threads Timed Out                      | `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                       | Sum     | 30s    | Count |
-| NFS Threads Woken                          | `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport        | Sum     | 30s    | Count |
+| NFS Packets Arrived                        | `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived to the proxy                                                    | Sum     | auto   | Count |
+| NFS Packets Deferred                       | `knfsd/nfs_packets_deferred` | Number of NFS packets deferred by the proxy                                                   | Maximum | auto   | Count |
+| NFS Sockets Enqueued                       | `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service             | Sum     | auto   | Count |
+| NFS Threads                                | `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                        | Maximum | auto   | Count |
+| NFS Threads Timed Out                      | `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                       | Sum     | auto   | Count |
+| NFS Threads Woken                          | `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport        | Sum     | auto   | Count |
 
 ### Networking Activity
 
@@ -389,27 +360,27 @@ Network activity for KNFSD proxy nodes showing data flow to/from clients and sou
 
 ### Data Transfer
 
-Data transfer metrics showing bandwidth between different layers.
+Data transfer metrics showing bandwidth between different layers (proxy to source/output filer(s)).
 
 | Widget                        | Metrics                           | Description                            | Stat | Period | Label        |
 | ----------------------------- | --------------------------------- | -------------------------------------- | ---- | ------ | ------------ |
 | Proxy to Source Bytes Read    | `knfsd/mount/read_bytes`          | Bytes read from source filer by proxy  | Sum  | 60s    | Bytes/Second |
 | Client to Proxy Bytes Read    | `knfsd/exports/total_read_bytes`  | Bytes read by clients from proxy       | Sum  | 60s    | Bytes/Second |
-| Proxy to Source Bytes Written | `knfsd/mount/write_bytes`         | Bytes written to source filer by proxy | Sum  | 60s    | Bytes/Second |
+| Proxy to Output Bytes Written | `knfsd/mount/write_bytes`         | Bytes written to output filer by proxy | Sum  | 60s    | Bytes/Second |
 | Client to Proxy Bytes Written | `knfsd/exports/total_write_bytes` | Bytes written by clients to proxy      | Sum  | 60s    | Bytes/Second |
 
 ### NFS Latency & Stats
 
-Performance metrics for NFS operations between proxy and source filer.
+Performance metrics for NFS operations between KNFSD proxy and source/output NFS filer(s) (selected).
 
 | Widget                           | Metrics                            | Description                                                   | Stat    | Period | Label             |
 | -------------------------------- | ---------------------------------- | ------------------------------------------------------------- | ------- | ------ | ----------------- |
 | Proxy to Source IOPS             | `knfsd/nfsiostat_ops_per_second`   | NFS operations per second to source                           | Sum     | 60s    | Operations/Second |
 | Proxy to Source RPC Backlog Size | `knfsd/nfsiostat_rpc_backlog`      | Pending RPC requests to source                                | Maximum | 60s    | Count             |
 | Proxy to Source Read RTT         | `knfsd/nfsiostat_mount_read_rtt`   | Round trip time for read operations                           | Average | 60s    | Time              |
-| Proxy to Source Write RTT        | `knfsd/nfsiostat_mount_write_rtt`  | Round trip time for write operations                          | Average | 60s    | Time              |
+| Proxy to Output Write RTT        | `knfsd/nfsiostat_mount_write_rtt`  | Round trip time for write operations                          | Average | 60s    | Time              |
 | Proxy to Source Read EXE         | `knfsd/nfsiostat_mount_read_exe`   | Execution time for read operations (RTT + kernel processing)  | Average | 60s    | Time              |
-| Proxy to Source Write EXE        | `knfsd/nfsiostat_mount_write_exe`  | Execution time for write operations (RTT + kernel processing) | Average | 60s    | Time              |
+| Proxy to Output Write EXE        | `knfsd/nfsiostat_mount_write_exe`  | Execution time for write operations (RTT + kernel processing) | Average | 60s    | Time              |
 
 **Note:** RTT = Round Trip Time (network time), EXE = Execution Time (RTT + kernel processing time)
 
@@ -429,17 +400,50 @@ Detailed breakdown of NFS operations by operation type (GETATTR, READ, WRITE, et
 
 **Supported NFS v4 Operations:** NULL, READ, WRITE, COMMIT, OPEN, OPEN_CONFIRM, OPEN_NOATTR, OPEN_DOWNGRADE, CLOSE, SETATTR, FSINFO, RENEW, SETCLIENTID, SETCLIENTID_CONFIRM, LOCK, LOCKT, LOCKU, ACCESS, GETATTR, LOOKUP, LOOKUP_ROOT, REMOVE, RENAME, LINK, SYMLINK, CREATE, PATHCONF, STATFS, READLINK, READDIR, SERVER_CAPS, DELEGRETURN, GETACL, SETACL, FS_LOCATIONS, RELEASE_LOCKOWNER, SECINFO, FSID_PRESENT, EXCHANGE_ID, CREATE_SESSION, DESTROY_SESSION, SEQUENCE, GET_LEASE_TIME, RECLAIM_COMPLETE, LAYOUTGET, GETDEVICEINFO, LAYOUTCOMMIT, LAYOUTRETURN, SECINFO_NO_NAME, TEST_STATEID, FREE_STATEID, GETDEVICELIST, BIND_CONN_TO_SESSION, DESTROY_CLIENTID, SEEK, ALLOCATE, DEALLOCATE, LAYOUTSTATS, CLONE, COPY, COPY_NOTIFY, GETXATTR, LISTXATTRS, LOOKUPP, OFFLOAD_CANCEL, READ_PLUS, REMOVEXATTR, SETXATTR, LAYOUTERROR
 
+### Netfs Statistics
+
+Performance metrics for NetfsLib operations.
+
+| Widget            | Metrics                     | Description                                    | Stat | Period | Label |
+|------------------ |-----------------------------|------------------------------------------------|------|--------|-------|
+| NetfsLib: Reads   | `knfsd/netfs/reads/*`       | Direct, readahead, folio, single read requests | Sum  | auto   | Count |
+| NetfsLib: Writes  | `knfsd/netfs/writes/*`      | Buffered, writethrough, direct write requests  | Sum  | auto   | Count |
+| NetfsLib: DownOps | `knfsd/netfs/download/*`    | Download requests, done, failed, instead       | Sum  | auto   | Count |
+| NetfsLib: CaRdOps | `knfsd/netfs/cache_read/*`  | Cache read requests, done, failed              | Sum  | auto   | Count |
+| NetfsLib: UpldOps | `knfsd/netfs/upload/*`      | Upload requests, done, failed                  | Sum  | auto   | Count |
+| NetfsLib: CaWrOps | `knfsd/netfs/cache_write/*` | Cache write requests, done, failed             | Sum  | auto   | Count |
+| NetfsLib: ZeroOps | `knfsd/netfs/zero_ops/*`    | Zero, short, skip operations                   | Sum  | auto   | Count |
+| NetfsLib: Retries | `knfsd/netfs/retries/*`     | Read/write request and subrequest retries      | Sum  | auto   | Count |
+| NetfsLib: Objs    | `knfsd/netfs/objects/*`     | Read reqs, subreqs, folio queue, conflicts     | Sum  | auto   | Count |
+| NetfsLib: WbLock  | `knfsd/netfs/wblock/*`      | Writeback lock skips and waits                 | Sum  | auto   | Count |
+
+### FS-Cache Statistics
+
+Performance metrics for FS-Cache operations.
+
+| Widget            | Metrics                       | Description                                         | Stat | Period | Label |
+|-------------------|-------------------------------|-----------------------------------------------------|------|--------|-------|
+| FS-Cache: Cookies | `knfsd/fscache/cookies/*`     | Data and volume cookies allocated, collisions, OOM  | Sum  | auto   | Count |
+| FS-Cache: Acquire | `knfsd/fscache/acquire/*`     | Cookie acquire requests, succeeded, failed (ENOMEM) | Sum  | auto   | Count |
+| FS-Cache: LRU     | `knfsd/fscache/lru/*`         | LRU count, expired, removed, dropped cookies        | Sum  | auto   | Count |
+| FS-Cache: Invals  | `knfsd/fscache/invalidations` | Number of cache invalidations                       | Sum  | auto   | Count |
+| FS-Cache: Updates | `knfsd/fscache/updates/*`     | Update requests, resize, resize skipped             | Sum  | auto   | Count |
+| FS-Cache: Relinqs | `knfsd/fscache/relinquish/*`  | Relinquish requests, retire, drop                   | Sum  | auto   | Count |
+| FS-Cache: NoSpace | `knfsd/fscache/nospace/*`     | Write/create refused (no space), objects culled     | Sum  | auto   | Count |
+| FS-Cache: IO      | `knfsd/fscache/io/*`          | Cache read, write, misfit operations                | Sum  | auto   | Count |
+
 ### Disk IO Performance
 
 Performance statistics for NVMe or EBS volumes used for `/var/cache/fscache`.
 
 | Widget                        | Metrics                                   | Description                                    | Stat | Period | Label             |
 | ----------------------------- | ----------------------------------------- | ---------------------------------------------- | ---- | ------ | ----------------- |
-| Disk IOPS                     | `diskio_reads`, `diskio_writes`           | Number of completed read/write operations      | Sum  | 10s    | Operations/Second |
-| Bytes Transferred             | `diskio_read_bytes`, `diskio_write_bytes` | Total bytes read/written                       | Sum  | 10s    | Bytes/Second      |
-| I/O Requests Queued           | `diskio_io_time`                          | Time I/O requests spent queued                 | Sum  | 10s    | Time (ms)         |
-| Instance Performance Exceeded | `diskio_*_performance_exceeded_*`         | Time instance performance limits were exceeded | Sum  | 10s    | Count/Second      |
-| Volume Queue Length           | `diskio_*_volume_queue_length`            | Number of operations queued at volume level    | Sum  | 10s    | Count             |
+| Disk IOPS                     | `diskio_reads`, `diskio_writes`           | Number of completed read/write operations      | Sum  | auto   | Operations/Second |
+| Bytes Transferred             | `diskio_read_bytes`, `diskio_write_bytes` | Total bytes read/written                       | Sum  | auto   | Bytes/Second      |
+| Instance Performance Exceeded | `diskio_*_performance_exceeded_*`         | Time instance performance limits were exceeded | Sum  | auto   | Time (μs)         |
+| I/O Requests: Queued          | `diskio_io_time`                          | Time I/O requests spent queued                 | Sum  | auto   | Time (ms)         |
+| I/O Requests: Waiting on Disk | `diskio_read_time`, `diskio_write_time`   | Time I/O requests spent waiting on disk        | Sum  | auto   | Time (ms)         |
+| Volume Queue Length           | `diskio_*_volume_queue_length`            | Number of operations queued at volume level    | Sum  | auto   | Count             |
 
 ### EC2 Node Performance
 

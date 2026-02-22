@@ -14,12 +14,12 @@ output "ip_address" {
   value       = one(data.dns_a_record_set.nfsproxy_lb_ip.addrs)
 }
 
-output "lb_target_groups" {
-  description = "Map of NFS port names to target group ARNs."
-  value       = { for k, v in aws_lb_target_group.nfsproxy_lb_tg : k => v.arn }
-}
-
 output "lb_security_group_id" {
   description = "The ID of the KNFSD Network Load Balancer Security Group."
   value       = aws_security_group.nfsproxy_lb_sg.id
+}
+
+output "lb_target_groups" {
+  description = "Map of NFS port names to target group ARNs."
+  value       = { for k, v in aws_lb_target_group.nfsproxy_lb_tg : k => v.arn }
 }

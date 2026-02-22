@@ -149,7 +149,7 @@ func checkFSCacheMount() error {
 // }
 
 func readServiceLog(unit string) (string, error) {
-	cmd := exec.Command("journalctl", "--boot", "--lines", "50", "--unit", unit)
+	cmd := exec.Command("journalctl", "--boot", "--lines", "50", "--unit", unit) // #nosec G204 -- unit is a hardcoded service name, not user input
 	out, err := cmd.Output()
 	return string(out), err
 }

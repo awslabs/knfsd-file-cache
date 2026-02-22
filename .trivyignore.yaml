@@ -1,55 +1,55 @@
 # https://trivy.dev/v0.61/docs/configuration/filtering/#trivyignoreyaml
 misconfigurations:
-  - id: AVD-DS-0001
+  - id: DS-0001
     paths:
       - "testing/images/terratest/Dockerfile"
-  - id: AVD-DS-0002
+  - id: DS-0002
     paths:
       - "deployment/terraform-module-knfsd/resources/tests/Dockerfile"
       - "deployment/database/resources/Dockerfile"
       - "testing/images/terratest/Dockerfile"
-  - id: AVD-DS-0010
+  - id: DS-0010
     paths:
       - ".devcontainer/dev/Dockerfile"
       - ".devcontainer/prod/Dockerfile"
-  - id: AVD-AWS-0017
+  - id: AWS-0017
     paths:
       - "deployment/database/main.tf"
       - "deployment/terraform-module-knfsd/modules/dns_round_robin/lambda.tf"
-  - id: AVD-DS-0029
+  - id: DS-0029
     paths:
       - ".devcontainer/dev/Dockerfile"
       - ".devcontainer/prod/Dockerfile"
       - "testing/images/terratest/Dockerfile"
-  - id: AVD-AWS-0078
+  - id: AWS-0078
     paths:
       - "deployment/database/main.tf"
-  - id: AVD-AWS-0098
+  - id: AWS-0098
     paths:
       - "examples/fsx-netapp/main.tf"
-  - id: AVD-AWS-0104
+  - id: AWS-0104
     paths:
       - "deployment/terraform-module-knfsd/vpc.tf"
       - "deployment/test/main.tf"
-  - id: AVD-AWS-0177
+  - id: AWS-0177
     paths:
       - "deployment/database/main.tf"
-  - id: AVD-AWS-0344
+  - id: AWS-0344
     paths:
       - "examples/efs/main.tf"
       - "examples/fsx-netapp/main.tf"
       - "examples/fsx-zfs-fanout-dns-rr/main.tf"
       - "examples/fsx-zfs-fanout-loadbalancer/main.tf"
       - "examples/fsx-zfs/main.tf"
-  - id: AVD-GCP-0029
-  - id: AVD-GCP-0030
-  - id: AVD-GCP-0033
-  - id: AVD-GCP-0034
-  - id: AVD-GCP-0036
-  - id: AVD-GCP-0041
-  - id: AVD-GCP-0045
-  - id: AVD-GCP-0067
-  - id: AVD-GCP-0076
+  - id: GCP-0029
+  - id: GCP-0030
+  - id: GCP-0033
+  - id: GCP-0034
+  - id: GCP-0036
+  - id: GCP-0041
+  - id: GCP-0045
+  - id: GCP-0067
+  - id: GCP-0076
 
 licenses:
   - id: Apache-2.0

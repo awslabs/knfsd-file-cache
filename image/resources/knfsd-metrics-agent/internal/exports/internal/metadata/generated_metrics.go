@@ -77,6 +77,7 @@ func (m *metricNfsExportsTotalOperations) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsExportsTotalOperations(cfg MetricConfig) metricNfsExportsTotalOperations {
 	m := metricNfsExportsTotalOperations{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -128,6 +129,7 @@ func (m *metricNfsExportsTotalReadBytes) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsExportsTotalReadBytes(cfg MetricConfig) metricNfsExportsTotalReadBytes {
 	m := metricNfsExportsTotalReadBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -179,6 +181,7 @@ func (m *metricNfsExportsTotalWriteBytes) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsExportsTotalWriteBytes(cfg MetricConfig) metricNfsExportsTotalWriteBytes {
 	m := metricNfsExportsTotalWriteBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

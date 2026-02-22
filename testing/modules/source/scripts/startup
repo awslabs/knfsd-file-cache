@@ -28,9 +28,9 @@ function create-layout() {
 function format-disk() {
 	local layout="$1"
 
-	# skip if the volume already exists and is formatted as ext4
-	if [[ -b ${volume} ]] && [[ "$(lsblk -no FSTYPE "${volume}")" == "ext4" ]]; then
-		echo "skipping '${volume}': already formatted as ext4"
+	# skip if the volume already exists and is formatted as xfs
+	if [[ -b ${volume} ]] && [[ "$(lsblk -no FSTYPE "${volume}")" == "xfs" ]]; then
+		echo "skipping '${volume}': already formatted as xfs"
 		return 0
 	fi
 
@@ -40,7 +40,7 @@ function format-disk() {
 	fi
 
 	echo "Formatting ${volume}"
-	if ! mkfs.ext4 -q -N "${inodes}" "${volume}"; then
+	if ! mkfs.xfs -q -f -m reflink=0 "${volume}"; then
 		fatal "formatting '${volume}' failed"
 	fi
 }

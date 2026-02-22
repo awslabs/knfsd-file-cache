@@ -28,6 +28,6 @@ These prerequisites are normally created by the main KNFSD proxy module.
 
 * `ip_address` - The private IP address of the KNFSD Network Load Balancer.
 
-* `lb_target_groups` - Map of NFS port names to target group ARNs.
-
 * `lb_security_group_id` - The ID of the KNFSD Network Load Balancer Security Group.
+
+* `lb_target_groups` - Map of NFS port names to target group ARNs.

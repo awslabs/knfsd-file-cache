@@ -54,7 +54,7 @@ func (handler JSONHandlerFunc[T]) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	gz := gzip.NewWriter(w)
 	defer gz.Close()
 	if _, err := gz.Write(body); err != nil {
-		log.Printf("Failed to write response body to gzip writer: %s", err.Error())
+		log.Printf("Failed to write response body to gzip writer: %s", err.Error()) // #nosec G706 -- logging internal error, not user input
 	}
 
 	if err := gz.Flush(); err != nil {
@@ -125,7 +125,7 @@ func logRequest(r *http.Request, statusCode int, err error) {
 	if err != nil {
 		errMsg = err.Error()
 	}
-	log.Printf("%s %s %s %d %s", r.RemoteAddr, r.Method, r.URL, statusCode, errMsg)
+	log.Printf("%s %s %s %d %s", r.RemoteAddr, r.Method, r.URL, statusCode, errMsg) // #nosec G706 -- standard HTTP access logging, not user-controlled log injection
 }
 
 func registerRoutes(mux *http.ServeMux) {

@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.30.0"
+      version = "~> 6.33.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.20"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.21"
     ]
   }
 }
@@ -39,9 +39,9 @@ locals {
 # create FSx for OpenZFS as source filer
 resource "aws_fsx_openzfs_file_system" "zfs" {
   deployment_type                 = "SINGLE_AZ_1"
-  storage_capacity                = 1024
+  storage_capacity                = var.FSX_STORAGE_CAPACITY
   subnet_ids                      = [var.SUBNET]
-  throughput_capacity             = 512
+  throughput_capacity             = var.FSX_THROUGHPUT_CAPACITY
   automatic_backup_retention_days = 0
   copy_tags_to_volumes            = true
   delete_options                  = ["DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"]
@@ -53,46 +53,12 @@ resource "aws_fsx_openzfs_file_system" "zfs" {
     nfs_exports {
       client_configurations {
         clients = "*"
-        options = ["rw", "crossmnt", "async"]
+        options = ["rw", "crossmnt", "async", "no_root_squash"]
       }
     }
     copy_tags_to_snapshots = true
     data_compression_type  = "NONE"
   }
-
-  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
-}
-
-# create additional ZFS volume: /fsx/vol2
-resource "aws_fsx_openzfs_volume" "vol2" {
-  name             = "vol2"
-  parent_volume_id = aws_fsx_openzfs_file_system.zfs.root_volume_id
-
-  nfs_exports {
-    client_configurations {
-      clients = "*"
-      options = ["rw", "crossmnt", "async"]
-    }
-  }
-  copy_tags_to_snapshots = true
-  data_compression_type  = "NONE"
-
-  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
-}
-
-# create additional ZFS volume: /fsx/vol3
-resource "aws_fsx_openzfs_volume" "vol3" {
-  name             = "vol3"
-  parent_volume_id = aws_fsx_openzfs_file_system.zfs.root_volume_id
-
-  nfs_exports {
-    client_configurations {
-      clients = "*"
-      options = ["rw", "crossmnt", "async"]
-    }
-  }
-  copy_tags_to_snapshots = true
-  data_compression_type  = "NONE"
 
   tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
 }
@@ -196,6 +162,7 @@ module "proxy" {
   TRAFFIC_MODE            = "dns_round_robin"
   KEY_NAME                = var.KEY_NAME
   INSTANCE_TYPE           = var.INSTANCE_TYPE
+  NUM_NFS_THREADS         = var.NUM_NFS_THREADS
   FSID_MODE               = var.FSID_MODE
   EXPORT_HOST_AUTO_DETECT = aws_fsx_openzfs_file_system.zfs.dns_name # Detect exports from the source filer via "showmount -e <SOURCE_FILER_DNS_NAME>"
   EXPORT_OPTIONS          = "insecure"                               # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
@@ -204,8 +171,6 @@ module "proxy" {
   depends_on = [
     data.aws_ami.proxy_exists, # Ensure proxy AMI exists
     data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type
-    aws_fsx_openzfs_file_system.zfs,
-    aws_fsx_openzfs_volume.vol2,
-    aws_fsx_openzfs_volume.vol3
+    aws_fsx_openzfs_file_system.zfs
   ]
 }

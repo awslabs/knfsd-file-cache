@@ -31,7 +31,7 @@ type NetAppServer struct {
 	Host           string          `hcl:"host,label"`
 	URL            string          `hcl:"url"`
 	User           string          `hcl:"user"`
-	Password       string          `hcl:"password,optional"`
+	Password       string          `hcl:"password,optional"` // #nosec G117 -- credential field required for config
 	SecurePassword *NetAppPassword `hcl:"password,block"`
 	TLS            *TLSConfig      `hcl:"tls,block"`
 }

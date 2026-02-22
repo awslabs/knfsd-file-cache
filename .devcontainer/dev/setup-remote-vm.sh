@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.20"
+VERSION="1.1.0-alpha.21"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}
@@ -142,29 +142,31 @@ KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.1.0
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.42.33
+KNFSD_BOTO3_VERSION=1.42.54
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.2.497
+KNFSD_CHECKOV_VERSION=3.2.505
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-KNFSD_EDITORCONFIG_VERSION=3.6.0
+KNFSD_EDITORCONFIG_VERSION=3.6.1
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.8.0
+KNFSD_GOLANGCI_LINT_VERSION=2.10.1
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.25.6
+KNFSD_GOLANG_VERSION=1.26.0
+# https://github.com/securego/gosec/releases
+KNFSD_GOSEC_VERSION=2.23.0
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=1.19.1
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.14.3
+KNFSD_PACKER_VERSION=1.15.0
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.5.1
 # https://pypi.org/project/psycopg/
-KNFSD_PSYCOPG_VERSION=3.3.2
+KNFSD_PSYCOPG_VERSION=3.3.3
 # https://github.com/pylint-dev/pylint/tags
-KNFSD_PYLINT_VERSION=4.0.4
+KNFSD_PYLINT_VERSION=4.0.5
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.149.0
+KNFSD_SEMGREP_VERSION=1.152.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -172,13 +174,13 @@ KNFSD_SHFMT_VERSION=3.12.0
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-KNFSD_TERRAGRUNT_VERSION=0.98.0
+KNFSD_TERRAGRUNT_VERSION=0.99.4
 # https://github.com/terraform-linters/tflint/releases
-KNFSD_TFLINT_VERSION=0.60.0
+KNFSD_TFLINT_VERSION=0.61.0
 # https://github.com/aquasecurity/tfsec/releases
 KNFSD_TFSEC_VERSION=1.28.14
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.68.2
+KNFSD_TRIVY_VERSION=0.69.1
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -198,6 +200,7 @@ curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/inst
 ## install golang tools
 go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION}
 go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION}
+go install github.com/securego/gosec/v2/cmd/gosec@f3e2fac4d58b7eca54307cd40ce2a836a12e4d95
 
 ## create pre-commit cache directory
 mkdir -p "/home/${USERNAME}/.cache/pre-commit" \

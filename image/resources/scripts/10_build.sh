@@ -11,8 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.20"
-KERNEL="6.19-rc7"
+VERSION="1.1.0-alpha.21"
+KERNEL="6.19.3"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -30,6 +30,7 @@ export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 export QUILT_PATCHES=debian/patches
+export NAME=build EMAIL=build
 
 # golang build cache
 export GOCACHE="/mnt/build/go/.cache/go-build"
@@ -116,10 +117,10 @@ function apt_update() (
 	complete_command
 )
 
-# install NFS packages
-function install_nfs_packages() (
-	begin_command "Installing rpcbind and nfs-kernel-server"
-	apt-get -o DPkg::Lock::Timeout=60 install -y rpcbind nfs-kernel-server
+# install packages
+function install_packages() (
+	begin_command "Installing packages"
+	apt-get -o DPkg::Lock::Timeout=60 install -y rpcbind nfs-kernel-server fio stress-ng
 	systemctl disable nfs-kernel-server
 	systemctl disable nfs-idmapd.service
 	complete_command
@@ -136,6 +137,17 @@ function install_build_dependencies() (
 		libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
 		gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
 		libreadline-dev libdw-dev
+	complete_command
+)
+
+# build and install mdadm from source
+function install_mdadm() (
+	begin_command "Building and installing mdadm"
+	# https://github.com/md-raid-utilities/mdadm
+	git clone --depth 1 --branch mdadm-4.5 https://github.com/md-raid-utilities/mdadm.git mdadm
+	cd mdadm
+	make
+	make install
 	complete_command
 )
 
@@ -171,15 +183,15 @@ function download_nfs-utils() (
 	# Jammy Jellyfish (Ubuntu 22.04) has nfs-common 2.6.1
 	# Noble Numbat (Ubuntu 24.04) has nfs-common 2.6.4
 	# Plucky Puffin (Ubuntu 25.04) has nfs-common 2.8.2
-	curl -o nfs-utils-2.8.4.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.4/nfs-utils-2.8.4.tar.gz
-	tar xf nfs-utils-2.8.4.tar.gz
+	curl -o nfs-utils-2.8.5.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
+	tar xf nfs-utils-2.8.5.tar.gz
 	complete_command
 )
 
 # build and install nfs-utils from source
 function build_install_nfs-utils() (
 	begin_command "Building and installing nfs-utils"
-	cd nfs-utils-2.8.4
+	cd nfs-utils-2.8.5
 	# https://launchpad.net/ubuntu/+source/nfs-utils
 	# Using build options for nfs-utils 1:2.8.2-2ubuntu1 amd64.
 	# https://launchpad.net/ubuntu/+source/nfs-utils/1:2.8.2-2ubuntu1/+build/30327487
@@ -311,9 +323,9 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.25.6.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.25.6.linux-${ARCH_ALT}.tar.gz
+	curl -o go1.26.0.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.26.0.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.25.6.linux-${ARCH_ALT}.tar.gz
+	tar -C /usr/local -xzf go1.26.0.linux-${ARCH_ALT}.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE"
 	complete_command
 )
@@ -382,7 +394,7 @@ function update_kernel() (
 function download_kernel() (
 	begin_command "Downloading Linux kernel: ${KERNEL}"
 	curl -fsSL --retry 5 --retry-delay 5 -o linux-${KERNEL}.tar.gz \
-		https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${KERNEL}.tar.gz
+		https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/snapshot/linux-${KERNEL}.tar.gz
 	tar -xf linux-${KERNEL}.tar.gz
 	complete_command
 )
@@ -469,8 +481,9 @@ function copy_config() (
 disable_unattended_upgrades
 update_amazon_ssm_agent
 apt_update
-install_nfs_packages
+install_packages
 install_build_dependencies
+install_mdadm
 install_cachefilesd
 download_nfs-utils
 build_install_nfs-utils

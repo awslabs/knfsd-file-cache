@@ -9,10 +9,10 @@
 export POSTGRES_PORT=0
 compose_opts=(-f postgres.compose.yaml)
 
-if [[ $CI == "cloudbuild" ]]; then
-	# When running on Cloud Build bind to the standard 5432 port
+if [[ $CI == "codebuild" ]]; then
+	# When running on AWS CodeBuild bind to the standard 5432 port
 	export POSTGRES_PORT=5432
-	compose_opts+=(-f cloudbuild.compose.yaml)
+	compose_opts+=(-f codebuild.compose.yaml)
 fi
 
 function compose() {

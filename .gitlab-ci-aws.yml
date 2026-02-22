@@ -29,30 +29,29 @@ variables:
   FF_USE_FASTZIP: "true"
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
-  KNFSD_ALPINE_VERSION: 3.23.2 # https://hub.docker.com/_/alpine/tags
+  KNFSD_ALPINE_VERSION: 3.23.3 # https://hub.docker.com/_/alpine/tags
   KNFSD_BLACK_VERSION: 26.1.0 # https://github.com/psf/black/releases
-  KNFSD_BOTO3_VERSION: 1.42.33 # https://github.com/boto/boto3/tags
-  KNFSD_CHECKOV_VERSION: 3.2.497 # https://hub.docker.com/r/bridgecrew/checkov/tags
+  KNFSD_BOTO3_VERSION: 1.42.54 # https://github.com/boto/boto3/tags
+  KNFSD_CHECKOV_VERSION: 3.2.505 # https://hub.docker.com/r/bridgecrew/checkov/tags
   KNFSD_CODESPELL_VERSION: 2.4.1 # https://github.com/codespell-project/codespell/releases
-  KNFSD_EDITORCONFIG_VERSION: 3.6.0 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-  KNFSD_GOLANGCI_LINT_VERSION: 2.8.0 # https://github.com/golangci/golangci-lint/releases
-  KNFSD_GOLANG_VERSION: 1.25.6 # https://go.dev/dl/
-  KNFSD_GOSEC_VERSION: 2.22.11 # https://github.com/securego/gosec/releases
+  KNFSD_EDITORCONFIG_VERSION: 3.6.1 # https://github.com/editorconfig-checker/editorconfig-checker/releases
+  KNFSD_GOLANGCI_LINT_VERSION: 2.10.1 # https://github.com/golangci/golangci-lint/releases
+  KNFSD_GOLANG_VERSION: 1.26.0 # https://go.dev/dl/
   KNFSD_GOVULNCHECK_VERSION: 1.1.4 # https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
   KNFSD_KANIKO_VERSION: 1.24.0 # https://github.com/GoogleContainerTools/kaniko/releases
   KNFSD_KICS_VERSION: 2.1.19 # https://github.com/Checkmarx/kics/releases
   KNFSD_MYPY_VERSION: 1.19.1 # https://github.com/python/mypy/tags
-  KNFSD_PACKER_VERSION: 1.14.3 # https://github.com/hashicorp/packer/releases
-  KNFSD_POSTGRES_VERSION: 18.1-alpine3.23 # https://hub.docker.com/_/postgres
-  KNFSD_PSYCOPG_VERSION: 3.3.2 # https://pypi.org/project/psycopg/
+  KNFSD_PACKER_VERSION: 1.15.0 # https://github.com/hashicorp/packer/releases
+  KNFSD_POSTGRES_VERSION: 18.2-alpine3.23 # https://hub.docker.com/_/postgres
+  KNFSD_PSYCOPG_VERSION: 3.3.3 # https://pypi.org/project/psycopg/
   KNFSD_PYLINT_VERSION: 4.0.4 # https://github.com/pylint-dev/pylint/tags
-  KNFSD_PYTHON_VERSION: 3.14.2 # https://hub.docker.com/_/python/tags
+  KNFSD_PYTHON_VERSION: 3.14.3 # https://hub.docker.com/_/python/tags
   KNFSD_SHELLCHECK_VERSION: 0.11.0 # https://github.com/koalaman/shellcheck/releases
   KNFSD_SHFMT_VERSION: 3.12.0 # https://github.com/mvdan/sh/releases
   KNFSD_TERRAFORM_VERSION: 1.2.9 # https://github.com/hashicorp/terraform/releases
-  KNFSD_TFLINT_VERSION: 0.60.0 # https://github.com/terraform-linters/tflint/releases
+  KNFSD_TFLINT_VERSION: 0.61.0 # https://github.com/terraform-linters/tflint/releases
   KNFSD_TFSEC_VERSION: 1.28.14 # https://github.com/aquasecurity/tfsec/releases
-  KNFSD_TRIVY_VERSION: 0.68.2 # https://github.com/aquasecurity/trivy/releases
+  KNFSD_TRIVY_VERSION: 0.69.1 # https://github.com/aquasecurity/trivy/releases
 
 .renovate-config: &renovate-config
   environment: renovate
@@ -130,11 +129,10 @@ variables:
     GOPROXY: https://proxy.golang.org,direct
     GOPATH: /go
     GOMODCACHE: ${CI_PROJECT_DIR}/.go/pkg/mod
-  image:
-    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/securego/gosec:${KNFSD_GOSEC_VERSION}
-    entrypoint: [""]
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
   before_script:
     - mkdir -p ".go/pkg/mod"
+    - go install github.com/securego/gosec/v2/cmd/gosec@latest
   allow_failure: true
   <<: *default-config
   tags:
@@ -836,7 +834,7 @@ checkov:
   <<: *default-config
 
 # https://github.com/securego/gosec
-gosec 1/5:
+gosec 1/7:
   extends: .gosec-config
   cache:
     - key: fe-mod-${CI_COMMIT_REF_SLUG}
@@ -847,7 +845,7 @@ gosec 1/5:
     - cd "${CI_PROJECT_DIR}/image/resources/filter-exports/" || exit 1
     - gosec ./...
 
-gosec 2/5:
+gosec 2/7:
   extends: .gosec-config
   cache:
     - key: ka-mod-${CI_COMMIT_REF_SLUG}
@@ -858,7 +856,7 @@ gosec 2/5:
     - cd "${CI_PROJECT_DIR}/image/resources/knfsd-agent/" || exit 1
     - gosec ./...
 
-gosec 3/5:
+gosec 3/7:
   extends: .gosec-config
   cache:
     - key: kf-mod-${CI_COMMIT_REF_SLUG}
@@ -869,7 +867,7 @@ gosec 3/5:
     - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
     - gosec ./...
 
-gosec 4/5:
+gosec 4/7:
   extends: .gosec-config
   cache:
     - key: kma-mod-${CI_COMMIT_REF_SLUG}
@@ -883,7 +881,7 @@ gosec 4/5:
     - arch:amd64
     - size:2xlarge
 
-gosec 5/5:
+gosec 5/7:
   extends: .gosec-config
   cache:
     - key: ne-mod-${CI_COMMIT_REF_SLUG}
@@ -894,6 +892,23 @@ gosec 5/5:
     - cd "${CI_PROJECT_DIR}/image/resources/netapp-exports/" || exit 1
     - go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
     - gosec ./...
+
+gosec 6/7:
+  extends: .gosec-config
+  needs: []
+  script:
+    - cd "${CI_PROJECT_DIR}/image/smoke-tests/" || exit 1
+    - gosec ./...
+
+gosec 7/7:
+  extends: .gosec-config
+  needs: []
+  script:
+    - cd "${CI_PROJECT_DIR}/testing/examples/" || exit 1
+    - gosec ./...
+  tags:
+    - arch:amd64
+    - size:2xlarge
 
 kics:
   stage: security
@@ -939,4 +954,7 @@ trivy:
     - script -q -c 'trivy fs --ignorefile .trivyignore.yaml --exit-code 1 --cache-dir ".trivycache" --scanners secret,vuln,misconfig,license --timeout 10m "${CI_PROJECT_DIR}" ; echo $? > TRIVYEXIT'
     - exit $(cat TRIVYEXIT)
   allow_failure: true
+  tags:
+    - arch:amd64
+    - size:2xlarge
   <<: *default-config

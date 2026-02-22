@@ -13,22 +13,22 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 HEALTHCHECK NONE
 
 # the build requires the following tools:
-#  - gcloud
-#  - go v1.25
-#  - terraform 1.2.0
+#  - aws cli v2
+#  - go v1.26.0
+#  - terraform 1.2.9
 
 # install golang (and unzip which we need later for terraform)
 RUN apt-get update \
     && apt-get install -y \
-    golang-1.25 \
+    golang-1.26 \
     unzip \
     && apt-get clean \
     && rm -rf "/var/lib/apt/lists/*"
 
 # add go to the path
-ENV PATH="$PATH:/usr/lib/go-1.25/bin"
+ENV PATH="$PATH:/usr/lib/go-1.26/bin"
 
 # install terraform
 RUN set -eux \
-    && curl -fsSL https://releases.hashicorp.com/terraform/1.2.0/terraform_1.2.0_linux_amd64.zip \
+    && curl -fsSL https://releases.hashicorp.com/terraform/1.2.9/terraform_1.2.9_linux_amd64.zip \
     && --output terraform.zip && unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip

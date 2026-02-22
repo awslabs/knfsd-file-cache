@@ -106,7 +106,19 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
 
-* `proxy_dns_name` - DNS name of the KNFSD proxy.
+* `autoscaling_group_security_group_id` - Security Group ID for the KNFSD proxy Auto Scaling Group.
+
+* `database_config` - Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
+
+* `database_iam_policy` - The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
+
+* `dns_name` - The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
+
+* `nfsproxy_loadbalancer_dnsaddress` - The private DNS name of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
+
+* `nfsproxy_loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
+
+* `nfsproxy_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
 
 ## NetApp Auto-Detection Configuration
 

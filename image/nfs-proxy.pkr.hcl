@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 packer {
-  required_version = ">= 1.14.0"
+  required_version = ">= 1.15.0"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.20"
+  version       = "1.1.0-alpha.21"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   temp_vol_size = 20
 
@@ -325,7 +325,7 @@ build {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
       "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
-      "mkfs.ext4 /dev/$device",
+      "mkfs.xfs /dev/$device",
       "mkdir -p /mnt/build",
       "mount /dev/$device /mnt/build",
       "chown ubuntu:ubuntu /mnt/build"

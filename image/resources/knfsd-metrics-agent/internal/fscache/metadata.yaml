@@ -16,8 +16,7 @@ status:
 metrics:
   fscache.acquire.ok:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of acquire requests that succeeded
     unit: "{requests}"
     sum:
@@ -27,8 +26,7 @@ metrics:
 
   fscache.acquire.oom:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of acquire requests that failed due to ENOMEM
     unit: "{requests}"
     sum:
@@ -38,8 +36,7 @@ metrics:
 
   fscache.acquire.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of acquire cookie requests
     unit: "{requests}"
     sum:
@@ -49,8 +46,7 @@ metrics:
 
   fscache.cookies.data:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of data storage cookies allocated
     unit: "{cookies}"
     sum:
@@ -60,8 +56,7 @@ metrics:
 
   fscache.cookies.volume:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of volume index cookies allocated
     unit: "{cookies}"
     sum:
@@ -71,8 +66,7 @@ metrics:
 
   fscache.cookies.volume_collisions:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of volume index key collisions
     unit: "{collisions}"
     sum:
@@ -82,8 +76,7 @@ metrics:
 
   fscache.cookies.volume_oom:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of OOM events when allocating volume cookies
     unit: "{events}"
     sum:
@@ -93,8 +86,7 @@ metrics:
 
   fscache.invalidations:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of invalidations
     unit: "{invalidations}"
     sum:
@@ -104,8 +96,7 @@ metrics:
 
   fscache.io.misfit:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of DIO misfit operations
     unit: "{operations}"
     sum:
@@ -115,8 +106,7 @@ metrics:
 
   fscache.io.read:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read operations in the cache
     unit: "{operations}"
     sum:
@@ -126,8 +116,7 @@ metrics:
 
   fscache.io.write:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write operations in the cache
     unit: "{operations}"
     sum:
@@ -137,8 +126,7 @@ metrics:
 
   fscache.lru.count:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cookies currently on the LRU
     unit: "{cookies}"
     sum:
@@ -148,8 +136,7 @@ metrics:
 
   fscache.lru.dropped:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of LRU'd cookies relinquished or withdrawn
     unit: "{cookies}"
     sum:
@@ -159,8 +146,7 @@ metrics:
 
   fscache.lru.expired:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cookies expired off of the LRU
     unit: "{cookies}"
     sum:
@@ -170,8 +156,7 @@ metrics:
 
   fscache.lru.removed:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cookies removed from the LRU
     unit: "{cookies}"
     sum:
@@ -181,8 +166,7 @@ metrics:
 
   fscache.nospace.create:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of create requests refused due to lack of space
     unit: "{requests}"
     sum:
@@ -192,8 +176,7 @@ metrics:
 
   fscache.nospace.cull:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of objects culled to make space
     unit: "{objects}"
     sum:
@@ -203,8 +186,7 @@ metrics:
 
   fscache.nospace.write:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write requests refused due to lack of space
     unit: "{requests}"
     sum:
@@ -214,8 +196,7 @@ metrics:
 
   fscache.relinquish.drop:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cookies no longer blocking re-acquisition
     unit: "{cookies}"
     sum:
@@ -225,8 +206,7 @@ metrics:
 
   fscache.relinquish.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of relinquish cookie requests
     unit: "{requests}"
     sum:
@@ -236,8 +216,7 @@ metrics:
 
   fscache.relinquish.retire:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of relinquish requests with retire=true
     unit: "{requests}"
     sum:
@@ -247,8 +226,7 @@ metrics:
 
   fscache.updates.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of update cookie requests
     unit: "{requests}"
     sum:
@@ -258,8 +236,7 @@ metrics:
 
   fscache.updates.resize:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of resize requests
     unit: "{requests}"
     sum:
@@ -269,8 +246,7 @@ metrics:
 
   fscache.updates.resize_skipped:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of skipped resize requests
     unit: "{requests}"
     sum:
@@ -280,8 +256,7 @@ metrics:
 
   netfs.cache_read.done:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache read operations completed (netfs_n_rh_read_done)
     unit: "{operations}"
     sum:
@@ -291,8 +266,7 @@ metrics:
 
   netfs.cache_read.failed:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache read operations failed (netfs_n_rh_read_failed)
     unit: "{operations}"
     sum:
@@ -302,8 +276,7 @@ metrics:
 
   netfs.cache_read.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache read requests (netfs_n_rh_read)
     unit: "{requests}"
     sum:
@@ -313,8 +286,7 @@ metrics:
 
   netfs.cache_write.done:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache write operations completed (netfs_n_wh_write_done)
     unit: "{operations}"
     sum:
@@ -324,8 +296,7 @@ metrics:
 
   netfs.cache_write.failed:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache write operations failed (netfs_n_wh_write_failed)
     unit: "{operations}"
     sum:
@@ -335,8 +306,7 @@ metrics:
 
   netfs.cache_write.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of cache write requests (netfs_n_wh_write)
     unit: "{requests}"
     sum:
@@ -346,8 +316,7 @@ metrics:
 
   netfs.download.done:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of download operations completed (netfs_n_rh_download_done)
     unit: "{operations}"
     sum:
@@ -357,8 +326,7 @@ metrics:
 
   netfs.download.failed:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of download operations failed (netfs_n_rh_download_failed)
     unit: "{operations}"
     sum:
@@ -368,8 +336,7 @@ metrics:
 
   netfs.download.instead:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of download instead of cache operations (netfs_n_rh_download_instead)
     unit: "{operations}"
     sum:
@@ -379,8 +346,7 @@ metrics:
 
   netfs.download.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of download requests (netfs_n_rh_download)
     unit: "{requests}"
     sum:
@@ -390,8 +356,7 @@ metrics:
 
   netfs.objects.folio_queue:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of folio queue objects (netfs_n_folioq)
     unit: "{objects}"
     sum:
@@ -401,8 +366,7 @@ metrics:
 
   netfs.objects.read_reqs:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read request objects (netfs_n_rh_rreq)
     unit: "{objects}"
     sum:
@@ -412,8 +376,7 @@ metrics:
 
   netfs.objects.subreqs:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of subrequest objects (netfs_n_rh_sreq)
     unit: "{objects}"
     sum:
@@ -423,8 +386,7 @@ metrics:
 
   netfs.objects.write_conflicts:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write stream conflicts (netfs_n_wh_wstream_conflict)
     unit: "{conflicts}"
     sum:
@@ -434,8 +396,7 @@ metrics:
 
   netfs.reads.direct:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of direct I/O read requests (netfs_n_rh_dio_read)
     unit: "{requests}"
     sum:
@@ -445,8 +406,7 @@ metrics:
 
   netfs.reads.folio:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read folio requests (netfs_n_rh_read_folio)
     unit: "{requests}"
     sum:
@@ -456,8 +416,7 @@ metrics:
 
   netfs.reads.readahead:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of readahead requests (netfs_n_rh_readahead)
     unit: "{requests}"
     sum:
@@ -467,8 +426,7 @@ metrics:
 
   netfs.reads.single:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read single requests (netfs_n_rh_read_single)
     unit: "{requests}"
     sum:
@@ -478,8 +436,7 @@ metrics:
 
   netfs.reads.write_begin:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write begin requests (netfs_n_rh_write_begin)
     unit: "{requests}"
     sum:
@@ -489,8 +446,7 @@ metrics:
 
   netfs.reads.write_zskip:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write zero skip operations (netfs_n_rh_write_zskip)
     unit: "{operations}"
     sum:
@@ -500,8 +456,7 @@ metrics:
 
   netfs.retries.read_req:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read request retries (netfs_n_rh_retry_read_req)
     unit: "{retries}"
     sum:
@@ -511,8 +466,7 @@ metrics:
 
   netfs.retries.read_subreq:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of read subrequest retries (netfs_n_rh_retry_read_subreq)
     unit: "{retries}"
     sum:
@@ -522,8 +476,7 @@ metrics:
 
   netfs.retries.write_req:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write request retries (netfs_n_wh_retry_write_req)
     unit: "{retries}"
     sum:
@@ -533,8 +486,7 @@ metrics:
 
   netfs.retries.write_subreq:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write subrequest retries (netfs_n_wh_retry_write_subreq)
     unit: "{retries}"
     sum:
@@ -544,8 +496,7 @@ metrics:
 
   netfs.upload.done:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of upload operations completed (netfs_n_wh_upload_done)
     unit: "{operations}"
     sum:
@@ -555,8 +506,7 @@ metrics:
 
   netfs.upload.failed:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of upload operations failed (netfs_n_wh_upload_failed)
     unit: "{operations}"
     sum:
@@ -566,8 +516,7 @@ metrics:
 
   netfs.upload.requests:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of upload requests (netfs_n_wh_upload)
     unit: "{requests}"
     sum:
@@ -577,8 +526,7 @@ metrics:
 
   netfs.wblock.skip:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of writeback lock skips (netfs_n_wb_lock_skip)
     unit: "{operations}"
     sum:
@@ -588,8 +536,7 @@ metrics:
 
   netfs.wblock.wait:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of writeback lock waits (netfs_n_wb_lock_wait)
     unit: "{operations}"
     sum:
@@ -599,8 +546,7 @@ metrics:
 
   netfs.writes.buffered:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of buffered write requests (netfs_n_wh_buffered_write)
     unit: "{requests}"
     sum:
@@ -610,8 +556,7 @@ metrics:
 
   netfs.writes.copy_to_cache:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of copy to cache requests (netfs_n_wh_copy_to_cache)
     unit: "{requests}"
     sum:
@@ -621,8 +566,7 @@ metrics:
 
   netfs.writes.direct:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of direct I/O write requests (netfs_n_wh_dio_write)
     unit: "{requests}"
     sum:
@@ -632,8 +576,7 @@ metrics:
 
   netfs.writes.pages:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of write pages requests (netfs_n_wh_writepages)
     unit: "{requests}"
     sum:
@@ -643,8 +586,7 @@ metrics:
 
   netfs.writes.writethrough:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of writethrough requests (netfs_n_wh_writethrough)
     unit: "{requests}"
     sum:
@@ -654,8 +596,7 @@ metrics:
 
   netfs.zero_ops.short:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of short read operations (netfs_n_rh_short_read)
     unit: "{operations}"
     sum:
@@ -665,8 +606,7 @@ metrics:
 
   netfs.zero_ops.skip:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of skip operations (netfs_n_rh_write_zskip)
     unit: "{operations}"
     sum:
@@ -676,8 +616,7 @@ metrics:
 
   netfs.zero_ops.zero:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Number of zero read operations (netfs_n_rh_zero)
     unit: "{operations}"
     sum:

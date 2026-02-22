@@ -9,7 +9,7 @@ variable "REGION" {
 }
 
 variable "SUBNET" {
-  description = "(Required) The subnet the EC2 instance will use. No default."
+  description = "(Optional) The subnet the EC2 instance will use. This is required if using a non-default VPC. Default: \"\"."
   type        = string
   default     = ""
 }

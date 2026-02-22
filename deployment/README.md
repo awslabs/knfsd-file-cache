@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
+source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.21"
 ```
 
 ## Prerequisites
@@ -42,7 +42,7 @@ provider "aws" {
 }
 
 module "nfs_proxy" {
-  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
+  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.21"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg" # ensure the AMI matches the architecture of the INSTANCE_TYPE
@@ -256,13 +256,13 @@ terraform apply
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `autoscaling_group_name`              | Name of the KNFSD proxy Auto Scaling Group.                                                                                                 |
 | `autoscaling_group_security_group_id` | Security Group ID for the KNFSD proxy Auto Scaling Group.                                                                                   |
+| `cluster_ready`                       | Boolean indicating if all KNFSD instances are ready and fully operational. Use this as a dependency for downstream resources.               |
+| `database_config`                     | Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module.                       |
+| `database_iam_policy`                 | The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module.                    |
 | `dns_name`                            | The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`). |
 | `nfsproxy_loadbalancer_dnsaddress`    | The private DNS address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                |
 | `nfsproxy_loadbalancer_ipaddress`     | The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                 |
 | `nfsproxy_security_group_id`          | Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`). |
-| `database_config`                     | Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module.                       |
-| `database_iam_policy`                 | The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module.                    |
-| `cluster_ready`                       | Boolean indicating if all KNFSD instances are ready and fully operational. Use this as a dependency for downstream resources.               |
 
 ## Caveats
 

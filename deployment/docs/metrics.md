@@ -36,12 +36,12 @@ The following custom metrics are exported currently:
 | **knfsd/dentry_cache_objsize**              | The total size of the objects in the Linux dentry cache in bytes.                                               |
 | **knfsd/nfsiostat_mount_read_exe**          | The average read operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer).          |
 | **knfsd/nfsiostat_mount_read_rtt**          | The average read operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer).          |
-| **knfsd/nfsiostat_mount_write_exe**         | The average write operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Source Filer).         |
-| **knfsd/nfsiostat_mount_write_rtt**         | The average write operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Source Filer).         |
+| **knfsd/nfsiostat_mount_write_exe**         | The average write operation EXE per NFS client mount over the past 60 seconds (KNFSD --> Output Filer).         |
+| **knfsd/nfsiostat_mount_write_rtt**         | The average write operation RTT per NFS client mount over the past 60 seconds (KNFSD --> Output Filer).         |
 | **knfsd/nfsiostat_ops_per_second**          | The number of NFS operations per second per NFS client mount over the past 60 seconds (KNFSD --> Source Filer). |
 | **knfsd/nfsiostat_rpc_backlog**             | The RPC backlog per NFS client mount over the past 60 seconds (KNFSD --> Source Filer).                         |
 | **knfsd/mount/read_bytes**                  | The total number of bytes read from the source NFS server.                                                      |
-| **knfsd/mount/write_bytes**                 | The total number of bytes written to the source NFS server.                                                     |
+| **knfsd/mount/write_bytes**                 | The total number of bytes written to the output NFS server.                                                     |
 | **knfsd/mount/operation/requests**          | The total number of NFS requests sent to the source NFS server.                                                 |
 | **knfsd/mount/operation/sent_bytes**        | The total number of bytes sent to the source NFS server. This includes the RPC protocol headers.                |
 | **knfsd/mount/operation/received_bytes**    | The total number of bytes received from the source NFS server. This includes the RPC protocol headers.          |
@@ -129,7 +129,7 @@ Providing the metrics config from a file:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.21"
 
   METRICS_AGENT_CONFIG = file("metrics-config.yaml")
 }
@@ -139,7 +139,7 @@ Providing the metrics config inline using heredoc syntax:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.20"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.21"
 
   METRICS_AGENT_CONFIG = <<- EOT
     receivers:

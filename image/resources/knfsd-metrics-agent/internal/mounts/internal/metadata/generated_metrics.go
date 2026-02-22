@@ -121,6 +121,7 @@ func (m *metricNfsMountOperationErrors) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountOperationErrors(cfg MetricConfig) metricNfsMountOperationErrors {
 	m := metricNfsMountOperationErrors{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -176,6 +177,7 @@ func (m *metricNfsMountOperationMajorTimeouts) emit(metrics pmetric.MetricSlice)
 
 func newMetricNfsMountOperationMajorTimeouts(cfg MetricConfig) metricNfsMountOperationMajorTimeouts {
 	m := metricNfsMountOperationMajorTimeouts{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -231,6 +233,7 @@ func (m *metricNfsMountOperationReceivedBytes) emit(metrics pmetric.MetricSlice)
 
 func newMetricNfsMountOperationReceivedBytes(cfg MetricConfig) metricNfsMountOperationReceivedBytes {
 	m := metricNfsMountOperationReceivedBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -286,6 +289,7 @@ func (m *metricNfsMountOperationRequests) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountOperationRequests(cfg MetricConfig) metricNfsMountOperationRequests {
 	m := metricNfsMountOperationRequests{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -341,6 +345,7 @@ func (m *metricNfsMountOperationSentBytes) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountOperationSentBytes(cfg MetricConfig) metricNfsMountOperationSentBytes {
 	m := metricNfsMountOperationSentBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -393,6 +398,7 @@ func (m *metricNfsMountOpsPerSecond) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountOpsPerSecond(cfg MetricConfig) metricNfsMountOpsPerSecond {
 	m := metricNfsMountOpsPerSecond{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -447,6 +453,7 @@ func (m *metricNfsMountReadBytes) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountReadBytes(cfg MetricConfig) metricNfsMountReadBytes {
 	m := metricNfsMountReadBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -499,6 +506,7 @@ func (m *metricNfsMountReadExe) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountReadExe(cfg MetricConfig) metricNfsMountReadExe {
 	m := metricNfsMountReadExe{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -551,6 +559,7 @@ func (m *metricNfsMountReadRtt) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountReadRtt(cfg MetricConfig) metricNfsMountReadRtt {
 	m := metricNfsMountReadRtt{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -603,6 +612,7 @@ func (m *metricNfsMountRPCBacklog) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountRPCBacklog(cfg MetricConfig) metricNfsMountRPCBacklog {
 	m := metricNfsMountRPCBacklog{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -657,6 +667,7 @@ func (m *metricNfsMountWriteBytes) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountWriteBytes(cfg MetricConfig) metricNfsMountWriteBytes {
 	m := metricNfsMountWriteBytes{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -709,6 +720,7 @@ func (m *metricNfsMountWriteExe) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountWriteExe(cfg MetricConfig) metricNfsMountWriteExe {
 	m := metricNfsMountWriteExe{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -761,6 +773,7 @@ func (m *metricNfsMountWriteRtt) emit(metrics pmetric.MetricSlice) {
 
 func newMetricNfsMountWriteRtt(cfg MetricConfig) metricNfsMountWriteRtt {
 	m := metricNfsMountWriteRtt{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()

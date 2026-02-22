@@ -1,0 +1,13 @@
+[nfs-fscache-deadlock]
+ioengine=posixaio
+direct=0
+time_based
+allow_file_create=0
+directory=/mnt/fsx/fio
+unique_filename=0
+bs=1M
+rw=randread
+size=10G
+numjobs=64
+runtime=60m
+norandommap

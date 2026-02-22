@@ -29,7 +29,7 @@
 111 23 0:36 / /var/lib/nfs/rpc_pipefs rw,relatime shared:59 - rpc_pipefs sunrpc rw
 544 30 0:25 /snapd/ns /run/snapd/ns rw,nosuid,nodev - tmpfs tmpfs rw,size=21424260k,nr_inodes=819200,mode=755,inode64
 325 544 0:4 mnt:[4026532802] /run/snapd/ns/lxd.mnt rw - nsfs nsfs rw
-576 23 9:127 / /var/cache/fscache rw,relatime shared:162 - ext4 /dev/md127 rw,discard,nobarrier,stripe=128
+576 23 9:127 / /var/cache/fscache rw,noatime shared:162 - xfs /dev/md127 rw,attr2,inode64,logbufs=8,logbsize=256k,noquota
 603 23 0:46 / /srv/nfs/files rw,noatime shared:328 - nfs 10.0.0.2:/files rw,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.2,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none,addr=10.0.0.2
 326 25 0:42 / /proc/fs/nfsd rw,relatime shared:160 - nfsd nfsd rw
 334 30 0:43 / /run/user/1001 rw,nosuid,nodev,relatime shared:179 - tmpfs tmpfs rw,size=10712128k,nr_inodes=2678032,mode=700,uid=1001,gid=1002,inode64

@@ -186,6 +186,16 @@ golint:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples golint
 
+.PHONY: gosec
+gosec:
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/filter-exports gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-agent gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-fsidd gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-metrics-agent gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/netapp-exports gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests gosec
+	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples gosec
+
 .PHONY: gotidy
 gotidy:
 	$(MAKE) -C image/resources/filter-exports gotidy

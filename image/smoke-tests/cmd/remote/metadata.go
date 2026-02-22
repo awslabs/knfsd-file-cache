@@ -22,7 +22,7 @@ func QueryAttribute(name string) (string, error) {
 	}
 
 	req.Header.Add("Metadata-Flavor", "Google")
-	res, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req) // #nosec G704 -- URL host is hardcoded to metadata.google.internal; only the attribute name varies.
 	if err != nil {
 		return "", err
 	}

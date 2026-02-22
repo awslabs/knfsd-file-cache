@@ -19,6 +19,10 @@ golint:
 gotidy:
 	go mod tidy
 
+.PHONY: gosec
+gosec:
+	gosec ./...
+
 .PHONY: goget goupdate
 goget goupdate:
 	go get -t -u ./...

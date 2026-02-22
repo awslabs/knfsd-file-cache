@@ -21,8 +21,7 @@ metrics:
 
   slab.dentry_cache.active_objects:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Dentry Cache Active Objects
     extended_documentation: The number of active objects in the Linux Dentry Cache
     unit: "{count}"
@@ -31,8 +30,7 @@ metrics:
 
   slab.dentry_cache.objsize:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: Dentry Cache Object Size
     extended_documentation: The total size of the objects in the Linux Dentry Cache
     unit: "{size}"
@@ -41,8 +39,7 @@ metrics:
 
   slab.nfs_inode_cache.active_objects:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: NFS inode Cache Cache Active Objects
     extended_documentation: The number of active objects in the Linux NFS inode Cache
     unit: "{count}"
@@ -51,8 +48,7 @@ metrics:
 
   slab.nfs_inode_cache.objsize:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: NFS inode Cache Object Size
     extended_documentation: The total size of the objects in the Linux NFS inode Cache
     unit: "{size}"

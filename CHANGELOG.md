@@ -1,5 +1,46 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.21
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Updated to Ubuntu 24.04.4 LTS.
+* Updated to Linux kernel v6.19.3-knfsd.
+* Updated to Golang 1.26.0.
+* Updated to PostgreSQL v18.2.
+* Updated to Packer v1.15.0.
+* Updated to `nfs-utils` v2.8.5.
+* Updated to Terraform AWS provider v6.32.0.
+* Switched FS-Cache filesystem from `EXT4` to `XFS` with tuned `mkfs`/`mount` options, added block-device tuning (`nomerges`, `read_ahead_kb`) and VM sysctls (`min_free_kbytes`, `compaction_proactiveness`, `dirty_ratio`, `swappiness`) to reduce deadlock risk and improve NVMe cache performance.
+* Added KNFSD Test Plans for:
+  * [Directory Listing](docs/tests/directory-listing.md)
+  * [Recovery Proxy](docs/tests/recovery-proxy.md)
+  * [Recovery Source](docs/tests/recovery-source.md)
+  * [Recovery Load Balancer](docs/tests/recovery-load-balancer.md)
+* Added `gosecure` to `Makefile` to run Go vulnerability scanning on all Go projects.
+* Added `gosecure` GitLab CI jobs for `smoke-tests` and `testing/examples` Golang projects.
+* Switched to using `golang` Docker image for Go vulnerability scanning in GitLab CI `gosec` jobs.
+* Added `wait_for_capacity_timeout = "0"` to `aws_autoscaling_group.knfsd_asg` in `terraform-module-knfsd` to avoid rare ASG waiter false-negative failures.
+* Added `REMOVE_EMPTY` function to CloudWatch `SEARCH` expressions for FS-Cache Read & Write Throughput metrics in dashboard to remove any `NaN` values.
+* Fixed bug in metric math expressions for `Cluster Network Bandwidth` and `Proxy Network Bandwidth` widgets in CW dashboard.
+* Added `diskio_read_time` and `diskio_write_time` metrics to `amazon-cloudwatch-agent.json` file.
+* Added `I/O Requests: Waiting on Disk` widget to CloudWatch dashboard.
+* Added `Output NFS Filer` to CloudWatch metrics dashboard to filter by Output NFS Filer(s), which might be different from the Source NFS Filer(s).
+* Removed `period` parameter from high-resolution CW dashboard widgets to use the automatically aggregated period.
+* Added `id` parameter to all metric math expressions in CW dashboard to ensure deterministic label ordering within each widget. Label ordering is ignored when `stacked` is `true` in a CW metric widget.
+* Improved some of the CW dashboard text descriptions.
+* Aligned CW dashboard widget colours to be consistent.
+* Updated KNFSD Monitoring Dashboard to `v9`.
+* Added `fio` and `stress-ng` packages to KNFSD AMI to enable NVMe performance testing.
+* Added `run-benchmark-nvme.sh` script to `.devcontainer/dev` for NVMe `instance-store` performance testing using FIO.
+* Added `run-fio-nfs.sh` script to `.devcontainer/dev` for NFS/FS-Cache performance testing using FIO.
+* Added `create-source-files.fio` file to `.devcontainer/dev/fio` for creating source files for NFS/FS-Cache performance testing using FIO.
+* Added `nfs-fscache-deadlock.fio` file to `.devcontainer/dev/fio` for NFS/FS-Cache performance testing using FIO.
+* Exposed `FSX_STORAGE_CAPACITY`, `FSX_THROUGHPUT_CAPACITY`, and `NUM_NFS_THREADS` Terraform variables to the `fsx-zfs` example.
+* Packer: Updated [README](image/README.md) to clarify `var.SUBNET` is required only if using a non-default VPC.
+* Packer: compile/install `mdadm` from source into AMI to remove `md: async del_gendisk mode will be removed in future, please upgrade to mdadm-4.5+` warning from `dmesg` output.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.20
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

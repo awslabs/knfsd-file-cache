@@ -67,9 +67,9 @@
 
 * [README](tests/README.md)
 * [Directory Listing](tests/directory-listing.md)
-* [Recovery Network Load Balancer](tests/recovery-load-balancer.md)
 * [Recovery Source](tests/recovery-source.md)
 * [Recovery Proxy](tests/recovery-proxy.md)
+* [Recovery Network Load Balancer](tests/recovery-load-balancer.md)
 
 ## Developer Reference
 

@@ -471,12 +471,56 @@ function pre_startup() {
 	complete_command
 }
 
+# tune_block_devices() optimises NVMe block device settings for FS-Cache workload
+function tune_block_devices() {
+	local devices="$1"
+	local raid_dev="${2:-}"
+
+	for dev_path in ${devices}; do
+		local dev
+		dev=$(basename "${dev_path}")
+		echo "Tuning block device: ${dev}"
+		echo 2 > /sys/block/${dev}/queue/nomerges 2> /dev/null || true
+		echo 2048 > /sys/block/${dev}/queue/read_ahead_kb 2> /dev/null || true
+	done
+
+	# apply same settings to RAID device if it exists
+	if [[ -n "${raid_dev}" ]] && [[ -e "${raid_dev}" ]]; then
+		local md_dev
+		md_dev=$(basename "${raid_dev}")
+		echo "Tuning RAID device: ${md_dev}"
+		echo 2 > /sys/block/${md_dev}/queue/nomerges 2> /dev/null || true
+		echo 2048 > /sys/block/${md_dev}/queue/read_ahead_kb 2> /dev/null || true
+	fi
+}
+
 # configure_kernel() configures custom kernel settings
 function configure_kernel() {
 	begin_command "configure kernel"
 	sysctl sunrpc.tcp_slot_table_entries="${TCP_SLOT_TABLE_ENTRIES}"
 	sysctl sunrpc.tcp_max_slot_table_entries="${TCP_MAX_SLOT_TABLE_ENTRIES}"
 	echo ${SVC_RPC_PER_CONNECTION_LIMIT} > /sys/module/sunrpc/parameters/svc_rpc_per_connection_limit
+
+	# Increase free memory reserve from ~67MB (auto-calculated default for i3en.6xl = 192GB) to 1GB.
+	# Prevents kcompactd from urgently reclaiming NFS folios under I/O pressure,
+	# which triggers the folio_wait_private_2 deadlock path.
+	sysctl -w vm.min_free_kbytes=1048576
+
+	# Disable proactive memory compaction (default: 20, range 0-100).
+	# Proactive compaction triggers kcompactd which blocks on NFS folios
+	# waiting for fscache PG_fscache flag to clear -- part of the deadlock chain.
+	sysctl -w vm.compaction_proactiveness=0
+
+	# Increase dirty page ceiling from 20% (default) to 40% of total memory.
+	# Allows more dirty pages before the kernel forces synchronous writeback,
+	# reducing write pressure spikes on the XFS log under burst cache writes.
+	sysctl -w vm.dirty_ratio=40
+
+	# Reduce swappiness from 60 (default) to 10.
+	# This is a dedicated KNFSD proxy with large amount of RAM; prefer keeping
+	# NFS page cache and fscache data in memory over swapping.
+	sysctl -w vm.swappiness=10
+
 	complete_command
 }
 
@@ -525,18 +569,28 @@ function create_fs_cache() {
 
 		if ! has_fs $dev; then
 			echo "Creating filesystem on ${dev}..."
+			# -f 	force overwrite
+			# -L 	set filesystem label
+			# -m 	disable reflink/copy-on-write
 			# nosemgrep: unquoted-variable-expansion-in-command
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${dev}
+			mkfs.xfs -f -L fscache -m reflink=0 ${dev}
 			echo "Finished formatting ${dev}"
 		else
 			echo "Filesystem already present on ${dev}; skipping mkfs"
 		fi
 
 		echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
+		# noatime      		do not update access time on read (reduces write load)
+		# logbufs=8    		number of in-memory log buffers (more = better throughput)
+		# logbsize=256k		size of each log buffer
+		# allocsize=64k 	preferred preallocation size for new writes (default 0)
+		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
+		# noquota      		disable quota accounting on this mount
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount ${dev} "${mount_point}"
+		mount -o noatime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${dev} "${mount_point}"
 		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
+		tune_block_devices "${DEVICESLIST}" ""
 		start_fs_cache
 	else
 		# multiple (NVMe or EBS) devices -> mdraid0 on /dev/md127
@@ -562,7 +616,14 @@ function create_fs_cache() {
 		# create filesystem on RAID array if needed
 		if ! has_fs $raid_dev; then
 			echo "Creating filesystem on ${raid_dev}..."
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,nodiscard ${raid_dev}
+			# -f 	force overwrite
+			# -L 	set filesystem label
+			# -d 	stripe unit 512k, stripe width = num devices (align to RAID0)
+			# -l 	lazy superblock counters (less contention), log stripe unit 32k
+			# -m 	disable reflink/copy-on-write
+			# nosemgrep: unquoted-variable-expansion-in-command
+			mkfs.xfs -f -L fscache -d su=512k,sw=${NUMDEVICES} \
+				-l lazy-count=1,su=32k -m reflink=0 ${raid_dev}
 			echo "Finished formatting ${raid_dev}"
 		else
 			echo "Filesystem already present on ${raid_dev}; skipping mkfs"
@@ -570,9 +631,17 @@ function create_fs_cache() {
 
 		# mount RAID array to FS-Cache directory
 		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
-		mount ${raid_dev} "${mount_point}"
+		# noatime      		do not update access time on read (reduces write load)
+		# logbufs=8    		number of in-memory log buffers (more = better throughput)
+		# logbsize=256k		size of each log buffer
+		# allocsize=64k 	preferred preallocation size for new writes (default 0)
+		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
+		# noquota      		disable quota accounting on this mount
+		# nosemgrep: unquoted-variable-expansion-in-command
+		mount -o noatime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${raid_dev} "${mount_point}"
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
 
+		tune_block_devices "${DEVICESLIST}" "${raid_dev}"
 		start_fs_cache
 	fi
 

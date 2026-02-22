@@ -84,6 +84,8 @@
           "diskio_reads",
           "diskio_writes",
           "diskio_io_time",
+          "diskio_read_time",
+          "diskio_write_time",
           "diskio_ebs_ec2_instance_performance_exceeded_iops",
           "diskio_ebs_ec2_instance_performance_exceeded_tp",
           "diskio_ebs_volume_queue_length",

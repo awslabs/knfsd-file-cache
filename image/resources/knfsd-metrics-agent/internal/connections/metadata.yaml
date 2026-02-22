@@ -17,8 +17,7 @@ status:
 metrics:
   nfs.clients:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: The number of unique NFS client IP addresses connected to the KNFSD filer (in any connected state)
     unit: "{count}"
     gauge:
@@ -26,8 +25,7 @@ metrics:
 
   nfs.connections:
     enabled: true
-    stability:
-      level: alpha
+    stability: alpha
     description: The number of active (ESTAB) NFS connections to the KNFSD filer (1-16 per client, used for autoscaling)
     unit: "{count}"
     gauge:

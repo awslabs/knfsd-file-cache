@@ -54,6 +54,7 @@ resource "aws_autoscaling_group" "knfsd_asg" {
   min_size                  = var.ENABLE_KNFSD_AUTOSCALING ? var.KNFSD_AUTOSCALING_MIN_INSTANCES : var.KNFSD_NODES
   max_size                  = var.ENABLE_KNFSD_AUTOSCALING ? var.KNFSD_AUTOSCALING_MAX_INSTANCES : var.KNFSD_NODES
   desired_capacity          = var.ENABLE_KNFSD_AUTOSCALING ? null : var.KNFSD_NODES
+  wait_for_capacity_timeout = "0" # avoid rare ASG waiter false-negative from eventual consistency
   default_cooldown          = 30
   default_instance_warmup   = 300 # instance_refresh will use this setting if not overridden
   vpc_zone_identifier       = [var.SUBNET]

@@ -53,19 +53,19 @@ func (f *filter) run() error {
 
 		if !match(export, f.includes, true) {
 			if *verbose {
-				fmt.Fprintf(os.Stderr, "Skipped \"%s\", did not match include filter\n", export)
+				fmt.Fprintf(os.Stderr, "Skipped \"%s\", did not match include filter\n", export) // #nosec G705 -- CLI stderr output, not HTTP response
 			}
 			continue
 		}
 
 		if match(export, f.excludes, false) {
 			if *verbose {
-				fmt.Fprintf(os.Stderr, "Skipped \"%s\", export was excluded\n", export)
+				fmt.Fprintf(os.Stderr, "Skipped \"%s\", export was excluded\n", export) // #nosec G705 -- CLI stderr output, not HTTP response
 			}
 			continue
 		}
 
-		fmt.Fprintln(f.output, line)
+		fmt.Fprintln(f.output, line) // #nosec G705 -- CLI file output, not HTTP response
 	}
 
 	return s.Err()
