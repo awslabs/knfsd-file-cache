@@ -15,6 +15,10 @@
 ## ./remote.sh creds
 ## ./remote.sh delete|del|terminate
 
+## PRIVATE SUBNET:
+## If the EC2 instance is in a private subnet (no public IP), set the EICE env var:
+##   export KNFSD_REMOTE_SSH_EICE_ID=<eice-id>
+
 set -eo pipefail
 
 # terminal colors
@@ -22,7 +26,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.21"
+VERSION="1.1.0-alpha.22"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -37,8 +41,8 @@ ARCH=${BUILDARCH:-"amd64"} # amd64 or arm64
 VOL_TYPE="ebs-gp3"
 # ec2 settings
 USER_DATA_SCRIPT="setup-remote-vm.sh" # run as EC2 VM
-INSTANCE_TYPE="c5n.2xlarge" # c6in.2xlarge (amd64) or c6gn.2xlarge (arm64)
-# use smaller c5n.large to save cost when heavy go downloading/compiling not required
+INSTANCE_TYPE="c6i.2xlarge" # c5n.2xlarge (amd64), c6in.2xlarge (amd64) or c6gn.2xlarge (arm64)
+# use smaller instance size to save cost when heavy go downloading/compiling not required
 VOLUME_SIZE=30
 
 function usage() {
@@ -61,6 +65,9 @@ Commands:
 				The ID of the EC2 subnet
 			KNFSD_REMOTE_SSH_SG_ID
 				The ID of the EC2 security group
+		Optional ENV VARs:
+			KNFSD_REMOTE_SSH_EICE_ID
+				EC2 Instance Connect Endpoint ID
 		[<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
 		[<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
 		[<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
@@ -289,6 +296,10 @@ function add-ssh-config() {
 	sed -i -e 's/^Host/\n&/' ${SSH_CONFIG_FILE}
 	sed -i -e '/^Host '"${REMOTE_HOST}"'$/,/^$/d;/^$/d' ${SSH_CONFIG_FILE}
 	# echo in new lines to bottom of ${SSH_CONFIG_FILE}
+	local proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
+	if [[ -n "${KNFSD_REMOTE_SSH_EICE_ID:-}" ]]; then
+		proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${KNFSD_REMOTE_SSH_EICE_ID}"
+	fi
 	cat << EOT >> ${SSH_CONFIG_FILE}
 Host ${REMOTE_HOST}
 	User ${USERNAME}
@@ -297,7 +308,7 @@ Host ${REMOTE_HOST}
 	StrictHostKeyChecking no
 	ForwardAgent yes
 	IdentitiesOnly yes
-	ProxyCommand bash -c "aws ec2-instance-connect open-tunnel --instance-id %h"
+	ProxyCommand bash -c "${proxy_cmd}"
 EOT
 	echo "INFO: ssh config file: ${SSH_CONFIG_FILE}"
 	echo "INFO: ssh config added: ${REMOTE_HOST}"

@@ -1,10 +1,13 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 function setup() {
 	bats_load_library bats-support
 	bats_load_library bats-assert
 	load ../proxy-startup.sh
 }
 
-@test "split" {
+@test "split " {
 	run split <<< "foo,bar,baz"
 	assert_success
 	assert_equal ${#lines[@]} 3
@@ -13,13 +16,13 @@ function setup() {
 	assert_line -n 2 baz
 }
 
-@test "split single item" {
+@test "split single item " {
 	run split <<< "foo"
 	assert_success
 	assert_output "foo"
 }
 
-@test "split trims whitespace" {
+@test "split trims whitespace " {
 	run split <<< "foo   ,   bar   ,   baz"
 	assert_success
 	assert_equal ${#lines[@]} 3
@@ -28,7 +31,7 @@ function setup() {
 	assert_line -n 2 baz
 }
 
-@test "split ignores empty items" {
+@test "split ignores empty items " {
 	run split <<< "foo,,bar"
 	assert_success
 	assert_equal ${#lines[@]} 2
@@ -36,13 +39,13 @@ function setup() {
 	assert_line -n 1 bar
 }
 
-@test "split empty" {
+@test "split empty " {
 	run split <<< ""
 	assert_success
 	assert_equal ${#lines[@]} 0
 }
 
-@test "trim_slash" {
+@test "trim slash " {
 	run trim_slash <<- EOT
 		/a/
 		/b
@@ -58,13 +61,13 @@ function setup() {
 	assert_line -n 3 /e/f
 }
 
-@test "trim slash preserves root" {
+@test "trim slash preserves root " {
 	run trim_slash <<< "/"
 	assert_success
 	assert_output "/"
 }
 
-@test "trim slash removes multiple trailing slashes" {
+@test "trim slash removes multiple trailing slashes " {
 	run trim_slash <<< "/foo/bar///"
 	assert_success
 	assert_output "/foo/bar"

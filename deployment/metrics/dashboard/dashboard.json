@@ -192,16 +192,16 @@
           "populateFrom": "server"
       },
       {
-        "type": "pattern",
-        "inputType": "select",
-        "pattern": "OUTPUT_FILTER",
-        "id": "output_filter",
-        "label": "Output NFS Filer",
-        "defaultValue": "__FIRST",
-        "visible": true,
-        "search": "{knfsd/metrics,AutoScalingGroupName,InstanceId,server} MetricName=\"knfsd/mount/read_bytes\"",
-        "populateFrom": "server"
-    }
+          "type": "pattern",
+          "inputType": "select",
+          "pattern": "OUTPUT_FILTER",
+          "id": "output_filter",
+          "label": "Output NFS Filer",
+          "defaultValue": "__FIRST",
+          "visible": true,
+          "search": "{knfsd/metrics,AutoScalingGroupName,InstanceId,server} MetricName=\"knfsd/mount/read_bytes\"",
+          "populateFrom": "server"
+      }
   ],
   "widgets": [
       {
@@ -211,7 +211,7 @@
           "width": 6,
           "height": 4,
           "properties": {
-              "markdown": "## Cache Overview\nThese graphs show information on the KNFSD caching layers. KNFSD implements two primary caching layers:\n- **L1 Cache:** The standard Linux filesystem cache, handles most of the metadata caching\n- **L2 Cache:** A filesystem caching layer implemented by FS-Cache, handles the majority of the file caching",
+              "markdown": "## Cache Overview\nThese graphs show information on the KNFSD caching layers. KNFSD implements two primary caching layers:\n- **L1 Cache:** The standard Linux filesystem cache, handles most of the metadata caching.\n- **L2 Cache:** A filesystem caching layer implemented by FS-Cache, handles the majority of the file caching.",
               "background": "transparent"
           }
       },
@@ -2176,30 +2176,30 @@
           }
       },
       {
-        "type": "metric",
-        "x": 16,
-        "y": 176,
-        "width": 8,
-        "height": 8,
-        "properties": {
-            "metrics": [
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp", "id": "e1" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops", "id": "e2" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp", "id": "e3" } ],
-                [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops", "id": "e4" } ]
-            ],
-            "view": "timeSeries",
-            "stacked": false,
-            "region": "${region_filter}",
-            "title": "Instance Performance Exceeded",
-            "stat": "Sum",
-            "yAxis": {
-                "left": {
-                    "label": "Time (μs)",
-                    "showUnits": false
-                }
-            }
-        }
+          "type": "metric",
+          "x": 16,
+          "y": 176,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp", "id": "e1" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops", "id": "e2" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp", "id": "e3" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops", "id": "e4" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "Instance Performance Exceeded",
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Time (μs)",
+                      "showUnits": false
+                  }
+              }
+          }
       },
       {
           "type": "metric",
@@ -2225,28 +2225,28 @@
           }
       },
       {
-        "type": "metric",
-        "x": 8,
-        "y": 184,
-        "width": 8,
-        "height": 8,
-        "properties": {
-            "metrics": [
-                [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ],
-                [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_time\"', 'Sum')", "label": "${LABEL}", "id": "e2" } ]
-            ],
-            "view": "timeSeries",
-            "stacked": false,
-            "region": "${region_filter}",
-            "title": "I/O Requests: Waiting on Disk",
-            "stat": "Sum",
-            "yAxis": {
-                "left": {
-                    "label": "Time (ms)",
-                    "showUnits": false
-                }
-            }
-        }
+          "type": "metric",
+          "x": 8,
+          "y": 184,
+          "width": 8,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_time\"', 'Sum')", "label": "${LABEL}", "id": "e2" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "I/O Requests: Waiting on Disk",
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Time (ms)",
+                      "showUnits": false
+                  }
+              }
+          }
       },
       {
           "type": "metric",
@@ -2482,7 +2482,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "disk_used_percent", "path", "/", "fstype", "xfs", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "disk_used" } ]
+                  [ "knfsd/ec2", "disk_used_percent", "path", "/", "fstype", "ext4", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "disk_used" } ]
               ],
               "view": "timeSeries",
               "stacked": false,

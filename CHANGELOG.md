@@ -1,5 +1,22 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.22
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Updated to Linux kernel v6.19.4-knfsd.
+* Removed `0001-nfsd-never-defer-requests-during-idmap-lookup.patch` kernel patch that is now included in the v6.19.4 release.
+* Updated to Terraform `aws` provider v6.34.0.
+* Updated to Terraform `random` provider v3.8.1.
+* Refactored `nfs.threads` metric to use `pgrep -c -x nfsd` instead of `prometheus/procfs/nfs` to count the currently running number of NFS threads in preparation for Linux v7.0 kernel release.
+* Enhanced `proxy-startup.sh` with dynamic memory management: added `calculate_min_free_kbytes` function to set `vm.min_free_kbytes` based on total RAM, adjusted `VFS_CACHE_PRESSURE`, and refined kernel parameters for improved NFS performance.
+* Fixed bug in CloudWatch `metrics` dashboard where the disk filesystem type was incorrectly set to `xfs` instead of `ext4`.
+* Updated KNFSD Monitoring Dashboard to `v10`.
+* Added explicit `EC2 Instance Connect Endpoint` (EICE) support to `run-fio-nfs.sh` and `remote.sh` scripts to support private subnets (no public IP).
+* Added ability to provide custom EC2 keypair to `run-fio-nfs.sh` script.
+* Enhanced `BATS` unit tests for `proxy-startup.sh` script to test all `sysctl` settings.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.21
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
@@ -10,7 +27,7 @@
 * Updated to PostgreSQL v18.2.
 * Updated to Packer v1.15.0.
 * Updated to `nfs-utils` v2.8.5.
-* Updated to Terraform AWS provider v6.32.0.
+* Updated to Terraform AWS provider v6.33.0.
 * Switched FS-Cache filesystem from `EXT4` to `XFS` with tuned `mkfs`/`mount` options, added block-device tuning (`nomerges`, `read_ahead_kb`) and VM sysctls (`min_free_kbytes`, `compaction_proactiveness`, `dirty_ratio`, `swappiness`) to reduce deadlock risk and improve NVMe cache performance.
 * Added KNFSD Test Plans for:
   * [Directory Listing](docs/tests/directory-listing.md)
@@ -31,7 +48,7 @@
 * Improved some of the CW dashboard text descriptions.
 * Aligned CW dashboard widget colours to be consistent.
 * Updated KNFSD Monitoring Dashboard to `v9`.
-* Added `fio` and `stress-ng` packages to KNFSD AMI to enable NVMe performance testing.
+* Added `fio` and `stress-ng` packages to KNFSD AMI to enable NVMe/NFS/FS-Cache performance testing.
 * Added `run-benchmark-nvme.sh` script to `.devcontainer/dev` for NVMe `instance-store` performance testing using FIO.
 * Added `run-fio-nfs.sh` script to `.devcontainer/dev` for NFS/FS-Cache performance testing using FIO.
 * Added `create-source-files.fio` file to `.devcontainer/dev/fio` for creating source files for NFS/FS-Cache performance testing using FIO.

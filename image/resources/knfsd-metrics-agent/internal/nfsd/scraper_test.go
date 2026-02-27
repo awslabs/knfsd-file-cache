@@ -127,3 +127,40 @@ func TestPacketsDeferredCalculationWithMultiplePools(t *testing.T) {
 
 	assert.Equal(t, int64(15), packetsDeferred)
 }
+
+func TestParsePgrepCount(t *testing.T) {
+	t.Parallel()
+
+	// NFSD thread count: 0 = no running nfsd (stopped), 1+ = running daemon. Cannot be negative
+	tests := []struct {
+		name    string
+		stdout  string
+		want    int64
+		wantErr bool
+	}{
+		{"zero (no running nfsd)", "0", 0, false},
+		{"one (minimal running daemon)", "1", 1, false},
+		{"single digit", "8", 8, false},
+		{"multiple digits", "128", 128, false},
+		{"with newline", "4\n", 4, false},
+		{"with leading/trailing space", "  12  ", 12, false},
+		{"empty", "", 0, true},
+		{"whitespace only", "  \n\t  ", 0, true},
+		{"non-numeric", "abc", 0, true},
+		{"partial number", "12abc", 0, true},
+		{"negative (invalid)", "-1", 0, true},
+		{"overflow", "99999999999999999999", 0, true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := parsePgrepCount(tc.stdout)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

@@ -11,8 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.21"
-KERNEL="6.19.3"
+VERSION="1.1.0-alpha.22"
+KERNEL="6.19.4"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -415,8 +415,12 @@ function build_kernel() (
 	# apply custom patches using quilt
 	# uses global QUILT_PATCHES=debian/patches set at top of script
 	mkdir -p debian/patches
-	quilt import "${PATCHES}"/kernel/*.patch
-	quilt push -a
+	kernel_patches=("${PATCHES}"/kernel/*.patch)
+	# skip if "patches/kernel" directory empty
+	if [[ -e "${kernel_patches[0]}" ]]; then
+		quilt import "${kernel_patches[@]}"
+		quilt push -a
+	fi
 
 	# disable keys that reference non-existent Ubuntu cert files
 	scripts/config --disable CONFIG_SYSTEM_TRUSTED_KEYS

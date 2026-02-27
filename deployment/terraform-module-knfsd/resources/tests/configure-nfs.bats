@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 function setup_file() {
 	: > /etc/nfs.conf
 	rm -rf /etc/nfs.conf.d
@@ -11,15 +14,7 @@ function setup() {
 	load ../proxy-startup.sh
 }
 
-@test "sets cache pressure" {
-	export VFS_CACHE_PRESSURE=10
-	run configure_nfs
-	assert_success
-	actual="$(< /tmp/sysctl)"
-	assert_equal "$actual" 'vm.vfs_cache_pressure=10'
-}
-
-@test "disable nfs versions" {
+@test "disable nfs versions " {
 	export DISABLED_NFS_VERSIONS="3,4.0,4.2"
 
 	run configure_nfs
@@ -34,7 +29,7 @@ function setup() {
 	assert_equal "$(nfsconf --get nfsd vers4.2)" no
 }
 
-@test "set RPC thread count" {
+@test "set RPC thread count " {
 	export NUM_NFS_THREADS=64
 
 	run configure_nfs

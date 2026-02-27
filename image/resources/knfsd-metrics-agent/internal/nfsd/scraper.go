@@ -7,16 +7,18 @@ package nfsd
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/convert"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/nfsd/internal/metadata"
-	"github.com/prometheus/procfs/nfs"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/scraper"
@@ -53,8 +55,8 @@ func (s *nfsdScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	now := pcommon.NewTimestampFromTime(time.Now())
 
-	// Get thread count via prometheus/procfs/nfs
-	if err := s.scrapeThreadCount(now); err != nil {
+	// Get thread count via "pgrep -c -x nfsd"
+	if err := s.scrapeThreadCount(ctx, now); err != nil {
 		s.logger.Warn("Failed to scrape thread count", zap.Error(err))
 	}
 
@@ -72,24 +74,46 @@ func (s *nfsdScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	return metrics, nil
 }
 
-// scrapeThreadCount reads the NFS server thread count via prometheus/procfs/nfs
-func (s *nfsdScraper) scrapeThreadCount(now pcommon.Timestamp) error {
-	fs, err := nfs.NewDefaultFS()
+// scrapeThreadCount reads the NFS server thread count via "pgrep -c -x nfsd"
+func (s *nfsdScraper) scrapeThreadCount(ctx context.Context, now pcommon.Timestamp) error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, "pgrep", "-c", "-x", "nfsd")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+
 	if err != nil {
-		return fmt.Errorf("failed to create nfs filesystem: %w", err)
+		var exit *exec.ExitError
+		if errors.As(err, &exit) {
+			return fmt.Errorf("pgrep terminated with exit code %d\n%s", exit.ExitCode(), stderr.String())
+		}
+		return fmt.Errorf("failed to run pgrep: %w", err)
 	}
 
-	stats, err := fs.ServerRPCStats()
+	count, err := parsePgrepCount(stdout.String())
 	if err != nil {
-		return fmt.Errorf("failed to read server RPC stats: %w", err)
+		return fmt.Errorf("failed to parse pgrep output %q: %w", stdout.String(), err)
 	}
 
-	threadCount := convert.Int64(stats.Threads.Threads)
-	s.mb.RecordNfsThreadsDataPoint(now, threadCount)
-
-	s.logger.Debug("NFSD threads", zap.Int64("threads", threadCount))
-
+	s.mb.RecordNfsThreadsDataPoint(now, count)
+	s.logger.Debug("NFSD threads", zap.Int64("threads", count))
 	return nil
+}
+
+// parsePgrepCount parses the stdout of "pgrep -c nfsd" (a single integer) into int64
+func parsePgrepCount(stdout string) (int64, error) {
+	s := strings.TrimSpace(stdout)
+	if s == "" {
+		return 0, fmt.Errorf("empty output")
+	}
+	count, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	if count < 0 {
+		return 0, fmt.Errorf("nfsd thread count cannot be negative: %d", count)
+	}
+	return count, nil
 }
 
 // scrapePoolStats parses /proc/fs/nfsd/pool_stats for thread pool metrics

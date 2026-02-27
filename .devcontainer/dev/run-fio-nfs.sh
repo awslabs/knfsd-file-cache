@@ -11,11 +11,34 @@
 ## ./run-fio-nfs.sh help|-h|--help
 ## ./run-fio-nfs.sh status
 ## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
+## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
 ## ./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
-## ./run-fio-nfs.sh run [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/create-source-files.fio> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock.fio> [OPTIONS]
+## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID>] [OPTIONS]
+## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID> --key-name <KEYPAIR_NAME>] [OPTIONS]
 ## ./run-fio-nfs.sh destroy
+
+## KNFSD-IP
+# Ideally, the secondary ENI based private IP address of the KNFSD proxy
+
+## SUBNET-ID
+# Ideally this should be the same subnet as the KNFSD proxy
+
+## SECURITY-GROUP-ID
+# TCP:8765 is required for FIO communication between clients and captain
+
+## CUSTOM KEYPAIR:
+## If you want to use a custom EC2 keypair, you can pass the --key-name <KEYPAIR_NAME> option to the "apply" and "run" commands.
+## The keypair must match the private key identified by shell variable: IDENTITY_FILE=<path> [default: ~/.ssh/id_rsa]
+
+## PRIVATE SUBNET:
+## If FIO captain is in a private subnet (no public IP assigned), you will need to manually create an EC2 Instance Connect Endpoint (EICE) in your VPC
+##   aws ec2 create-instance-connect-endpoint --subnet-id <subnet-id>
+## then pass the EICE ID to the "run" command only:
+##   ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> --instance-connect-endpoint-id <EICE_ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
+## AWS docs: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html
+## More info: https://github.com/awslabs/knfsd-file-cache/blob/main/docs/developer.md#remote-ssh-considerations
 
 ## fscache deadlock notes:
 ## 1. ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID>
@@ -39,7 +62,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-alpha.21"
+VERSION="1.1.0-alpha.22"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -73,6 +96,8 @@ MOUNT_PATH="/mnt/fsx"
 MOUNT_EXPORT="/fsx"
 FIO_JOB=""
 KNFSD_IP=""
+EICE_ID=""
+KEY_NAME=""
 
 # AWS "name" tag for all instances (captain + clients)
 FIO_TAG_PREFIX="knfsd-fio"
@@ -95,13 +120,17 @@ Commands:
 		--knfsd-ip is required (KNFSD proxy IP for NFS mounts).
 		--subnet-id is required (ID of the subnet to launch the instances in).
 		--security-group-id is required (ID of the security group to launch the instances in).
+		Optional: --key-name <KEYPAIR_NAME> attaches an EC2 keypair to the captain instance. Must match private key identified by: IDENTITY_FILE=<path>
 	./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
 		Add N additional FIO client instances to an existing fleet.
 		Requires an existing captain (run apply first).
-	./run-fio-nfs.sh run [OPTIONS]
+	./run-fio-nfs.sh run [OPTIONS] [--instance-connect-endpoint-id <EICE_ID>] [--key-name <KEYPAIR_NAME>]
 		Copy job file to captain, run FIO client/server test,
 		and download results. Use --fio-job to select the job file.
 		Default: fio/nfs-fscache-deadlock.fio (deadlock test).
+		Optional: --key-name <KEYPAIR_NAME> uses keypair auth (skips send-ssh-public-key); must match private key identified by: IDENTITY_FILE=<path>
+		For captain in a private subnet (no public IP), pass
+		--instance-connect-endpoint-id <EICE_ID> to run only (not apply/scale/status/destroy).
 		Example: create source files first:
 			./run-fio-nfs.sh run --fio-job fio/create-source-files.fio
 		then run deadlock test (default job):
@@ -182,6 +211,16 @@ function parse_args() {
 			--fio-job)
 				require_option_value "$1" "${2:-}"
 				FIO_JOB="$2"
+				shift 2
+				;;
+			--instance-connect-endpoint-id)
+				require_option_value "$1" "${2:-}"
+				EICE_ID="$2"
+				shift 2
+				;;
+			--key-name)
+				require_option_value "$1" "${2:-}"
+				KEY_NAME="$2"
 				shift 2
 				;;
 			--help | -h | help | "")
@@ -339,6 +378,12 @@ function cmd_apply() {
 
 	local captain_ud
 	captain_ud=$(create_user_data_captain)
+
+	local captain_extra_args=()
+	if [[ -n "${KEY_NAME}" ]]; then
+		captain_extra_args+=(--key-name "${KEY_NAME}")
+	fi
+
 	local captain_id
 	captain_id=$(aws ec2 run-instances \
 		--image-id "${captain_ami_id}" \
@@ -349,6 +394,7 @@ function cmd_apply() {
 		--user-data "${captain_ud}" \
 		--metadata-options "HttpEndpoint=enabled,HttpTokens=required,HttpPutResponseHopLimit=2,InstanceMetadataTags=enabled" \
 		--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${CAPTAIN_NAME}},{Key=knfsd-file-cache:version,Value=${VERSION}},{Key=knfsd-fio,Value=captain}]" \
+		"${captain_extra_args[@]}" \
 		--query 'Instances[0].InstanceId' --output text)
 
 	# Launch clients
@@ -374,6 +420,7 @@ function push_ssh_key() {
 		--instance-id "${instance_id}" \
 		--instance-os-user "${USERNAME}" \
 		--ssh-public-key "file://${IDENTITY_FILE}.pub" > /dev/null
+	sleep 2
 }
 
 # get_captain_instance_id prints the captain instance ID (or empty)
@@ -486,20 +533,28 @@ function cmd_run() {
 	done
 
 	# SSH/SCP options for EC2 Instance Connect tunnelling
+	local proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
+	if [[ -n "${EICE_ID}" ]]; then
+		proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${EICE_ID}"
+	fi
 	local opts=(
 		-i "${IDENTITY_FILE}"
 		-o "StrictHostKeyChecking=no"
 		-o "UserKnownHostsFile=/dev/null"
 		-o "LogLevel=ERROR"
-		-o "ProxyCommand=aws ec2-instance-connect open-tunnel --instance-id %h"
+		-o "ProxyCommand=${proxy_cmd}"
 	)
 
 	echo -e "${SHELL_BLUE}Copying job file to captain...${SHELL_DEFAULT}"
-	push_ssh_key "${captain_id}"
+	if [[ -z "${KEY_NAME}" ]]; then
+		push_ssh_key "${captain_id}"
+	fi
 	scp "${opts[@]}" "${FIO_JOB}" "${USERNAME}@${captain_id}:/tmp/fio-settings.fio"
 
 	echo -e "${SHELL_BLUE}Running FIO...${SHELL_DEFAULT}"
-	push_ssh_key "${captain_id}"
+	if [[ -z "${KEY_NAME}" ]]; then
+		push_ssh_key "${captain_id}"
+	fi
 	local fio_rc=0
 
 	# shellcheck disable=SC2087
@@ -528,7 +583,9 @@ REMOTE
 	local local_output="fio-output-${job_name}-${timestamp}.json"
 
 	echo -e "${SHELL_BLUE}Transferring results...${SHELL_DEFAULT}"
-	push_ssh_key "${captain_id}"
+	if [[ -z "${KEY_NAME}" ]]; then
+		push_ssh_key "${captain_id}"
+	fi
 	scp "${opts[@]}" "${USERNAME}@${captain_id}:${remote_output}" "./${local_output}"
 	echo -e "${SHELL_GREEN}Results saved to: $(pwd)/${local_output}${SHELL_DEFAULT}"
 }

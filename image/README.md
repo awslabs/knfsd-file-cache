@@ -252,7 +252,7 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.19.3-knfsd
+amazon-ebs.nfs-proxy: Kernel:       6.19.4-knfsd
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
@@ -310,7 +310,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.21"
+VERSION="1.1.0-alpha.22"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -473,7 +473,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.19.3-knfsd
+Kernel:       6.19.4-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

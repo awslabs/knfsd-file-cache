@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.21"
+VERSION="1.1.0-alpha.22"
 
 ## set env vars for build env only
 export HOME=/home/${USERNAME}

@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.21"
+ARG VERSION="1.1.0-alpha.22"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"

@@ -494,21 +494,70 @@ function tune_block_devices() {
 	fi
 }
 
+# calculate_min_free_kbytes() computes vm.min_free_kbytes as 1% of total RAM,
+# rounded to the nearest GB, with a floor of 1 GB and ceiling of 4 GB.
+# Returns the value in KB via stdout.
+function calculate_min_free_kbytes() {
+	local total_mb
+	total_mb=$(free -m | awk '/^Mem:/ {print $2}')
+
+	# 1% of total RAM in MB
+	local one_pct_mb=$((total_mb / 100))
+
+	# round to nearest GB (1024 MB): add 512 MB then integer-divide by 1024, multiply back
+	local rounded_gb=$(((one_pct_mb + 512) / 1024))
+
+	# floor: 1 GB
+	if ((rounded_gb < 1)); then
+		rounded_gb=1
+	fi
+
+	# ceiling: 4 GB
+	if ((rounded_gb > 4)); then
+		rounded_gb=4
+	fi
+
+	# convert GB to KB
+	echo $((rounded_gb * 1024 * 1024))
+}
+
 # configure_kernel() configures custom kernel settings
 function configure_kernel() {
 	begin_command "configure kernel"
-	sysctl sunrpc.tcp_slot_table_entries="${TCP_SLOT_TABLE_ENTRIES}"
-	sysctl sunrpc.tcp_max_slot_table_entries="${TCP_MAX_SLOT_TABLE_ENTRIES}"
+
+	# Set the initial number of SUNRPC slot table entries for outbound TCP connections
+	# to the source NFS filer. Each slot represents one in-flight RPC request.
+	# min: 2, default: 128, max: 65536. Higher values increase parallelism to the source filer.
+	sysctl -w sunrpc.tcp_slot_table_entries="${TCP_SLOT_TABLE_ENTRIES}"
+
+	# Set the upper ceiling for SUNRPC slot table entries. The kernel can
+	# dynamically grow the slot table up to this limit under load.
+	# min: 2, default: 128, max: 65536
+	sysctl -w sunrpc.tcp_max_slot_table_entries="${TCP_MAX_SLOT_TABLE_ENTRIES}"
+
+	# Limit the number of SUNRPC requests the server processes in parallel from
+	# a single client IP/connection. Prevents one aggressive client from
+	# monopolising all nfsd threads, ensuring fair access across NFS clients.
+	# min: 0 (unlimited), default: 0, max: 65536
+	echo "svc_rpc_per_connection_limit = ${SVC_RPC_PER_CONNECTION_LIMIT}"
 	echo ${SVC_RPC_PER_CONNECTION_LIMIT} > /sys/module/sunrpc/parameters/svc_rpc_per_connection_limit
 
-	# Increase free memory reserve from ~67MB (auto-calculated default for i3en.6xl = 192GB) to 1GB.
-	# Prevents kcompactd from urgently reclaiming NFS folios under I/O pressure,
-	# which triggers the folio_wait_private_2 deadlock path.
-	sysctl -w vm.min_free_kbytes=1048576
+	# Set VFS cache pressure
+	# dentry/inode cache should almost never be reclaimed.
+	# min: 0, default: 1, max: 100
+	sysctl -w vm.vfs_cache_pressure="${VFS_CACHE_PRESSURE}"
 
-	# Disable proactive memory compaction (default: 20, range 0-100).
+	# Reserve ~1% of total RAM (floor 1 GB, ceiling 4 GB, rounded to nearest GB)
+	# as free memory. Prevents kcompactd from urgently reclaiming NFS folios
+	# under I/O pressure.
+	local min_free_kb
+	min_free_kb=$(calculate_min_free_kbytes)
+	sysctl -w vm.min_free_kbytes=${min_free_kb}
+
+	# Disable proactive memory compaction.
 	# Proactive compaction triggers kcompactd which blocks on NFS folios
-	# waiting for fscache PG_fscache flag to clear -- part of the deadlock chain.
+	# waiting for fscache PG_fscache flag to clear.
+	# min: 0, default: 20, max: 100
 	sysctl -w vm.compaction_proactiveness=0
 
 	# Increase dirty page ceiling from 20% (default) to 40% of total memory.
@@ -516,10 +565,15 @@ function configure_kernel() {
 	# reducing write pressure spikes on the XFS log under burst cache writes.
 	sysctl -w vm.dirty_ratio=40
 
-	# Reduce swappiness from 60 (default) to 10.
+	# Raise async writeback threshold from 10% (default) to 20% of total memory.
+	# Delays background flush so dirty pages accumulate longer before pdflush
+	# starts writing, reducing I/O interference during FS-Cache cold-fill bursts.
+	sysctl -w vm.dirty_background_ratio=20
+
+	# Reduce swappiness from 60 (default) to 5.
 	# This is a dedicated KNFSD proxy with large amount of RAM; prefer keeping
 	# NFS page cache and fscache data in memory over swapping.
-	sysctl -w vm.swappiness=10
+	sysctl -w vm.swappiness=5
 
 	complete_command
 }
@@ -788,12 +842,9 @@ function configure_read_ahead() {
 	complete_command
 }
 
-# configure_nfs() sets the VFS Cache Pressure and disables unwanted NFS Versions
+# configure_nfs() disables unwanted NFS Versions and sets the number of NFS threads
 function configure_nfs() {
 	begin_command "configure nfs"
-	# set VFS Cache Pressure
-	sysctl vm.vfs_cache_pressure="${VFS_CACHE_PRESSURE}"
-
 	# build Flags to Disable NFS Versions
 	DISABLED_NFS_VERSIONS_FLAGS=("vers2=no")
 	for v in $(echo "${DISABLED_NFS_VERSIONS}" | sed "s/,/ /g"); do

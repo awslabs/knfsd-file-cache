@@ -316,6 +316,12 @@ To ensure a reliable workflow of provision, start, SSH config, stop, and termina
   export KNFSD_REMOTE_SSH_SG_ID=<security-group-id> # "id" of the security group to be used for the EC2 instance
   ```
 
+Optionally, you can set the EC2 Instance Connect Endpoint ID (if not set, this is automatically inferred from the VPC that the instance is running in):
+
+  ```bash
+  export KNFSD_REMOTE_SSH_EICE_ID=<eice-id> # "id" of the EC2 Instance Connect Endpoint
+  ```
+
 Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|help|--help`.
 
   ```bash
@@ -337,6 +343,9 @@ Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|hel
             The ID of the EC2 subnet
           KNFSD_REMOTE_SSH_SG_ID
             The ID of the EC2 security group
+        Optional ENV VARs:
+          KNFSD_REMOTE_SSH_EICE_ID
+            EC2 Instance Connect Endpoint ID (if not set, this is automatically inferred from the VPC that the instance is running in)
         [<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
         [<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
         [<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
