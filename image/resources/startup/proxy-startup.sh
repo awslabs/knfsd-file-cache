@@ -635,13 +635,14 @@ function create_fs_cache() {
 
 		echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
 		# noatime      		do not update access time on read (reduces write load)
+		# lazytime     		only update times (atime, mtime, ctime) on the in-memory version of the file inode (reduces write load)
 		# logbufs=8    		number of in-memory log buffers (more = better throughput)
 		# logbsize=256k		size of each log buffer
 		# allocsize=64k 	preferred preallocation size for new writes (default 0)
 		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
 		# noquota      		disable quota accounting on this mount
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount -o noatime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${dev} "${mount_point}"
+		mount -o noatime,lazytime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${dev} "${mount_point}"
 		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" ""
@@ -686,13 +687,14 @@ function create_fs_cache() {
 		# mount RAID array to FS-Cache directory
 		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
 		# noatime      		do not update access time on read (reduces write load)
+		# lazytime     		only update times (atime, mtime, ctime) on the in-memory version of the file inode (reduces write load)
 		# logbufs=8    		number of in-memory log buffers (more = better throughput)
 		# logbsize=256k		size of each log buffer
 		# allocsize=64k 	preferred preallocation size for new writes (default 0)
 		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
 		# noquota      		disable quota accounting on this mount
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount -o noatime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${raid_dev} "${mount_point}"
+		mount -o noatime,lazytime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${raid_dev} "${mount_point}"
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" "${raid_dev}"

@@ -11,8 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.22"
-KERNEL="6.19.4"
+VERSION="1.1.0-alpha.23"
+KERNEL="6.19.7"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -35,6 +35,7 @@ export NAME=build EMAIL=build
 # golang build cache
 export GOCACHE="/mnt/build/go/.cache/go-build"
 export GOMODCACHE="/mnt/build/go/pkg/mod"
+export GOTMPDIR="/mnt/build/go/tmp"
 export GOPROXY=https://proxy.golang.org,direct
 
 # set the working directory to "/mnt/build"
@@ -136,7 +137,8 @@ function install_build_dependencies() (
 		libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
 		libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
 		gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
-		libreadline-dev libdw-dev
+		libreadline-dev libdw-dev libslang2-dev libnuma-dev libtraceevent-dev \
+		python3-dev python-is-python3
 	complete_command
 )
 
@@ -183,7 +185,7 @@ function download_nfs-utils() (
 	# Jammy Jellyfish (Ubuntu 22.04) has nfs-common 2.6.1
 	# Noble Numbat (Ubuntu 24.04) has nfs-common 2.6.4
 	# Plucky Puffin (Ubuntu 25.04) has nfs-common 2.8.2
-	curl -o nfs-utils-2.8.5.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
+	curl -o nfs-utils-2.8.5.tar.gz https://cdn.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
 	tar xf nfs-utils-2.8.5.tar.gz
 	complete_command
 )
@@ -251,7 +253,19 @@ function configure_serial_console() (
 	# Add GRUB_SERIAL_COMMAND="serial --speed=115200"
 	sed -i '/^GRUB_SERIAL_COMMAND=/d' "${cfg_file}"
 	echo 'GRUB_SERIAL_COMMAND="serial --speed=115200"' >> "${cfg_file}"
-	# Update GRUB configuration
+	update-grub
+	complete_command
+)
+
+# limit CPU idle C-states to C1 via GRUB boot parameters to reduce
+# interrupt/wake-up latency. Ignored on Graviton & EC2 instance
+# sizes that do not expose C-state control.
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html
+function configure_cpu_power_states() (
+	begin_command "Configuring CPU power states"
+	cat > /etc/default/grub.d/60-cpu-power-states.cfg << 'EOF'
+GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX intel_idle.max_cstate=1 processor.max_cstate=1"
+EOF
 	update-grub
 	complete_command
 )
@@ -323,10 +337,10 @@ function install_amazon_efs_utils() (
 # install golang
 function install_golang() (
 	begin_command "Installing golang"
-	curl -o go1.26.0.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.26.0.linux-${ARCH_ALT}.tar.gz
+	curl -o go1.26.1.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.26.1.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.26.0.linux-${ARCH_ALT}.tar.gz
-	mkdir -p "$GOCACHE" "$GOMODCACHE"
+	tar -C /usr/local -xzf go1.26.1.linux-${ARCH_ALT}.tar.gz
+	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"
 	complete_command
 )
 
@@ -378,6 +392,13 @@ function install_netapp_exports() (
 	complete_command
 )
 
+# install the proxy startup script
+function install_proxy_startup() (
+	begin_command "Installing proxy-startup"
+	install -m 0755 startup/proxy-startup.sh /usr/local/sbin/proxy-startup.sh
+	complete_command
+)
+
 # update to latest Linux HWE kernel
 function update_kernel() (
 	begin_command "Updating kernel"
@@ -393,8 +414,8 @@ function update_kernel() (
 # download kernel source
 function download_kernel() (
 	begin_command "Downloading Linux kernel: ${KERNEL}"
-	curl -fsSL --retry 5 --retry-delay 5 -o linux-${KERNEL}.tar.gz \
-		https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/snapshot/linux-${KERNEL}.tar.gz
+	curl -fsSL --retry 5 --retry-max-time 300 --connect-timeout 30 --max-time 600 -o linux-${KERNEL}.tar.gz \
+		https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL}.tar.gz
 	tar -xf linux-${KERNEL}.tar.gz
 	complete_command
 )
@@ -405,6 +426,7 @@ function build_kernel() (
 	cd linux-${KERNEL}
 
 	# map architecture for kernel build (kernel uses arm64, not aarch64)
+	# shellcheck disable=SC2030
 	if [ "$ARCH" = "aarch64" ]; then
 		export ARCH="arm64"
 	fi
@@ -469,6 +491,24 @@ function install_kernel() (
 	complete_command
 )
 
+# build/install perf
+function build_install_perf() (
+	begin_command "Building and installing perf"
+	cd linux-${KERNEL}/tools/perf
+
+	# map architecture for perf build
+	# shellcheck disable=SC2031
+	if [ "$ARCH" = "aarch64" ]; then
+		export ARCH="arm64"
+	fi
+
+	local nproc
+	nproc=$(nproc)
+	make -j "${nproc}" prefix=/usr
+	make -j "${nproc}" prefix=/usr/local install
+	complete_command
+)
+
 # copy various configuration files
 function copy_config() (
 	begin_command "Copying config"
@@ -476,8 +516,6 @@ function copy_config() (
 	chmod --recursive 0644 etc
 	cp --recursive ./etc /
 	mkdir -p /srv/nfs
-	# symlink python3 to python
-	ln -sf /usr/bin/python3 /usr/bin/python
 	complete_command
 )
 
@@ -492,6 +530,7 @@ install_cachefilesd
 download_nfs-utils
 build_install_nfs-utils
 configure_serial_console
+configure_cpu_power_states
 install_aws_cli
 install_amazon_ec2_net_utils
 install_cloudwatch_agent
@@ -505,10 +544,12 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
+install_proxy_startup
 # update_kernel
 download_kernel
 build_kernel
 install_kernel
+build_install_perf
 copy_config
 
 echo -e "\n${SHELL_YELLOW}---- SUCCESS: Finished build image script. Reboot(ing) for new kernel to take effect${SHELL_DEFAULT}"

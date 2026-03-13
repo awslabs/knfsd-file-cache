@@ -1,5 +1,7 @@
 # NFS Client Setup
 
+> CRITICAL: When using the DNS Round-Robin (DNS-RR) architecture, ensure all NFS clients mount the KNFSD proxy instance(s) using the `dns_name` output from the Terraform deployment (ideally) or the secondary ENI (Device Index: 1, `ens6`) private IP address of the proxy instance(s). Do NOT use the primary (Device Index: 0, `ens5`) private IP address of the proxy instance(s) for client mounts.
+
 ## Amazon Elastic Network Adapter (ENA) Driver
 
 NFS performance is heavily network-bound. It is highly recommended to install the latest [ENA driver](https://github.com/amzn/amzn-drivers/tree/master/kernel/linux/ena) on NFS clients to achieve maximum network throughput and best performance during periods of network congestion. Ideally, the ENA driver should be installed as part of your client image (AMI) building process. This ENA driver is already installed in the AMI for the KNFSD proxy instances.

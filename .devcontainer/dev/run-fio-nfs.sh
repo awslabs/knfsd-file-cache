@@ -13,20 +13,21 @@
 ## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
 ## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
 ## ./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
-## ./run-fio-nfs.sh run --fio-job <fio/create-source-files.fio> [OPTIONS]
-## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock.fio> [OPTIONS]
+## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/create-files.fio> [OPTIONS]
+## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/run-test.fio> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID>] [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID> --key-name <KEYPAIR_NAME>] [OPTIONS]
 ## ./run-fio-nfs.sh destroy
 
 ## KNFSD-IP
-# Ideally, the secondary ENI based private IP address of the KNFSD proxy
+## CRITICAL: The SECONDARY ENI (Device Index: 1, "ens6") PRIVATE IP address of the KNFSD proxy must be used here.
+## Do NOT use the PRIMARY ENI (Device Index: 0, "ens5") PRIVATE IP address.
 
 ## SUBNET-ID
-# Ideally this should be the same subnet as the KNFSD proxy
+## Ideally this should be the same subnet as the KNFSD proxy
 
 ## SECURITY-GROUP-ID
-# TCP:8765 is required for FIO communication between clients and captain
+## TCP:8765 is required for FIO communication between clients and captain
 
 ## CUSTOM KEYPAIR:
 ## If you want to use a custom EC2 keypair, you can pass the --key-name <KEYPAIR_NAME> option to the "apply" and "run" commands.
@@ -42,14 +43,14 @@
 
 ## fscache deadlock notes:
 ## 1. ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID>
-## 2. ./run-fio-nfs.sh run --fio-job fio/create-source-files.fio (6.3TB ~41 mins)
+## 2. ./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock/create-files.fio (6.3TB ~41 mins)
 ## 3. SSH into KNFSD proxy (add EC2 Security Group if applicable to allow access):
 ##    sudo systemctl stop cachefilesd
 ##    sudo rm -rf /var/cache/fscache/*
 ##    sudo systemctl start cachefilesd
 ##    echo 3 | sudo tee /proc/sys/vm/drop_caches
-##    stress-ng --vm 8 --vm-bytes 95% --vm-method all --timeout 60m
-## 4. ./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock.fio (60 mins)
+##    sudo stress-ng --vm 8 --vm-bytes 95% --vm-method all --timeout 120m --oom-avoid
+## 4. ./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock/run-test.fio (120 mins)
 ## 5. SSH into KNFSD proxy (wait for crash):
 ##    sudo dmesg -w
 ## 6. Success: KNFSD instance does not crash, possible log messages using XFS (but no crash):
@@ -62,7 +63,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-alpha.22"
+VERSION="1.1.0-alpha.23"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -127,12 +128,12 @@ Commands:
 	./run-fio-nfs.sh run [OPTIONS] [--instance-connect-endpoint-id <EICE_ID>] [--key-name <KEYPAIR_NAME>]
 		Copy job file to captain, run FIO client/server test,
 		and download results. Use --fio-job to select the job file.
-		Default: fio/nfs-fscache-deadlock.fio (deadlock test).
+		Default: fio/nfs-fscache-deadlock/run-test.fio (deadlock test).
 		Optional: --key-name <KEYPAIR_NAME> uses keypair auth (skips send-ssh-public-key); must match private key identified by: IDENTITY_FILE=<path>
 		For captain in a private subnet (no public IP), pass
 		--instance-connect-endpoint-id <EICE_ID> to run only (not apply/scale/status/destroy).
 		Example: create source files first:
-			./run-fio-nfs.sh run --fio-job fio/create-source-files.fio
+			./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock/create-files.fio
 		then run deadlock test (default job):
 			./run-fio-nfs.sh run
 		Results are saved as: fio-output-<jobname>-YYYYMMDD-HHMMSS.json
@@ -164,7 +165,7 @@ function parse_args() {
 
 	# set script dir to directory containing this script
 	SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	FIO_JOB="${SCRIPT_DIR}/fio/nfs-fscache-deadlock.fio"
+	FIO_JOB="${SCRIPT_DIR}/fio/nfs-fscache-deadlock/run-test.fio"
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in

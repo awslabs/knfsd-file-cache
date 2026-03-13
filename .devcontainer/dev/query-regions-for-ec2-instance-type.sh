@@ -19,8 +19,8 @@ SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 
 # Default instance type, if not specified on cli
-INSTANCE_TYPE=${1:-c6in.2xlarge}
-# other good, generic instance types for packer build: m6i.2xlarge, c5.2xlarge, m5.2xlarge
+INSTANCE_TYPE=${1:-c6in.16xlarge}
+# other good, generic instance types for packer build: c6i.16xlarge, m6i.16xlarge, c5.18xlarge, m5.16xlarge
 # that are widely available in most AWS regions
 
 echo -e "Checking availability for instance type: ${SHELL_GREEN}$INSTANCE_TYPE${SHELL_DEFAULT}"

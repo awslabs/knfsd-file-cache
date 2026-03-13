@@ -27,7 +27,7 @@ apt-get install -y -qq \
 	libreadline-dev
 
 cd /tmp
-curl -o nfs-utils-2.8.5.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
+curl -o nfs-utils-2.8.5.tar.gz https://cdn.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
 tar xvf nfs-utils-2.8.5.tar.gz
 cd /tmp/nfs-utils-2.8.5
 

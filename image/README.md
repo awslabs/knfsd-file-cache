@@ -20,7 +20,7 @@ Alternatively, if your build procedure is more complex, you can replace the cust
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.14.0 or newer from <https://packer.io/downloads>.
+Download Packer 1.15.0 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -142,12 +142,9 @@ Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/has
 
 ### AWS Service Quotas
 
-By default, a new AWS account will have 5 vCPUs (On-Demand) available. This is insufficient for the instance types used in the build process:
+By default, a new AWS account will have 5 vCPUs (Spot) available. This is insufficient for any of the EC2 Spot instance types used in the build process, which require **64** vCPUs or more.
 
-* `c6in.16xlarge` (amd64 builds) requires 64 vCPUs
-* `c7g.16xlarge` (arm64 builds) requires 64 vCPUs
-
-You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the appropriate instance types.
+You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the appropriate EC2 [Spot Instance quotas](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html).
 
 See [AWS Service Quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for more information.
 
@@ -252,7 +249,7 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.19.4-knfsd
+amazon-ebs.nfs-proxy: Kernel:       6.19.7-knfsd
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
@@ -285,7 +282,7 @@ The `-debug` flag disables Packer parallelization, allows you to step through th
 
 Once the EC2 build instance is instantiated, Packer will emit to the current directory an ephemeral private SSH key as a `.pem` file.
 
-Using that you can `ssh -i <key>.pem ubuntu@<instance-public-ip>` to connect to the instance and see what is going on for debugging. The ephemeral key will be deleted at the end of the Packer run during cleanup.
+Using that you can `ssh -i <key>.pem ubuntu@<instance-ip>` to connect to the instance and see what is going on for debugging. The ephemeral key will be deleted at the end of the Packer run during cleanup.
 
 ## Build Manually
 
@@ -310,7 +307,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.22"
+VERSION="1.1.0-alpha.23"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -353,15 +350,15 @@ aws ec2 authorize-security-group-ingress \
 
 The instance type used depends on your architecture choice:
 
-* `c6in.16xlarge` for amd64 builds
-* `c7g.16xlarge` for arm64 builds
+* `c6i.16xlarge` for amd64 builds, 64 vCPUs (EC2 On-Demand)
+* `c7g.16xlarge` for arm64 builds, 64 vCPUs (EC2 On-Demand)
 
 **Note**: You will need to provide an `$KNFSD_SECURITY_GROUP_ID` to create the build machine.
 
 ```bash
-# Set instance type based on architecture
+# set instance type based on architecture
 if [ "$KNFSD_ARCH" = "amd64" ]; then
-  KNFSD_INSTANCE_TYPE="c6in.16xlarge"
+  KNFSD_INSTANCE_TYPE="c6i.16xlarge"
 elif [ "$KNFSD_ARCH" = "arm64" ]; then
   KNFSD_INSTANCE_TYPE="c7g.16xlarge"
 fi
@@ -473,7 +470,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.19.4-knfsd
+Kernel:       6.19.7-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

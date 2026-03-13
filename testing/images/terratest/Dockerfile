@@ -14,7 +14,7 @@ HEALTHCHECK NONE
 
 # the build requires the following tools:
 #  - aws cli v2
-#  - go v1.26.0
+#  - go v1.26.1
 #  - terraform 1.2.9
 
 # install golang (and unzip which we need later for terraform)

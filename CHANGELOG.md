@@ -1,10 +1,32 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.23
+
+> BREAKING CHANGES: `proxy-startup.sh` script is now installed into the AMI via Packer and only executed via EC2 user data on every boot.
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Updated to Linux kernel v6.19.7-knfsd.
+* Packer: Add `perf` analysis tool (excluding `man` pages) to AMI to enable performance benchmarking and tuning.
+* Packer: Updated to use EC2 Spot instance types for build process to lower build cost (up to ~87% reduction) and dramatically increase capacity availability. AWS does not charge for an EC2 Spot instance if [interrupted](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/billing-for-interrupted-spot-instances.html) in the first hour.
+* Packer: `proxy-startup.sh` script is now installed into the AMI via Packer and only executed via EC2 user data on every boot.
+* Packer: Updated to use `tmpfs` for `/mnt/build` and `/tmp` to improve build performance and remove the need for a persistent EBS `gp3` volume.
+* Packer: Applied `intel_idle.max_cstate=1 processor.max_cstate=1` to GRUB boot parameters to limit CPU idle C-states to C1 to reduce interrupt/wake-up latency on supported `x86_64` EC2 [instance types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html).
+* Packer: Switch to using `cdn.kernel.org` endpoint for kernel source downloads to improve download reliability.
+* `lazytime` mount option added to `fscache` mount in `proxy-startup.sh` script to only update times (atime, mtime, ctime) on the in-memory version of the file inode (reduces write load).
+* Updated to Golang 1.26.1.
+* Updated to PostgreSQL v18.3.
+* Updated to Terraform `aws` provider v6.36.0.
+* Improvements to CloudWatch `metrics` dashboard layout and widget styling.
+* Updated KNFSD Monitoring Dashboard to `v11`.
+* Packer: Pinned `amzn/amzn-drivers` ENA driver to `ena_linux_2.16.1`.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.22
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Updated to Linux kernel v6.19.4-knfsd.
+* Packer: Updated to Linux kernel v6.19.4-knfsd.
 * Removed `0001-nfsd-never-defer-requests-during-idmap-lookup.patch` kernel patch that is now included in the v6.19.4 release.
 * Updated to Terraform `aws` provider v6.34.0.
 * Updated to Terraform `random` provider v3.8.1.
@@ -22,7 +44,7 @@
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
 * Updated to Ubuntu 24.04.4 LTS.
-* Updated to Linux kernel v6.19.3-knfsd.
+* Packer: Updated to Linux kernel v6.19.3-knfsd.
 * Updated to Golang 1.26.0.
 * Updated to PostgreSQL v18.2.
 * Updated to Packer v1.15.0.
@@ -62,7 +84,7 @@
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Switched to use compiled from source, Linux kernel v6.19.0-rc7 and NFS kernel patches for KNFSD AMI.
+* Packer: Switched to use compiled from source, Linux kernel v6.19.0-rc7 and NFS kernel patches for KNFSD AMI.
 * Introduced `fscache` Open Telemetry `receiver/component` to track the performance of the FS-Cache and Netfslib. See [FS-Cache Metrics](deployment/metrics/README.md#fs-cache-metrics) and [Netfs Metrics](deployment/metrics/README.md#netfs-metrics) for more information.
 * Added 37 x `NetfsLib` and 24 x `FS-Cache` metrics to CloudWatch `metrics` dashboard.
 * Added `REMOVE_EMPTY` function to CloudWatch `SEARCH` expressions in metrics dashboard to remove any `NaN` values.

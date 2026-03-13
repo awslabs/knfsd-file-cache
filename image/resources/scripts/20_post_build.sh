@@ -39,7 +39,7 @@ function complete_command() {
 function install_ena_driver() (
 	begin_command "Installing ENA driver"
 	apt-get install -yq make gcc
-	git clone https://github.com/amzn/amzn-drivers
+	git clone --depth 1 --branch ena_linux_2.16.1 https://github.com/amzn/amzn-drivers
 	cd amzn-drivers/kernel/linux/ena/
 	make
 	# ena.ko OR ena.ko.zst

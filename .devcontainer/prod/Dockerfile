@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.22"
+ARG VERSION="1.1.0-alpha.23"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -120,6 +120,8 @@ RUN set -eux \
 ARG KNFSD_PACKER_VERSION=1.15.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
+# https://pypi.org/project/tzupdate/
+ARG KNFSD_TZUPDATE_VERSION=2.1.0
 
 ## change current working directory
 WORKDIR /tmp
@@ -148,7 +150,7 @@ RUN set -eux \
 ## pipx install system-wide binaries into isolated virt envs
 RUN set -eux \
     && sudo /home/${USERNAME}/.venv/bin/pipx install -qq --global \
-    "tzupdate"
+    "tzupdate==${KNFSD_TZUPDATE_VERSION}"
 
 ## set timezone/date to local location
 RUN sudo tzupdate

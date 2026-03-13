@@ -9,5 +9,5 @@ bs=1M
 rw=randread
 size=10G
 numjobs=64
-runtime=60m
+runtime=120m
 norandommap

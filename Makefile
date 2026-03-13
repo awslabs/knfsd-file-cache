@@ -78,7 +78,7 @@ shellcheck:
 
 black:
 	@echo "[black]"
-	@black --target-version py313 --quiet .
+	@black --target-version py312 --quiet .
 
 mypy:
 	@echo "[mypy]"
@@ -142,7 +142,7 @@ tf-val:
 .PHONY: bats
 bats:
 	@echo "[bats]"
-	@cd $(ROOT_DIR)/deployment/terraform-module-knfsd/resources && ./run-tests.sh
+	@cd $(ROOT_DIR)/image/resources/startup && ./run-tests.sh
 
 .PHONY: scan-semgrep
 scan: scan-semgrep

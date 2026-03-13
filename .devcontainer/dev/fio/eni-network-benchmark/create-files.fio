@@ -1,0 +1,9 @@
+[eni-network-benchmark]
+ioengine=sync
+direct=0
+rw=write
+directory=/mnt/fsx/fio
+unique_filename=0
+bs=1M
+size=10G
+numjobs=32

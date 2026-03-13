@@ -14,9 +14,10 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.22"
+  version       = "1.1.0-alpha.23"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
-  temp_vol_size = 20
+  build_fs_size = 20
+  tmp_fs_size   = 8
 
   # Architecture-specific AMI names
   ami_name_amd64 = "knfsd-proxy-${local.version}-amd64-${local.timestamp}"
@@ -84,10 +85,28 @@ source "amazon-ebs" "nfs-proxy-amd64" {
   region    = var.REGION
   subnet_id = var.SUBNET
 
-  # Build machine
-  source_ami           = data.amazon-parameterstore.base-ami-amd64.value
-  instance_type        = "c6in.16xlarge"
-  iam_instance_profile = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
+  # Build machine (use spot so we can provide a list of instance types to try and lower build cost)
+  source_ami = data.amazon-parameterstore.base-ami-amd64.value
+  spot_instance_types = [
+    "c5.18xlarge",
+    "c5n.18xlarge",
+    "c6a.16xlarge",
+    "m6a.16xlarge",
+    "c6i.16xlarge",
+    "c7i.16xlarge",
+    "m6i.16xlarge",
+    "c8i.16xlarge",
+    "m7i.16xlarge",
+    "c7a.16xlarge",
+    "m7a.16xlarge",
+    "c6in.16xlarge",
+    "r6i.16xlarge",
+    "r7i.16xlarge",
+    "r8i.16xlarge",
+  ]
+  spot_allocation_strategy = "price-capacity-optimized"
+  spot_price               = "auto"
+  iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
   run_tags = {
     "Name"                            = local.build_name_amd64
     "knfsd-file-cache:version"        = local.version
@@ -130,15 +149,6 @@ source "amazon-ebs" "nfs-proxy-amd64" {
     delete_on_termination = true
   }
 
-  # EBS temp build volume configuration
-  launch_block_device_mappings {
-    device_name           = "/dev/sdf"
-    encrypted             = true
-    volume_size           = local.temp_vol_size
-    volume_type           = "gp3"
-    delete_on_termination = true
-  }
-
   # Output image
   skip_create_ami = var.SKIP_CREATE_IMAGE
   ami_name        = local.ami_name_amd64
@@ -171,12 +181,6 @@ source "amazon-ebs" "nfs-proxy-amd64" {
     no_device   = true
   }
 
-  # Explicitly exclude the temporary EBS build volume from the AMI
-  ami_block_device_mappings {
-    device_name = "/dev/sdf"
-    no_device   = true
-  }
-
   # Metadata options
   imds_support = "v2.0"
   metadata_options {
@@ -205,10 +209,24 @@ source "amazon-ebs" "nfs-proxy-arm64" {
   region    = var.REGION
   subnet_id = var.SUBNET
 
-  # Build machine
-  source_ami           = data.amazon-parameterstore.base-ami-arm64.value
-  instance_type        = "c7g.16xlarge"
-  iam_instance_profile = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
+  # Build machine (use spot so we can provide a list of instance types to try and lower build cost)
+  source_ami = data.amazon-parameterstore.base-ami-arm64.value
+  spot_instance_types = [
+    "c8gn.16xlarge",
+    "c8g.16xlarge",
+    "r8g.16xlarge",
+    "m8g.16xlarge",
+    "c7g.16xlarge",
+    "r7g.16xlarge",
+    "m7g.16xlarge",
+    "c6gn.16xlarge",
+    "c6g.16xlarge",
+    "r6g.16xlarge",
+    "m6g.16xlarge",
+  ]
+  spot_allocation_strategy = "price-capacity-optimized"
+  spot_price               = "auto"
+  iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
   run_tags = {
     "Name"                            = local.build_name_arm64
     "knfsd-file-cache:version"        = local.version
@@ -251,15 +269,6 @@ source "amazon-ebs" "nfs-proxy-arm64" {
     delete_on_termination = true
   }
 
-  # EBS temp build volume configuration
-  launch_block_device_mappings {
-    device_name           = "/dev/sdf"
-    encrypted             = true
-    volume_size           = local.temp_vol_size
-    volume_type           = "gp3"
-    delete_on_termination = true
-  }
-
   # Output image
   skip_create_ami = var.SKIP_CREATE_IMAGE
   ami_name        = local.ami_name_arm64
@@ -292,12 +301,6 @@ source "amazon-ebs" "nfs-proxy-arm64" {
     no_device   = true
   }
 
-  # Explicitly exclude the temporary EBS build volume from the AMI
-  ami_block_device_mappings {
-    device_name = "/dev/sdf"
-    no_device   = true
-  }
-
   # Metadata options
   imds_support = "v2.0"
   metadata_options {
@@ -324,11 +327,10 @@ build {
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
-      "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
-      "mkfs.xfs /dev/$device",
       "mkdir -p /mnt/build",
-      "mount /dev/$device /mnt/build",
-      "chown ubuntu:ubuntu /mnt/build"
+      "mount -t tmpfs -o size=${local.build_fs_size}G tmpfs /mnt/build",
+      "chown ubuntu:ubuntu /mnt/build",
+      "mount -t tmpfs -o size=${local.tmp_fs_size}G tmpfs /tmp"
     ]
   }
 
@@ -363,8 +365,21 @@ build {
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
-      "device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '${local.temp_vol_size}G' | awk '{print $1}' | head -n1)",
-      "mount /dev/$device /mnt/build",
+      "mount -t tmpfs -o size=${local.build_fs_size}G tmpfs /mnt/build",
+      "chown ubuntu:ubuntu /mnt/build"
+    ]
+  }
+
+  provisioner "file" {
+    source      = "${path.root}/resources/"
+    destination = "/mnt/build/"
+    timeout     = "10m"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = [
+      "chmod +x /mnt/build/scripts/*.sh",
       "/mnt/build/scripts/20_post_build.sh 2>&1"
     ]
     timeout = "5m"

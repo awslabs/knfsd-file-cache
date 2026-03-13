@@ -5,7 +5,7 @@ misconfigurations:
       - "testing/images/terratest/Dockerfile"
   - id: DS-0002
     paths:
-      - "deployment/terraform-module-knfsd/resources/tests/Dockerfile"
+      - "image/resources/startup/tests/Dockerfile"
       - "deployment/database/resources/Dockerfile"
       - "testing/images/terratest/Dockerfile"
   - id: DS-0010
