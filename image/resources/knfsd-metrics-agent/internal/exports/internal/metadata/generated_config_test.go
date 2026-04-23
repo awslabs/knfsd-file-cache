@@ -27,9 +27,15 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsExportsTotalOperations: MetricConfig{Enabled: true},
-					NfsExportsTotalReadBytes:  MetricConfig{Enabled: true},
-					NfsExportsTotalWriteBytes: MetricConfig{Enabled: true},
+					NfsExportsTotalOperations: MetricConfig{
+						Enabled: true,
+					},
+					NfsExportsTotalReadBytes: MetricConfig{
+						Enabled: true,
+					},
+					NfsExportsTotalWriteBytes: MetricConfig{
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -37,9 +43,15 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsExportsTotalOperations: MetricConfig{Enabled: false},
-					NfsExportsTotalReadBytes:  MetricConfig{Enabled: false},
-					NfsExportsTotalWriteBytes: MetricConfig{Enabled: false},
+					NfsExportsTotalOperations: MetricConfig{
+						Enabled: false,
+					},
+					NfsExportsTotalReadBytes: MetricConfig{
+						Enabled: false,
+					},
+					NfsExportsTotalWriteBytes: MetricConfig{
+						Enabled: false,
+					},
 				},
 			},
 		},

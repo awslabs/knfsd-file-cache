@@ -31,7 +31,6 @@ func TestCombineMultiline(t *testing.T) {
 	}
 
 	for _, x := range tests {
-		x := x
 		t.Run(x[0], func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, x[1], combineMultiline(x[0]))

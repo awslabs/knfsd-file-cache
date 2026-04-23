@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -22,7 +22,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/database/1.1.0-alpha.23"
+      "knfsd-file-cache/database/1.1.0-alpha.24"
     ]
   }
 }
@@ -85,8 +85,12 @@ resource "aws_db_instance" "fsids" {
   tags                     = local.tags
 
   # db network config
-  availability_zone      = local.az
-  db_subnet_group_name   = var.FSID_DB_SUBNET_GROUP_NAME
+  availability_zone = local.az
+  db_subnet_group_name = (
+    var.FSID_DB_SUBNET_GROUP_NAME != null
+    ? var.FSID_DB_SUBNET_GROUP_NAME
+    : one(aws_db_subnet_group.fsids[*].name)
+  )
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   publicly_accessible    = var.ENABLE_PUBLIC_IP
 
@@ -109,6 +113,15 @@ resource "aws_db_instance" "fsids" {
   deletion_protection        = var.DELETION_PROTECTION
   skip_final_snapshot        = true
   copy_tags_to_snapshot      = true
+}
+
+# db subnet group (only created when the user opts-in via FSID_DB_SUBNET_IDS)
+resource "aws_db_subnet_group" "fsids" {
+  count       = var.FSID_DB_SUBNET_IDS != null ? 1 : 0
+  name        = "${local.name}-db-subnet-group"
+  description = "DB subnet group for ${local.name}"
+  subnet_ids  = var.FSID_DB_SUBNET_IDS
+  tags        = merge(local.tags, { Name = "${local.name}-db-subnet-group" })
 }
 
 # db security group

@@ -46,11 +46,11 @@ func (r *testRunner) log(s string) {
 	fmt.Print(s)
 }
 
-func (r *testRunner) Log(args ...interface{}) {
+func (r *testRunner) Log(args ...any) {
 	r.log(fmt.Sprint(args...))
 }
 
-func (r *testRunner) Logf(format string, args ...interface{}) {
+func (r *testRunner) Logf(format string, args ...any) {
 	r.log(fmt.Sprintf(format, args...))
 }
 
@@ -73,25 +73,25 @@ func (r *testRunner) FailNow() {
 }
 
 // Fatal is equivalent to Log followed by FailNow.
-func (r *testRunner) Fatal(args ...interface{}) {
+func (r *testRunner) Fatal(args ...any) {
 	r.Log(args...)
 	r.FailNow()
 }
 
 // Fatalf is equivalent to Logf followed by FailNow.
-func (r *testRunner) Fatalf(format string, args ...interface{}) {
+func (r *testRunner) Fatalf(format string, args ...any) {
 	r.Logf(format, args...)
 	r.FailNow()
 }
 
 // Error is equivalent to Log followed by Fail.
-func (r *testRunner) Error(args ...interface{}) {
+func (r *testRunner) Error(args ...any) {
 	r.Log(args...)
 	r.Fail()
 }
 
 // Errorf is equivalent to Logf followed by Fail.
-func (r *testRunner) Errorf(format string, args ...interface{}) {
+func (r *testRunner) Errorf(format string, args ...any) {
 	r.Logf(format, args...)
 	r.Fail()
 }

@@ -31,6 +31,12 @@ import (
 // The main purpose of this code is to provide a way to manage file system IDs in a database,
 // allowing for the association of paths with unique identifiers (FSIDs) and vice versa.
 
+// bootRetryDeadline bounds the initial CreateTable retry window. Kept short
+// so that if fsidd is racing RDS IAM policy propagation on a fresh deployment,
+// the process exits promptly and systemd's Restart= loop takes over (giving
+// AWS IAM additional wall-clock time to replicate between process restarts).
+const bootRetryDeadline = 90 * time.Second
+
 //go:embed schema.sql
 var tableSchema string
 
@@ -194,7 +200,7 @@ func (s FSIDSource) CreateTable(ctx context.Context) error {
 	}
 
 	sql := w.String()
-	return withRetry(ctx, func() error {
+	return withRetryDeadline(ctx, bootRetryDeadline, func() error {
 		_, err = s.db.Exec(ctx, sql)
 		return err
 	})

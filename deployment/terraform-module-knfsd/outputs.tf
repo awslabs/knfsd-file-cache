@@ -45,6 +45,11 @@ output "dns_name" {
   )
 }
 
+output "iam_role_name" {
+  description = "Name of the IAM role attached to the KNFSD proxy instances."
+  value       = aws_iam_role.knfsd_instance_role.name
+}
+
 output "nfsproxy_loadbalancer_dnsaddress" {
   description = "The private DNS name of the Network Load Balancer."
   value       = one(module.loadbalancer[*].dns_name)

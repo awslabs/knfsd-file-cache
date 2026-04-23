@@ -192,20 +192,20 @@ function mount_nfs_server() {
 	# make the local export directory
 	mkdir -p "$path"
 
-	# remove nconnect option if fstype=efs
 	local mount_opts="$MOUNT_OPTIONS"
-	if [[ $fstype == "efs" ]]; then
+
+	if [[ $fstype == "efs" || $fstype == "s3files" ]]; then
+		# remove nconnect option if fstype=efs or fstype=s3files
 		mount_opts="$(echo "$mount_opts" | sed -E 's/(^|,)(nconnect=[^,]*,?)/\1/g; s/,,+/,/g; s/^,+//; s/,+$//')"
 		echo "Removed [nconnect] option from MOUNT_OPTIONS: $mount_opts"
-	fi
 
-	if [[ $fstype == "efs" ]]; then
-		# EFS mount helper has its own retry logic, so attempt only once
+		# EFS/S3 Files mount helper has its own retry logic, so attempt only once
 		echo "Mounting $FSTYPE share: $remote..."
 		if mount -t "$fstype" -o "$mount_opts" "$remote" "$path"; then
 			echo "$FSTYPE mount succeeded for $remote"
 		else
 			echo "ERROR: $FSTYPE mount failed for $remote" >&2
+			echo "INFO: See /var/log/amazon/efs/mount.log"
 			exit 1
 		fi
 	else
@@ -463,11 +463,15 @@ function init() {
 # pre_startup() runs the CUSTOM_PRE_STARTUP_SCRIPT
 function pre_startup() {
 	begin_command "pre startup"
-	echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
-	echo "${CUSTOM_PRE_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-pre-startup-script.sh
-	chmod +x /custom-pre-startup-script.sh
-	bash /custom-pre-startup-script.sh
-	echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
+	if [[ -z "${CUSTOM_PRE_STARTUP_SCRIPT:-}" ]]; then
+		echo "CUSTOM_PRE_STARTUP_SCRIPT is empty; skipping"
+	else
+		echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
+		echo "${CUSTOM_PRE_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-pre-startup-script.sh
+		chmod +x /custom-pre-startup-script.sh
+		bash /custom-pre-startup-script.sh
+		echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
+	fi
 	complete_command
 }
 
@@ -574,6 +578,94 @@ function configure_kernel() {
 	# This is a dedicated KNFSD proxy with large amount of RAM; prefer keeping
 	# NFS page cache and fscache data in memory over swapping.
 	sysctl -w vm.swappiness=5
+
+	complete_command
+}
+
+# configure_network() tunes the network stack and ENA driver
+# for high-throughput NFS server/client traffic and configures ENA-X
+function configure_network() {
+	begin_command "configure network"
+
+	# Raise socket buffer ceiling to 16MB so NFS can buffer 1MB
+	# rsize/wsize responses under high concurrency.
+	sysctl -w net.core.rmem_max=16777216
+	sysctl -w net.core.wmem_max=16777216
+
+	# Increase network backlog from 1000 (default) to 16384 to
+	# prevent packet drops at high PPS before reaching the NFS stack.
+	sysctl -w net.core.netdev_max_backlog=16384
+
+	# Set TCP auto-tuning range (min/default/max) to 4KB/128KB/16MB.
+	# Aligns with rmem_max/wmem_max so TCP can auto-tune up to 16MB
+	# for NFS connections with 1-100ms latency.
+	sysctl -w net.ipv4.tcp_rmem="4096 131072 16777216"
+	sysctl -w net.ipv4.tcp_wmem="4096 131072 16777216"
+
+	# Raise TCP small queue limit to 1MB (default 128KB) for ENA-X
+	sysctl -w net.ipv4.tcp_limit_output_bytes=1048576
+
+	# Disable TCP HyStart detection
+	echo "/sys/module/tcp_cubic/parameters/hystart_detect = 0"
+	echo 0 > /sys/module/tcp_cubic/parameters/hystart_detect
+
+	# Build all-vCPU hex bitmask for RPS (Receive Packet Steering).
+	# Kernel bitmap_parse expects comma-separated 32-bit hex groups
+	# (MSB first), so split the mask into 32-bit chunks.
+	local vcpus remaining chunk_bits chunk_val rps_mask
+	vcpus=$(nproc)
+	remaining=${vcpus}
+	rps_mask=""
+	while [[ ${remaining} -gt 0 ]]; do
+		if [[ ${remaining} -ge 32 ]]; then
+			chunk_bits=32
+		else
+			chunk_bits=${remaining}
+		fi
+		chunk_val=$((2 ** chunk_bits - 1))
+		if [[ -z "${rps_mask}" ]]; then
+			rps_mask=$(printf '%x' "${chunk_val}")
+		else
+			rps_mask="$(printf '%x' "${chunk_val}"),${rps_mask}"
+		fi
+		remaining=$((remaining - chunk_bits))
+	done
+
+	# ENA interface udev names: ens5(i3en), enp39s0(i7i), ens36(i8g), ens37(r8gd)
+	for dev in /sys/class/net/en*; do
+		local iface
+		iface=$(basename "${dev}")
+
+		if [[ ! -d "${dev}/device/driver/module" ]] \
+			|| [[ "$(basename "$(readlink -f "${dev}/device/driver/module")")" != "ena" ]]; then
+			echo "Skipping ${iface}: not an ENA device"
+			continue
+		fi
+
+		echo "Tuning ENA interface: ${iface}"
+
+		# ENA-X requires MTU 8900
+		echo "${iface}: mtu = 8900"
+		ip link set dev "${iface}" mtu 8900 || true
+
+		# Increase Rx ring buffer to 8192 to absorb packet bursts
+		# during FS-Cache I/O stalls. ENA-X recommended min.
+		echo "${iface}: rx ring buffer = 8192"
+		ethtool -G "${iface}" rx 8192 || true
+
+		# Enable adaptive Rx interrupt moderation (DIM) to balance
+		# interrupt overhead vs latency under varying load.
+		echo "${iface}: adaptive-rx = on"
+		ethtool -C "${iface}" adaptive-rx on || true
+
+		# Spread softirq processing across all vCPUs via RPS
+		echo "${iface}: rps_cpus = ${rps_mask}"
+		for rxq in "${dev}"/queues/rx-*/rps_cpus; do
+			if [[ -e "${rxq}" ]]; then
+				echo "${rps_mask}" > "${rxq}" || true
+			fi
+		done
+	done
 
 	complete_command
 }
@@ -752,12 +844,40 @@ function start_fsidd() {
 	complete_command
 }
 
+# configure_nfs() configures the NFS kernel server and readahead settings
+function configure_nfs() {
+	begin_command "configure nfs"
+	# build flags to disable NFS versions
+	DISABLED_NFS_VERSIONS_FLAGS=("vers2=no")
+	for v in $(echo "${DISABLED_NFS_VERSIONS}" | sed "s/,/ /g"); do
+		DISABLED_NFS_VERSIONS_FLAGS+=("vers$v=no")
+	done
+	DISABLED_NFS_VERSIONS_CONFIG=$(printf '%s\n' "${DISABLED_NFS_VERSIONS_FLAGS[@]}")
+
+	# convert readahead from bytes to KiB for nfsrahead configuration
+	READ_AHEAD_KB=$((READ_AHEAD / 1024))
+
+	echo "Setting NFS threads to: ${NUM_NFS_THREADS}"
+	echo "Setting NFS readahead to: ${READ_AHEAD_KB} KiB"
+	cat <<- EOF > /etc/nfs.conf.d/knfsd.conf
+		[nfsd]
+		threads=${NUM_NFS_THREADS}
+		${DISABLED_NFS_VERSIONS_CONFIG}
+
+		[nfsrahead]
+		nfs=${READ_AHEAD_KB}
+		nfs4=${READ_AHEAD_KB}
+		default=${READ_AHEAD_KB}
+	EOF
+	complete_command
+}
+
 # export_map() loops through statically defined NFS exports in $EXPORT_MAP,
 # and re-exports (fn: reexport), without filtering the exports
 function export_map() {
 	begin_command "export map"
 	if [[ -n ${EXPORT_MAP} ]]; then
-		echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
+		echo "Beginning processing of NFS re-exports (EXPORT_MAP)..."
 		local i REMOTE_IP REMOTE_EXPORT LOCAL_EXPORT FSTYPE
 
 		for i in $(echo "${EXPORT_MAP}" | sed "s/,/ /g"); do
@@ -768,7 +888,7 @@ function export_map() {
 			FSTYPE="$(echo "$i" | cut -d';' -f4)"
 			reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${LOCAL_EXPORT}" "${FSTYPE}"
 		done
-		echo "Finished processing of standard NFS re-exports (EXPORT_MAP)"
+		echo "Finished processing of NFS re-exports (EXPORT_MAP)"
 	else
 		echo "Skipping..."
 	fi
@@ -818,49 +938,6 @@ function export_netapp() {
 	else
 		echo "Skipping..."
 	fi
-	complete_command
-}
-
-# configure_read_ahead() sets the read ahead value for NFS mounts
-function configure_read_ahead() {
-	begin_command "configure read ahead"
-	# Set read ahead value to 8 MiB
-	# Originally read ahead default to rsize * 15, but with rsizes now allowing 1 MiB
-	# a 15 MiB read ahead was too large. Newer versions of Ubuntu changed the
-	# default to a fixed value of 128 KiB which is now too small.
-	# Currently we're assuming the max read size of 1 MiB and using rsize * 8.
-	echo "Setting read ahead for NFS mounts..."
-
-	READ_AHEAD_KB=$((READ_AHEAD / 1024))
-
-	findmnt -rnu -t nfs,nfs4 -o MAJ:MIN,TARGET \
-		| while read -r MOUNT; do
-			DEVICE="$(cut -d ' ' -f 1 <<< "${MOUNT}")"
-			MOUNT_PATH="$(cut -d ' ' -f 2- <<< "${MOUNT}")"
-			echo "Setting read ahead for: ${MOUNT_PATH} to: ${READ_AHEAD_KB} KiB"
-			echo "${READ_AHEAD_KB}" > /sys/class/bdi/"${DEVICE}"/read_ahead_kb
-		done
-	echo "Finished setting read ahead for NFS mounts"
-	complete_command
-}
-
-# configure_nfs() disables unwanted NFS Versions and sets the number of NFS threads
-function configure_nfs() {
-	begin_command "configure nfs"
-	# build Flags to Disable NFS Versions
-	DISABLED_NFS_VERSIONS_FLAGS=("vers2=no")
-	for v in $(echo "${DISABLED_NFS_VERSIONS}" | sed "s/,/ /g"); do
-		DISABLED_NFS_VERSIONS_FLAGS+=("vers$v=no")
-	done
-	DISABLED_NFS_VERSIONS_CONFIG=$(printf '%s\n' "${DISABLED_NFS_VERSIONS_FLAGS[@]}")
-
-	# set NFS Kernel Server Config
-	echo "Setting number of NFS Threads to: ${NUM_NFS_THREADS}"
-	cat <<- EOF > /etc/nfs.conf.d/knfsd.conf
-		[nfsd]
-		threads=${NUM_NFS_THREADS}
-		${DISABLED_NFS_VERSIONS_CONFIG}
-	EOF
 	complete_command
 }
 
@@ -921,6 +998,13 @@ function start_metrics() {
 	if [[ ${ENABLE_METRICS} == "true" ]]; then
 		echo "Starting Metrics Agents..."
 		printf '%s' "${METRICS_AGENT_CONFIG}" > /etc/knfsd-metrics-agent/custom.yaml
+
+		# pre-create the CloudWatch log group used by knfsd-metrics-agent to
+		# avoid OperationAbortedException when multiple scrapers concurrently
+		# call CreateLogGroup on first boot. Values must match 'config/common.yaml'
+		aws logs create-log-group --log-group-name "knfsd/metrics" 2> /dev/null || true
+		aws logs put-retention-policy --log-group-name "knfsd/metrics" --retention-in-days 30 2> /dev/null || true
+
 		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
 		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then
 			update_cloudwatch_diskio_resources
@@ -941,11 +1025,15 @@ function start_metrics() {
 # post_startup() runs the CUSTOM_POST_STARTUP_SCRIPT
 function post_startup() {
 	begin_command "post startup"
-	echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
-	echo "${CUSTOM_POST_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-post-startup-script.sh
-	chmod +x /custom-post-startup-script.sh
-	bash /custom-post-startup-script.sh
-	echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
+	if [[ -z "${CUSTOM_POST_STARTUP_SCRIPT:-}" ]]; then
+		echo "CUSTOM_POST_STARTUP_SCRIPT is empty; skipping"
+	else
+		echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
+		echo "${CUSTOM_POST_STARTUP_SCRIPT}" | base64 -d | gzip -d > /custom-post-startup-script.sh
+		chmod +x /custom-post-startup-script.sh
+		bash /custom-post-startup-script.sh
+		echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
+	fi
 	complete_command
 }
 
@@ -1023,17 +1111,17 @@ function main() {
 	pre_startup
 
 	configure_kernel
+	configure_network
 	create_fs_cache
 
 	echo "MOUNT_OPTIONS: ${MOUNT_OPTIONS}"
 	echo "EXPORT_OPTIONS: ${EXPORT_OPTIONS}"
 
+	configure_nfs
+
 	export_map
 	export_auto_detect
 	export_netapp
-
-	configure_read_ahead
-	configure_nfs
 
 	start_fsidd
 	start_nfs

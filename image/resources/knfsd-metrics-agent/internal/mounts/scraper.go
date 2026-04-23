@@ -32,6 +32,7 @@ type mountsScraper struct {
 	p        procfs.Proc
 	mb       *metadata.MetricsBuilder // MetricsBuilder to build metrics
 	nic      *nodeInfoClient
+	efsRes   *efsResolver
 	previous map[string]nfsStats
 }
 
@@ -97,6 +98,10 @@ func (s *mountsScraper) start(context.Context, component.Host) error {
 	}
 
 	s.p = p
+	s.efsRes = &efsResolver{
+		stateDir: s.cfg.EFSStateDir,
+		logger:   s.logger,
+	}
 	return nil
 }
 
@@ -133,9 +138,23 @@ func (s *mountsScraper) aggregateNFSStats() (nfsStatsAggregator, error) {
 	}
 
 	agg := make(nfsStatsAggregator)
+	s.efsRes.resetCache()
 	for _, m := range mounts {
 		if !isNFS(m.Type) {
 			continue
+		}
+
+		server, path := splitNFSDevice(m.Device)
+
+		// Resolve 127.0.0.1 to the real DNS name for EFS/S3 Files mounts
+		if server == "127.0.0.1" {
+			if resolved, err := s.efsRes.resolveServer(m.Mount); err != nil {
+				s.logger.Warn("failed to resolve EFS/S3Files server",
+					zap.String("mount", m.Mount), zap.Error(err))
+			} else if resolved != "" {
+				server = resolved
+				m.Device = resolved + ":" + path
+			}
 		}
 
 		blkid := ids[m.Mount]
@@ -151,7 +170,7 @@ func (s *mountsScraper) aggregateNFSStats() (nfsStatsAggregator, error) {
 			continue
 		}
 
-		agg.AddMount(blkid, m)
+		agg.AddMount(server, blkid, m)
 	}
 	return agg, nil
 }
@@ -186,13 +205,11 @@ type nfsStatsGroup struct {
 	blockIDs stringSet
 }
 
-func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
+func (agg nfsStatsAggregator) AddMount(server, blkid string, mount *procfs.Mount) {
 	stats, ok := mount.Stats.(*procfs.MountStatsNFS)
 	if !ok {
 		return
 	}
-
-	server, _ := splitNFSDevice(mount.Device)
 
 	grp, found := agg[server]
 	if !found {

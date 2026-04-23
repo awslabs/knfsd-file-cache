@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.23"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.24"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -94,6 +94,11 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `ethtool_conntrack_allowance_exceeded`              | Packets dropped due to connection tracking allowance exceeded       | Count        | 60s    |
 | `ethtool_linklocal_allowance_exceeded`              | Packets dropped due to link-local service allowance exceeded        | Count        | 60s    |
 | `ethtool_pps_allowance_exceeded`                    | Packets queued/dropped due to PPS allowance exceeded                | Count        | 60s    |
+| `ethtool_ena_srd_mode`                              | ENA-X SRD mode                                                      | Count        | 60s    |
+| `ethtool_ena_srd_eligible_tx_pkts`                  | ENA-X SRD eligible transmit packets                                 | Count        | 60s    |
+| `ethtool_ena_srd_tx_pkts`                           | ENA-X SRD transmit packets                                          | Count        | 60s    |
+| `ethtool_ena_srd_rx_pkts`                           | ENA-X SRD receive packets                                           | Count        | 60s    |
+| `ethtool_ena_srd_resource_utilization`              | ENA-X SRD resource utilization                                      | Percent      | 60s    |
 | `mem_cached`                                        | Memory used for filesystem cache                                    | Bytes        | 60s    |
 | `mem_buffered`                                      | Memory used for buffers                                             | Bytes        | 60s    |
 | `mem_available_percent`                             | Percentage of memory available for use                              | Percent      | 60s    |
@@ -103,6 +108,8 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `net_drop_out`                                      | Outbound packets dropped                                            | Count        | 60s    |
 | `net_err_in`                                        | Inbound packet errors                                               | Count        | 60s    |
 | `net_err_out`                                       | Outbound packet errors                                              | Count        | 60s    |
+| `net_packets_recv`                                  | Total packets received on network interface                         | Count        | 60s    |
+| `net_packets_sent`                                  | Total packets sent on network interface                             | Count        | 60s    |
 | `netstat_tcp_close_wait`                            | TCP connections in CLOSE_WAIT state                                 | Count        | 60s    |
 | `netstat_tcp_established`                           | TCP connections in ESTABLISHED state                                | Count        | 60s    |
 | `netstat_tcp_listen`                                | TCP connections in LISTEN state                                     | Count        | 60s    |
@@ -132,43 +139,43 @@ OpenTelemetry metrics are collected by the `knfsd-metrics-agent` and provide NFS
 
 | Class   | Event  | Metric Name                           | Description                                    | Stat | Unit  | Period |
 |---------|--------|---------------------------------------|------------------------------------------------|------|-------|--------|
-| Reads   | DR=N   | `knfsd/netfs/reads/direct`            | Number of direct I/O read requests             | Sum  | Count | 30s    |
-|         | RA=N   | `knfsd/netfs/reads/readahead`         | Number of readahead requests                   | Sum  | Count | 30s    |
-|         | RF=N   | `knfsd/netfs/reads/folio`             | Number of read folio requests                  | Sum  | Count | 30s    |
-|         | RS=N   | `knfsd/netfs/reads/single`            | Number of read single requests                 | Sum  | Count | 30s    |
-|         | WB=N   | `knfsd/netfs/reads/write_begin`       | Number of write begin requests                 | Sum  | Count | 30s    |
-|         | WBZ=N  | `knfsd/netfs/reads/write_zskip`       | Number of write zero skip operations           | Sum  | Count | 30s    |
-| Writes  | BW=N   | `knfsd/netfs/writes/buffered`         | Number of buffered write requests              | Sum  | Count | 30s    |
-|         | WT=N   | `knfsd/netfs/writes/writethrough`     | Number of writethrough requests                | Sum  | Count | 30s    |
-|         | DW=N   | `knfsd/netfs/writes/direct`           | Number of direct I/O write requests            | Sum  | Count | 30s    |
-|         | WP=N   | `knfsd/netfs/writes/pages`            | Number of write pages requests                 | Sum  | Count | 30s    |
-|         | 2C=N   | `knfsd/netfs/writes/copy_to_cache`    | Number of copy to cache requests               | Sum  | Count | 30s    |
-| DownOps | DL=N   | `knfsd/netfs/download/requests`       | Number of download requests                    | Sum  | Count | 30s    |
-|         | ds=N   | `knfsd/netfs/download/done`           | Number of download operations completed        | Sum  | Count | 30s    |
-|         | df=N   | `knfsd/netfs/download/failed`         | Number of download operations failed           | Sum  | Count | 30s    |
-|         | di=N   | `knfsd/netfs/download/instead`        | Number of download instead of cache operations | Sum  | Count | 30s    |
-| CaRdOps | RD=N   | `knfsd/netfs/cache_read/requests`     | Number of cache read requests                  | Sum  | Count | 30s    |
-|         | rs=N   | `knfsd/netfs/cache_read/done`         | Number of cache read operations completed      | Sum  | Count | 30s    |
-|         | rf=N   | `knfsd/netfs/cache_read/failed`       | Number of cache read operations failed         | Sum  | Count | 30s    |
-| UpldOps | UL=N   | `knfsd/netfs/upload/requests`         | Number of upload requests                      | Sum  | Count | 30s    |
-|         | us=N   | `knfsd/netfs/upload/done`             | Number of upload operations completed          | Sum  | Count | 30s    |
-|         | uf=N   | `knfsd/netfs/upload/failed`           | Number of upload operations failed             | Sum  | Count | 30s    |
-| CaWrOps | WR=N   | `knfsd/netfs/cache_write/requests`    | Number of cache write requests                 | Sum  | Count | 30s    |
-|         | ws=N   | `knfsd/netfs/cache_write/done`        | Number of cache write operations completed     | Sum  | Count | 30s    |
-|         | wf=N   | `knfsd/netfs/cache_write/failed`      | Number of cache write operations failed        | Sum  | Count | 30s    |
-| ZeroOps | ZR=N   | `knfsd/netfs/zero_ops/zero`           | Number of zero read operations                 | Sum  | Count | 30s    |
-|         | sh=N   | `knfsd/netfs/zero_ops/short`          | Number of short read operations                | Sum  | Count | 30s    |
-|         | sk=N   | `knfsd/netfs/zero_ops/skip`           | Number of skip operations                      | Sum  | Count | 30s    |
-| Retries | rq=N   | `knfsd/netfs/retries/read_req`        | Number of read request retries                 | Sum  | Count | 30s    |
-|         | rs=N   | `knfsd/netfs/retries/read_subreq`     | Number of read subrequest retries              | Sum  | Count | 30s    |
-|         | wq=N   | `knfsd/netfs/retries/write_req`       | Number of write request retries                | Sum  | Count | 30s    |
-|         | ws=N   | `knfsd/netfs/retries/write_subreq`    | Number of write subrequest retries             | Sum  | Count | 30s    |
-| Objs    | rr=N   | `knfsd/netfs/objects/read_reqs`       | Number of read request objects                 | Sum  | Count | 30s    |
-|         | sr=N   | `knfsd/netfs/objects/subreqs`         | Number of subrequest objects                   | Sum  | Count | 30s    |
-|         | foq=N  | `knfsd/netfs/objects/folio_queue`     | Number of folio queue objects                  | Sum  | Count | 30s    |
-|         | wsc=N  | `knfsd/netfs/objects/write_conflicts` | Number of write stream conflicts               | Sum  | Count | 30s    |
-| WbLock  | skip=N | `knfsd/netfs/wblock/skip`             | Number of writeback lock skips                 | Sum  | Count | 30s    |
-|         | wait=N | `knfsd/netfs/wblock/wait`             | Number of writeback lock waits                 | Sum  | Count | 30s    |
+| Reads   | DR=N   | `knfsd/netfs/reads/direct`            | Number of direct I/O read requests             | Sum  | Count | 60s    |
+|         | RA=N   | `knfsd/netfs/reads/readahead`         | Number of readahead requests                   | Sum  | Count | 60s    |
+|         | RF=N   | `knfsd/netfs/reads/folio`             | Number of read folio requests                  | Sum  | Count | 60s    |
+|         | RS=N   | `knfsd/netfs/reads/single`            | Number of read single requests                 | Sum  | Count | 60s    |
+|         | WB=N   | `knfsd/netfs/reads/write_begin`       | Number of write begin requests                 | Sum  | Count | 60s    |
+|         | WBZ=N  | `knfsd/netfs/reads/write_zskip`       | Number of write zero skip operations           | Sum  | Count | 60s    |
+| Writes  | BW=N   | `knfsd/netfs/writes/buffered`         | Number of buffered write requests              | Sum  | Count | 60s    |
+|         | WT=N   | `knfsd/netfs/writes/writethrough`     | Number of writethrough requests                | Sum  | Count | 60s    |
+|         | DW=N   | `knfsd/netfs/writes/direct`           | Number of direct I/O write requests            | Sum  | Count | 60s    |
+|         | WP=N   | `knfsd/netfs/writes/pages`            | Number of write pages requests                 | Sum  | Count | 60s    |
+|         | 2C=N   | `knfsd/netfs/writes/copy_to_cache`    | Number of copy to cache requests               | Sum  | Count | 60s    |
+| DownOps | DL=N   | `knfsd/netfs/download/requests`       | Number of download requests                    | Sum  | Count | 60s    |
+|         | ds=N   | `knfsd/netfs/download/done`           | Number of download operations completed        | Sum  | Count | 60s    |
+|         | df=N   | `knfsd/netfs/download/failed`         | Number of download operations failed           | Sum  | Count | 60s    |
+|         | di=N   | `knfsd/netfs/download/instead`        | Number of download instead of cache operations | Sum  | Count | 60s    |
+| CaRdOps | RD=N   | `knfsd/netfs/cache_read/requests`     | Number of cache read requests                  | Sum  | Count | 60s    |
+|         | rs=N   | `knfsd/netfs/cache_read/done`         | Number of cache read operations completed      | Sum  | Count | 60s    |
+|         | rf=N   | `knfsd/netfs/cache_read/failed`       | Number of cache read operations failed         | Sum  | Count | 60s    |
+| UpldOps | UL=N   | `knfsd/netfs/upload/requests`         | Number of upload requests                      | Sum  | Count | 60s    |
+|         | us=N   | `knfsd/netfs/upload/done`             | Number of upload operations completed          | Sum  | Count | 60s    |
+|         | uf=N   | `knfsd/netfs/upload/failed`           | Number of upload operations failed             | Sum  | Count | 60s    |
+| CaWrOps | WR=N   | `knfsd/netfs/cache_write/requests`    | Number of cache write requests                 | Sum  | Count | 60s    |
+|         | ws=N   | `knfsd/netfs/cache_write/done`        | Number of cache write operations completed     | Sum  | Count | 60s    |
+|         | wf=N   | `knfsd/netfs/cache_write/failed`      | Number of cache write operations failed        | Sum  | Count | 60s    |
+| ZeroOps | ZR=N   | `knfsd/netfs/zero_ops/zero`           | Number of zero read operations                 | Sum  | Count | 60s    |
+|         | sh=N   | `knfsd/netfs/zero_ops/short`          | Number of short read operations                | Sum  | Count | 60s    |
+|         | sk=N   | `knfsd/netfs/zero_ops/skip`           | Number of skip operations                      | Sum  | Count | 60s    |
+| Retries | rq=N   | `knfsd/netfs/retries/read_req`        | Number of read request retries                 | Sum  | Count | 60s    |
+|         | rs=N   | `knfsd/netfs/retries/read_subreq`     | Number of read subrequest retries              | Sum  | Count | 60s    |
+|         | wq=N   | `knfsd/netfs/retries/write_req`       | Number of write request retries                | Sum  | Count | 60s    |
+|         | ws=N   | `knfsd/netfs/retries/write_subreq`    | Number of write subrequest retries             | Sum  | Count | 60s    |
+| Objs    | rr=N   | `knfsd/netfs/objects/read_reqs`       | Number of read request objects                 | Sum  | Count | 60s    |
+|         | sr=N   | `knfsd/netfs/objects/subreqs`         | Number of subrequest objects                   | Sum  | Count | 60s    |
+|         | foq=N  | `knfsd/netfs/objects/folio_queue`     | Number of folio queue objects                  | Sum  | Count | 60s    |
+|         | wsc=N  | `knfsd/netfs/objects/write_conflicts` | Number of write stream conflicts               | Sum  | Count | 60s    |
+| WbLock  | skip=N | `knfsd/netfs/wblock/skip`             | Number of writeback lock skips                 | Sum  | Count | 60s    |
+|         | wait=N | `knfsd/netfs/wblock/wait`             | Number of writeback lock waits                 | Sum  | Count | 60s    |
 
 See [Network Filesystem Services Library](https://www.kernel.org/doc/html/latest/filesystems/netfs_library.html) and [Netfs Library Stats](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/stats.c) for more information.
 
@@ -176,30 +183,30 @@ See [Network Filesystem Services Library](https://www.kernel.org/doc/html/latest
 
 | Class   | Event  | Metric Name                               | Description                                         | Stat | Unit  | Period |
 |---------|--------|-------------------------------------------|-----------------------------------------------------|------|-------|--------|
-| Cookies | n=N    | `knfsd/fscache/cookies/data`              | Number of data storage cookies allocated            | Sum  | Count | 30s    |
-|         | v=N    | `knfsd/fscache/cookies/volume`            | Number of volume index cookies allocated            | Sum  | Count | 30s    |
-|         | vcol=N | `knfsd/fscache/cookies/volume_collisions` | Number of volume index key collisions               | Sum  | Count | 30s    |
-|         | voom=N | `knfsd/fscache/cookies/volume_oom`        | Number of OOM events when allocating volume cookies | Sum  | Count | 30s    |
-| Acquire | n=N    | `knfsd/fscache/acquire/requests`          | Number of acquire cookie requests                   | Sum  | Count | 30s    |
-|         | ok=N   | `knfsd/fscache/acquire/ok`                | Number of acquire requests that succeeded           | Sum  | Count | 30s    |
-|         | oom=N  | `knfsd/fscache/acquire/oom`               | Number of acquire requests that failed (ENOMEM)     | Sum  | Count | 30s    |
-| LRU     | n=N    | `knfsd/fscache/lru/count`                 | Number of cookies on the LRU                        | Sum  | Count | 30s    |
-|         | exp=N  | `knfsd/fscache/lru/expired`               | Number of cookies expired off the LRU               | Sum  | Count | 30s    |
-|         | rmv=N  | `knfsd/fscache/lru/removed`               | Number of cookies removed from the LRU              | Sum  | Count | 30s    |
-|         | drp=N  | `knfsd/fscache/lru/dropped`               | Number of LRU'd cookies relinquished or withdrawn   | Sum  | Count | 30s    |
-| Invals  | n=N    | `knfsd/fscache/invalidations`             | Number of cache invalidations                       | Sum  | Count | 30s    |
-| Updates | n=N    | `knfsd/fscache/updates/requests`          | Number of update cookie requests                    | Sum  | Count | 30s    |
-|         | rsz=N  | `knfsd/fscache/updates/resize`            | Number of resize requests                           | Sum  | Count | 30s    |
-|         | rsn=N  | `knfsd/fscache/updates/resize_skipped`    | Number of skipped resize requests                   | Sum  | Count | 30s    |
-| Relinqs | n=N    | `knfsd/fscache/relinquish/requests`       | Number of relinquish cookie requests                | Sum  | Count | 30s    |
-|         | rtr=N  | `knfsd/fscache/relinquish/retire`         | Number of relinquish requests with retire=true      | Sum  | Count | 30s    |
-|         | drop=N | `knfsd/fscache/relinquish/drop`           | Number of cookies no longer blocking re-acquisition | Sum  | Count | 30s    |
-| NoSpace | nwr=N  | `knfsd/fscache/nospace/write`             | Number of write requests refused (no space)         | Sum  | Count | 30s    |
-|         | ncr=N  | `knfsd/fscache/nospace/create`            | Number of create requests refused (no space)        | Sum  | Count | 30s    |
-|         | cull=N | `knfsd/fscache/nospace/cull`              | Number of objects culled to make space              | Sum  | Count | 30s    |
-| IO      | rd=N   | `knfsd/fscache/io/read`                   | Number of read operations in the cache              | Sum  | Count | 30s    |
-|         | wr=N   | `knfsd/fscache/io/write`                  | Number of write operations in the cache             | Sum  | Count | 30s    |
-|         | mis=N  | `knfsd/fscache/io/misfit`                 | Number of DIO misfit operations                     | Sum  | Count | 30s    |
+| Cookies | n=N    | `knfsd/fscache/cookies/data`              | Number of data storage cookies allocated            | Sum  | Count | 60s    |
+|         | v=N    | `knfsd/fscache/cookies/volume`            | Number of volume index cookies allocated            | Sum  | Count | 60s    |
+|         | vcol=N | `knfsd/fscache/cookies/volume_collisions` | Number of volume index key collisions               | Sum  | Count | 60s    |
+|         | voom=N | `knfsd/fscache/cookies/volume_oom`        | Number of OOM events when allocating volume cookies | Sum  | Count | 60s    |
+| Acquire | n=N    | `knfsd/fscache/acquire/requests`          | Number of acquire cookie requests                   | Sum  | Count | 60s    |
+|         | ok=N   | `knfsd/fscache/acquire/ok`                | Number of acquire requests that succeeded           | Sum  | Count | 60s    |
+|         | oom=N  | `knfsd/fscache/acquire/oom`               | Number of acquire requests that failed (ENOMEM)     | Sum  | Count | 60s    |
+| LRU     | n=N    | `knfsd/fscache/lru/count`                 | Number of cookies on the LRU                        | Sum  | Count | 60s    |
+|         | exp=N  | `knfsd/fscache/lru/expired`               | Number of cookies expired off the LRU               | Sum  | Count | 60s    |
+|         | rmv=N  | `knfsd/fscache/lru/removed`               | Number of cookies removed from the LRU              | Sum  | Count | 60s    |
+|         | drp=N  | `knfsd/fscache/lru/dropped`               | Number of LRU'd cookies relinquished or withdrawn   | Sum  | Count | 60s    |
+| Invals  | n=N    | `knfsd/fscache/invalidations`             | Number of cache invalidations                       | Sum  | Count | 60s    |
+| Updates | n=N    | `knfsd/fscache/updates/requests`          | Number of update cookie requests                    | Sum  | Count | 60s    |
+|         | rsz=N  | `knfsd/fscache/updates/resize`            | Number of resize requests                           | Sum  | Count | 60s    |
+|         | rsn=N  | `knfsd/fscache/updates/resize_skipped`    | Number of skipped resize requests                   | Sum  | Count | 60s    |
+| Relinqs | n=N    | `knfsd/fscache/relinquish/requests`       | Number of relinquish cookie requests                | Sum  | Count | 60s    |
+|         | rtr=N  | `knfsd/fscache/relinquish/retire`         | Number of relinquish requests with retire=true      | Sum  | Count | 60s    |
+|         | drop=N | `knfsd/fscache/relinquish/drop`           | Number of cookies no longer blocking re-acquisition | Sum  | Count | 60s    |
+| NoSpace | nwr=N  | `knfsd/fscache/nospace/write`             | Number of write requests refused (no space)         | Sum  | Count | 60s    |
+|         | ncr=N  | `knfsd/fscache/nospace/create`            | Number of create requests refused (no space)        | Sum  | Count | 60s    |
+|         | cull=N | `knfsd/fscache/nospace/cull`              | Number of objects culled to make space              | Sum  | Count | 60s    |
+| IO      | rd=N   | `knfsd/fscache/io/read`                   | Number of read operations in the cache              | Sum  | Count | 60s    |
+|         | wr=N   | `knfsd/fscache/io/write`                  | Number of write operations in the cache             | Sum  | Count | 60s    |
+|         | mis=N  | `knfsd/fscache/io/misfit`                 | Number of DIO misfit operations                     | Sum  | Count | 60s    |
 
 See [FS-Cache](https://www.kernel.org/doc/html/latest/filesystems/caching/fscache.html) for more information.
 
@@ -215,12 +222,12 @@ See [FS-Cache](https://www.kernel.org/doc/html/latest/filesystems/caching/fscach
 | ---------------------------- | --------------------------------------------------------------------------------------------------- | ------- | ----- | ------ |
 | `knfsd/nfs_connections`      | Number of active (ESTAB) NFS connections to the KNFSD proxy (1-16 per client, used for autoscaling) | Maximum | Count | 60s    |
 | `knfsd/nfs_clients`          | Number of unique NFS client IP addresses connected to the KNFSD proxy (in any connected state)      | Maximum | Count | 60s    |
-| `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived                                                                       | Sum     | Count | 30s    |
-| `knfsd/nfs_packets_deferred` | Number of NFS packets deferred                                                                      | Maximum | Count | 30s    |
-| `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service                   | Sum     | Count | 30s    |
-| `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                              | Maximum | Count | 30s    |
-| `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                             | Sum     | Count | 30s    |
-| `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport              | Sum     | Count | 30s    |
+| `knfsd/nfs_packets_arrived`  | Number of NFS packets arrived                                                                       | Sum     | Count | 60s    |
+| `knfsd/nfs_packets_deferred` | Number of NFS packets deferred                                                                      | Maximum | Count | 60s    |
+| `knfsd/nfs_sockets_enqueued` | Number of times an NFS transport is enqueued to wait for an NFS thread to service                   | Sum     | Count | 60s    |
+| `knfsd/nfs_threads`          | Number of current KNFSD server threads                                                              | Maximum | Count | 60s    |
+| `knfsd/nfs_threads_timedout` | Number of times an NFS thread triggered an idle timeout                                             | Sum     | Count | 60s    |
+| `knfsd/nfs_threads_woken`    | Number of times an idle NFS thread is woken to receive some data from an NFS transport              | Sum     | Count | 60s    |
 
 * **packets-arrived**: Provides an accurate, workload-independent measure of the CPU load placed on the SUNRPC server layer due to NFS network traffic. Due to network stack effects, the value may differ from the actual NFS call count.
 * **packets-deferred**: Indicates packets temporarily deferred because the NFS transport was already in use by an NFSD thread. This is inferred from: `packets-deferred = packets-arrived - ( sockets-enqueued + threads-woken )`.
@@ -449,21 +456,26 @@ Performance statistics for NVMe or EBS volumes used for `/var/cache/fscache`.
 
 General EC2 instance performance metrics.
 
-| Widget                       | Metrics                                 | Description                                    | Stat    | Period | Label         |
-| ---------------------------- | --------------------------------------- | ---------------------------------------------- | ------- | ------ | ------------- |
-| CPU Utilization              | `AWS/EC2.CPUUtilization`                | EC2 instance CPU utilization                   | Average | 60s    | Percent %     |
-| CPU Usage                    | `cpu_usage_active`, `cpu_usage_iowait`  | Detailed CPU usage breakdown                   | Average | 60s    | Percent %     |
-| Memory Available             | `mem_available_percent`                 | Memory available for use                       | Average | 60s    | Percent %     |
-| Memory Metrics               | `mem_buffered`, `mem_cached`            | Memory used for buffers and cache              | Average | 60s    | Bytes         |
-| Network I/O                  | `net_drop_*`, `net_err_*`               | Network packet drops and errors                | Sum     | 60s    | Events/Second |
-| ENA Performance              | `ethtool_*_allowance_exceeded`          | Packets queued/dropped due to allowance limits | Sum     | 60s    | Events/Second |
-| Operating System Disk Used % | `disk_used_percent` (path: `/`)         | Root filesystem disk usage                     | Average | 60s    | Percent %     |
-| Processes                    | `processes_*`                           | Process and thread statistics                  | Average | 60s    | Count         |
+| Widget                          | Metrics                                   | Description                                    | Stat    | Period | Label         |
+| ------------------------------- | ----------------------------------------- | ---------------------------------------------- | ------- | ------ | ------------- |
+| CPU Utilization                 | `AWS/EC2.CPUUtilization`                  | EC2 instance CPU utilization                   | Average | 60s    | Percent %     |
+| CPU Usage                       | `cpu_usage_active`, `cpu_usage_iowait`    | Detailed CPU usage breakdown                   | Average | 60s    | Percent %     |
+| Memory Available                | `mem_available_percent`                   | Memory available for use                       | Average | 60s    | Percent %     |
+| Memory Metrics                  | `mem_buffered`, `mem_cached`              | Memory used for buffers and cache              | Average | 60s    | Bytes         |
+| Network I/O                     | `net_drop_*`, `net_err_*`                 | Network packet drops and errors                | Sum     | 60s    | Events/Second |
+| ENA Performance                 | `ethtool_*_allowance_exceeded`            | Packets queued/dropped due to allowance limits | Sum     | 60s    | Events/Second |
+| Operating System Disk Used %    | `disk_used_percent` (path: `/`)           | Root filesystem disk usage                     | Average | 60s    | Percent %     |
+| Processes                       | `processes_*`                             | Process and thread statistics                  | Average | 60s    | Count         |
+| ENA-X: SRD Mode                 | `ethtool_ena_srd_mode`                    | ENA-X SRD mode                                 | Maximum | 60s    | Count         |
+| ENA-X: Egress SRD               | `*_srd_eligible_tx_pkts`, `*_srd_tx_pkts` | ENA-X SRD eligible transmit packets            | Sum     | 60s    | Count         |
+| ENA-X: Ingress SRD              | `ethtool_ena_srd_rx_pkts`                 | ENA-X SRD receive packets                      | Sum     | 60s    | Count         |
+| ENA-X: SRD Resource Utilization | `ethtool_ena_srd_resource_utilization`    | ENA-X SRD resource utilization                 | Maximum | 60s    | Percent %     |
 
 **Thresholds:**
 
 * CPU Utilization: 80% (warning)
 * Memory Available: 5% (warning)
+* SRD Resource Utilization: 90% (warning)
 
 ### FSID Performance
 

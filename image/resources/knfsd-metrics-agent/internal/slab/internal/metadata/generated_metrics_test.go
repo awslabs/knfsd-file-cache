@@ -82,28 +82,34 @@ func TestMetricsBuilder(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, 1, metrics.ResourceMetrics().Len())
-			rm := metrics.ResourceMetrics().At(0)
-			assert.Equal(t, res, rm.Resource())
-			assert.Equal(t, 1, rm.ScopeMetrics().Len())
-			ms := rm.ScopeMetrics().At(0).Metrics()
+			var allMetricsList []pmetric.Metric
+			totalMetricsCount := 0
+			for ri := 0; ri < metrics.ResourceMetrics().Len(); ri++ {
+				rm := metrics.ResourceMetrics().At(ri)
+				assert.Equal(t, 1, rm.ScopeMetrics().Len())
+				ms := rm.ScopeMetrics().At(0).Metrics()
+				totalMetricsCount += ms.Len()
+				for mi := 0; mi < ms.Len(); mi++ {
+					allMetricsList = append(allMetricsList, ms.At(mi))
+				}
+			}
 			if tt.metricsSet == testDataSetDefault {
-				assert.Equal(t, defaultMetricsCount, ms.Len())
+				assert.Equal(t, defaultMetricsCount, totalMetricsCount)
 			}
 			if tt.metricsSet == testDataSetAll {
-				assert.Equal(t, allMetricsCount, ms.Len())
+				assert.Equal(t, allMetricsCount, totalMetricsCount)
 			}
 			validatedMetrics := make(map[string]bool)
-			for i := 0; i < ms.Len(); i++ {
-				switch ms.At(i).Name() {
+			for _, mi := range allMetricsList {
+				switch mi.Name() {
 				case "slab.dentry_cache.active_objects":
 					assert.False(t, validatedMetrics["slab.dentry_cache.active_objects"], "Found a duplicate in the metrics slice: slab.dentry_cache.active_objects")
 					validatedMetrics["slab.dentry_cache.active_objects"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Dentry Cache Active Objects", ms.At(i).Description())
-					assert.Equal(t, "{count}", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Dentry Cache Active Objects", mi.Description())
+					assert.Equal(t, "{count}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
@@ -111,11 +117,11 @@ func TestMetricsBuilder(t *testing.T) {
 				case "slab.dentry_cache.objsize":
 					assert.False(t, validatedMetrics["slab.dentry_cache.objsize"], "Found a duplicate in the metrics slice: slab.dentry_cache.objsize")
 					validatedMetrics["slab.dentry_cache.objsize"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Dentry Cache Object Size", ms.At(i).Description())
-					assert.Equal(t, "{size}", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Dentry Cache Object Size", mi.Description())
+					assert.Equal(t, "{size}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
@@ -123,11 +129,11 @@ func TestMetricsBuilder(t *testing.T) {
 				case "slab.nfs_inode_cache.active_objects":
 					assert.False(t, validatedMetrics["slab.nfs_inode_cache.active_objects"], "Found a duplicate in the metrics slice: slab.nfs_inode_cache.active_objects")
 					validatedMetrics["slab.nfs_inode_cache.active_objects"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "NFS inode Cache Cache Active Objects", ms.At(i).Description())
-					assert.Equal(t, "{count}", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "NFS inode Cache Cache Active Objects", mi.Description())
+					assert.Equal(t, "{count}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
@@ -135,11 +141,11 @@ func TestMetricsBuilder(t *testing.T) {
 				case "slab.nfs_inode_cache.objsize":
 					assert.False(t, validatedMetrics["slab.nfs_inode_cache.objsize"], "Found a duplicate in the metrics slice: slab.nfs_inode_cache.objsize")
 					validatedMetrics["slab.nfs_inode_cache.objsize"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "NFS inode Cache Object Size", ms.At(i).Description())
-					assert.Equal(t, "{size}", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "NFS inode Cache Object Size", mi.Description())
+					assert.Equal(t, "{size}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())

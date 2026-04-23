@@ -7,6 +7,7 @@
 package main
 
 import (
+	"maps"
 	"net/http"
 	"sort"
 	"strings"
@@ -220,9 +221,7 @@ func readMountStats(proc procfs.Proc, nfsRoot string) (*client.MountStatsRespons
 func combineMountOptions(opts ...map[string]string) map[string]string {
 	combined := make(map[string]string)
 	for _, o := range opts {
-		for k, v := range o {
-			combined[k] = v
-		}
+		maps.Copy(combined, o)
 	}
 	return combined
 }

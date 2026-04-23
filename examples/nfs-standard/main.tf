@@ -9,12 +9,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/nfs-standard/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/nfs-standard/1.1.0-alpha.24"
     ]
   }
 }
@@ -33,6 +33,7 @@ module "proxy" {
   KEY_NAME                  = var.KEY_NAME
   FSID_MODE                 = "external" # default is "external", but including here for clarity
   FSID_DB_SUBNET_GROUP_NAME = null       # if using a non-default VPC, you must specify the name of the DB subnet group
+  FSID_DB_SUBNET_IDS        = null       # alternative: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
   EXPORT_MAP                = var.EXPORT_MAP
   INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "nfs-standard" }
 }

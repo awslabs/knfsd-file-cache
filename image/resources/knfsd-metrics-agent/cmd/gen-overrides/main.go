@@ -66,7 +66,7 @@ func formatOverrides(meta metadata) {
 	}
 }
 
-func readYamlFile(path string, v interface{}) error {
+func readYamlFile(path string, v any) error {
 	path = filepath.Clean(path)
 	f, err := os.Open(path)
 	if err != nil {

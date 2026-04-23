@@ -100,13 +100,13 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 ### Security Scanning
 
-| Command             | Aliases | Purpose                          | Tool                                           | Configuration                               | Reference                                                                    |
-|---------------------|---------|----------------------------------|------------------------------------------------|---------------------------------------------|------------------------------------------------------------------------------|
-| `make scan-semgrep` | `scan`  | Static code analysis             | [Semgrep](https://semgrep.dev/)                | Built-in rules                              | [Semgrep Documentation](https://semgrep.dev/docs/)                           |
-| `make scan-checkov` | `scan`  | Infrastructure security scan     | [Checkov](https://www.checkov.io/)             | [`.checkov.yaml`](../.checkov.yaml)         | [Checkov Documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html) |
-| `make scan-tfsec`   | `scan`  | Terraform security scan          | [tfsec](https://github.com/aquasecurity/tfsec) | [`.tfsec.yaml`](../.tfsec.yaml)             | [tfsec Documentation](https://aquasecurity.github.io/tfsec/)                 |
-| `make scan-trivy`   | `scan`  | Comprehensive vulnerability scan | [Trivy](https://github.com/aquasecurity/trivy) | [`.trivyignore.yaml`](../.trivyignore.yaml) | [Trivy Documentation](https://trivy.dev/)                                    |
-| `make scan-kics`    | `scan`  | Infrastructure security analysis | [KICS](https://github.com/Checkmarx/kics)      | [`.kics.yaml`](../.kics.yaml)               | [KICS Documentation](https://docs.kics.io/)                                  |
+| Command             | Aliases | Purpose                          | Tool                                           | Configuration                               | Reference                                                                     |
+|---------------------|---------|----------------------------------|------------------------------------------------|---------------------------------------------|-------------------------------------------------------------------------------|
+| `make scan-checkov` | `scan`  | Infrastructure security scan     | [Checkov](https://www.checkov.io/)             | [`.checkov.yaml`](../.checkov.yaml)         | [Checkov Documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html)  |
+| `make scan-gosec`   | `scan`  | Go source code security scan     | [Gosec](https://github.com/securego/gosec)     | Built-in rules                              | [Gosec Documentation](https://github.com/securego/gosec/blob/master/README.md)|
+| `make scan-kics`    | `scan`  | Infrastructure security analysis | [KICS](https://github.com/Checkmarx/kics)      | [`.kics.yaml`](../.kics.yaml)               | [KICS Documentation](https://docs.kics.io/)                                   |
+| `make scan-semgrep` | `scan`  | Static code analysis             | [Semgrep](https://semgrep.dev/)                | Built-in rules                              | [Semgrep Documentation](https://semgrep.dev/docs/)                            |
+| `make scan-trivy`   | `scan`  | Comprehensive vulnerability scan | [Trivy](https://github.com/aquasecurity/trivy) | [`.trivyignore.yaml`](../.trivyignore.yaml) | [Trivy Documentation](https://trivy.dev/)                                     |
 
 ### License Scanning
 
@@ -119,11 +119,12 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 The following commands operate across all Go projects in the repository:
 
-| Command       | Aliases    | Purpose                       | Reference                                                 |
-|---------------|------------|-------------------------------|-----------------------------------------------------------|
-| `make golint` | -          | Lint all Go projects          | [golangci-lint Documentation](https://golangci-lint.run/) |
-| `make gotidy` | -          | Tidy Go modules               | [Go Modules](https://golang.org/ref/mod)                  |
-| `make goget`  | `goupdate` | Update Go dependencies        | [Go Modules](https://golang.org/ref/mod)                  |
+| Command       | Aliases      | Purpose                       | Reference                                                 |
+|---------------|--------------|-------------------------------|-----------------------------------------------------------|
+| `make golint` | -            | Lint all Go projects          | [golangci-lint Documentation](https://golangci-lint.run/) |
+| `make gosec`  | `scan-gosec` | Go source code security scan  | [Gosec](https://github.com/securego/gosec)                |
+| `make gotidy` | -            | Tidy Go modules               | [Go Modules](https://golang.org/ref/mod)                  |
+| `make goget`  | `goupdate`   | Update Go dependencies        | [Go Modules](https://golang.org/ref/mod)                  |
 
 ## Go Project Makefiles
 
@@ -229,7 +230,6 @@ These hooks use the project's Makefile targets:
 | [`.tflint.hcl`](../.tflint.hcl)             | Terraform linting configuration            | [TFLint](https://github.com/terraform-linters/tflint)       |
 | [`.golangci.yaml`](../.golangci.yaml)       | Go linting configuration                   | [golangci-lint](https://golangci-lint.run/)                 |
 | [`.checkov.yaml`](../.checkov.yaml)         | Infrastructure security scanning           | [Checkov](https://www.checkov.io/)                          |
-| [`.tfsec.yaml`](../.tfsec.yaml)             | Terraform security scanning                | [tfsec](https://aquasecurity.github.io/tfsec/)              |
 | [`.trivyignore.yaml`](../.trivyignore.yaml) | Vulnerability scanning exclusions          | [Trivy](https://trivy.dev/)                                 |
 
 ## VS Code Integration
@@ -258,16 +258,6 @@ The terminal will show color-coded output from each tool, making it easy to iden
 - **Documentation** - Maintains high-quality documentation through spell checking and formatting
 
 ## Troubleshooting
-
-### Pre-commit Installation Issues
-
-If pre-commit installation fails:
-
-```bash
-# Reinstall pre-commit
-pip install --upgrade pre-commit
-pre-commit install --overwrite
-```
 
 ### Tool-specific Issues
 

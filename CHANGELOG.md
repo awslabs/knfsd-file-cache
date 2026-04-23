@@ -1,5 +1,59 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.24
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
+
+> EXPERIMENTAL: Amazon S3 Files (`s3files`) support is experimental and subject to change.
+
+* Packer: Updated to Linux kernel v6.19.14-knfsd.
+* Updated `opentelemetry-collector-contrib` to v0.150.0 to fix bugs in `exporter/awsemf`: Fix data races in `getPusher` and `logPusher` that cause nil pointer panics and out-of-order log events ([#47126](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/47126))
+* Added support for EC2 [Instance Bandwidth Configuration](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-bandwidth-weighting.html) (bandwidth weighting). Only certain EC2 instance types support this feature; when the instance type is detected as supported, the configuration is applied automatically. This can increase network bandwidth available to the instance by up to 25% (at the cost of reduced baseline EBS bandwidth for the same instance).
+* Added support for [ENA Express](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ena-express.html) (ENA-X), which is automatically enabled when the selected EC2 instance type for the KNFSD instance supports it. ENA Express can raise maximum single-flow bandwidth from 5 Gbps to 25 Gbps for NFS traffic between instances in the same Availability Zone, up to the instance’s aggregate network limit. Both TCP and UDP will use ENA-X. The sending and receiving instances (KNFSD instance and NFS client instances) must both support ENA-X for it to be enabled. If any requirement is unmet, traffic falls back gracefully to standard TCP/UDP without ENA-X.
+* Added ENA-X support to secondary ENI attachment via Lambda `static_ip` function in `dns_round_robin` module.
+* Added `configure_network()` function to `proxy-startup.sh` that tunes the Linux network stack and ENA driver on every boot for high-throughput NFS proxy traffic. Kernel-level changes include raising socket buffer ceilings (`rmem_max`/`wmem_max`) to 16 MB, increasing `netdev_max_backlog` to 16384, widening TCP auto-tuning ranges to 16 MB, and raising `tcp_limit_output_bytes` to 1 MB for ENA-X. Per-ENA-interface tuning sets MTU to 8900, Rx ring buffers to 8192, enables adaptive Rx interrupt coalescing, and configures Receive Packet Steering (RPS) across all vCPUs to distribute softirq processing evenly.
+* Replaced manual sysfs-based `configure_read_ahead()` function in `proxy-startup.sh` with declarative `[nfsrahead]` configuration in `/etc/nfs.conf.d/knfsd.conf`. Readahead is now applied automatically via the `nfsrahead` udev tool to all NFS mounts, including `autofs`-triggered nested mounts. Amazon Elastic File System (EFS) mounts are unaffected as `efs-utils` overwrites `read_ahead_kb` after mount.
+* [EXPERIMENTAL] Added Amazon S3 Files (`s3files`) filesystem type support in `proxy-startup.sh`. The `s3files` mount helper (`mount.s3files`) is now handled identically to `mount.efs`: `nconnect` is stripped and the mount helper's own retry logic is used (single attempt).
+* Fixed CloudWatch metrics `server` dimension showing `127.0.0.1` for Amazon EFS and S3 Files mounts. The `knfsd-metrics-agent` now reads `efs-utils` state files from `/var/run/efs/` at scrape time to resolve the proxy loopback address to the real DNS name (e.g. `<fs-id>.efs.<region>.amazonaws.com` or `<az-id>.<fs-id>.s3files.<region>.on.aws`).
+* [EXPERIMENTAL] Added `examples/s3-files` Terraform example demonstrating [Amazon S3 Files](https://aws.amazon.com/blogs/aws/launching-s3-files-making-s3-buckets-accessible-as-file-systems/) fronted by KNFSD proxy. Provisions S3 bucket with versioning, S3 Files filesystem, mount target, synchronization configuration, and required IAM roles/policies.
+* Added `FSID_DB_SUBNET_IDS` variable to the `database` and `terraform-module-knfsd` modules. Callers using a non-default VPC can now pass a list of 2+ subnet IDs and the module will create the `aws_db_subnet_group` automatically. Mutually exclusive with `FSID_DB_SUBNET_GROUP_NAME`. Pre-apply validation enforces at least 2 unique subnets, inclusion of `var.SUBNET`, which must be in the same VPC as `var.SUBNET`, and coverage of at least 2 availability zones within the AWS region. See [FSID Database Options](deployment/README.md#fsid-database-options). Default VPC is still supported when both variables are `null` (default).
+* Hardened `knfsd-fsidd` against transient RDS IAM authentication failures caused by IAM policy propagation races on fresh deployments. Added SQLSTATE `28000` ("PAM authentication failed") to the retryable error set in `retry.go`, and bounded the boot-time `CreateTable` retry window to 90 secs via a new `withRetryDeadline` helper (socket-handler retries remain at the default 5 min). Added `Restart=on-failure`, `RestartSec=10s`, `StartLimitBurst=3`, `StartLimitIntervalSec=600` to `knfsd-fsidd.service`; worst-case cumulative retry time before systemd marks the unit failed is ~5 mins.
+* Added `iam_role_name` output to KNFSD proxy Terraform module (`deployment/terraform-module-knfsd/outputs.tf`) to allow external IAM policy attachments.
+* Pre-create the `knfsd/metrics` CloudWatch log group in `proxy-startup.sh` before starting `knfsd-metrics-agent` to avoid `OperationAbortedException` when multiple scrapers concurrently call `CreateLogGroup` on first boot of first KNFSD instance.
+* Updated KNFSD Monitoring Dashboard to `v12`.
+* Added `ENA-X` (SRD) metrics to `amazon-cloudwatch-agent.json` file.
+* Added `net_packets_recv` and `net_packets_sent` metrics to `amazon-cloudwatch-agent.json` file.
+* Added `ENA-X` (SRD) metric widgets to CloudWatch `metrics` dashboard.
+* Added support to CloudWatch `metrics` dashboard to filter by different `udev` network interface names for different generation EC2 instance types.
+* Added Terraform validation to ensure selected `INSTANCE_TYPE` is offered in the selected subnet's availability zone.
+* Rename references to `fsidd.sock` to `knfsd-fsidd.sock` to be consistent (naming convention now matches: `/run/knfsd-metrics.sock`).
+* Added `ExecStopPost=` to `knfsd-metrics-agent` systemd service via AMI build file: `proxy.service` to remove the metrics socket file after the service stops.
+* Added `GOMEMLIMIT` environment variable to `knfsd-metrics-agent` systemd service files: `proxy.service` and `client.service` to limit the amount of memory available to the agent.
+* Updated `memory_limiter` configuration in `knfsd-metrics-agent` configuration `common.yaml` file to limit the amount of memory available to the agent to 512 MiB with a spike limit of 128 MiB.
+* Increased collection interval of `fscache` and `netfs` metrics from `30s` to `1m` in `knfsd-metrics-agent` configuration `common.yaml` file.
+* Added `rpc.mountd[]: can't stat exported dir /acme/home/<username>: Success` syslog message to [known-issues](docs/known-issues.md) documentation.
+* Swapped `pip` for `uv` in `.devcontainer/dev`, `.devcontainer/prod`, and `setup-remote-vm.sh` script for more performant Python package management.
+* Centralized `set -eux` in the Dockerfile `SHELL [...]` directive and removed per-command usage.
+* Refactored `setup-remote-vm.sh` script to run as `root` and `ubuntu` user, with the latter running user-level tools in a virtual environment.
+* Added `modernize` linter to `golangci-lint` configuration.
+* Fixed `modernize` linter warnings in multiple golang projects.
+* Added missing `${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}` variable to GitLab CI configuration for PostgreSQL image in `go-knfsd-fsidd 4/5` job.
+* Packer: Updated minimum required IAM permissions for Packer build process in [README.md](/image/README.md#iam-permissions) documentation.
+* Packer: Removed redundant `apt-get install` call for `make` and `gcc` in `20_post_build.sh` script.
+* Packer: Added `retry` and `retry-delay` to all `curl` commands in `10_build.sh` and `20_post_build.sh` scripts.
+* Packer: Wrapped all `git clone` commands in `10_build.sh` and `20_post_build.sh` with a `git_clone` function to add retry logic.
+* Packer: Updated to `mdadm` v4.6.
+* Packer: Updated to `rust` v1.94.1.
+* Packer: Updated to `amazon-efs-utils` v3.1.0.
+* Refactored `.devcontainer/dev/Dockerfile` to improve caching of Docker build layers and BuildKit cache mount performance.
+* Updated to Packer v1.15.1.
+* Updated to Terraform `aws` provider v6.42.0.
+* Updated to Golang v1.26.2.
+* Updated to Python v3.14.4.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.23
 
 > BREAKING CHANGES: `proxy-startup.sh` script is now installed into the AMI via Packer and only executed via EC2 user data on every boot.

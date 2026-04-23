@@ -149,7 +149,8 @@ resource "aws_iam_policy" "lambda_static_ip" {
       {
         Action = [
           "ec2:DescribeNetworkInterfaces",
-          "ec2:DescribeInstances"
+          "ec2:DescribeInstances",
+          "ec2:DescribeInstanceTypes"
         ],
         Effect   = "Allow",
         Resource = "*"

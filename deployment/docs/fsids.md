@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.23"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.24"
   SUBNET = "subnet-038e337f0ff4cd53f"
 }
 
@@ -142,7 +142,7 @@ When using `FSID_MODE="external"` the `knfsd-fsidd` service can be configured by
 
 The configuration supports the following options:
 
-* `socket` (Optional) - The unix socket to listen on for incoming FSID requests from `mountd`. This *must* match the value configured in `/etc/nfs.conf`. Default `/run/fsidd.sock`.
+* `socket` (Optional) - The unix socket to listen on for incoming FSID requests from `mountd`. This *must* match the value configured in `/etc/nfs.conf`. Default `/run/knfsd-fsidd.sock`.
 
 * `debug` (Optional) - Enabled writing verbose debug output to `stderr`. Default `false`.
 
@@ -175,7 +175,7 @@ The `[metrics]` section supports:
 ### Example FSID database configuration
 
 ```ini
-socket=/run/fsidd.sock
+socket=/run/knfsd-fsidd.sock
 
 [database]
 url=host=fsids.jazg4zscprls.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=fsids

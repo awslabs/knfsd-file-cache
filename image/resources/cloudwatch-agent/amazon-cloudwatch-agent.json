@@ -107,7 +107,12 @@
           "bw_out_allowance_exceeded",
           "conntrack_allowance_exceeded",
           "linklocal_allowance_exceeded",
-          "pps_allowance_exceeded"
+          "pps_allowance_exceeded",
+          "ena_srd_mode",
+          "ena_srd_eligible_tx_pkts",
+          "ena_srd_tx_pkts",
+          "ena_srd_rx_pkts",
+          "ena_srd_resource_utilization"
         ]
       },
       "mem": {
@@ -124,10 +129,12 @@
           "net_drop_in",
           "net_drop_out",
           "net_err_in",
-          "net_err_out"
+          "net_err_out",
+          "net_packets_recv",
+          "net_packets_sent"
         ],
         "resources": [
-          "ens*"
+          "en*"
         ]
       },
       "netstat": {

@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-alpha.24"
     ]
   }
 }
@@ -148,6 +148,26 @@ data "aws_ami" "proxy_arch" {
   }
 }
 
+# Validate INSTANCE_TYPE is offered in selected subnet.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ec2_instance_type_offerings" "instance_offered" {
+  filter {
+    name   = "instance-type"
+    values = [var.INSTANCE_TYPE]
+  }
+  filter {
+    name   = "location"
+    values = [data.aws_subnet.selected.availability_zone]
+  }
+  location_type = "availability-zone"
+  lifecycle {
+    postcondition {
+      condition     = contains(self.instance_types, var.INSTANCE_TYPE)
+      error_message = "INSTANCE_TYPE \"${var.INSTANCE_TYPE}\" is not offered in the subnet's availability zone \"${data.aws_subnet.selected.availability_zone}\"."
+    }
+  }
+}
+
 module "nfs_proxy_fanout" {
   source                    = "../../deployment/terraform-module-knfsd"
   SUBNET                    = var.SUBNET
@@ -163,6 +183,7 @@ module "nfs_proxy_fanout" {
   DISABLED_NFS_VERSIONS     = "4.0,4.1,4.2"                                           # Allow NFS v3 only as we use 'showmount' in the next cluster for export discovery
   ENABLE_STATUS_CHECK       = true                                                    # Enable status check to hold the deployment until all EC2 instances are status:ready
   FSID_DB_SUBNET_GROUP_NAME = "default"                                               # Use the default database subnet group (non-default VPCs may require a custom DB subnet group)
+  FSID_DB_SUBNET_IDS        = null                                                    # alternative to FSID_DB_SUBNET_GROUP_NAME: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
   depends_on = [
     data.aws_ami.proxy_exists, # Ensure proxy AMI exists
     data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type

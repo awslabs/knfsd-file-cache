@@ -49,7 +49,12 @@ resource "null_resource" "dns_rr" {
 
 # EC2 Auto Scaling Group for the KNFSD instances
 resource "aws_autoscaling_group" "knfsd_asg" {
-  depends_on                = [null_resource.fsid_db, null_resource.dns_rr, null_resource.autoscaling_slr]
+  depends_on = [
+    null_resource.fsid_db,
+    null_resource.dns_rr,
+    null_resource.autoscaling_slr,
+    aws_ssm_parameter.settings,
+  ]
   name                      = local.asg_name
   min_size                  = var.ENABLE_KNFSD_AUTOSCALING ? var.KNFSD_AUTOSCALING_MIN_INSTANCES : var.KNFSD_NODES
   max_size                  = var.ENABLE_KNFSD_AUTOSCALING ? var.KNFSD_AUTOSCALING_MAX_INSTANCES : var.KNFSD_NODES

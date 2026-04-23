@@ -21,11 +21,11 @@ Using the deployment scripts in this repository, we further extend this architec
 
 The NFS caching solution is collectively referred to as `KNFSD` in this repository.
 
-## [Documentation](./docs/index.md)
+## Documentation
 
 The [docs](./docs/index.md) directory provides comprehensive documentation for the solution.
 
-## [Building and Deploying](./docs/index.md)
+## Building and Deploying
 
 This repository is broken down into two key sections:
 
@@ -34,9 +34,9 @@ This repository is broken down into two key sections:
 
 You should start with the [Packer build](image/). Once built, you can use this Amazon Machine Image (AMI) and the [Terraform module](deployment/) to deploy and operate a KNFSD cluster on AWS.
 
-## Testing the Image
+## Metrics
 
-There is a basic [suite of smoke tests](image/smoke-tests/) that can be run after building a new image. These tests check for common configuration issues such as the correct kernel version, cachefilesd is enabled and active, etc.
+KNFSD provides a number of metrics for monitoring and observability. These are collected by the [Amazon CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent.html) and [KNFSD Metrics Agent](image/resources/knfsd-metrics-agent/README.md) and published to Amazon CloudWatch. See the [Metrics Dashboard](deployment/metrics/README.md) documentation for more details. Third party tools can also be used to collect and visualise the Open-Telemetry based metrics, such as [Prometheus](https://prometheus.io/) and [Grafana](https://grafana.com/). Client-side metrics can be collected by the [KNFSD Metrics Agent](image/resources/knfsd-metrics-agent/README.md) running on the NFS client instances. See the [Client Metrics](docs/client-metrics.md) documentation for more details.
 
 ## Dev Container
 

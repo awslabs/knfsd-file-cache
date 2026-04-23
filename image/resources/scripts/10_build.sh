@@ -11,8 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.23"
-KERNEL="6.19.7"
+VERSION="1.1.0-alpha.24"
+KERNEL="6.19.14"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -72,6 +72,26 @@ function disable_unattended_upgrades() {
 	begin_command "Disabling unattended-upgrades.service"
 	systemctl disable unattended-upgrades.service
 	complete_command
+}
+
+# git clone with retry, 10-50s delay between attempts
+function git_clone() {
+	local max_attempts=5
+	local attempt
+	local target="${!#}"
+	if [[ "$target" == https://* ]] || [[ "$target" == git@* ]]; then
+		target=$(basename "$target" .git)
+	fi
+	for attempt in $(seq 1 $max_attempts); do
+		if git clone "$@"; then
+			return 0
+		fi
+		echo "git clone failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
+		rm -rf "$target"
+		sleep $((attempt * 10))
+	done
+	echo "git clone failed after $max_attempts attempts"
+	return 1
 }
 
 # update amazon-ssm-agent
@@ -138,7 +158,7 @@ function install_build_dependencies() (
 		libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
 		gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
 		libreadline-dev libdw-dev libslang2-dev libnuma-dev libtraceevent-dev \
-		python3-dev python-is-python3
+		python3-dev python-is-python3 binutils perl gettext cmake wget
 	complete_command
 )
 
@@ -146,7 +166,7 @@ function install_build_dependencies() (
 function install_mdadm() (
 	begin_command "Building and installing mdadm"
 	# https://github.com/md-raid-utilities/mdadm
-	git clone --depth 1 --branch mdadm-4.5 https://github.com/md-raid-utilities/mdadm.git mdadm
+	git_clone --depth 1 --branch mdadm-4.6 https://github.com/md-raid-utilities/mdadm.git mdadm
 	cd mdadm
 	make
 	make install
@@ -185,8 +205,9 @@ function download_nfs-utils() (
 	# Jammy Jellyfish (Ubuntu 22.04) has nfs-common 2.6.1
 	# Noble Numbat (Ubuntu 24.04) has nfs-common 2.6.4
 	# Plucky Puffin (Ubuntu 25.04) has nfs-common 2.8.2
-	curl -o nfs-utils-2.8.5.tar.gz https://cdn.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
-	tar xf nfs-utils-2.8.5.tar.gz
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o nfs-utils.tar.gz https://cdn.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
+	tar xf nfs-utils.tar.gz
 	complete_command
 )
 
@@ -275,7 +296,8 @@ function install_aws_cli() (
 	begin_command "Installing aws-cli"
 	mkdir -p aws-cli
 	cd aws-cli
-	curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip"
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip
 	unzip -q awscliv2.zip
 	./aws/install
 	complete_command
@@ -285,7 +307,7 @@ function install_aws_cli() (
 function install_amazon_ec2_net_utils() (
 	begin_command "Installing amazon-ec2-net-utils"
 	# do not upgrade (March 2025) to v2.5.4+ as it breaks the refresh-policy-routes timer for secondary ips
-	git clone --depth 1 --branch v2.5.3 https://github.com/amazonlinux/amazon-ec2-net-utils.git amazon-ec2-net-utils
+	git_clone --depth 1 --branch v2.5.3 https://github.com/amazonlinux/amazon-ec2-net-utils.git amazon-ec2-net-utils
 	cd amazon-ec2-net-utils
 	# edit systemd global @timer settings, execute every 30s, after initial 30s delay, with jitter of 5s
 	# Ubuntu 24.04 uses systemd v255: https://www.freedesktop.org/software/systemd/man/255/systemd.timer.html
@@ -306,10 +328,22 @@ function install_amazon_ec2_net_utils() (
 function install_cloudwatch_agent() (
 	begin_command "Installing cloudwatch agent"
 	cd cloudwatch-agent
-	curl -sSO https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/${ARCH_ALT}/latest/amazon-cloudwatch-agent.deb
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o amazon-cloudwatch-agent.deb https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/${ARCH_ALT}/latest/amazon-cloudwatch-agent.deb
 	dpkg -i -E amazon-cloudwatch-agent.deb
 	systemctl disable amazon-cloudwatch-agent
 	cp amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+	complete_command
+)
+
+# install golang
+function install_golang() (
+	begin_command "Installing golang"
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o go.tar.gz https://dl.google.com/go/go1.26.2.linux-${ARCH_ALT}.tar.gz
+	rm -rf /usr/local/go
+	tar -C /usr/local -xzf go.tar.gz
+	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"
 	complete_command
 )
 
@@ -317,9 +351,10 @@ function install_cloudwatch_agent() (
 function install_rust() (
 	begin_command "Installing rust"
 	# https://forge.rust-lang.org/infra/other-installation-methods.html#standalone
-	curl -sSO https://static.rust-lang.org/dist/rust-1.88.0-${ARCH}-unknown-linux-gnu.tar.xz
-	tar xf rust-1.88.0-${ARCH}-unknown-linux-gnu.tar.xz
-	cd rust-1.88.0-${ARCH}-unknown-linux-gnu
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o rust.tar.xz https://static.rust-lang.org/dist/rust-1.94.1-${ARCH}-unknown-linux-gnu.tar.xz
+	tar xf rust.tar.xz
+	cd rust-1.94.1-${ARCH}-unknown-linux-gnu
 	./install.sh
 	complete_command
 )
@@ -327,20 +362,10 @@ function install_rust() (
 # install amazon-efs-utils
 function install_amazon_efs_utils() (
 	begin_command "Installing amazon-efs-utils"
-	git clone --depth 1 --branch v2.3.2 https://github.com/aws/efs-utils efs-utils
+	git_clone --depth 1 --branch v3.1.0 https://github.com/aws/efs-utils.git efs-utils
 	cd efs-utils
 	./build-deb.sh
 	apt-get install -y ./build/amazon-efs-utils*deb
-	complete_command
-)
-
-# install golang
-function install_golang() (
-	begin_command "Installing golang"
-	curl -o go1.26.1.linux-${ARCH_ALT}.tar.gz https://dl.google.com/go/go1.26.1.linux-${ARCH_ALT}.tar.gz
-	rm -rf /usr/local/go
-	tar -C /usr/local -xzf go1.26.1.linux-${ARCH_ALT}.tar.gz
-	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"
 	complete_command
 )
 
@@ -414,8 +439,8 @@ function update_kernel() (
 # download kernel source
 function download_kernel() (
 	begin_command "Downloading Linux kernel: ${KERNEL}"
-	curl -fsSL --retry 5 --retry-max-time 300 --connect-timeout 30 --max-time 600 -o linux-${KERNEL}.tar.gz \
-		https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL}.tar.gz
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o linux-${KERNEL}.tar.gz https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL}.tar.gz
 	tar -xf linux-${KERNEL}.tar.gz
 	complete_command
 )
@@ -534,11 +559,10 @@ configure_cpu_power_states
 install_aws_cli
 install_amazon_ec2_net_utils
 install_cloudwatch_agent
-install_rust
-export PATH=$PATH:/root/.cargo/bin
-install_amazon_efs_utils
 install_golang
 export PATH=$PATH:/usr/local/go/bin
+install_rust
+install_amazon_efs_utils
 install_fsidd_service
 install_knfsd_agent
 install_knfsd_metrics_agent

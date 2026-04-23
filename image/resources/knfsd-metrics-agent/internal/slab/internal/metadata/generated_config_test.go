@@ -27,10 +27,18 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SlabDentryCacheActiveObjects:   MetricConfig{Enabled: true},
-					SlabDentryCacheObjsize:         MetricConfig{Enabled: true},
-					SlabNfsInodeCacheActiveObjects: MetricConfig{Enabled: true},
-					SlabNfsInodeCacheObjsize:       MetricConfig{Enabled: true},
+					SlabDentryCacheActiveObjects: MetricConfig{
+						Enabled: true,
+					},
+					SlabDentryCacheObjsize: MetricConfig{
+						Enabled: true,
+					},
+					SlabNfsInodeCacheActiveObjects: MetricConfig{
+						Enabled: true,
+					},
+					SlabNfsInodeCacheObjsize: MetricConfig{
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -38,10 +46,18 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SlabDentryCacheActiveObjects:   MetricConfig{Enabled: false},
-					SlabDentryCacheObjsize:         MetricConfig{Enabled: false},
-					SlabNfsInodeCacheActiveObjects: MetricConfig{Enabled: false},
-					SlabNfsInodeCacheObjsize:       MetricConfig{Enabled: false},
+					SlabDentryCacheActiveObjects: MetricConfig{
+						Enabled: false,
+					},
+					SlabDentryCacheObjsize: MetricConfig{
+						Enabled: false,
+					},
+					SlabNfsInodeCacheActiveObjects: MetricConfig{
+						Enabled: false,
+					},
+					SlabNfsInodeCacheObjsize: MetricConfig{
+						Enabled: false,
+					},
 				},
 			},
 		},

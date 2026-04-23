@@ -1,5 +1,5 @@
 [Socket]
-ListenSequentialPacket=/run/fsidd.sock
+ListenSequentialPacket=/run/knfsd-fsidd.sock
 
 [Install]
 WantedBy=sockets.target

@@ -24,7 +24,7 @@ import (
 
 const (
 	defaultConfigFile = "/etc/knfsd-fsidd.conf"
-	defaultSocketPath = "/run/fsidd.sock"
+	defaultSocketPath = "/run/knfsd-fsidd.sock"
 )
 
 type Config struct {

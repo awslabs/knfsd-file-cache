@@ -9,6 +9,7 @@ package opt
 import (
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 )
 
@@ -37,9 +38,7 @@ func (opts *OptSet) Parse(arguments []string) error {
 
 	// copy the environment map
 	env := make(map[string]string)
-	for k, v := range opts.env {
-		env[k] = v
-	}
+	maps.Copy(env, opts.env)
 
 	// remove arguments that have already been explicitly set by the command line flags
 	flags.Visit(func(f *flag.Flag) {

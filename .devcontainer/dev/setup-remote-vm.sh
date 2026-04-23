@@ -9,13 +9,13 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.23"
+VERSION="1.1.0-alpha.24"
 
 ## set env vars for build env only
-export HOME=/home/${USERNAME}
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 
+## root tasks
 ## disable unattended-upgrades.service
 systemctl disable unattended-upgrades.service
 
@@ -55,7 +55,6 @@ apt-get -y -q update && apt-get -y -q upgrade \
 		man-db \
 		nfstrace \
 		openssh-client \
-		python3-pip \
 		python3-venv \
 		rsync \
 		sudo \
@@ -108,7 +107,7 @@ echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
 	&& rm -f /etc/sudoers.d/90-cloud-init-users \
 	&& chmod 0440 /etc/sudoers.d/disable_admin_file \
 	&& echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
-	&& echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/local/go/bin:/home/ubuntu/go/bin"' >> /etc/sudoers.d/${USERNAME} \
+	&& echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/local/go/bin:/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin\"" >> /etc/sudoers.d/${USERNAME} \
 	&& chmod 0440 /etc/sudoers.d/${USERNAME} \
 	&& chmod 0444 /proc/slabinfo \
 	&& ln -sf /usr/bin/python3 /usr/bin/python
@@ -117,13 +116,9 @@ echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
 usermod -aG docker ${USERNAME}
 setfacl --modify user:${USERNAME}:rw /var/run/docker.sock
 
-## add aliases, extra env vars, silence motd/sudo messages
+## add extra env vars
 # shellcheck disable=SC2031
-echo "alias cls='clear'" >> /home/${USERNAME}/.bashrc \
-	&& echo "alias tf='terraform'" >> /home/${USERNAME}/.bashrc \
-	&& echo "alias ec='editorconfig-checker'" >> /home/${USERNAME}/.bashrc \
-	&& touch "/home/${USERNAME}/.hushlogin" \
-	&& echo "GITHUB_COM_TOKEN=" >> /etc/environment \
+echo "GITHUB_COM_TOKEN=" >> /etc/environment \
 	&& echo "PACKER_GITHUB_API_TOKEN=" >> /etc/environment \
 	&& echo "CI=devcontainer" >> /etc/environment \
 	&& echo "DOCKER_CLI_HINTS=false" >> /etc/environment \
@@ -133,78 +128,65 @@ echo "alias cls='clear'" >> /home/${USERNAME}/.bashrc \
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -i).zip" -o /tmp/awscliv2.zip \
 	&& unzip -q -o /tmp/awscliv2.zip -d /tmp/aws-cli \
 	&& bash /tmp/aws-cli/aws/install \
-	&& rm -rf /tmp/awscliv2.zip /tmp/aws-cli \
-	&& echo 'complete -C "/usr/local/bin/aws_completer" aws' >> /home/${USERNAME}/.bashrc
+	&& rm -rf /tmp/awscliv2.zip /tmp/aws-cli
 
 ## build version args
 # https://github.com/bats-core/bats-core/releases
 KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
-KNFSD_BLACK_VERSION=26.3.0
+KNFSD_BLACK_VERSION=26.3.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.42.65
+KNFSD_BOTO3_VERSION=1.42.94
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.2.508
+KNFSD_CHECKOV_VERSION=3.2.524
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=3.6.1
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.11.3
+KNFSD_GOLANGCI_LINT_VERSION=2.11.4
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.26.1
+KNFSD_GOLANG_VERSION=1.26.2
+# https://github.com/securego/gosec/releases
+KNFSD_GOSEC_VERSION=2.25.0
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=1.19.1
+KNFSD_MYPY_VERSION=1.20.2
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.15.0
+KNFSD_PACKER_VERSION=1.15.1
 # https://github.com/pre-commit/pre-commit/releases
-KNFSD_PRECOMMIT_VERSION=4.5.1
+KNFSD_PRECOMMIT_VERSION=4.6.0
 # https://pypi.org/project/psycopg/
 KNFSD_PSYCOPG_VERSION=3.3.3
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.5
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.154.0
+KNFSD_SEMGREP_VERSION=1.161.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
-KNFSD_SHFMT_VERSION=3.13.0
+KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-KNFSD_TERRAGRUNT_VERSION=0.99.4
+KNFSD_TERRAGRUNT_VERSION=1.0.2
 # https://github.com/terraform-linters/tflint/releases
-KNFSD_TFLINT_VERSION=0.61.0
-# https://github.com/aquasecurity/tfsec/releases
-KNFSD_TFSEC_VERSION=1.28.14
+KNFSD_TFLINT_VERSION=0.62.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.69.3
+KNFSD_TRIVY_VERSION=0.70.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
+# https://github.com/astral-sh/uv/releases
+KNFSD_UV_VERSION=0.11.7
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
 	&& tar -C /usr/local -xzf "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
 	&& rm "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
 	&& sed -i -e '/^PATH=/d' -e '/^$/d' /etc/environment \
-	&& echo "PATH=$PATH:/usr/local/go/bin:/home/${USERNAME}/go/bin" >> /etc/environment \
-	&& source /etc/environment && go env -w GOPROXY=direct \
-	&& sudo go env -w GOPROXY=direct
-
-## install golangci-lint
-curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
-	| sh -s -- -b "$(go env GOPATH)/bin" v${KNFSD_GOLANGCI_LINT_VERSION} \
-	&& mkdir -p "/home/${USERNAME}/.cache/golangci-lint" \
-	&& echo 'export GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint' >> /home/${USERNAME}/.bashrc
-
-## install golang tools
-go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION}
-go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION}
-go install github.com/securego/gosec/v2/cmd/gosec@latest
-
-## create pre-commit cache directory
-mkdir -p "/home/${USERNAME}/.cache/pre-commit" \
-	&& echo 'export PRE_COMMIT_HOME=$HOME/.cache/pre-commit' >> /home/${USERNAME}/.bashrc
+	&& echo "PATH=$PATH:/usr/local/go/bin:/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin" >> /etc/environment \
+	&& source /etc/environment \
+	&& export HOME="${HOME:-/root}" \
+	&& go env -w GOPROXY=direct
 
 ## change current working directory
 pushd /tmp > /dev/null
@@ -216,16 +198,10 @@ curl -fsSL "https://releases.hashicorp.com/packer/${KNFSD_PACKER_VERSION}/packer
 ## install terraform
 curl -fsSL "https://releases.hashicorp.com/terraform/${KNFSD_TERRAFORM_VERSION}/terraform_${KNFSD_TERRAFORM_VERSION}_linux_${BUILDARCH}.zip" \
 	--output terraform.zip && unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip
-mkdir -p "/home/${USERNAME}/.terraform.d/plugin-cache" \
-	&& echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache' >> /home/${USERNAME}/.bashrc
 
 ## install tflint
 curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${KNFSD_TFLINT_VERSION}/tflint_linux_${BUILDARCH}.zip" \
 	--output tflint.zip && unzip -q -o tflint.zip -d /usr/local/bin && rm tflint.zip
-
-## install tfsec
-curl -fsSL "https://github.com/aquasecurity/tfsec/releases/download/v${KNFSD_TFSEC_VERSION}/tfsec_${KNFSD_TFSEC_VERSION}_linux_${BUILDARCH}.tar.gz" \
-	--output tfsec.tar.gz && tar -xf tfsec.tar.gz tfsec && rm tfsec.tar.gz && install tfsec /usr/local/bin && rm -rf tfsec
 
 ## install trivy
 ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "ARM64" || echo "64bit")
@@ -241,39 +217,74 @@ curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BA
 curl -fsSL "https://github.com/gruntwork-io/terragrunt/releases/download/v${KNFSD_TERRAGRUNT_VERSION}/terragrunt_linux_${BUILDARCH}" \
 	--output /usr/local/bin/terragrunt && chmod +x /usr/local/bin/terragrunt
 
-## create venv, activate, install/upgrade pip/pipx, ensure path global
-python3 -m venv /home/${USERNAME}/.venv
-"/home/${USERNAME}/.venv/bin/pip" install -qq --upgrade pip pipx
-"/home/${USERNAME}/.venv/bin/pipx" ensurepath -qq --global
+## install uv
+curl -fsSL "https://astral.sh/uv/${KNFSD_UV_VERSION}/install.sh" | sudo env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
 
-## pipx install system-wide binaries into isolated virt envs
-"/home/${USERNAME}/.venv/bin/pipx" install -qq --global \
-	"tzupdate==${KNFSD_TZUPDATE_VERSION}" \
-	"black==${KNFSD_BLACK_VERSION}" \
-	"checkov==${KNFSD_CHECKOV_VERSION}" \
-	"codespell==${KNFSD_CODESPELL_VERSION}" \
-	"pre-commit==${KNFSD_PRECOMMIT_VERSION}" \
-	"shellcheck-py==${KNFSD_SHELLCHECK_PY_VERSION}" \
-	"semgrep==${KNFSD_SEMGREP_VERSION}"
+## run user-level tools as ${USERNAME}
+sudo -Hiu "${USERNAME}" bash -l << USERSETUP
+set -eo pipefail
 
-## check versions available: $ pip index versions <package-name>
-"/home/${USERNAME}/.venv/bin/pip" install -qq --break-system-packages \
+## add aliases, aws-cli completion, silence motd/sudo messages
+echo "alias cls='clear'" >> ~/.bashrc
+echo "alias tf='terraform'" >> ~/.bashrc
+echo "alias ec='editorconfig-checker'" >> ~/.bashrc
+echo 'complete -C "/usr/local/bin/aws_completer" aws' >> ~/.bashrc
+touch ~/.hushlogin
+
+## configure GOPROXY=direct
+go env -w GOPROXY=direct
+
+## install golangci-lint
+curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
+	| sh -s -- -b "\$(go env GOPATH)/bin" v${KNFSD_GOLANGCI_LINT_VERSION}
+mkdir -p ~/.cache/golangci-lint
+echo 'export GOLANGCI_LINT_CACHE=\$HOME/.cache/golangci-lint' >> ~/.bashrc
+
+## install golang tools
+go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION}
+go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION}
+go install github.com/securego/gosec/v2/cmd/gosec@v${KNFSD_GOSEC_VERSION}
+
+## create pre-commit cache directory
+mkdir -p ~/.cache/pre-commit
+echo 'export PRE_COMMIT_HOME=\$HOME/.cache/pre-commit' >> ~/.bashrc
+
+## create terraform plugin-cache directory
+mkdir -p ~/.terraform.d/plugin-cache
+echo 'export TF_PLUGIN_CACHE_DIR=\$HOME/.terraform.d/plugin-cache' >> ~/.bashrc
+
+## create venv with uv
+uv venv ~/.venv
+
+## uv tool install binaries into isolated virt envs
+uv tool install -q "tzupdate==${KNFSD_TZUPDATE_VERSION}" \
+	&& uv tool install -q "black==${KNFSD_BLACK_VERSION}" \
+	&& uv tool install -q "checkov==${KNFSD_CHECKOV_VERSION}" \
+	&& uv tool install -q "codespell==${KNFSD_CODESPELL_VERSION}" \
+	&& uv tool install -q "pre-commit==${KNFSD_PRECOMMIT_VERSION}" \
+	&& uv tool install -q "shellcheck-py==${KNFSD_SHELLCHECK_PY_VERSION}" \
+	&& uv tool install -q "semgrep==${KNFSD_SEMGREP_VERSION}"
+
+## check versions available: $ uv pip index versions <package-name>
+uv pip install -q --python ~/.venv/bin/python \
 	"boto3==${KNFSD_BOTO3_VERSION}" \
 	"mypy==${KNFSD_MYPY_VERSION}" \
 	"pylint==${KNFSD_PYLINT_VERSION}" \
 	"psycopg==${KNFSD_PSYCOPG_VERSION}"
 
+## create empty ~/.aws directory
+mkdir -p ~/.aws
+USERSETUP
+
+## final root tasks
 ## set timezone/date to local location
 tzupdate
 
 ## create git repo dir, add safe.directory
 mkdir -p /knfsd-file-cache && chown ${USERNAME}:${USERNAME} /knfsd-file-cache
 
-## create empty ~/.aws directory
-mkdir -p /home/${USERNAME}/.aws
-
 ## chown docker.sock
 chown ${USERNAME}:${USERNAME} /var/run/docker.sock
 
-## change ownership of everything in $HOME
-chown -R ${USERNAME}:${USERNAME} $HOME
+## change ownership of everything in /home/${USERNAME}
+chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}

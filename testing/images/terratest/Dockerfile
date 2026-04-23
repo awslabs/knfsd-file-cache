@@ -12,9 +12,12 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 HEALTHCHECK NONE
 
+## set default SHELL to bash
+SHELL ["/bin/bash", "-eux", "-c"]
+
 # the build requires the following tools:
 #  - aws cli v2
-#  - go v1.26.1
+#  - go v1.26
 #  - terraform 1.2.9
 
 # install golang (and unzip which we need later for terraform)
@@ -29,6 +32,5 @@ RUN apt-get update \
 ENV PATH="$PATH:/usr/lib/go-1.26/bin"
 
 # install terraform
-RUN set -eux \
-    && curl -fsSL https://releases.hashicorp.com/terraform/1.2.9/terraform_1.2.9_linux_amd64.zip \
+RUN curl -fsSL https://releases.hashicorp.com/terraform/1.2.9/terraform_1.2.9_linux_amd64.zip \
     && --output terraform.zip && unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip

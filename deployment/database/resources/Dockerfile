@@ -3,12 +3,12 @@
 
 # https://gallery.ecr.aws/docker/library/python
 # must match the Lambda function runtime
-ARG KNFSD_PYTHON_VERSION=3.14.3
+ARG KNFSD_PYTHON_VERSION=3.14.4
 
 # nosemgrep: dockerfile-source-not-pinned
 FROM public.ecr.aws/docker/library/python:${KNFSD_PYTHON_VERSION}-alpine
 
-ARG VERSION="1.1.0-alpha.23"
+ARG VERSION="1.1.0-alpha.24"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache lambda-db-setup container image"

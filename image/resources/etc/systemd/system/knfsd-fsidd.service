@@ -1,13 +1,17 @@
 [Unit]
-Description=knfsd fsid daemon
+Description=KNFSD FSID Daemon
 After=local-fs.target
 Before=nfs-mountd.service nfs-server.service
 Requires=knfsd-fsidd.socket
 BindsTo=nfs-server.service
+StartLimitIntervalSec=600
+StartLimitBurst=3
 
 [Service]
 Type=notify
 ExecStart=/usr/local/sbin/knfsd-fsidd
+Restart=on-failure
+RestartSec=10s
 
 [Install]
 RequiredBy=nfs-mountd.service nfs-server.service

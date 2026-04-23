@@ -7,6 +7,7 @@
 package mounts
 
 import (
+	"maps"
 	"math"
 	"time"
 
@@ -42,10 +43,7 @@ func newSummary(new *procfs.MountStatsNFS) summary {
 }
 
 func addSummary(new, old summary) summary {
-	age := new.age
-	if age < old.age {
-		age = old.age
-	}
+	age := max(new.age, old.age)
 
 	return summary{
 		age:        age,
@@ -122,9 +120,7 @@ func addTransport(new, old procfs.NFSTransportStats) procfs.NFSTransportStats {
 
 func addOperations(new, old map[string]procfs.NFSOperationStats) map[string]procfs.NFSOperationStats {
 	sum := make(map[string]procfs.NFSOperationStats)
-	for key, value := range new {
-		sum[key] = value
-	}
+	maps.Copy(sum, new)
 
 	for key, value := range old {
 		sum[key] = addOperation(key, sum[key], value)

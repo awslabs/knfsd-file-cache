@@ -27,19 +27,45 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsMountOperationErrors:        MetricConfig{Enabled: true},
-					NfsMountOperationMajorTimeouts: MetricConfig{Enabled: true},
-					NfsMountOperationReceivedBytes: MetricConfig{Enabled: true},
-					NfsMountOperationRequests:      MetricConfig{Enabled: true},
-					NfsMountOperationSentBytes:     MetricConfig{Enabled: true},
-					NfsMountOpsPerSecond:           MetricConfig{Enabled: true},
-					NfsMountReadBytes:              MetricConfig{Enabled: true},
-					NfsMountReadExe:                MetricConfig{Enabled: true},
-					NfsMountReadRtt:                MetricConfig{Enabled: true},
-					NfsMountRPCBacklog:             MetricConfig{Enabled: true},
-					NfsMountWriteBytes:             MetricConfig{Enabled: true},
-					NfsMountWriteExe:               MetricConfig{Enabled: true},
-					NfsMountWriteRtt:               MetricConfig{Enabled: true},
+					NfsMountOperationErrors: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountOperationMajorTimeouts: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountOperationReceivedBytes: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountOperationRequests: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountOperationSentBytes: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountOpsPerSecond: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountReadBytes: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountReadExe: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountReadRtt: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountRPCBacklog: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountWriteBytes: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountWriteExe: MetricConfig{
+						Enabled: true,
+					},
+					NfsMountWriteRtt: MetricConfig{
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -47,19 +73,45 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsMountOperationErrors:        MetricConfig{Enabled: false},
-					NfsMountOperationMajorTimeouts: MetricConfig{Enabled: false},
-					NfsMountOperationReceivedBytes: MetricConfig{Enabled: false},
-					NfsMountOperationRequests:      MetricConfig{Enabled: false},
-					NfsMountOperationSentBytes:     MetricConfig{Enabled: false},
-					NfsMountOpsPerSecond:           MetricConfig{Enabled: false},
-					NfsMountReadBytes:              MetricConfig{Enabled: false},
-					NfsMountReadExe:                MetricConfig{Enabled: false},
-					NfsMountReadRtt:                MetricConfig{Enabled: false},
-					NfsMountRPCBacklog:             MetricConfig{Enabled: false},
-					NfsMountWriteBytes:             MetricConfig{Enabled: false},
-					NfsMountWriteExe:               MetricConfig{Enabled: false},
-					NfsMountWriteRtt:               MetricConfig{Enabled: false},
+					NfsMountOperationErrors: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountOperationMajorTimeouts: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountOperationReceivedBytes: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountOperationRequests: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountOperationSentBytes: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountOpsPerSecond: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountReadBytes: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountReadExe: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountReadRtt: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountRPCBacklog: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountWriteBytes: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountWriteExe: MetricConfig{
+						Enabled: false,
+					},
+					NfsMountWriteRtt: MetricConfig{
+						Enabled: false,
+					},
 				},
 			},
 		},

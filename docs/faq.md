@@ -24,7 +24,12 @@ The AMI must be in the same AWS Region as the KNFSD proxy instances.
 │   64: resource "aws_db_instance" "fsids" {
 ```
 
-If you are using a **non-default** VPC for the database, you should create a DB subnet group in RDS, containing at least 2 subnets, each in a different availability zone, and then specify `FSID_DB_SUBNET_GROUP_NAME`. The single AZ deployment of the database will still target the availability zone of the provided subnet via `var.SUBNET`. The RDS DB subnet group must contain the subnet defined in `var.SUBNET`. Please make sure to review the [FSID Database Options](../deployment/README.md#fsid-database-options).
+If you are using a **non-default** VPC for the database, you have two options:
+
+* Pre-create a DB subnet group in RDS (containing at least 2 subnets, each in a different availability zone, including the subnet defined in `var.SUBNET`) and then specify its name via `FSID_DB_SUBNET_GROUP_NAME`.
+* Provide a list of 2+ subnet IDs (in different availability zones, including `var.SUBNET`) via `FSID_DB_SUBNET_IDS` and let the module create the `aws_db_subnet_group` for you.
+
+The two variables are mutually exclusive. The single AZ deployment of the DB instance will still target the availability zone of the provided subnet via `var.SUBNET`. Please make sure to review the [FSID Database Options](../deployment/README.md#fsid-database-options) for the full table of scenarios and validation rules.
 
 ## Error creating resource: already exists
 

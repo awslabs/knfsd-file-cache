@@ -86,7 +86,7 @@ func runExampleTest(t *testing.T, example string, validate ValidateFunc) {
 	terraformDir := filepath.Join(ExampleDir, example)
 	terraformOptions := &terraform.Options{
 		TerraformDir: terraformDir,
-		Vars: map[string]interface{}{
+		Vars: map[string]any{
 			"name":       testing.GetTestID(t, terraformDir),
 			"export_map": common.ExportMap(t),
 		},

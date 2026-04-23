@@ -35,11 +35,37 @@ function complete_command() {
 	printf "${SHELL_YELLOW}---- DONE: %dh%02dm%02ds${SHELL_DEFAULT}\n" "$hours" "$minutes" "$seconds"
 }
 
+# git clone with retry, 10-50s delay between attempts
+function git_clone() {
+	local max_attempts=5
+	local attempt
+	local target="${!#}"
+	if [[ "$target" == https://* ]] || [[ "$target" == git@* ]]; then
+		target=$(basename "$target" .git)
+	fi
+	for attempt in $(seq 1 $max_attempts); do
+		if git clone "$@"; then
+			return 0
+		fi
+		echo "git clone failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
+		rm -rf "$target"
+		sleep $((attempt * 10))
+	done
+	echo "git clone failed after $max_attempts attempts"
+	return 1
+}
+
+# remove unnecessary packages, reduce syslog noise
+function remove_packages() (
+	begin_command "Removing packages"
+	apt-get -o DPkg::Lock::Timeout=60 purge -yq multipath-tools cryptsetup-initramfs
+	complete_command
+)
+
 # install latest ena driver
 function install_ena_driver() (
 	begin_command "Installing ENA driver"
-	apt-get install -yq make gcc
-	git clone --depth 1 --branch ena_linux_2.16.1 https://github.com/amzn/amzn-drivers
+	git_clone --depth 1 --branch ena_linux_2.16.1 https://github.com/amzn/amzn-drivers.git amzn-drivers
 	cd amzn-drivers/kernel/linux/ena/
 	make
 	# ena.ko OR ena.ko.zst
@@ -49,18 +75,11 @@ function install_ena_driver() (
 	complete_command
 )
 
-# remove unnecessary packages, reduce syslog noise
-function remove_packages() (
-	begin_command "Removing packages"
-	apt-get purge -yq multipath-tools
-	complete_command
-)
-
 # cleanup the image before capture
 function cleanup_image() (
 	begin_command "Cleaning up image"
-	apt-get autoremove -y
-	apt-get clean -y
+	apt-get -o DPkg::Lock::Timeout=60 autoremove -y
+	apt-get -o DPkg::Lock::Timeout=60 clean -y
 	rm -rf "/var/lib/apt/lists/*"
 	find /root -mindepth 1 -delete
 	truncate -s 0 /etc/machine-id
@@ -68,8 +87,8 @@ function cleanup_image() (
 )
 
 # run post build
-install_ena_driver
 remove_packages
+install_ena_driver
 cleanup_image
 
 echo -e "\n${SHELL_YELLOW}---- SUCCESS: Finished post build image script${SHELL_DEFAULT}"

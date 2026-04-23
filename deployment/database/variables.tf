@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.23"
+  default     = "1.1.0-alpha.24"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.23\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.24\"."
   }
 }
 
@@ -38,6 +38,26 @@ variable "FSID_DB_SUBNET_GROUP_NAME" {
   type        = string
   nullable    = true
   default     = null
+}
+
+variable "FSID_DB_SUBNET_IDS" {
+  description = "(Optional) List of 2+ subnet IDs in different availability zones used to automatically create an aws_db_subnet_group. Must include the subnet referenced by var.SUBNET. Mutually exclusive with FSID_DB_SUBNET_GROUP_NAME. Default: \"null\"."
+  type        = list(string)
+  nullable    = true
+  default     = null
+
+  validation {
+    condition = (
+      var.FSID_DB_SUBNET_IDS == null
+      ? true
+      : (
+        length(var.FSID_DB_SUBNET_IDS) >= 2 &&
+        length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
+        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[a-z0-9]{8,17}$", s))])
+      )
+    )
+    error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
+  }
 }
 
 variable "NAME_PREFIX" {

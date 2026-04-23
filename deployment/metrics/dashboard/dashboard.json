@@ -301,13 +301,13 @@
               "period": 60,
               "stat": "Sum",
               "yAxis": {
-                "left": {
-                    "label": "Percent %",
-                    "min": 0,
-                    "max": 100,
-                    "showUnits": false
-                }
-            }
+                  "left": {
+                      "label": "Percent %",
+                      "min": 0,
+                      "max": 100,
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
@@ -751,8 +751,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "net_bytes_recv", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
-                  [ "...", "ens6", { "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -763,7 +763,8 @@
               "yAxis": {
                   "left": {
                       "label": "Bytes",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -776,8 +777,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "net_bytes_sent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
-                  [ "...", "ens6", { "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -788,7 +789,8 @@
               "yAxis": {
                   "left": {
                       "label": "Bytes",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -815,7 +817,8 @@
               "yAxis": {
                   "left": {
                       "label": "Gbps",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -842,7 +845,8 @@
               "yAxis": {
                   "left": {
                       "label": "Gbps",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -895,7 +899,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId, server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -945,7 +949,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId, server} AutoScalingGroupName=\"ASG_FILTER\" server=\"OUTPUT_FILTER\" MetricName=\"knfsd/mount/write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"OUTPUT_FILTER\" MetricName=\"knfsd/mount/write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -2423,21 +2427,21 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "net_drop_out", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: drop_out", "id": "e1" } ],
-                  [ "knfsd/ec2", "net_drop_in", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "id": "m2", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m2", "visible": false } ],
                   [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: drop_in", "id": "e2" } ],
-                  [ "knfsd/ec2", "net_err_out", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "id": "m3", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_out\"', 'Sum')", "id": "m3", "visible": false } ],
                   [ { "expression": "ABS(RATE(m3))", "label": "${PROP('Dim.interface')}: err_out", "id": "e3" } ],
-                  [ "knfsd/ec2", "net_err_in", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens5", { "id": "m4", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_in\"', 'Sum')", "id": "m4", "visible": false } ],
                   [ { "expression": "ABS(RATE(m4))", "label": "${PROP('Dim.interface')}: err_in", "id": "e4" } ],
-                  [ "knfsd/ec2", "net_drop_out", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens6", { "id": "m5", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m5", "visible": false } ],
                   [ { "expression": "ABS(RATE(m5))", "label": "${PROP('Dim.interface')}: drop_out", "id": "e5" } ],
-                  [ "knfsd/ec2", "net_drop_in", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens6", { "id": "m6", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m6", "visible": false } ],
                   [ { "expression": "ABS(RATE(m6))", "label": "${PROP('Dim.interface')}: drop_in", "id": "e6" } ],
-                  [ "knfsd/ec2", "net_err_out", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens6", { "id": "m7", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_out\"', 'Sum')", "id": "m7", "visible": false } ],
                   [ { "expression": "ABS(RATE(m7))", "label": "${PROP('Dim.interface')}: err_out", "id": "e7" } ],
-                  [ "knfsd/ec2", "net_err_in", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "interface", "ens6", { "id": "m8", "visible": false } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_in\"', 'Sum')", "id": "m8", "visible": false } ],
                   [ { "expression": "ABS(RATE(m8))", "label": "${PROP('Dim.interface')}: err_in", "id": "e8" } ]
               ],
               "view": "timeSeries",
@@ -2537,9 +2541,151 @@
           }
       },
       {
-          "type": "text",
+          "type": "metric",
           "x": 0,
           "y": 209,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_mode\"','Maximum')", "label": "ena_srd_mode" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "ENA Express: SRD Mode",
+              "period": 60,
+              "stat": "Maximum",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "ENA Express on, UDP on",
+                          "value": 3,
+                          "color": "#558b2f"
+                      },
+                      {
+                          "label": "ENA Express off, UDP on",
+                          "value": 2,
+                          "color": "#6a1b9a"
+                      },
+                      {
+                          "label": "ENA Express on, UDP off",
+                          "value": 1,
+                          "color": "#ad1457"
+                      },
+                      {
+                          "label": "ENA Express off, UDP off",
+                          "value": 0,
+                          "color": "#00838f"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "min": 0,
+                      "max": 3,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 6,
+          "y": 209,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_eligible_tx_pkts\"','Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: ena_srd_eligible_tx_pkts", "id": "e1" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_tx_pkts\"','Sum')", "id": "m2", "visible": false } ],
+                  [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: ena_srd_tx_pkts", "id": "e2" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_sent\"','Sum')", "id": "m3", "visible": false } ],
+                  [ { "expression": "ABS(RATE(m3))", "label": "${PROP('Dim.interface')}: net_packets_sent", "id": "e3" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "ENA Express: Egress SRD (eligible vs sent)",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Packets/Second",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 209,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_rx_pkts\"','Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: ena_srd_rx_pkts", "id": "e1" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_recv\"','Sum')", "id": "m2", "visible": false } ],
+                  [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: net_packets_recv", "id": "e2" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "ENA Express: Ingress SRD",
+              "period": 60,
+              "stat": "Sum",
+              "yAxis": {
+                  "left": {
+                      "label": "Packets/Second",
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 209,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_resource_utilization\"','Maximum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "REMOVE_EMPTY(m1)", "label": "${PROP('Dim.interface')}: ena_srd_resource_utilization", "id": "e1" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "ENA Express: SRD Resource Utilization",
+              "period": 60,
+              "stat": "Maximum",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "Resource Utilization Warning",
+                          "value": 90,
+                          "color": "#ffa500",
+                          "fill": "above"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "label": "Percent %",
+                      "min": 0,
+                      "max": 100,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "text",
+          "x": 0,
+          "y": 217,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2550,7 +2696,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 211,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2582,7 +2728,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 211,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2606,7 +2752,8 @@
               "yAxis": {
                   "left": {
                       "label": "Time/ms",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -2614,7 +2761,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 211,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2643,7 +2790,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 211,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2672,7 +2819,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 219,
+          "y": 227,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2701,7 +2848,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 219,
+          "y": 227,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2722,7 +2869,8 @@
               "yAxis": {
                   "left": {
                       "label": "Time/ms",
-                      "showUnits": false
+                      "showUnits": false,
+                      "min": 0
                   }
               }
           }
@@ -2730,7 +2878,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 219,
+          "y": 227,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2759,7 +2907,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 227,
+          "y": 235,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2770,7 +2918,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 229,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2796,7 +2944,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 229,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2814,7 +2962,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 229,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2838,7 +2986,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 237,
+          "y": 245,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2864,7 +3012,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 237,
+          "y": 245,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2900,7 +3048,8 @@
               "yAxis": {
                   "left": {
                       "showUnits": false,
-                      "label": "Credits (vCPU-minutes)"
+                      "label": "Credits (vCPU-minutes)",
+                      "max": 300
                   }
               }
           }
@@ -2908,7 +3057,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 237,
+          "y": 245,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2939,7 +3088,8 @@
               "yAxis": {
                   "left": {
                       "showUnits": false,
-                      "label": "Credits (vCPU-minutes)"
+                      "label": "Credits (vCPU-minutes)",
+                      "max": 5.25
                   }
               }
           }
@@ -2947,7 +3097,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 237,
+          "y": 245,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2979,7 +3129,8 @@
               "yAxis": {
                   "left": {
                       "showUnits": false,
-                      "label": "Credits (vCPU-minutes)"
+                      "label": "Credits (vCPU-minutes)",
+                      "max": 300
                   }
               }
           }
@@ -2987,7 +3138,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 245,
+          "y": 253,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3006,7 +3157,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 245,
+          "y": 253,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3025,7 +3176,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 245,
+          "y": 253,
           "width": 8,
           "height": 8,
           "properties": {

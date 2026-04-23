@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -22,7 +22,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.23"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.24"
     ]
   }
 }
@@ -90,6 +90,7 @@ module "fsid_database" {
   count                     = local.deploy_fsid_database ? 1 : 0
   SUBNET                    = var.SUBNET
   FSID_DB_SUBNET_GROUP_NAME = var.FSID_DB_SUBNET_GROUP_NAME
+  FSID_DB_SUBNET_IDS        = var.FSID_DB_SUBNET_IDS
   NAME                      = "${local.name}-fsids"
   DELETION_PROTECTION       = false
   ASSUME_ROLE_ARN           = var.ASSUME_ROLE_ARN

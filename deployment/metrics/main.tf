@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/metrics/1.1.0-alpha.23"
+      "knfsd-file-cache/metrics/1.1.0-alpha.24"
     ]
   }
 }

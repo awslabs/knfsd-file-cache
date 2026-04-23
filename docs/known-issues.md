@@ -23,6 +23,21 @@ You can check the current running NFS server configuration:
 
 Alternatively, do not use `EXPORT_HOST_AUTO_DETECT` and use `EXPORT_MAP` to list the exports explicitly.
 
+## rpc.mountd reports "can't stat exported dir"
+
+When re-exporting NFS, `rpc.mountd` logs messages such as:
+
+```text
+rpc.mountd[9503]: authenticated mount request from 172.23.98.118:995 for /acme/home/<username> (/acme/home)
+rpc.mountd[9503]: can't stat exported dir /acme/home/<username>: Success
+```
+
+These messages are benign and can be safely ignored. They occur because a client is mounting a subdirectory (e.g. `/acme/home/<username>`) within an exported parent path (`/acme/home`). The proxy's `rpc.mountd` calls `stat()` on the specific subdirectory path to verify it exists, but on a re-export proxy the subdirectory may not yet be materialised in the local VFS. The `stat()` fails, but `errno` is 0 so `strerror()` prints "Success", producing the confusing message.
+
+The mount still succeeds because NFS resolves the path at the protocol level.
+
+If home directories are automounted on the source server, the proxy may not be configured to access these directories, in which case the `stat()` failure is expected. NFS clients can still access these paths provided the parent export is correctly configured.
+
 ## Kernel NULL pointer dereference when restarting NFS server
 
 When restarting the NFS server process the kernel might crash with "kernel NULL pointer dereference".

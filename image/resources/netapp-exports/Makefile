@@ -18,7 +18,7 @@ gen_cert:
 .PHONY: golint
 golint: gen_cert
 	@echo "[golangci-lint]"
-	@~/go/bin/golangci-lint run --config=$(ROOT_DIR)/.golangci.yaml --color always --verbose
+	@golangci-lint run --config=$(ROOT_DIR)/.golangci.yaml --color always --verbose
 
 .PHONY: gotidy
 gotidy: gen_cert

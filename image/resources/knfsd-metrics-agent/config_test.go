@@ -128,7 +128,7 @@ func readMetricNames(path string) (names []string, err error) {
 	return
 }
 
-func readYamlFile(path string, v interface{}) error {
+func readYamlFile(path string, v any) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err

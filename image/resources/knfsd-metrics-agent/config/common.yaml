@@ -42,7 +42,7 @@ receivers:
     #     enabled: false
 
   nfsd:
-    collection_interval: 30s
+    collection_interval: 1m
     # metrics:
     #   nfs.packets.arrived:
     #     enabled: false
@@ -58,7 +58,7 @@ receivers:
     #     enabled: false
 
   fscache:
-    collection_interval: 30s
+    collection_interval: 1m
     # metrics:
     #   # Netfslib Reads
     #   netfs.reads.direct:
@@ -256,6 +256,11 @@ processors:
           enabled: false
       tags:
         - ^aws:autoscaling:groupName$
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
 
   transform:
     error_mode: ignore
@@ -668,12 +673,13 @@ processors:
 exporters:
   # Useful when developing or debugging metrics. When running the agent from the
   # command line this will write the metrics to the terminal.
-  debug:
-    verbosity: basic
+  # debug:
+  #   verbosity: basic
 
   awsemf:
     log_group_name: "knfsd/metrics"
     log_retention: 30
+    max_retries: 3
     namespace: "knfsd/metrics"
     dimension_rollup_option: NoDimensionRollup
     resource_to_telemetry_conversion:

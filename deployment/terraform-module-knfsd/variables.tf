@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.23"
+  default     = "1.1.0-alpha.24"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.23\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.24\"."
   }
 }
 
@@ -340,10 +340,14 @@ variable "VFS_CACHE_PRESSURE" {
 }
 
 variable "READ_AHEAD" {
-  description = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
+  description = "(Optional) The NFS readahead value in bytes, applied via nfsrahead udev rule in \"/etc/nfs.conf.d/knfsd.conf\". Applies to all NFS mounts. EFS mounts use their own readahead via efs-utils. Default: \"8388608\" (8 * 1024 * 1024 bytes = 8 MiB)."
   type        = number
   nullable    = false
   default     = 8388608
+  validation {
+    condition     = var.READ_AHEAD >= 1048576 && var.READ_AHEAD <= 15728640
+    error_message = "READ_AHEAD must be between 1048576 (1 MiB) and 15728640 (15 MiB)."
+  }
 }
 
 variable "ENABLE_METRICS" {
@@ -497,6 +501,10 @@ variable "RSIZE" {
   type        = number
   nullable    = false
   default     = 1048576
+  validation {
+    condition     = var.RSIZE >= 131072 && var.RSIZE <= 1048576
+    error_message = "RSIZE must be between 131072 (128 KiB) and 1048576 (1 MiB)."
+  }
 }
 
 variable "WSIZE" {
@@ -504,6 +512,10 @@ variable "WSIZE" {
   type        = number
   nullable    = false
   default     = 1048576
+  validation {
+    condition     = var.WSIZE >= 131072 && var.WSIZE <= 1048576
+    error_message = "WSIZE must be between 131072 (128 KiB) and 1048576 (1 MiB)."
+  }
 }
 
 variable "MOUNT_OPTIONS" {
@@ -518,7 +530,6 @@ variable "NFS_MOUNT_VERSION" {
   type        = string
   nullable    = false
   default     = "3"
-
   validation {
     condition     = contains(["3", "4", "4.0", "4.1", "4.2"], var.NFS_MOUNT_VERSION)
     error_message = "Valid values for NFS_MOUNT_VERSION are '3', '4', '4.0', '4.1', '4.2'."
@@ -559,6 +570,10 @@ variable "NUM_NFS_THREADS" {
   type        = number
   nullable    = false
   default     = 128
+  validation {
+    condition     = var.NUM_NFS_THREADS >= 16 && var.NUM_NFS_THREADS <= 512
+    error_message = "NUM_NFS_THREADS must be between 16 and 512."
+  }
 }
 
 variable "SVC_RPC_PER_CONNECTION_LIMIT" {
@@ -634,6 +649,26 @@ variable "FSID_DB_SUBNET_GROUP_NAME" {
   default     = null
 }
 
+variable "FSID_DB_SUBNET_IDS" {
+  description = "(Optional) List of 2+ subnet IDs in different availability zones used to automatically create an aws_db_subnet_group. Must include the subnet referenced by var.SUBNET. Mutually exclusive with FSID_DB_SUBNET_GROUP_NAME. Default: \"null\"."
+  type        = list(string)
+  nullable    = true
+  default     = null
+
+  validation {
+    condition = (
+      var.FSID_DB_SUBNET_IDS == null
+      ? true
+      : (
+        length(var.FSID_DB_SUBNET_IDS) >= 2 &&
+        length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
+        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[a-z0-9]{8,17}$", s))])
+      )
+    )
+    error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
+  }
+}
+
 variable "FSID_DATABASE_IAM_POLICY" {
   description = "(Optional) Allows overriding the default FSID database IAM policy when \"FSID_MODE\" is set to \"external\" with custom IAM policy ARN. Default: \"\"."
   type        = string
@@ -678,7 +713,6 @@ variable "ASSUME_ROLE_ARN" {
   type        = string
   nullable    = true
   default     = null
-
   validation {
     condition = var.ASSUME_ROLE_ARN == null || (
       var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))

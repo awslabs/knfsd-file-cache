@@ -42,6 +42,113 @@ modprobe ena
 dracut -f
 ```
 
+## Amazon ENA Express (ENA-X)
+
+[ENA Express](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ena-express.html) (ENA-X) uses SRD to raise per-flow network throughput and cut tail latency between EC2 instances in the same Availability Zone when the instance type supports it. For Linux guests, AWS also documents OS tuning (MTU, ring buffers, TCP settings) in [ENA Express prerequisites for Linux](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ena-express.html#ena-express-prereq-linux).
+
+After you configure a host, you can validate tuning with Amazon’s [check-ena-express-settings.sh](https://github.com/amzn/amzn-ec2-ena-utilities/blob/main/ena-express/check-ena-express-settings.sh) helper (pass your primary ENA interface name, for example `ens5`).
+
+ENA Express must be enabled on **both** endpoints of the traffic (sender and receiver) for that path to use SRD. KNFSD proxy instances enable ENA-X automatically when the instance type supports it. Your NFS compute clients must enable ENA-X as well if you want SRD end-to-end. If either side does not support ENA-X or it is not enabled, traffic **falls back** to ordinary ENA/TCP behavior—there is no hard failure, but you do not get ENA-X performance benefits on that path.
+
+When using EC2 Fleet, EC2 Spot Fleet, or AutoScaling Group, the launch template cannot safely specify `ena_srd_specification` for a single template shared across mixed EC2 instance types (unsupported types fail the launch). Instead, use **user data** (or an equivalent boot script) to call `modify-network-interface-attribute` on the **primary** network interface (device index **0** only; typically the interface whose MAC matches `meta-data` `mac` in cloud-init) after you confirm the instance type reports `EnaSrdSupported`.
+
+### Prerequisites
+
+The following `bash` example script requires the following tools:
+
+* `cloud-init` — provides `cloud-init query` and `/run/cloud-init/instance-data.json`.
+* `jq` — reads nested fields from `instance-data.json`.
+* `aws` — `describe-instance-types` and `modify-network-interface-attribute`.
+* `ip` — set link MTU.
+* `ethtool` — Rx ring and interrupt moderation.
+* `sysctl` — kernel tuning.
+
+### IAM permissions
+
+Attach an instance profile whose role allows the following. Tighten `Resource` and `Condition` in production (for example, limit `ModifyNetworkInterfaceAttribute` to ENIs owned by the instance or in your VPC).
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DescribeInstanceTypesForEnaExpress",
+            "Effect": "Allow",
+            "Action": "ec2:DescribeInstanceTypes",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ModifyPrimaryEniEnaExpress",
+            "Effect": "Allow",
+            "Action": "ec2:ModifyNetworkInterfaceAttribute",
+            "Resource": "arn:aws:ec2:*:*:network-interface/*"
+        }
+    ]
+}
+```
+
+### User-data script
+
+Run as **root** (for example as a MIME `text/x-shellscript` part in cloud-init, or a systemd oneshot). The script waits for cloud-init, enables ENA-X on the primary ENI only when `EnaSrdSupported` is true, then applies ENA-X-oriented Linux tuning on every ENA interface (commands are no-ops or best-effort on non-ENA or unsupported setups).
+
+```bash
+#!/usr/bin/env bash
+# Enable ENA Express on the primary ENI (device index 0) when supported, and apply Linux tuning
+set -o errexit
+set -o pipefail
+
+cloud-init status --wait > /dev/null
+
+REGION=$(cloud-init query region)
+INSTANCE_DATA="/run/cloud-init/instance-data.json"
+INSTANCE_TYPE=$(jq -r '.ds.meta_data.instance_type // .ds.meta_data["instance-type"] // empty' "${INSTANCE_DATA}")
+MAC=$(jq -r '.ds.meta_data.mac // empty' "${INSTANCE_DATA}")
+ENI_ID=$(jq -r --arg mac "${MAC}" \
+    '.ds.meta_data.network.interfaces.macs[$mac].interface_id // .ds.meta_data.network.interfaces.macs[$mac]["interface-id"] // empty' \
+    "${INSTANCE_DATA}")
+
+if [[ -z "${INSTANCE_TYPE}" ]] || [[ -z "${ENI_ID}" ]]; then
+    echo "Could not read instance type or primary ENI from cloud-init instance data." >&2
+    exit 1
+fi
+
+ENA_SRD_SUPPORTED=$(aws ec2 describe-instance-types \
+    --region "${REGION}" \
+    --instance-types "${INSTANCE_TYPE}" \
+    --query 'InstanceTypes[0].NetworkInfo.EnaSrdSupported' \
+    --output text)
+
+if [[ "${ENA_SRD_SUPPORTED}" == "True" ]] || [[ "${ENA_SRD_SUPPORTED}" == "true" ]]; then
+    aws ec2 modify-network-interface-attribute \
+        --region "${REGION}" \
+        --network-interface-id "${ENI_ID}" \
+        --ena-srd-specification "EnaSrdEnabled=true,EnaSrdUdpSpecification={EnaSrdUdpEnabled=true}"
+else
+    echo "Instance type ${INSTANCE_TYPE} does not support ENA-X; skipping API enablement."
+fi
+
+sysctl -w net.core.rmem_max=16777216
+sysctl -w net.core.wmem_max=16777216
+sysctl -w net.core.netdev_max_backlog=16384
+sysctl -w net.ipv4.tcp_rmem="4096 131072 16777216"
+sysctl -w net.ipv4.tcp_wmem="4096 131072 16777216"
+sysctl -w net.ipv4.tcp_limit_output_bytes=1048576
+sysctl -w net.ipv4.tcp_autocorking=0
+echo 0 > /sys/module/tcp_cubic/parameters/hystart_detect
+
+for dev in /sys/class/net/en*; do
+    iface=$(basename "${dev}")
+    if [[ ! -d "${dev}/device/driver/module" ]] \
+        || [[ "$(basename "$(readlink -f "${dev}/device/driver/module")")" != "ena" ]]; then
+        echo "Skipping ${iface}: not an ENA device"
+        continue
+    fi
+    ip link set dev "${iface}" mtu 8900 || true
+    ethtool -G "${iface}" rx 8192 || true
+    ethtool -C "${iface}" adaptive-rx on || true
+done
+```
+
 ## Fixing KNFSD Server IP Address (DNS-RR Architecture)
 
 When using the DNS Round-Robin (DNS-RR) architecture, each DNS lookup can return a different KNFSD server IP address. Without intervention, a single NFS client may connect to multiple different KNFSD servers over time as it mounts different exports, which prevents optimal load distribution across your KNFSD fleet.

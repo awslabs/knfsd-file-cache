@@ -8,9 +8,19 @@ This module deploys an Amazon RDS PostgreSQL database for use with the [external
 
 * `SUBNET` - (Required) The subnet ID to use for deployment of the Amazon RDS DB instance. Example: `subnet-038e337f0ff4cd53f`.
 
-* `FSID_DB_SUBNET_GROUP_NAME` - (Optional) The name of the Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC. Defaults to `null`.
+* `FSID_DB_SUBNET_GROUP_NAME` - (Optional) The name of an existing Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC, unless `FSID_DB_SUBNET_IDS` is used instead. Defaults to `null`.
 
-    **NOTE:** When deploying a database; a default VPC will cause Terraform to automatically generate a `default` DB subnet group, containing at least 2 subnets, each in a different availability zone. If you are using a non-default VPC for the database, you should create a DB subnet group in RDS, containing at least 2 subnets, each in a different availability zone, and then specify `FSID_DB_SUBNET_GROUP_NAME`. The single AZ deployment of the database will still target the availability zone of the provided subnet via `var.SUBNET`. The RDS DB subnet group must contain the subnet defined in `var.SUBNET`.
+* `FSID_DB_SUBNET_IDS` - (Optional) List of 2+ subnet IDs in different availability zones; the module will automatically create an `aws_db_subnet_group` from the supplied subnets. Must include the subnet in `var.SUBNET`, all subnets must belong to the same VPC as `var.SUBNET`, and the subnets must span at least 2 availability zones (all enforced at `terraform plan` time). Mutually exclusive with `FSID_DB_SUBNET_GROUP_NAME`. Defaults to `null`.
+
+    **NOTE:** The `database` module supports three ways to choose where the RDS DB instance is placed:
+
+    | Scenario                                                   | `FSID_DB_SUBNET_GROUP_NAME` | `FSID_DB_SUBNET_IDS`                 | Result                                                             |
+    | ---------------------------------------------------------- | --------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+    | Default VPC (default)                                      | `null`                      | `null`                               | AWS's regional `default` DB subnet group is used automatically.    |
+    | Non-default VPC, pre-existing DB subnet group              | `"my-group"`                | `null`                               | Module uses the DB subnet group you already created.               |
+    | Non-default VPC, let the module create the DB subnet group | `null`                      | `["subnet-aaa...", "subnet-bbb..."]` | Module creates `aws_db_subnet_group` from the supplied subnet IDs. |
+
+    Setting both variables at the same time is an error. The single-AZ deployment of the DB instance still targets the availability zone of `var.SUBNET`.
 
     **INFO:** AWS mandates that the DB subnet group must contain at least 2 subnets, each in a different availability zone, just in case you want to convert the database to a multi-AZ deployment in the future or in the case of AZ failure, you will have the ability to failover manually to another AZ.
 

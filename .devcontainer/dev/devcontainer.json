@@ -54,12 +54,13 @@
   "mounts": [
     "source=knfsd-dev-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
     "source=knfsd-dev-packer-cache,target=/home/ubuntu/.packer.d/plugins,type=volume",
-    "source=knfsd-dev-go-cache,target=/home/ubuntu/.cache/go-build,type=volume",
-    "source=knfsd-dev-go-mod-cache,target=/home/ubuntu/go/pkg/mod,type=volume",
+    "source=knfsd-dev-go-build-cache,target=/home/ubuntu/.cache/go-build,type=volume",
+    "source=knfsd-dev-go-pkg-cache,target=/home/ubuntu/.cache/go/pkg,type=volume",
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
     "source=knfsd-dev-cursor-cache,target=/home/ubuntu/.cursor,type=volume",
+    "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
@@ -67,12 +68,14 @@
   "postCreateCommand": {
     "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
     "chmod-proc-slabinfo": "sudo chmod 444 /proc/slabinfo",
+    "fix-go-cache-perms": "sudo chown -R $(whoami):$(whoami) /home/ubuntu/.cache/go-build /home/ubuntu/.cache/go/pkg /home/ubuntu/.cache/golangci-lint",
     "git-add-safe-dir": "sudo git config --system --add safe.directory ${containerWorkspaceFolder}",
     "docker-image-prune": "sudo docker image prune --force"
   },
   "postStartCommand": {
     "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
-    "chmod-proc-slabinfo": "sudo chmod 444 /proc/slabinfo"
+    "chmod-proc-slabinfo": "sudo chmod 444 /proc/slabinfo",
+    "fix-go-cache-perms": "sudo chown -R $(whoami):$(whoami) /home/ubuntu/.cache/go-build /home/ubuntu/.cache/go/pkg /home/ubuntu/.cache/golangci-lint"
   },
   "runArgs": [
     "--cap-add=SYS_PTRACE",

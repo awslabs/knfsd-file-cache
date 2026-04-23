@@ -272,14 +272,6 @@ Includes certificate generation for testing TLS functionality.
 - **Configuration**: Uses `.kics.yaml` configuration file
 - **Failure Policy**: Warning
 
-#### `tfsec`
-
-- **Purpose**: Terraform security scanning
-- **Tool**: [tfsec](https://github.com/aquasecurity/tfsec)
-- **Reference**: [tfsec Documentation](https://aquasecurity.github.io/tfsec/)
-- **Configuration**: Uses `.tfsec.yaml` configuration file
-- **Failure Policy**: Warning
-
 #### `trivy`
 
 - **Purpose**: Comprehensive security scanning for secrets, vulnerabilities, misconfigurations, and licenses
@@ -377,10 +369,10 @@ Ensure you configure GitLab Dependency Proxy in your GitLab group/project with [
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.26.1
+image: golang:1.26.2
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.1
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.2
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Outputs map[string]interface{}
+type Outputs map[string]any
 
 func (o Outputs) Project(t TestingT) string {
 	return o.GetString(t, "project")

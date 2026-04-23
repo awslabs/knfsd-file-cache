@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -25,7 +25,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.24"
     ]
   }
 }
@@ -344,6 +344,26 @@ data "aws_ami" "proxy_arch" {
         : self.architecture == "x86_64"
       )
       error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
+  }
+}
+
+# Validate INSTANCE_TYPE is offered in selected subnet.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ec2_instance_type_offerings" "instance_offered" {
+  filter {
+    name   = "instance-type"
+    values = [var.INSTANCE_TYPE]
+  }
+  filter {
+    name   = "location"
+    values = [data.aws_subnet.selected.availability_zone]
+  }
+  location_type = "availability-zone"
+  lifecycle {
+    postcondition {
+      condition     = contains(self.instance_types, var.INSTANCE_TYPE)
+      error_message = "INSTANCE_TYPE \"${var.INSTANCE_TYPE}\" is not offered in the subnet's availability zone \"${data.aws_subnet.selected.availability_zone}\"."
     }
   }
 }

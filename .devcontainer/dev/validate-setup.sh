@@ -11,7 +11,7 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.23"
+VERSION="1.1.0-alpha.24"
 
 # List of binaries to check
 binaries=(
@@ -32,7 +32,6 @@ binaries=(
 	"make"
 	"man"
 	"nfstrace"
-	"pip"
 	"sed"
 	"set"
 	"ssh"
@@ -60,9 +59,9 @@ binaries=(
 	"terraform"
 	"terragrunt"
 	"tflint"
-	"tfsec"
 	"trivy"
 	"tzupdate"
+	"uv"
 )
 
 # Function to check if a binary exists in $PATH and get its version

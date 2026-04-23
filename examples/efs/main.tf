@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/efs/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/efs/1.1.0-alpha.24"
     ]
   }
 }
@@ -64,7 +64,7 @@ resource "aws_efs_backup_policy" "efs_backup_policy" {
 
 # create a dedicated SG for the EFS mount target
 resource "aws_security_group" "efs_mt_sg" {
-  name        = "efs-mt-sg"
+  name        = "${var.PROXY_BASENAME}-efs-mt-sg"
   description = "knfsd security group for EFS mount target"
   vpc_id      = data.aws_subnet.selected.vpc_id
 
@@ -87,7 +87,7 @@ resource "aws_security_group" "efs_mt_sg" {
   }
 
   tags = {
-    "Name"                      = "efs-mt-sg",
+    "Name"                      = "${var.PROXY_BASENAME}-efs-mt-sg"
     "knfsd-file-cache:examples" = "efs"
   }
 }
@@ -123,6 +123,26 @@ data "aws_ami" "proxy_arch" {
         : self.architecture == "x86_64"
       )
       error_message = "PROXY_AMI architecture (${self.architecture}) does not match INSTANCE_TYPE (${var.INSTANCE_TYPE}) architecture."
+    }
+  }
+}
+
+# Validate INSTANCE_TYPE is offered in selected subnet.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ec2_instance_type_offerings" "instance_offered" {
+  filter {
+    name   = "instance-type"
+    values = [var.INSTANCE_TYPE]
+  }
+  filter {
+    name   = "location"
+    values = [data.aws_subnet.selected.availability_zone]
+  }
+  location_type = "availability-zone"
+  lifecycle {
+    postcondition {
+      condition     = contains(self.instance_types, var.INSTANCE_TYPE)
+      error_message = "INSTANCE_TYPE \"${var.INSTANCE_TYPE}\" is not offered in the subnet's availability zone \"${data.aws_subnet.selected.availability_zone}\"."
     }
   }
 }

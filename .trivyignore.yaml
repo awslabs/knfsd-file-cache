@@ -24,6 +24,9 @@ misconfigurations:
   - id: AWS-0078
     paths:
       - "deployment/database/main.tf"
+  - id: AWS-0089
+    paths:
+      - "examples/s3-files/main.tf"
   - id: AWS-0098
     paths:
       - "examples/fsx-netapp/main.tf"
@@ -31,6 +34,9 @@ misconfigurations:
     paths:
       - "deployment/terraform-module-knfsd/vpc.tf"
       - "deployment/test/main.tf"
+  - id: AWS-0132
+    paths:
+      - "examples/s3-files/main.tf"
   - id: AWS-0177
     paths:
       - "deployment/database/main.tf"
@@ -41,6 +47,7 @@ misconfigurations:
       - "examples/fsx-zfs-fanout-dns-rr/main.tf"
       - "examples/fsx-zfs-fanout-loadbalancer/main.tf"
       - "examples/fsx-zfs/main.tf"
+      - "examples/s3-files/main.tf"
   - id: GCP-0029
   - id: GCP-0030
   - id: GCP-0033

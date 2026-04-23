@@ -51,7 +51,7 @@ locals {
     NUM_NFS_THREADS              = "(Optional) The number of NFS threads to use for KNFSD. Default: \"128\"."
     VFS_CACHE_PRESSURE           = "(Optional) The value to set for \"vfs_cache_pressure\" Rule. Default: \"1\"."
     DISABLED_NFS_VERSIONS        = "(Optional) The versions of NFS that should be disabled in \"nfs-kernel-server\". Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". NFS Version 2 is always disabled. Default: \"4.0,4.1,4.2\"."
-    READ_AHEAD                   = "(Optional) The number of bytes to read ahead. Must be a multiple of the kernel page size (8 KiB for 5.11). The kernel will round this down to the nearest page. Default: \"8388608\" (8 MiB)."
+    READ_AHEAD                   = "(Optional) The NFS readahead value in bytes, applied via nfsrahead udev rule in \"/etc/nfs.conf.d/knfsd.conf\". Applies to all NFS mounts. EFS mounts use their own readahead via efs-utils. Default: \"8388608\" (8 * 1024 * 1024 bytes = 8 MiB)."
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = "(Optional) The disk type to use for the cachefiles directory. Can be either \"local-nvme\", \"ebs-gp3\" or \"ebs-io2\". Local ephemeral NVMe provides the highest performance, whilst EBS can provide data persistence. Default: \"local-nvme\"."

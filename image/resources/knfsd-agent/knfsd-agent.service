@@ -1,7 +1,8 @@
 [Unit]
-Description=KNFSD Agent
+Description=KNFSD HTTP Agent
 After=network.target
 StartLimitIntervalSec=0
+
 [Service]
 Type=simple
 Restart=always

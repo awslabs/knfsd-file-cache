@@ -133,7 +133,7 @@ func TestSmoke(t *testing.T) {
 		require.NoError(t, err)
 
 		// A single stat doesn't always cache the metadata, so re-read.
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_, err = os.Stat("/test/proxy/" + name)
 			require.NoError(t, err)
 		}
@@ -174,7 +174,7 @@ func TestSmoke(t *testing.T) {
 		require.NoFileExists(t, "/test/proxy/"+name)
 
 		// Ensure the negative lookup is cached on the proxy.
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			os.Stat("/test/proxy/" + name)
 		}
 
@@ -236,7 +236,7 @@ func TestSmoke(t *testing.T) {
 		assertFilesEqual(t, "/tmp/"+name, "/test/proxy/"+name)
 
 		// Read it a few more times to ensure it is fully cached
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			err = copyFile("/test/proxy/"+name, "/dev/null")
 			require.NoError(t, err)
 		}

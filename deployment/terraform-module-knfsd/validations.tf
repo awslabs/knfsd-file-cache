@@ -35,6 +35,26 @@ data "aws_ami" "proxy_arch" {
   }
 }
 
+# Validate INSTANCE_TYPE is offered in selected subnet.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ec2_instance_type_offerings" "instance_offered" {
+  filter {
+    name   = "instance-type"
+    values = [var.INSTANCE_TYPE]
+  }
+  filter {
+    name   = "location"
+    values = [data.aws_subnet.selected.availability_zone]
+  }
+  location_type = "availability-zone"
+  lifecycle {
+    postcondition {
+      condition     = contains(self.instance_types, var.INSTANCE_TYPE)
+      error_message = "INSTANCE_TYPE \"${var.INSTANCE_TYPE}\" is not offered in the subnet's availability zone \"${data.aws_subnet.selected.availability_zone}\"."
+    }
+  }
+}
+
 # To maintain Tf v1.2 support, we need to use null_resource to validate cross-referencing variables.
 resource "null_resource" "validations" {
   lifecycle {
@@ -185,6 +205,27 @@ resource "null_resource" "validations" {
         : true
       )
       error_message = "BUG: deployed RDS PostgreSQL database, but that database is not in use."
+    }
+
+    # FSID_DB_SUBNET_GROUP_NAME and FSID_DB_SUBNET_IDS are mutually exclusive. This
+    # check is duplicated in the database module's validations.tf so standalone
+    # database use is also validated; surfacing it here lets users of the wrapper
+    # get the error early during "terraform plan" before Terraform descends into
+    # the child module.
+    precondition {
+      condition     = !(var.FSID_DB_SUBNET_GROUP_NAME != null && var.FSID_DB_SUBNET_IDS != null)
+      error_message = "FSID_DB_SUBNET_GROUP_NAME and FSID_DB_SUBNET_IDS are mutually exclusive; set only one (or leave both null to use the AWS default DB subnet group)."
+    }
+
+    # Mirrors the FSID_DATABASE_CONFIG guard above: if this module is not
+    # deploying the FSID database, neither subnet-control variable applies.
+    precondition {
+      condition = (
+        !local.deploy_fsid_database
+        ? var.FSID_DB_SUBNET_GROUP_NAME == null && var.FSID_DB_SUBNET_IDS == null
+        : true
+      )
+      error_message = "FSID_DB_SUBNET_GROUP_NAME / FSID_DB_SUBNET_IDS only apply when this module deploys the FSID database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = true)."
     }
   }
 }

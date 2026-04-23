@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/weka/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/weka/1.1.0-alpha.24"
     ]
   }
 }
@@ -52,6 +52,7 @@ module "projects" {
   # NFS Settings
   FSID_MODE                 = "external"
   FSID_DB_SUBNET_GROUP_NAME = null # if using a non-default VPC, you must specify the name of the DB subnet group
+  FSID_DB_SUBNET_IDS        = null # alternative: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
   EXPORT_MAP                = "${var.WEKA_NFS_GATEWAY};/;/"
   NFS_MOUNT_VERSION         = "4.1"
   DISABLED_NFS_VERSIONS     = "3"
@@ -88,6 +89,7 @@ module "software" {
   # NFS Settings
   FSID_MODE                 = "external"
   FSID_DB_SUBNET_GROUP_NAME = null # if using a non-default VPC, you must specify the name of the DB subnet group
+  FSID_DB_SUBNET_IDS        = null # alternative: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
   EXPORT_MAP                = var.EXPORT_MAP_SOFTWARE
   # Set to v3 to improve software launch times, v4.x uses lookups when opening files back to source which cause slow startup times
   NFS_MOUNT_VERSION = "3"

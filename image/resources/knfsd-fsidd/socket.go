@@ -417,9 +417,5 @@ func isClosed(err error) bool {
 }
 
 func cut(s, sep string) (before string, after string, found bool) {
-	if i := strings.Index(s, sep); i >= 0 {
-		return s[:i], s[i+len(sep):], true
-	} else {
-		return s, "", false
-	}
+	return strings.Cut(s, sep)
 }

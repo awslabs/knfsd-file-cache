@@ -107,31 +107,41 @@ Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/has
       "Effect": "Allow",
       "Action": [
         "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:CreateFleet",
         "ec2:CreateImage",
         "ec2:CreateKeyPair",
+        "ec2:CreateLaunchTemplate",
         "ec2:CreateSecurityGroup",
-        "ec2:CreateSnapshot",
         "ec2:CreateTags",
         "ec2:DeleteKeyPair",
+        "ec2:DeleteLaunchTemplate",
         "ec2:DeleteSecurityGroup",
         "ec2:DeleteSnapshot",
+        "ec2:DescribeImageAttribute",
         "ec2:DescribeImages",
         "ec2:DescribeInstances",
         "ec2:DescribeInstanceStatus",
+        "ec2:DescribeInstanceTypeOfferings",
         "ec2:DescribeRegions",
         "ec2:DescribeSecurityGroups",
         "ec2:DescribeSnapshots",
+        "ec2:DescribeSpotPriceHistory",
         "ec2:DescribeSubnets",
         "ec2:DescribeTags",
         "ec2:DescribeVolumes",
         "ec2:DescribeVpcs",
         "ec2:ModifyImageAttribute",
+        "ec2:ModifyInstanceAttribute",
         "ec2:RunInstances",
         "ec2:StopInstances",
         "ec2:TerminateInstances",
+        "iam:PassRole",
+        "iam:GetInstanceProfile",
+        "iam:CreateServiceLinkedRole",
         "kms:CreateGrant",
         "kms:GenerateDataKeyWithoutPlaintext",
-        "kms:ReEncrypt*",
+        "kms:ReEncryptFrom",
+        "kms:ReEncryptTo",
         "ssm:GetParameter"
       ],
       "Resource": "*"
@@ -249,7 +259,7 @@ amazon-ebs.nfs-proxy: ---- SYSTEM INFO
 amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.nfs-proxy: Release:      24.04
 amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.19.7-knfsd
+amazon-ebs.nfs-proxy: Kernel:       6.19.14-knfsd
 ...
 amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
 ...
@@ -307,7 +317,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.23"
+VERSION="1.1.0-alpha.24"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -470,7 +480,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.19.7-knfsd
+Kernel:       6.19.14-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

@@ -83,7 +83,7 @@ black:
 mypy:
 	@echo "[mypy]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/home/$(USERNAME)/.venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty .; \
+		/opt/venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty .; \
 	else \
 		mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty .; \
 	fi
@@ -91,7 +91,7 @@ mypy:
 pylint:
 	@echo "[pylint]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/home/$(USERNAME)/.venv/bin/python -m pylint --output-format=colorized --score=n .; \
+		/opt/venv/bin/python -m pylint --output-format=colorized --score=n .; \
 	else \
 		pylint --output-format=colorized --score=n .; \
 	fi
@@ -156,12 +156,6 @@ scan-checkov:
 	@echo "[checkov]"
 	@checkov --config-file $(ROOT_DIR)/.checkov.yaml
 
-.PHONY: scan-tfsec
-scan: scan-tfsec
-scan-tfsec:
-	@echo "[tfsec]"
-	@tfsec --force-all-dirs -f lovely --config-file $(ROOT_DIR)/.tfsec.yaml
-
 .PHONY: scan-trivy
 scan: scan-trivy
 scan-trivy:
@@ -186,8 +180,8 @@ golint:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples golint
 
-.PHONY: gosec
-gosec:
+.PHONY: gosec scan-gosec
+gosec scan-gosec:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/filter-exports gosec
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-agent gosec
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-fsidd gosec

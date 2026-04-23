@@ -25,7 +25,7 @@ steps:
       - "./terratest/Dockerfile"
       - "./terratest"
 
-  - name: "hashicorp/packer:1.15"
+  - name: "hashicorp/packer:1.15.1"
     id: "Packer client image creation"
     script: |
       packer init client &&

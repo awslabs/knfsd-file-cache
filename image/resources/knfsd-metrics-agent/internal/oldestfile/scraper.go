@@ -74,10 +74,7 @@ func (s *oldestFileScraper) findOldest(ctx context.Context) (time.Duration, erro
 	}
 
 	now := time.Now()
-	age := now.Sub(oldest.mtime)
-	if age < 0 {
-		age = 0
-	}
+	age := max(now.Sub(oldest.mtime), time.Duration(0))
 
 	return age, nil
 }

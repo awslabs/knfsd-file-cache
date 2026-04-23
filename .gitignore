@@ -50,6 +50,8 @@ install-chronicle.yaml
 /image/resources.tgz
 
 # Development files
+/go.mod
+/go.sum
 go.work
 go.work.sum
 

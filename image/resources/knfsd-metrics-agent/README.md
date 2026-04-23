@@ -152,8 +152,6 @@ receivers:
 
 ### Processors
 
-* [Batch](https://pkg.go.dev/go.opentelemetry.io/collector/processor/batchprocessor)
-* [Filter](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor)
 * [Metrics Transform](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor)
 * [Resource Detection](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor)
 * [Resource](https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor)

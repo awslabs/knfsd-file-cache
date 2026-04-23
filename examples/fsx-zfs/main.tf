@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.36.0"
+      version = "~> 6.42.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.23"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.24"
     ]
   }
 }
@@ -152,6 +152,26 @@ data "aws_ami" "proxy_arch" {
   }
 }
 
+# Validate INSTANCE_TYPE is offered in selected subnet.
+# tflint-ignore: terraform_unused_declarations
+data "aws_ec2_instance_type_offerings" "instance_offered" {
+  filter {
+    name   = "instance-type"
+    values = [var.INSTANCE_TYPE]
+  }
+  filter {
+    name   = "location"
+    values = [data.aws_subnet.selected.availability_zone]
+  }
+  location_type = "availability-zone"
+  lifecycle {
+    postcondition {
+      condition     = contains(self.instance_types, var.INSTANCE_TYPE)
+      error_message = "INSTANCE_TYPE \"${var.INSTANCE_TYPE}\" is not offered in the subnet's availability zone \"${data.aws_subnet.selected.availability_zone}\"."
+    }
+  }
+}
+
 module "proxy" {
   source                  = "../../deployment/terraform-module-knfsd"
   SUBNET                  = var.SUBNET
@@ -169,8 +189,8 @@ module "proxy" {
   NFS_MOUNT_VERSION       = "3"                                      # Mount the source filer as NFSv3
   DISABLED_NFS_VERSIONS   = "4.0,4.1,4.2"                            # Ensure NFS v3 is used ("showmount" auto-discovery)
   depends_on = [
-    data.aws_ami.proxy_exists, # Ensure proxy AMI exists
-    data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type
-    aws_fsx_openzfs_file_system.zfs
+    data.aws_ami.proxy_exists,      # Ensure proxy AMI exists
+    data.aws_ami.proxy_arch,        # Ensure proxy AMI architecture matches instance type
+    aws_fsx_openzfs_file_system.zfs # Ensure FSx for OpenZFS is created before deploying the proxy
   ]
 }

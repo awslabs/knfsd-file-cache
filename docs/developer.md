@@ -51,8 +51,8 @@ To allow rapid onboarding of developers to the integrated development environmen
   * `Ubuntu`: ~98MB
   * `Bats`: ~105MB
   * `Postgres`: ~261MB
-  * `knfsd-go-cache` volume: ~multiple GB
-  * `knfsd-go-mod-cache` volume: ~multiple GB
+  * `knfsd-go-build-cache` volume: ~multiple GB
+  * `knfsd-go-pkg-cache` volume: ~multiple GB
   * `vscode` volume: ~266MB
 
 * The `knfsd-dev.code-workspace` is respected independently of the devcontainer setup, with minimal `golang` configuration. We are using a multi-root workspace, so all roots/folders will be opened in the same .devcontainer, regardless of whether there are configuration files at lower levels in this project. This is a known devcontainer limitation and explains why we provide only a single "monorepo" .devcontainer configuration at the root.
@@ -94,7 +94,7 @@ The `workspaceMount`/`workspaceFolder` have been configured to: `/knfsd-file-cac
 
 The devcontainer extension provides out of the box support for using local `git` credentials from inside a container by automatically copying your local `.gitconfig` file into the container on startup, so you should not need to do this in the container itself. See [Sharing Git credentials with your container](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials) for more information.
 
-The devcontainer extension has been configured via: `"dev.containers.cacheVolume"=true` to cache the VS Code server and third-party extensions in a Docker volume: `vscode`.
+The devcontainer extension has been configured via: `"dev.containers.cacheVolume"=true` to cache the VS Code/Cursor server and third-party extensions in a Docker volume: `vscode`.
 
 The `devcontainer.json` file has a number of custom mounts configured (see breakdown below). `volume` mounts are prefixed with: `knfsd-dev-` to ensure no conflict with any existing Docker volumes on the host system. To support different host OS, we use the technique of only one environment variable resolving on a particular OS. So, `source=${localEnv:HOME}${localEnv:USERPROFILE}` will either resolve to: `~` (`$HOME`) on macOS/Linux or to the user's folder: `%USERPROFILE%` on Windows.
 
@@ -102,11 +102,14 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
     # Docker persistent volume: Terraform cache: $HOME/.terraform.d/plugin-cache
     "source=knfsd-dev-tf-cache,target=/home/ubuntu/.terraform.d/plugin-cache,type=volume",
 
-    # Docker persistent volume: go-build cache: $ go env GOCACHE ('/home/ubuntu/.cache/gobuild')
-    "source=knfsd-dev-go-cache,target=/home/ubuntu/.cache/go-build,type=volume",
+    # Docker persistent volume: Packer cache: $HOME/.packer.d/plugins
+    "source=knfsd-dev-packer-cache,target=/home/ubuntu/.packer.d/plugins,type=volume",
 
-    # Docker persistent volume: go pkg mod cache: $ go env GOMODCACHE ('/home/ubuntu/go/pkg/mod')
-    "source=knfsd-dev-go-mod-cache,target=/home/ubuntu/go/pkg/mod,type=volume",
+    # Docker persistent volume: go-build cache: $ go env GOCACHE ('/home/ubuntu/.cache/go-build')
+    "source=knfsd-dev-go-build-cache,target=/home/ubuntu/.cache/go-build,type=volume",
+
+    # Docker persistent volume: go package cache: $ go env GOMODCACHE ('/home/ubuntu/.cache/go/pkg')
+    "source=knfsd-dev-go-pkg-cache,target=/home/ubuntu/.cache/go/pkg,type=volume",
 
     # Docker persistent volume: $GOLANGCI_LINT_CACHE ('/home/ubuntu/.cache/golangci-lint')
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
@@ -116,6 +119,12 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
 
     # Docker persistent volume: saves all terminal/shell history from container for future use
     "source=knfsd-dev-commandhistory,target=/home/ubuntu/.commandhistory,type=volume",
+
+    # Docker persistent volume: Cursor cache: $HOME/.cursor
+    "source=knfsd-dev-cursor-cache,target=/home/ubuntu/.cursor,type=volume",
+
+    # Docker persistent volume: uv cache: $HOME/.cache/uv
+    "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
 
     # Docker bind mount: pass host docker.sock through to container docker.sock for Docker-from-Docker
     # "//var..." allows Windows host support
@@ -173,7 +182,7 @@ All `✓` means success! `✗` is an error (RED) or warning (YELLOW). `-` means 
 - Not running on EC2. IMDSv2 check skipped
 ```
 
-* The `go-mod-download.sh` script will hydrate the Docker `knfsd-dev-go-mod-cache` volume (`$ go env GOMODCACHE`) with all required `golang` packages for all the go projects. Ideally, you should execute this script whilst connected to a fast internet link. Ensure your devcontainer has the `GITHUB_COM_TOKEN` environment variable configured.
+* The `go-mod-download.sh` script will hydrate the Docker `knfsd-dev-go-pkg-cache` volume (`$ go env GOMODCACHE`) with all required `golang` packages for all the go projects. Ideally, you should execute this script whilst connected to a fast internet link. Ensure your devcontainer has the `GITHUB_COM_TOKEN` environment variable configured.
 
 ```bash
 env | grep GITHUB_COM_TOKEN
@@ -200,7 +209,7 @@ retry_command: go mod download
 
 Depending on usage, some house cleaning on a regular basis is recommended to minimise your storage footprint.
 
-* *Docker Desktop Dashboard* -> *Volumes*, ensure you monitor the `knfsd-dev-go-cache` and `knfsd-dev-go-mod-cache` volume size growth. Although not a requirement for the devcontainer to operate, if you are logged into your Docker user account in *Docker Desktop*, then you can click on a specific volume and `Empty volume` to purge it. Note this will force a rebuild of your existing devcontainer. Alternatively (and not requiring a Docker user account login), the volume sizes can be queried and purged via the CLI within the devcontainer and not force a rebuild.
+* *Docker Desktop Dashboard* -> *Volumes*, ensure you monitor the `knfsd-dev-go-build-cache` and `knfsd-dev-go-pkg-cache` volume size growth. Although not a requirement for the devcontainer to operate, if you are logged into your Docker user account in *Docker Desktop*, then you can click on a specific volume and `Empty volume` to purge it. Note this will force a rebuild of your existing devcontainer. Alternatively (and not requiring a Docker user account login), the volume sizes can be queried and purged via the CLI within the devcontainer and not force a rebuild.
 
   ```bash
   du -sh $(go env GOCACHE)

@@ -27,12 +27,24 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsPacketsArrived:  MetricConfig{Enabled: true},
-					NfsPacketsDeferred: MetricConfig{Enabled: true},
-					NfsSocketsEnqueued: MetricConfig{Enabled: true},
-					NfsThreads:         MetricConfig{Enabled: true},
-					NfsThreadsTimedout: MetricConfig{Enabled: true},
-					NfsThreadsWoken:    MetricConfig{Enabled: true},
+					NfsPacketsArrived: MetricConfig{
+						Enabled: true,
+					},
+					NfsPacketsDeferred: MetricConfig{
+						Enabled: true,
+					},
+					NfsSocketsEnqueued: MetricConfig{
+						Enabled: true,
+					},
+					NfsThreads: MetricConfig{
+						Enabled: true,
+					},
+					NfsThreadsTimedout: MetricConfig{
+						Enabled: true,
+					},
+					NfsThreadsWoken: MetricConfig{
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -40,12 +52,24 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsPacketsArrived:  MetricConfig{Enabled: false},
-					NfsPacketsDeferred: MetricConfig{Enabled: false},
-					NfsSocketsEnqueued: MetricConfig{Enabled: false},
-					NfsThreads:         MetricConfig{Enabled: false},
-					NfsThreadsTimedout: MetricConfig{Enabled: false},
-					NfsThreadsWoken:    MetricConfig{Enabled: false},
+					NfsPacketsArrived: MetricConfig{
+						Enabled: false,
+					},
+					NfsPacketsDeferred: MetricConfig{
+						Enabled: false,
+					},
+					NfsSocketsEnqueued: MetricConfig{
+						Enabled: false,
+					},
+					NfsThreads: MetricConfig{
+						Enabled: false,
+					},
+					NfsThreadsTimedout: MetricConfig{
+						Enabled: false,
+					},
+					NfsThreadsWoken: MetricConfig{
+						Enabled: false,
+					},
 				},
 			},
 		},

@@ -12,7 +12,7 @@ default:
 .PHONY: golint
 golint:
 	@echo "[golangci-lint]"
-	@~/go/bin/golangci-lint run --config=$(ROOT_DIR)/.golangci.yaml --color always --verbose
+	@golangci-lint run --config=$(ROOT_DIR)/.golangci.yaml --color always --verbose
 
 .PHONY: gotidy
 gotidy:

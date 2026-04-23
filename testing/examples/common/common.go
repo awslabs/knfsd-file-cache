@@ -38,7 +38,7 @@ func Setup(t TestingT) {
 	terraformDir := "./common"
 	options = &terraform.Options{
 		TerraformDir: terraformDir,
-		Vars: map[string]interface{}{
+		Vars: map[string]any{
 			"name": testing.GetTestID(t, terraformDir),
 		},
 		VarFiles: varFiles,

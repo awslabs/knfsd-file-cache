@@ -439,9 +439,8 @@ func parseLine(line string, stats *fscacheStats) error {
 // parseKeyValues parses "key=value key=value..." into a map
 func parseKeyValues(s string) map[string]uint64 {
 	result := make(map[string]uint64)
-	pairs := strings.Fields(s)
 
-	for _, pair := range pairs {
+	for pair := range strings.FieldsSeq(s) {
 		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) != 2 {
 			continue

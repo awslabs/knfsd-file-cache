@@ -42,6 +42,7 @@
     }
   ],
   "settings": {
+    "remote.autoForwardPorts": false,
     "go.toolsManagement.checkForUpdates": "proxy",
     "go.useLanguageServer": true,
     "go.toolsEnvVars": {

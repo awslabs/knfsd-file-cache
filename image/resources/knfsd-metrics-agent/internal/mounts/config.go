@@ -29,6 +29,11 @@ type Config struct {
 	// IP only, so that all the connections from a client to the same IP will
 	// use the same instance.
 	QueryProxyInstance QueryProxyInstanceConfig `mapstructure:"query_proxy_instance"`
+
+	// Directory containing efs-utils state files. Used to resolve the real
+	// server DNS name for EFS and S3 Files mounts that appear as 127.0.0.1
+	// in /proc/self/mountstats.
+	EFSStateDir string `mapstructure:"efs_state_dir"`
 }
 
 type QueryProxyInstanceConfig struct {
@@ -50,5 +55,6 @@ func createDefaultConfig() component.Config {
 			Enabled: false,
 			Timeout: 10 * time.Second,
 		},
+		EFSStateDir: "/var/run/efs",
 	}
 }

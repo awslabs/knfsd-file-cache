@@ -27,7 +27,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FscacheOldestFile: MetricConfig{Enabled: true},
+					FscacheOldestFile: MetricConfig{
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -35,7 +37,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FscacheOldestFile: MetricConfig{Enabled: false},
+					FscacheOldestFile: MetricConfig{
+						Enabled: false,
+					},
 				},
 			},
 		},

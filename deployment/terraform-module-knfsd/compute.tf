@@ -9,6 +9,11 @@ locals {
   ebs_vol_type = var.CACHEFILESD_DISK_TYPE == "ebs-gp3" ? "gp3" : "io2"
 }
 
+# query instance type capabilities
+data "aws_ec2_instance_type" "selected" {
+  instance_type = var.INSTANCE_TYPE
+}
+
 # Optionally create an EC2 Capacity Reservation for the cluster
 # The KNFSD nodes are often large instances. This means they can sometimes be difficult
 # to schedule which can cause delays when replacing unhealthy instances, or performing
@@ -35,12 +40,11 @@ resource "aws_ec2_capacity_reservation" "knfsd_reservation" {
 
 # Instance template for the KNFSD instances
 resource "aws_launch_template" "nfsproxy_template" {
-  name                   = "${local.name}-lt"
-  description            = "EC2 instance template for the KNFSD instances"
-  image_id               = var.PROXY_AMI
-  instance_type          = var.INSTANCE_TYPE
-  key_name               = var.KEY_NAME
-  vpc_security_group_ids = [aws_security_group.nfsproxy_asg_sg.id]
+  name          = "${local.name}-lt"
+  description   = "EC2 instance template for the KNFSD instances"
+  image_id      = var.PROXY_AMI
+  instance_type = var.INSTANCE_TYPE
+  key_name      = var.KEY_NAME
 
   ebs_optimized = true
 
@@ -52,6 +56,28 @@ resource "aws_launch_template" "nfsproxy_template" {
       volume_type           = "gp3"
       delete_on_termination = true
       encrypted             = true
+    }
+  }
+
+  # enable ENA-SRD only if the instance type supports it
+  network_interfaces {
+    security_groups = [aws_security_group.nfsproxy_asg_sg.id]
+    dynamic "ena_srd_specification" {
+      for_each = data.aws_ec2_instance_type.selected.ena_srd_supported ? [1] : []
+      content {
+        ena_srd_enabled = true
+        ena_srd_udp_specification {
+          ena_srd_udp_enabled = true
+        }
+      }
+    }
+  }
+
+  # apply "vpc-1" network bandwidth weighting only if the instance type supports it
+  dynamic "network_performance_options" {
+    for_each = contains(data.aws_ec2_instance_type.selected.bandwidth_weightings, "vpc-1") ? [1] : []
+    content {
+      bandwidth_weighting = "vpc-1"
     }
   }
 

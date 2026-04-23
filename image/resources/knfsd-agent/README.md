@@ -22,6 +22,12 @@ The following methods are supported:
   GET /api/v1/status
 ```
 
+To access the KNFSD Agent from the command line, you can use the `curl` command. Results are returned in JSON format.
+
+```bash
+curl -s --compressed http://localhost:80/api/v1/status
+```
+
 ## Methods
 
 ### GET /api/v1/cache/usage
@@ -509,7 +515,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "6.19.7-knfsd",
+  "kernel": "6.19.14-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",
@@ -572,7 +578,7 @@ The endpoint will always return `200 Ok` with a response, even if one or more se
           "error": ""
         }
       ],
-      "log": "Oct 16 14:20:15 knfsd-proxy-4r97 systemd[1]: Starting LSB: CacheFiles daemon...\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2144]:  * Starting FilesCache daemon  cachefilesd\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2152]: About to bind cache\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2152]: Bound cache\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2153]: Daemon Started\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2144]:    ...done.\nOct 16 14:20:15 knfsd-proxy-4r97 systemd[1]: Started LSB: CacheFiles daemon.\n"
+      "log": "Apr 15 09:43:14 ip-172-31-45-135 systemd[1]: Starting cachefilesd.service - LSB: CacheFiles daemon...\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8561]:  * Starting FilesCache daemon  cachefilesd\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8569]: About to bind cache\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8569]: Bound cache\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8571]: Daemon Started\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8561]:    ...done.\nApr 15 09:43:14 ip-172-31-45-135 systemd[1]: Started cachefilesd.service - LSB: CacheFiles daemon.\n"
     }
   ]
 }

@@ -53,7 +53,7 @@ func TestSmoke(t *testing.T) {
 	scope.RunTestStage(t, "apply", func() {
 		terraformOptions := &terraform.Options{
 			TerraformDir: "terraform",
-			Vars: map[string]interface{}{
+			Vars: map[string]any{
 				// "prefix": gcp.RandomValidGcpName(),
 				"prefix": "test", // temp hack to workaround "ambiguous import" in go.mod (we will remove 'gcp' anyway in the future)
 			},
@@ -133,7 +133,7 @@ func executeRemote(t *testing.T, outputs Outputs) {
 	})
 }
 
-type Outputs map[string]interface{}
+type Outputs map[string]any
 
 func (o Outputs) Project(t *testing.T) string {
 	return o.GetString(t, "project")

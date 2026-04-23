@@ -173,17 +173,29 @@ def instance_launching(instance_id, asg_name, hook_name, token):
             {"Name": "status", "Values": ["available"]},
         ]
     ):
-        # Accept all ENIs that are in status==available for this specific ASG/subnet
+        # accept all ENIs that are in status==available for this specific ASG/subnet
         for eni in page["NetworkInterfaces"]:
             available_enis.append(eni)
 
     logger.info("Available ENIs: %s", available_enis)
 
-    # get the security groups assigned to the instance's primary network interface
+    # get the security groups and instance type from the instance's primary network interface
     instance = ec2.describe_instances(InstanceIds=[instance_id])
-    primary_eni = instance["Reservations"][0]["Instances"][0]["NetworkInterfaces"][0]
+    instance_data = instance["Reservations"][0]["Instances"][0]
+    primary_eni = instance_data["NetworkInterfaces"][0]
     security_group_ids = [sg["GroupId"] for sg in primary_eni["Groups"]]
     logger.info("Security groups from primary ENI: %s", security_group_ids)
+
+    # check if the instance type supports ENA Express (ENA-X)
+    instance_type = instance_data["InstanceType"]
+    type_info = ec2.describe_instance_types(InstanceTypes=[instance_type])
+    ena_srd_supported = (
+        type_info["InstanceTypes"][0]
+        .get("NetworkInfo", {})
+        .get("EnaSrdSupported", False)
+    )
+    logger.info("Instance type: %s", instance_type)
+    logger.info("ENA-X supported: %s", ena_srd_supported)
 
     # if no available ENIs, create a new ENI
     if not available_enis:
@@ -216,11 +228,20 @@ def instance_launching(instance_id, asg_name, hook_name, token):
     )
 
     # attach the ENI to the new instance
-    attachment = ec2.attach_network_interface(
-        NetworkInterfaceId=eni["NetworkInterfaceId"],
-        InstanceId=instance_id,
-        DeviceIndex=1,
-    )
+    attach_kwargs = {
+        "NetworkInterfaceId": eni["NetworkInterfaceId"],
+        "InstanceId": instance_id,
+        "DeviceIndex": 1,
+    }
+
+    # enable ENA-X if the instance type supports it
+    if ena_srd_supported:
+        attach_kwargs["EnaSrdSpecification"] = {
+            "EnaSrdEnabled": True,
+            "EnaSrdUdpSpecification": {"EnaSrdUdpEnabled": True},
+        }
+
+    attachment = ec2.attach_network_interface(**attach_kwargs)
     attachment_id = attachment["AttachmentId"]
 
     logger.info(
