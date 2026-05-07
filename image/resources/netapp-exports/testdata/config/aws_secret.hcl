@@ -4,7 +4,7 @@
 
 server "all-attributes" {
     url  = "https://10.0.0.2:8080"
-    user = "nfs-proxy"
+    user = "knfsd"
 
     password {
         aws_secret {
@@ -17,7 +17,7 @@ server "all-attributes" {
 
 server "minimal" {
     url  = "https://10.0.0.2:8080"
-    user = "nfs-proxy"
+    user = "knfsd"
 
     password {
         aws_secret {
@@ -28,7 +28,7 @@ server "minimal" {
 
 server "previous-version" {
     url  = "https://10.0.0.2:8080"
-    user = "nfs-proxy"
+    user = "knfsd"
 
     password {
         aws_secret {
@@ -40,7 +40,7 @@ server "previous-version" {
 
 server "remote-secret" {
     url  = "https://10.0.0.2:8080"
-    user = "nfs-proxy"
+    user = "knfsd"
 
     password {
         aws_secret {

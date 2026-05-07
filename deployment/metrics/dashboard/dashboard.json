@@ -751,8 +751,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -777,8 +777,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: IN" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}: OUT" } ]
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
+                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,

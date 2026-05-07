@@ -56,9 +56,9 @@ If you connect to the source server using NFS v4 you can re-export the pseudo-ro
 Use of an FSID service to automatically allocate FSIDs for exports is required when using auto re-export. The Terraform option: `FSID_MODE="external"` is recommended so that all the KNFSD proxy instances in the cluster use the same FSID number for each export.
 
 ```terraform
-module "nfs_proxy" {
+module "knfsd" {
 
-    source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.24"
+    source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.25"
 
     # Include your standard KNFSD configuration, this example only shows the
     # configuration values specific to the auto re-export feature.

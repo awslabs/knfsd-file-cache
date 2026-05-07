@@ -11,7 +11,7 @@ output "autoscaling_group_name" {
 
 output "autoscaling_group_security_group_id" {
   description = "Security Group ID for the KNFSD proxy Auto Scaling Group."
-  value       = aws_security_group.nfsproxy_asg_sg.id
+  value       = aws_security_group.knfsd_asg_sg.id
 }
 
 output "cluster_ready" {
@@ -50,21 +50,16 @@ output "iam_role_name" {
   value       = aws_iam_role.knfsd_instance_role.name
 }
 
-output "nfsproxy_loadbalancer_dnsaddress" {
-  description = "The private DNS name of the Network Load Balancer."
-  value       = one(module.loadbalancer[*].dns_name)
-}
-
-output "nfsproxy_loadbalancer_ipaddress" {
+output "loadbalancer_ipaddress" {
   description = "The private IP address of the Network Load Balancer."
   value       = one(module.loadbalancer[*].ip_address)
 }
 
-output "nfsproxy_security_group_id" {
+output "knfsd_security_group_id" {
   description = "Security Group ID for the NFS clients to connect to the KNFSD proxy instances."
   value = (
     var.TRAFFIC_MODE == "loadbalancer" ? one(module.loadbalancer[*].lb_security_group_id) :
-    var.TRAFFIC_MODE == "dns_round_robin" ? aws_security_group.nfsproxy_asg_sg.id :
+    var.TRAFFIC_MODE == "dns_round_robin" ? aws_security_group.knfsd_asg_sg.id :
     null
   )
 }

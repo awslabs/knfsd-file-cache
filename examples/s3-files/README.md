@@ -67,6 +67,10 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 There are a number of ways to [monitor](../../docs/check-startup.md) the deployment progress.
 
+## IAM Permissions
+
+This example creates Amazon S3 and Amazon S3 Files resources (`aws_s3_bucket`, `aws_s3_bucket_versioning`, `aws_s3_bucket_public_access_block`, `aws_s3files_file_system`, `aws_s3files_synchronization_configuration`, `aws_s3files_mount_target`) that are not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `s3:*` (scoped to `knfsd-*` buckets), `s3files:*`, mount-target `ec2:*Network*` networking, EventBridge management for the S3 Files-managed `DO-NOT-DELETE-S3-Files*` sync rules, `iam:PassRole` (for `elasticfilesystem.amazonaws.com`) and `iam:CreateServiceLinkedRole` (for `elasticfilesystem.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json) (when applicable). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
+
 ## Inputs
 
 * `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
@@ -75,7 +79,7 @@ There are a number of ways to [monitor](../../docs/check-startup.md) the deploym
 
 * `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
 
-* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `nfsproxy`.
+* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `knfsd`.
 
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
@@ -91,11 +95,9 @@ There are a number of ways to [monitor](../../docs/check-startup.md) the deploym
 
 * `dns_name` - The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
 
-* `nfsproxy_loadbalancer_dnsaddress` - The private DNS name of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
+* `loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
 
-* `nfsproxy_loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
-
-* `nfsproxy_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
+* `knfsd_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
 
 * `s3_bucket_name` - Name of the S3 bucket backing the S3 Files filesystem.
 

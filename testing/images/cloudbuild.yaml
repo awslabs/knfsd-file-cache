@@ -15,7 +15,7 @@ options:
     - BUILD_ID=${BUILD_ID}
 
 steps:
-  - name: "gcr.io/cloud-builders/docker"
+  - name: gcr.io/cloud-builders/docker
     id: "Terratest build image creation"
     args:
       - "build"
@@ -25,7 +25,7 @@ steps:
       - "./terratest/Dockerfile"
       - "./terratest"
 
-  - name: "hashicorp/packer:1.15.1"
+  - name: hashicorp/packer:1.15.3
     id: "Packer client image creation"
     script: |
       packer init client &&

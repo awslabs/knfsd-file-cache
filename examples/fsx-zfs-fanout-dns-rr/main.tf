@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-alpha.24"
+      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-alpha.25"
     ]
   }
 }
@@ -65,7 +65,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 2049
     to_port         = 2049
     protocol        = "tcp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow NFS TCP from proxy ASG"
   }
 
@@ -74,7 +74,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 2049
     to_port         = 2049
     protocol        = "udp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow NFS UDP from proxy ASG"
   }
 
@@ -83,7 +83,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 111
     to_port         = 111
     protocol        = "tcp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow portmapper TCP from proxy ASG"
   }
 
@@ -91,7 +91,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 111
     to_port         = 111
     protocol        = "udp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow portmapper UDP from proxy ASG"
   }
 
@@ -100,7 +100,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 20001
     to_port         = 20003
     protocol        = "tcp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow ZFS management TCP from proxy ASG"
   }
 
@@ -109,7 +109,7 @@ resource "aws_security_group" "fsx_sg" {
     from_port       = 20001
     to_port         = 20003
     protocol        = "udp"
-    security_groups = [module.nfs_proxy_fanout.autoscaling_group_security_group_id]
+    security_groups = [module.knfsd_fanout.autoscaling_group_security_group_id]
     description     = "Allow ZFS management UDP from proxy ASG"
   }
 
@@ -168,7 +168,7 @@ data "aws_ec2_instance_type_offerings" "instance_offered" {
   }
 }
 
-module "nfs_proxy_fanout" {
+module "knfsd_fanout" {
   source                    = "../../deployment/terraform-module-knfsd"
   SUBNET                    = var.SUBNET
   TRAFFIC_MODE              = "dns_round_robin"
@@ -178,7 +178,7 @@ module "nfs_proxy_fanout" {
   INSTANCE_TYPE             = var.INSTANCE_TYPE                                       # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES               = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
   EXPORT_MAP                = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
-  PROXY_BASENAME            = "nfsproxy-fanout"                                       # Give this proxy a unique base name
+  PROXY_BASENAME            = "knfsd-fanout"                                          # Give this proxy a unique base name
   NFS_MOUNT_VERSION         = "3"                                                     # Mount source filer as NFSv3
   DISABLED_NFS_VERSIONS     = "4.0,4.1,4.2"                                           # Allow NFS v3 only as we use 'showmount' in the next cluster for export discovery
   ENABLE_STATUS_CHECK       = true                                                    # Enable status check to hold the deployment until all EC2 instances are status:ready
@@ -190,22 +190,22 @@ module "nfs_proxy_fanout" {
   ]
 }
 
-module "nfs_proxy_cluster" {
+module "knfsd_cluster" {
   source                   = "../../deployment/terraform-module-knfsd"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "dns_round_robin"
   KEY_NAME                 = var.KEY_NAME
   PROXY_AMI                = var.PROXY_AMI
   INSTANCE_TAGS            = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
-  FSID_DATABASE_DEPLOY     = false                                       # Reuse the database from the fanout module
-  FSID_DATABASE_CONFIG     = module.nfs_proxy_fanout.database_config     # Database configuration from the fanout module
-  FSID_DATABASE_IAM_POLICY = module.nfs_proxy_fanout.database_iam_policy # ARN of the IAM policy for rds-db:connect database access from the fanout module
-  INSTANCE_TYPE            = "i3en.6xlarge"                              # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
-  KNFSD_NODES              = 3                                           # Deploy >1 knfsd node for the performant based, temporary proxy nodes
-  EXPORT_HOST_AUTO_DETECT  = module.nfs_proxy_fanout.dns_name            # Detect exports from the fanout node via "showmount -e <FANOUT_NODE_DNS_NAME>"
-  PROXY_BASENAME           = "nfsproxy-cluster"                          # Give this cluster a unique base name
-  NFS_MOUNT_VERSION        = "3"                                         # Mount the fanout node as NFSv3
-  DISABLED_NFS_VERSIONS    = "4.0,4.1,4.2"                               # Ensure NFS v3 is used ("showmount" auto-discovery)
-  EXPORT_OPTIONS           = "insecure"                                  # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
-  depends_on               = [module.nfs_proxy_fanout.cluster_ready]     # Deploy after "nfs_proxy_fanout" status is "ready" (TAG:knfsd-file-cache:status=ready)
+  FSID_DATABASE_DEPLOY     = false                                   # Reuse the database from the fanout module
+  FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config     # Database configuration from the fanout module
+  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy # ARN of the IAM policy for rds-db:connect database access from the fanout module
+  INSTANCE_TYPE            = "i3en.6xlarge"                          # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
+  KNFSD_NODES              = 3                                       # Deploy >1 knfsd node for the performant based, temporary proxy nodes
+  EXPORT_HOST_AUTO_DETECT  = module.knfsd_fanout.dns_name            # Detect exports from the fanout node via "showmount -e <FANOUT_NODE_DNS_NAME>"
+  PROXY_BASENAME           = "knfsd-cluster"                         # Give this cluster a unique base name
+  NFS_MOUNT_VERSION        = "3"                                     # Mount the fanout node as NFSv3
+  DISABLED_NFS_VERSIONS    = "4.0,4.1,4.2"                           # Ensure NFS v3 is used ("showmount" auto-discovery)
+  EXPORT_OPTIONS           = "insecure"                              # Override the default "secure" option with "insecure" (required for "showmount" auto-discovery by clients)
+  depends_on               = [module.knfsd_fanout.cluster_ready]     # Deploy after "knfsd_fanout" status is "ready" (TAG:knfsd-file-cache:status=ready)
 }

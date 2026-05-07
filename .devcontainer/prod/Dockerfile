@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.24"
+ARG VERSION="1.1.0-alpha.25"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -111,7 +111,7 @@ RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 
 ## build version args
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.1
+ARG KNFSD_PACKER_VERSION=1.15.3
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 

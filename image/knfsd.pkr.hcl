@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 packer {
-  required_version = ">= 1.15.1"
+  required_version = ">= 1.15.3"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.24"
+  version       = "1.1.0-alpha.25"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -73,7 +73,7 @@ data "amazon-parameterstore" "base-ami-arm64" {
 }
 
 # https://developer.hashicorp.com/packer/integrations/hashicorp/amazon/latest/components/builder/ebs
-source "amazon-ebs" "nfs-proxy-amd64" {
+source "amazon-ebs" "knfsd-amd64" {
 
   # increase timeout for AMI creation
   aws_polling {
@@ -197,7 +197,7 @@ source "amazon-ebs" "nfs-proxy-amd64" {
   ssh_username = "ubuntu"
 }
 
-source "amazon-ebs" "nfs-proxy-arm64" {
+source "amazon-ebs" "knfsd-arm64" {
 
   # increase timeout for AMI creation
   aws_polling {
@@ -319,8 +319,8 @@ source "amazon-ebs" "nfs-proxy-arm64" {
 
 build {
   sources = concat(
-    contains(var.ARCH, "amd64") ? ["source.amazon-ebs.nfs-proxy-amd64"] : [],
-    contains(var.ARCH, "arm64") ? ["source.amazon-ebs.nfs-proxy-arm64"] : []
+    contains(var.ARCH, "amd64") ? ["source.amazon-ebs.knfsd-amd64"] : [],
+    contains(var.ARCH, "arm64") ? ["source.amazon-ebs.knfsd-arm64"] : []
   )
 
   # https://developer.hashicorp.com/packer/docs/provisioners/shell

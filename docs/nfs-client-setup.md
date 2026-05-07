@@ -161,7 +161,7 @@ By "fixing" the KNFSD hostname to a single IP address in `/etc/hosts` at client 
 
 ```bash
 #!/usr/bin/env bash
-PROXY_HOSTNAME="nfsproxy-a1b2c3d4.aws.internal" # "dns_name" output from Terraform deployment
+PROXY_HOSTNAME="knfsd-a1b2c3d4.aws.internal" # "dns_name" output from Terraform deployment
 # get first IP from DNS-RR using dig, add to /etc/hosts
 PROXY_IP=$(dig +short "${PROXY_HOSTNAME}" | head -n1)
 echo "${PROXY_IP} ${PROXY_HOSTNAME}" >> /etc/hosts

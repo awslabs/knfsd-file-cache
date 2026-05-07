@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
     archive = {
       source  = "hashicorp/archive"
@@ -18,7 +18,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.24"
+      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.25"
     ]
   }
 }
@@ -41,10 +41,10 @@ locals {
 }
 
 # create a private route53 DNS zone for the dns-rr cluster
-resource "aws_route53_zone" "nfsproxy" {
+resource "aws_route53_zone" "knfsd" {
   count         = var.DNS_NAME == "" ? 1 : 0
   name          = "${var.PROXY_BASENAME}.aws.internal."
-  comment       = "Internal DNS for KNFSD DNS Round-Robin"
+  comment       = "Internal DNS Zone for KNFSD DNS Round-Robin"
   force_destroy = true
   vpc {
     vpc_id = data.aws_vpc.selected.id

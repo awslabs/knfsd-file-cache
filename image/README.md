@@ -20,7 +20,7 @@ Alternatively, if your build procedure is more complex, you can replace the cust
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.15.0 or newer from <https://packer.io/downloads>.
+Download Packer 1.15.3 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -96,59 +96,7 @@ Default output format []: json
 
 ### IAM Permissions
 
-Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/hashicorp/amazon#authentication) are available to Packer. The following IAM policy document provides the minimal permissions necessary for this Packer build to work:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PackerPermissions",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:CreateFleet",
-        "ec2:CreateImage",
-        "ec2:CreateKeyPair",
-        "ec2:CreateLaunchTemplate",
-        "ec2:CreateSecurityGroup",
-        "ec2:CreateTags",
-        "ec2:DeleteKeyPair",
-        "ec2:DeleteLaunchTemplate",
-        "ec2:DeleteSecurityGroup",
-        "ec2:DeleteSnapshot",
-        "ec2:DescribeImageAttribute",
-        "ec2:DescribeImages",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeInstanceTypeOfferings",
-        "ec2:DescribeRegions",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSnapshots",
-        "ec2:DescribeSpotPriceHistory",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeTags",
-        "ec2:DescribeVolumes",
-        "ec2:DescribeVpcs",
-        "ec2:ModifyImageAttribute",
-        "ec2:ModifyInstanceAttribute",
-        "ec2:RunInstances",
-        "ec2:StopInstances",
-        "ec2:TerminateInstances",
-        "iam:PassRole",
-        "iam:GetInstanceProfile",
-        "iam:CreateServiceLinkedRole",
-        "kms:CreateGrant",
-        "kms:GenerateDataKeyWithoutPlaintext",
-        "kms:ReEncryptFrom",
-        "kms:ReEncryptTo",
-        "ssm:GetParameter"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/hashicorp/amazon#authentication) are available to Packer. The minimum IAM permissions for the Packer AMI build (and the rest of the project) are documented at [docs/iam.md](../docs/iam.md). The standalone, Packer-only IAM policy file is at [docs/iam/packer.json](../docs/iam/packer.json) and can be attached directly to the principal that runs `packer build`.
 
 ### AWS Service Quotas
 
@@ -248,25 +196,25 @@ TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS = ["192.168.1.0/24"]
 
 ```bash
 cd knfsd-file-cache
-packer init -upgrade image/nfs-proxy.pkr.hcl
+packer init -upgrade image/knfsd.pkr.hcl
 packer build -var-file image/image.pkrvars.hcl image
 ```
 
 ### Successful Build Output
 
 ```bash
-amazon-ebs.nfs-proxy: ---- SYSTEM INFO
-amazon-ebs.nfs-proxy: Description:  Ubuntu 24.04.4 LTS
-amazon-ebs.nfs-proxy: Release:      24.04
-amazon-ebs.nfs-proxy: Codename:     noble
-amazon-ebs.nfs-proxy: Kernel:       6.19.14-knfsd
+amazon-ebs.knfsd: ---- SYSTEM INFO
+amazon-ebs.knfsd: Description:  Ubuntu 24.04.4 LTS
+amazon-ebs.knfsd: Release:      24.04
+amazon-ebs.knfsd: Codename:     noble
+amazon-ebs.knfsd: Kernel:       7.0.4-knfsd
 ...
-amazon-ebs.nfs-proxy: ---- SUCCESS: Finished finalize image script
+amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
 ==> Wait completed after 29 minutes 36 seconds
 ...
 ==> Builds finished. The artifacts of successful builds are:
---> amazon-ebs.nfs-proxy: AMIs were created:
+--> amazon-ebs.knfsd: AMIs were created:
 us-east-1: ami-0123456789abcdef0
 ```
 
@@ -317,7 +265,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.24"
+VERSION="1.1.0-alpha.25"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -480,7 +428,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       6.19.14-knfsd
+Kernel:       7.0.4-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

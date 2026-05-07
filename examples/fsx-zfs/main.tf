@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.24"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.25"
     ]
   }
 }
@@ -179,7 +179,7 @@ module "proxy" {
   PROXY_AMI               = var.PROXY_AMI
   INSTANCE_TAGS           = { "knfsd-file-cache:examples" = "fsx-zfs" }
   PROXY_BASENAME          = var.PROXY_BASENAME
-  TRAFFIC_MODE            = "dns_round_robin"
+  TRAFFIC_MODE            = var.TRAFFIC_MODE
   KEY_NAME                = var.KEY_NAME
   INSTANCE_TYPE           = var.INSTANCE_TYPE
   NUM_NFS_THREADS         = var.NUM_NFS_THREADS

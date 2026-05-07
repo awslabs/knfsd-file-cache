@@ -75,8 +75,8 @@ Retrieve the instance ID of a KNFSD proxy instance in the Auto Scaling Group.
 
 ```bash
 aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=<var.PROXY_BASENAME>-asg" --query "Reservations[].Instances[].InstanceId[0]" --output text
-# where <var.PROXY_BASENAME> is the Terraform variable for the unique basename of the KNFSD proxy cluster, default is `nfsproxy`, which if present, is combined
-# with a random 8 alphanumeric string, and "-asg". Example: "nfsproxy-a1b2c3d4-asg"
+# where <var.PROXY_BASENAME> is the Terraform variable for the unique basename of the KNFSD proxy cluster, default is `knfsd`, which if present, is combined
+# with a random 8 alphanumeric string, and "-asg". Example: "knfsd-a1b2c3d4-asg"
 ```
 
 If the instance is still starting up you can watch the `cloud-init` output by running:

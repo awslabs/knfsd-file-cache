@@ -28,7 +28,7 @@ func createDefaultConfig() component.Config {
 		ControllerConfig: scraperhelper.ControllerConfig{
 			CollectionInterval: 10 * time.Minute,
 		},
-		MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		CachePath:            "/var/cache/fscache/cache",
 	}
 }

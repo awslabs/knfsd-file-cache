@@ -49,6 +49,10 @@ You will need to create or append to existing security group(s) for:
 
 See [Security Groups](../../deployment/docs/security-groups.md).
 
+## IAM Permissions
+
+This example creates an Amazon FSx for OpenZFS file system (`aws_fsx_openzfs_file_system`) that is not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `fsx:*` and `iam:CreateServiceLinkedRole` (for `fsx.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json) (when applicable). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
+
 ## Inputs
 
 * `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
@@ -57,7 +61,9 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
 
-* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `nfsproxy`.
+* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `knfsd`.
+
+* `TRAFFIC_MODE` - (Optional) The traffic distribution mode to use for the KNFSD proxy cluster. The options are `dns_round_robin`, `loadbalancer`, or `none`. Default: `dns_round_robin`.
 
 * `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
 
@@ -85,11 +91,9 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 * `dns_name` - The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
 
-* `nfsproxy_loadbalancer_dnsaddress` - The private DNS name of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
+* `loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
 
-* `nfsproxy_loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
-
-* `nfsproxy_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
+* `knfsd_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
 
 ## Additional Notes
 

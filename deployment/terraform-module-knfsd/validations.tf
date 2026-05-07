@@ -216,16 +216,5 @@ resource "null_resource" "validations" {
       condition     = !(var.FSID_DB_SUBNET_GROUP_NAME != null && var.FSID_DB_SUBNET_IDS != null)
       error_message = "FSID_DB_SUBNET_GROUP_NAME and FSID_DB_SUBNET_IDS are mutually exclusive; set only one (or leave both null to use the AWS default DB subnet group)."
     }
-
-    # Mirrors the FSID_DATABASE_CONFIG guard above: if this module is not
-    # deploying the FSID database, neither subnet-control variable applies.
-    precondition {
-      condition = (
-        !local.deploy_fsid_database
-        ? var.FSID_DB_SUBNET_GROUP_NAME == null && var.FSID_DB_SUBNET_IDS == null
-        : true
-      )
-      error_message = "FSID_DB_SUBNET_GROUP_NAME / FSID_DB_SUBNET_IDS only apply when this module deploys the FSID database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = true)."
-    }
   }
 }

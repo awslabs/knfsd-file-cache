@@ -8,7 +8,7 @@ output "dns_name" {
   description = "The DNS name that was created for the KNFSD proxy cluster."
   # Even when setting var.DNS_NAME explicitly this is still useful as it
   # allows other resources to reference the DNS zone name
-  value = var.DNS_NAME == "" ? aws_route53_zone.nfsproxy[0].name : trimsuffix(var.DNS_NAME, ".")
+  value = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].name : trimsuffix(var.DNS_NAME, ".")
 }
 
 output "lambda_static_ip_resources" {

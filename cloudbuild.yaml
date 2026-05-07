@@ -97,7 +97,7 @@ steps:
   # an image for general use, to avoid building the image twice, once the tests
   # are complete you could copy the image to a proper image_family and more
   # usable name (such as using a timestamp or version tag).
-  - name: hashicorp/packer:1.15.1
+  - name: hashicorp/packer:1.15.3
     id: knfsd-image:build
     script: |
       packer init image &&

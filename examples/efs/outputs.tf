@@ -18,17 +18,12 @@ output "dns_name" {
   value       = module.proxy.dns_name
 }
 
-output "nfsproxy_loadbalancer_dnsaddress" {
-  description = "The private DNS name of the Network Load Balancer."
-  value       = module.proxy.nfsproxy_loadbalancer_dnsaddress
-}
-
-output "nfsproxy_loadbalancer_ipaddress" {
+output "loadbalancer_ipaddress" {
   description = "The private IP address of the Network Load Balancer."
-  value       = module.proxy.nfsproxy_loadbalancer_ipaddress
+  value       = module.proxy.loadbalancer_ipaddress
 }
 
-output "nfsproxy_security_group_id" {
+output "knfsd_security_group_id" {
   description = "Security Group ID for the NFS clients to connect to the KNFSD proxy instances."
-  value       = module.proxy.nfsproxy_security_group_id
+  value       = module.proxy.knfsd_security_group_id
 }

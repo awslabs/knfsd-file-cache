@@ -11,8 +11,8 @@ set -o pipefail
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.24"
-KERNEL="6.19.14"
+VERSION="1.1.0-alpha.25"
+KERNEL="7.0.4"
 
 # identify the architecture
 export ARCH=$(uname -m)
@@ -94,6 +94,21 @@ function git_clone() {
 	return 1
 }
 
+# snap refresh with retry, 10-50s delay between attempts
+snap_refresh() {
+	local max_attempts=5
+	local attempt
+	for attempt in $(seq 1 $max_attempts); do
+		if snap refresh "$@"; then
+			return 0
+		fi
+		echo "snap refresh failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
+		sleep $((attempt * 10))
+	done
+	echo "snap refresh failed after $max_attempts attempts"
+	return 1
+}
+
 # update amazon-ssm-agent
 function update_amazon_ssm_agent() (
 	begin_command "Updating amazon-ssm-agent"
@@ -106,7 +121,7 @@ function update_amazon_ssm_agent() (
 
 	snap stop amazon-ssm-agent
 	snap switch --channel=candidate amazon-ssm-agent
-	snap refresh amazon-ssm-agent
+	snap_refresh amazon-ssm-agent
 	mkdir -p /etc/amazon/ssm
 	snap start amazon-ssm-agent
 	complete_command
@@ -362,7 +377,7 @@ function install_rust() (
 # install amazon-efs-utils
 function install_amazon_efs_utils() (
 	begin_command "Installing amazon-efs-utils"
-	git_clone --depth 1 --branch v3.1.0 https://github.com/aws/efs-utils.git efs-utils
+	git_clone --depth 1 --branch v3.1.1 https://github.com/aws/efs-utils.git efs-utils
 	cd efs-utils
 	./build-deb.sh
 	apt-get install -y ./build/amazon-efs-utils*deb
@@ -440,7 +455,7 @@ function update_kernel() (
 function download_kernel() (
 	begin_command "Downloading Linux kernel: ${KERNEL}"
 	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
-		-o linux-${KERNEL}.tar.gz https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL}.tar.gz
+		-o linux-${KERNEL}.tar.gz https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-${KERNEL}.tar.gz
 	tar -xf linux-${KERNEL}.tar.gz
 	complete_command
 )

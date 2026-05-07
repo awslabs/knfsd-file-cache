@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -22,7 +22,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/database/1.1.0-alpha.24"
+      "knfsd-file-cache/database/1.1.0-alpha.25"
     ]
   }
 }
@@ -71,7 +71,7 @@ locals {
 # nosemgrep: aws-rds-multiaz-not-enabled, aws-db-instance-no-logging
 resource "aws_db_instance" "fsids" {
   # db configuration
-  identifier               = local.name
+  identifier               = "${local.name}-fsids"
   db_name                  = local.db_name
   engine                   = "postgres"
   engine_version           = "18.3"

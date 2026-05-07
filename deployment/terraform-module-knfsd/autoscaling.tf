@@ -109,8 +109,8 @@ resource "aws_autoscaling_group" "knfsd_asg" {
   }
 
   launch_template {
-    id      = aws_launch_template.nfsproxy_template.id
-    version = aws_launch_template.nfsproxy_template.latest_version
+    id      = aws_launch_template.knfsd_launch_template.id
+    version = aws_launch_template.knfsd_launch_template.latest_version
   }
 
   enabled_metrics = [

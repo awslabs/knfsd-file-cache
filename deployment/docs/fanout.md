@@ -33,56 +33,56 @@ While this architecture can provide performance benefits for certain use-cases, 
 
 ## Example Deployment of Fanout Architecture
 
-The KNFSD Terraform module is defined twice to achieve the fanout deployment. The below code block shows an example deployment of the fanout architecture. We deploy a single RDS PostgreSQL database for the `nfs_proxy_fanout` module, and then reuse this database for the `nfs_proxy_cluster` module.
+The KNFSD Terraform module is defined twice to achieve the fanout deployment. The below code block shows an example deployment of the fanout architecture. We deploy a single RDS PostgreSQL database for the `knfsd_fanout` module, and then reuse this database for the `knfsd_cluster` module.
 
-We ensure that the `nfs_proxy_cluster` module is deployed after the `nfs_proxy_fanout` module via the `depends_on` and `ENABLE_STATUS_CHECK` parameters.
+We ensure that the `knfsd_cluster` module is deployed after the `knfsd_fanout` module via the `depends_on` and `ENABLE_STATUS_CHECK` parameters.
 
-1. The module `nfs_proxy_fanout` defines the single KNFSD proxy responsible for connecting to on-premise/source.
-2. The module `nfs_proxy_cluster` defines the three KNFSD proxies that connect to the fanout proxy. Downstream NFS clients all connect to these cluster proxies.
+1. The module `knfsd_fanout` defines the single KNFSD proxy responsible for connecting to on-premise/source.
+2. The module `knfsd_cluster` defines the three KNFSD proxies that connect to the fanout proxy. Downstream NFS clients all connect to these cluster proxies.
 
 The [fsx-zfs-fanout-loadbalancer](../../examples/fsx-zfs-fanout-loadbalancer/README.md) example provides a `ZFS (source) <-> tier-1 (fanout) <-> NLB <-> tier-2 (cluster) <-> NLB` example of the fanout architecture. The below code block shows the relevant sections of a generic fanout implementation in a `main.tf` file.
 
 ```terraform
-module "nfs_proxy_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.24"
+module "knfsd_fanout" {
+  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.25"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
   INSTANCE_TYPE         = "i3en.12xlarge"                        # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES           = 1                                      # Only deploy 1 proxy in the cluster because we want a single fanout proxy
   EXPORT_MAP            = "10.0.5.5;/remoteexport;/remoteexport" # Define the exports in the standard way
-  PROXY_BASENAME        = "nfsproxy-fanout"                      # Give this proxy a unique base name
-  DNS_NAME              = "nfsproxy-fanout.aws.internal."        # Use a unique private DNS name for the fanout proxy
+  PROXY_BASENAME        = "knfsd-fanout"                         # Give this proxy a unique base name
+  DNS_NAME              = "knfsd-fanout.aws.internal."           # Use a unique private DNS name for the fanout proxy
   NFS_MOUNT_VERSION     = "4.1"                                  # Must use NFSv4.1 for fanout due to filehandle size limitations in NFSv3
   DISABLED_NFS_VERSIONS = "3,4.0,4.2"                            # Only allow NFSv4.1 on exports due to additional filehandle size, allow NFSv3 for "showmount"
   ENABLE_STATUS_CHECK   = true                                   # Enable status check to hold the deployment until all EC2 instances are status:ready
 }
 
-module "nfs_proxy_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.24"
+module "knfsd_cluster" {
+  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.25"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI
-  FSID_DATABASE_DEPLOY     = false                                                                                    # Reuse the database from the fanout module
-  FSID_DATABASE_CONFIG     = module.nfs_proxy_fanout.database_config                                                  # database configuration from the fanout module
-  FSID_DATABASE_IAM_POLICY = module.nfs_proxy_fanout.database_iam_policy                                              # ARN of the IAM policy for rds-db:connect database access from the fanout module
-  INSTANCE_TYPE            = "i3en.6xlarge"                                                                           # Use a smaller CPU and memory machine type as we have multiple proxies in the cluster
-  KNFSD_NODES              = 3                                                                                        # Deploy 3 knfsd proxies for the performant based, temporary cache nodes
-  EXPORT_MAP               = "${module.nfs_proxy_fanout.nfsproxy_loadbalancer_ipaddress};/remoteexport;/remoteexport" # Re-export the export from the fanout proxy
-  PROXY_BASENAME           = "nfsproxy-cluster"                                                                       # Give this cluster a unique base name
-  DNS_NAME                 = "nfsproxy-cluster.aws.internal."                                                         # Use a unique private DNS name for the cluster proxy
-  NFS_MOUNT_VERSION        = "4.1"                                                                                    # Mount the fanout proxy as NFSv4.1 due to filehandle size limitations in NFSv3
-  DISABLED_NFS_VERSIONS    = "3,4.0,4.2"                                                                              # Only allow NFSv4.1 on exports due to additional filehandle size
-  depends_on               = [module.nfs_proxy_fanout.cluster_ready]                                                  # Deploy after "nfs_proxy_fanout" status is "ready" (TAG:knfsd-file-cache:status=ready)
+  FSID_DATABASE_DEPLOY     = false                                                                       # Reuse the database from the fanout module
+  FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config                                         # database configuration from the fanout module
+  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy                                     # ARN of the IAM policy for rds-db:connect database access from the fanout module
+  INSTANCE_TYPE            = "i3en.6xlarge"                                                              # Use a smaller CPU and memory machine type as we have multiple proxies in the cluster
+  KNFSD_NODES              = 3                                                                           # Deploy 3 knfsd proxies for the performant based, temporary cache nodes
+  EXPORT_MAP               = "${module.knfsd_fanout.loadbalancer_ipaddress};/remoteexport;/remoteexport" # Re-export the export from the fanout proxy
+  PROXY_BASENAME           = "knfsd-cluster"                                                             # Give this cluster a unique base name
+  DNS_NAME                 = "knfsd-cluster.aws.internal."                                               # Use a unique private DNS name for the cluster proxy
+  NFS_MOUNT_VERSION        = "4.1"                                                                       # Mount the fanout proxy as NFSv4.1 due to filehandle size limitations in NFSv3
+  DISABLED_NFS_VERSIONS    = "3,4.0,4.2"                                                                 # Only allow NFSv4.1 on exports due to additional filehandle size
+  depends_on               = [module.knfsd_fanout.cluster_ready]                                         # Deploy after "knfsd_fanout" status is "ready" (TAG:knfsd-file-cache:status=ready)
 }
 
-output "load_balancer_ip_address" {
-  description = "The IP address of the Network Load Balancer that the NFS clients will connect to."
-  value       = module.nfs_proxy_cluster.nfsproxy_loadbalancer_ipaddress
-}
-
-output "load_balancer_dns_address" {
+output "dns_name" {
   description = "The DNS address of the Network Load Balancer that the NFS clients will connect to."
-  value       = module.nfs_proxy_cluster.nfsproxy_loadbalancer_dnsaddress
+  value       = module.knfsd_cluster.dns_name
+}
+
+output "loadbalancer_ipaddress" {
+  description = "The IP address of the Network Load Balancer that the NFS clients will connect to."
+  value       = module.knfsd_cluster.loadbalancer_ipaddress
 }
 ```

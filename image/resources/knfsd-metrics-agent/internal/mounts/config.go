@@ -50,7 +50,7 @@ type QueryProxyInstanceExcludesConfig struct {
 func createDefaultConfig() component.Config {
 	return &Config{
 		ControllerConfig:     scraperhelper.NewDefaultControllerConfig(),
-		MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		QueryProxyInstance: QueryProxyInstanceConfig{
 			Enabled: false,
 			Timeout: 10 * time.Second,

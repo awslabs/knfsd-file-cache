@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -17,7 +17,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/s3-files/1.1.0-alpha.24"
+      "knfsd-file-cache/examples/s3-files/1.1.0-alpha.25"
     ]
   }
 }
@@ -42,7 +42,7 @@ data "aws_vpc" "selected" {
 # local variables
 locals {
   account_id     = data.aws_caller_identity.current.account_id
-  name           = var.PROXY_BASENAME != "nfsproxy" ? var.PROXY_BASENAME : random_id.name.hex
+  name           = var.PROXY_BASENAME != "knfsd" ? var.PROXY_BASENAME : random_id.name.hex
   vpc_cidr_block = data.aws_vpc.selected.cidr_block
   # <SOURCE_IP/FILESYSTEM_ID/DNS_NAME>;<SOURCE_EXPORT>;<TARGET_EXPORT>;<FILESYSTEM_TYPE>
   export_map = "${aws_s3files_mount_target.s3files.file_system_id};/;/s3files;s3files"

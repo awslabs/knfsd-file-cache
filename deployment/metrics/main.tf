@@ -8,12 +8,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/metrics/1.1.0-alpha.24"
+      "knfsd-file-cache/metrics/1.1.0-alpha.25"
     ]
   }
 }
@@ -29,7 +29,7 @@ resource "aws_cloudwatch_dashboard" "knfsd_monitoring_dashboard" {
 
 # this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution
 resource "aws_cloudformation_stack" "metrics_dashboard" {
-  name          = "metrics-dashboard"
+  name          = "knfsd-metrics-dashboard"
   on_failure    = "DO_NOTHING"
   template_body = <<STACK
     {

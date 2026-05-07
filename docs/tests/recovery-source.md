@@ -56,9 +56,9 @@ Set all required variables for the test. Variables marked as **REQUIRED** must b
 
 ```bash
 # Proxy configuration
-PROXY_BASENAME=<your-proxy-basename>        # REQUIRED: e.g., "nfsproxy"
-PROXY_DNS=<the-proxy-dns-name>              # REQUIRED: e.g., "nfsproxy-a1b2c3d4.aws.internal"
-PROXY_FQDN=<fully-qualified-domain-name>    # REQUIRED: e.g., "knfsd.nfsproxy-a1b2c3d4.aws.internal"
+PROXY_BASENAME=<your-proxy-basename>        # REQUIRED: e.g., "knfsd"
+PROXY_DNS=<the-proxy-dns-name>              # REQUIRED: e.g., "knfsd-a1b2c3d4.aws.internal"
+PROXY_FQDN=<fully-qualified-domain-name>    # REQUIRED: e.g., "knfsd.knfsd-a1b2c3d4.aws.internal"
 
 # Source NFS server
 SOURCE_ADDRESS=<source-nfs-server-ip>       # REQUIRED: IP address of source filer
@@ -86,7 +86,7 @@ PROXY_DNS="$(terraform output --raw dns_name)"
 PROXY_FQDN="knfsd.${PROXY_DNS}"
 
 # Get the proxy basename (used for Parameter Store lookups)
-PROXY_BASENAME="$(terraform output --raw proxy_basename 2>/dev/null || echo 'nfsproxy')"
+PROXY_BASENAME="$(terraform output --raw proxy_basename 2>/dev/null || echo 'knfsd')"
 
 # Get the Export Map from the Parameter Store
 EXPORT_MAP=$(aws ssm get-parameter \

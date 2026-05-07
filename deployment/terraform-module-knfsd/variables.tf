@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.24"
+  default     = "1.1.0-alpha.25"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.24\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.25\"."
   }
 }
 
@@ -29,6 +29,7 @@ variable "TRAFFIC_MODE" {
   description = "(Required) The client traffic distribution mode used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either \"dns_round_robin\", \"loadbalancer\", or \"none\". The recommended option is \"dns_round_robin\". If using \"none\" you will need to provide your own solution to handle traffic distribution. No default."
   type        = string
   nullable    = false
+  default     = "dns_round_robin"
   validation {
     condition     = contains(["dns_round_robin", "loadbalancer", "none"], var.TRAFFIC_MODE)
     error_message = "Valid values for TRAFFIC_MODE are 'dns_round_robin', 'loadbalancer', and 'none'."
@@ -47,7 +48,7 @@ variable "LOADBALANCER_IP" {
 }
 
 variable "DNS_NAME" {
-  description = "(Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: \"lb-knfsd/knfsd.{PROXY_BASENAME}.aws.internal.\" [Note: the trailing period is required]. Default: \"\"."
+  description = "(Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: \"{PROXY_BASENAME}.aws.internal.\" or \"nlb.{PROXY_BASENAME}.aws.internal.\" [Note: the trailing period is required]. Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
@@ -261,10 +262,10 @@ variable "NETAPP_ALLOW_COMMON_NAME" {
 }
 
 variable "PROXY_BASENAME" {
-  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"nfsproxy\"."
+  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"knfsd\"."
   type        = string
   nullable    = false
-  default     = "nfsproxy"
+  default     = "knfsd"
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{0,27}[a-zA-Z0-9]$", var.PROXY_BASENAME))
     error_message = "PROXY_BASENAME must be 2-29 characters long, contain only alphanumeric characters or hyphens, and cannot begin or end with a hyphen."

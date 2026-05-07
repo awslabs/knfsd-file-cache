@@ -23,15 +23,36 @@ all: lint packer terraform bats scan golint test
 
 .PHONY: image
 image:
-	@packer init -upgrade image/nfs-proxy.pkr.hcl
+	@packer init -upgrade image/knfsd.pkr.hcl
 	@packer build -var-file image/image.pkrvars.hcl image
 
 .PHONY: image-debug
 image-debug:
-	@export PACKER_LOG=1
-	@export PACKER_LOG_PATH=packer.log
-	@packer init -upgrade image/nfs-proxy.pkr.hcl
-	@packer build -debug -var-file image/image.pkrvars.hcl image
+	@packer init -upgrade image/knfsd.pkr.hcl
+	@PACKER_LOG=1 PACKER_LOG_PATH=packer.log packer build -debug -var-file image/image.pkrvars.hcl image
+
+.PHONY: iamlive
+iamlive:
+	@: > iamlive.json
+	@echo "iamlive listening on 127.0.0.1:10080. Ctrl+C to exit"
+	@iamlive --set-ini --mode proxy --output-file iamlive.json
+
+.PHONY: image-iam
+image-iam:
+	@(echo > /dev/tcp/127.0.0.1/10080) 2> /dev/null || { \
+		echo "ERROR: iamlive is not listening on 127.0.0.1:10080. Run 'make iamlive' first"; \
+		exit 1; \
+	}
+	@test -f "$$HOME/.iamlive/ca.pem" || { \
+		echo "ERROR: ~/.iamlive/ca.pem not found. Run 'make iamlive' first to generate it"; \
+		exit 1; \
+	}
+	@sudo bash -c "cp '$$HOME/.iamlive/ca.pem' /usr/local/share/ca-certificates/iamlive.crt && update-ca-certificates > /dev/null 2>&1"
+	@packer init -upgrade image/knfsd.pkr.hcl
+	@export AWS_CA_BUNDLE="$$HOME/.iamlive/ca.pem"; \
+	export HTTP_PROXY=http://127.0.0.1:10080; \
+	export HTTPS_PROXY=http://127.0.0.1:10080; \
+	packer build -var-file image/image.pkrvars.hcl image
 
 .PHONY: pre-commit precommit pc
 pre-commit precommit pc:
@@ -55,8 +76,8 @@ lic-scan-ignore:
 	@echo "[license scan, ignore]"
 	@trivy fs --scanners license --license-full --ignorefile $(ROOT_DIR)/.trivyignore.yaml $(ROOT_DIR)
 
-.PHONY: lint ec codespell shfmt shellcheck black mypy pylint
-lint: ec codespell shfmt shellcheck black mypy pylint
+.PHONY: lint ec codespell shfmt shellcheck black mypy pylint iam-size
+lint: ec codespell shfmt shellcheck black mypy pylint iam-size
 
 ec:
 	@echo "[ec]"
@@ -94,6 +115,47 @@ pylint:
 		/opt/venv/bin/python -m pylint --output-format=colorized --score=n .; \
 	else \
 		pylint --output-format=colorized --score=n .; \
+	fi
+
+define IAM_SIZE_PY
+import glob, json, re, sys
+LIMIT = 6144
+PATTERN = "docs/iam/*.json"
+fails = []
+files = sorted(glob.glob(PATTERN))
+if not files:
+	sys.stderr.write(f"[iam-size] FAIL: no files matched {PATTERN}\n")
+	sys.exit(1)
+for path in files:
+	with open(path, encoding="utf-8") as fh:
+		raw = fh.read()
+	try:
+		json.loads(raw)
+	except json.JSONDecodeError as exc:
+		sys.stderr.write(f"[iam-size] FAIL: {path} is not valid JSON: {exc}\n")
+		sys.exit(1)
+	n = len(re.sub(r"\s", "", raw))
+	print(f"  {path}: {n}/{LIMIT} chars")
+	if n > LIMIT:
+		fails.append((path, n))
+if fails:
+	sys.stderr.write(
+		"\n[iam-size] FAIL: each docs/iam/*.json must fit the AWS "
+		"customer-managed-policy 6144 non-whitespace char limit. Trim or split:\n"
+	)
+	for path, n in fails:
+		sys.stderr.write(f"  {path}: over by {n - LIMIT} chars\n")
+	sys.exit(1)
+endef
+export IAM_SIZE_PY
+
+.PHONY: iam-size
+iam-size:
+	@echo "[iam-size]"
+	@if [ "$$CI" = "devcontainer" ]; then \
+		/opt/venv/bin/python -c "$$IAM_SIZE_PY"; \
+	else \
+		python3 -c "$$IAM_SIZE_PY"; \
 	fi
 
 .PHONY: packer-format
@@ -145,28 +207,28 @@ bats:
 	@cd $(ROOT_DIR)/image/resources/startup && ./run-tests.sh
 
 .PHONY: scan-semgrep
-scan: scan-semgrep
-scan-semgrep:
+scan: scan-semgrep semgrep
+scan-semgrep semgrep:
 	@echo "[semgrep]"
 	@semgrep scan --no-git-ignore --no-rewrite-rule-ids $(ROOT_DIR)
 
 .PHONY: scan-checkov
-scan: scan-checkov
-scan-checkov:
+scan: scan-checkov checkov
+scan-checkov checkov:
 	@echo "[checkov]"
 	@checkov --config-file $(ROOT_DIR)/.checkov.yaml
 
 .PHONY: scan-trivy
-scan: scan-trivy
-scan-trivy:
+scan: scan-trivy trivy
+scan-trivy trivy:
 	@echo "[trivy]"
 	@trivy fs --ignorefile $(ROOT_DIR)/.trivyignore.yaml --exit-code 1 \
 		--cache-dir "$(ROOT_DIR)/.trivycache" \
 		--scanners secret,vuln,misconfig,license $(ROOT_DIR)
 
-.PHONY: scan-kics
+.PHONY: scan-kics kics
 scan: scan-kics
-scan-kics:
+scan-kics kics:
 	@echo "[kics]"
 	@$(ROOT_DIR)/.devcontainer/dev/run-kics.sh $(ROOT_DIR)
 

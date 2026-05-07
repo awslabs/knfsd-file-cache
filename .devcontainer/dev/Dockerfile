@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.24"
+ARG VERSION="1.1.0-alpha.25"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -146,31 +146,33 @@ ARG KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.3.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.42.94
+ARG KNFSD_BOTO3_VERSION=1.43.5
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.524
+ARG KNFSD_CHECKOV_VERSION=3.2.526
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/go-delve/delve/tags
-ARG KNFSD_DLV_VERSION=1.26.2
+ARG KNFSD_DLV_VERSION=1.26.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 ARG KNFSD_EDITORCONFIG_VERSION=3.6.1
 # https://github.com/golangci/golangci-lint/releases
-ARG KNFSD_GOLANGCI_LINT_VERSION=2.11.4
+ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
 ARG KNFSD_GOLANG_VERSION=1.26.2
 # https://pkg.go.dev/golang.org/x/tools/gopls
 ARG KNFSD_GOPLS_VERSION=0.21.1
 # https://github.com/securego/gosec/releases
-ARG KNFSD_GOSEC_VERSION=2.25.0
+ARG KNFSD_GOSEC_VERSION=2.26.1
+# https://github.com/iann0036/iamlive/releases
+ARG KNFSD_IAMLIVE_VERSION=1.1.28
 # https://github.com/python/mypy/tags
-ARG KNFSD_MYPY_VERSION=1.20.2
+ARG KNFSD_MYPY_VERSION=2.0.0
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.1
+ARG KNFSD_PACKER_VERSION=1.15.3
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.6.0
 # https://pypi.org/project/psycopg/
-ARG KNFSD_PSYCOPG_VERSION=3.3.3
+ARG KNFSD_PSYCOPG_VERSION=3.3.4
 # https://github.com/pylint-dev/pylint/tags
 ARG KNFSD_PYLINT_VERSION=4.0.5
 # https://github.com/semgrep/semgrep/releases
@@ -182,7 +184,7 @@ ARG KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=1.0.2
+ARG KNFSD_TERRAGRUNT_VERSION=1.0.3
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.62.0
 # https://github.com/aquasecurity/trivy/releases
@@ -190,7 +192,7 @@ ARG KNFSD_TRIVY_VERSION=0.70.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.11.7
+ARG KNFSD_UV_VERSION=0.11.11
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -211,7 +213,7 @@ RUN mkdir -p "/home/${USERNAME}/.cache/go-build" \
     "/home/${USERNAME}/.cache/golangci-lint"
 
 ## install golangci-lint
-RUN curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
+RUN curl -sSfL "https://golangci-lint.run/install.sh" \
     | sudo sh -s -- -b /usr/local/bin "v${KNFSD_GOLANGCI_LINT_VERSION}" \
     && mkdir -p "/home/${USERNAME}/.cache/golangci-lint" \
     && echo "export GOLANGCI_LINT_CACHE=/home/${USERNAME}/.cache/golangci-lint" >> /home/${USERNAME}/.bashrc
@@ -223,14 +225,8 @@ RUN --mount=type=cache,target=/home/${USERNAME}/.cache/go-build,uid=1000,gid=100
     && mkdir -p "${GOBIN}" \
     && go install golang.org/x/tools/gopls@v${KNFSD_GOPLS_VERSION} \
     && go install github.com/go-delve/delve/cmd/dlv@v${KNFSD_DLV_VERSION} \
-    && go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION} \
-    && go install github.com/securego/gosec/v2/cmd/gosec@v${KNFSD_GOSEC_VERSION} \
-    && go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION} \
     && sudo install -m 0755 "${GOBIN}/gopls" /usr/local/bin/gopls \
     && sudo install -m 0755 "${GOBIN}/dlv" /usr/local/bin/dlv \
-    && sudo install -m 0755 "${GOBIN}/shfmt" /usr/local/bin/shfmt \
-    && sudo install -m 0755 "${GOBIN}/gosec" /usr/local/bin/gosec \
-    && sudo install -m 0755 "${GOBIN}/editorconfig-checker" /usr/local/bin/editorconfig-checker \
     && rm -rf "${GOBIN}"
 ENV PATH="$PATH:/home/${USERNAME}/go/bin"
 
@@ -271,6 +267,27 @@ RUN curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFS
 RUN sudo curl -fsSL "https://github.com/gruntwork-io/terragrunt/releases/download/v${KNFSD_TERRAGRUNT_VERSION}/terragrunt_linux_${BUILDARCH}" \
     --output /usr/local/bin/terragrunt && sudo chmod +x /usr/local/bin/terragrunt
 
+## install editorconfig-checker
+RUN curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/ec-linux-${BUILDARCH}.tar.gz" \
+    --output ec.tar.gz \
+    && sudo tar -xzf ec.tar.gz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${BUILDARCH}" \
+    && sudo mv "/usr/local/bin/ec-linux-${BUILDARCH}" /usr/local/bin/editorconfig-checker \
+    && sudo chmod +x /usr/local/bin/editorconfig-checker && rm ec.tar.gz
+
+## install shfmt
+RUN sudo curl -fsSL "https://github.com/mvdan/sh/releases/download/v${KNFSD_SHFMT_VERSION}/shfmt_v${KNFSD_SHFMT_VERSION}_linux_${BUILDARCH}" \
+    --output /usr/local/bin/shfmt && sudo chmod +x /usr/local/bin/shfmt
+
+## install iamlive
+RUN curl -fsSL "https://github.com/iann0036/iamlive/releases/download/v${KNFSD_IAMLIVE_VERSION}/iamlive_${KNFSD_IAMLIVE_VERSION}_linux_${BUILDARCH}.tar.gz" \
+    --output iamlive.tar.gz && sudo tar -xzf iamlive.tar.gz -C /usr/local/bin iamlive \
+    && sudo chmod +x /usr/local/bin/iamlive && rm iamlive.tar.gz
+
+## install gosec
+RUN curl -fsSL "https://github.com/securego/gosec/releases/download/v${KNFSD_GOSEC_VERSION}/gosec_${KNFSD_GOSEC_VERSION}_linux_${BUILDARCH}.tar.gz" \
+    --output gosec.tar.gz && sudo tar -xzf gosec.tar.gz -C /usr/local/bin gosec \
+    && sudo chmod +x /usr/local/bin/gosec && rm gosec.tar.gz
+
 ## install uv
 RUN curl -fsSL "https://astral.sh/uv/${KNFSD_UV_VERSION}/install.sh" | sudo env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
 
@@ -297,7 +314,7 @@ RUN --mount=type=cache,target=/home/${USERNAME}/.cache/uv,uid=1000,gid=1000 \
     && uv tool install -q "shellcheck-py==${KNFSD_SHELLCHECK_PY_VERSION}" \
     && uv tool install -q "semgrep==${KNFSD_SEMGREP_VERSION}"
 
-## check versions available: $ uv pip index versions <package-name>
+## check versions available: see 'uv pip index versions PACKAGE'
 RUN --mount=type=cache,target=/home/${USERNAME}/.cache/uv,uid=1000,gid=1000 \
     uv pip install -q \
     "boto3==${KNFSD_BOTO3_VERSION}" \

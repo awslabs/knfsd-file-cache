@@ -34,10 +34,10 @@ variable "PROXY_AMI" {
 }
 
 variable "PROXY_BASENAME" {
-  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"nfsproxy\"."
+  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"knfsd\"."
   type        = string
   nullable    = false
-  default     = "nfsproxy"
+  default     = "knfsd"
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{0,27}[a-zA-Z0-9]$", var.PROXY_BASENAME))
     error_message = "PROXY_BASENAME must be 2-29 characters long, contain only alphanumeric characters or hyphens, and cannot begin or end with a hyphen."

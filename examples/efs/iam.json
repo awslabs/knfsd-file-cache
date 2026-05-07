@@ -1,0 +1,54 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "KnfsdEfsFileSystem",
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:CreateFileSystem",
+        "elasticfilesystem:DeleteFileSystem",
+        "elasticfilesystem:DescribeFileSystemPolicy",
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:DescribeLifecycleConfiguration",
+        "elasticfilesystem:ListTagsForResource",
+        "elasticfilesystem:PutLifecycleConfiguration",
+        "elasticfilesystem:TagResource",
+        "elasticfilesystem:UntagResource",
+        "elasticfilesystem:UpdateFileSystem"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdEfsMountTarget",
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:CreateMountTarget",
+        "elasticfilesystem:DeleteMountTarget",
+        "elasticfilesystem:DescribeMountTargetSecurityGroups",
+        "elasticfilesystem:DescribeMountTargets",
+        "elasticfilesystem:ModifyMountTargetSecurityGroups"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdEfsBackupPolicy",
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:DescribeBackupPolicy",
+        "elasticfilesystem:PutBackupPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdEfsServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/elasticfilesystem.amazonaws.com/*",
+      "Condition": {
+        "StringEquals": {
+          "iam:AWSServiceName": "elasticfilesystem.amazonaws.com"
+        }
+      }
+    }
+  ]
+}

@@ -22,7 +22,7 @@ func TestParseConfig(t *testing.T) {
 		t.Parallel()
 		s := findServer(t, c, "basic-attributes")
 		assert.Equal(t, "https://10.0.0.2:8080", s.URL)
-		assert.Equal(t, "nfs-proxy", s.User)
+		assert.Equal(t, "knfsd", s.User)
 		assert.Equal(t, "secret", s.Password)
 
 		// even though we did not set a TLS block, the TLS block should still

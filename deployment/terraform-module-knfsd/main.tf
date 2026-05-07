@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.42.0"
+      version = "~> 6.44.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -22,13 +22,13 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.24"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.25"
     ]
   }
 }
 
 # generate a random name for the knfsd cluster
-# example: "nfsproxy-a1b2c3d4"
+# example: "knfsd-a1b2c3d4"
 resource "random_id" "name" {
   prefix      = "${var.PROXY_BASENAME}-"
   byte_length = 4
@@ -59,7 +59,7 @@ locals {
   vpc_cidr             = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
   export_cidr          = length(var.EXPORT_CIDR) > 0 ? var.EXPORT_CIDR : local.vpc_cidr
   is_windows           = can(env("USERPROFILE"))
-  name                 = var.PROXY_BASENAME != "nfsproxy" ? var.PROXY_BASENAME : random_id.name.hex
+  name                 = var.PROXY_BASENAME != "knfsd" ? var.PROXY_BASENAME : random_id.name.hex
   asg_name             = "${local.name}-asg"
   asg_tags             = merge(local.tags, var.INSTANCE_TAGS)
   deploy_fsid_database = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
@@ -91,7 +91,7 @@ module "fsid_database" {
   SUBNET                    = var.SUBNET
   FSID_DB_SUBNET_GROUP_NAME = var.FSID_DB_SUBNET_GROUP_NAME
   FSID_DB_SUBNET_IDS        = var.FSID_DB_SUBNET_IDS
-  NAME                      = "${local.name}-fsids"
+  NAME                      = local.name
   DELETION_PROTECTION       = false
   ASSUME_ROLE_ARN           = var.ASSUME_ROLE_ARN
   VPC_CIDR                  = local.vpc_cidr

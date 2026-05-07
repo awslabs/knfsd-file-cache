@@ -7,5 +7,5 @@
 # extract the name of the AWS AMI(s) that were built by Packer
 # supports both amd64 and arm64 architectures
 exec jq -r '.builds[] |
-	select((.name == "nfs-proxy-amd64" or .name == "nfs-proxy-arm64") and .builder_type == "amazon-ebs") |
-	(.name | sub("nfs-proxy-"; "")) + ":" + (.artifact_id | split(":")[1])' image.manifest.json
+	select((.name == "knfsd-amd64" or .name == "knfsd-arm64") and .builder_type == "amazon-ebs") |
+	(.name | sub("knfsd-"; "")) + ":" + (.artifact_id | split(":")[1])' image.manifest.json

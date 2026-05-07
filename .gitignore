@@ -42,7 +42,7 @@ install-chronicle.yaml
 
 # Exclude Specific Packer Variables File
 !/image/cloudbuild.pkrvars.hcl
-!/image/nfs-proxy.pkr.hcl
+!/image/knfsd.pkr.hcl
 !/image/variables.pkr.hcl
 
 # Build files

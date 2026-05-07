@@ -22,7 +22,7 @@ type Config struct {
 func createDefaultConfig() component.Config {
 	return &Config{
 		ControllerConfig:     scraperhelper.NewDefaultControllerConfig(),
-		MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		PoolStatsPath:        "/proc/fs/nfsd/pool_stats",
 	}
 }

@@ -76,7 +76,7 @@ PROXY_EXPORT=</mount-path>                  # REQUIRED: e.g., "subnet-0123456789
 VPC_ID=<vpc-id>                             # Can be set automatically: e.g., "vpc-0123456789abcdef0"
 
 # Network Load Balancer configuration
-NLB_DNS=<nlb-dns-name>                      # Can be set automatically: e.g., "knfsd.nfsproxy.aws.internal"
+NLB_DNS=<nlb-dns-name>                      # Can be set automatically: e.g., "nlb.knfsd.aws.internal"
 NLB_IP=<nlb-ip-address>                     # Can be set automatically: e.g., "10.0.1.100"
 NLB_SUBNET=<nlb-subnet-id>                  # Can be set automatically: e.g., "subnet-0123456789abcdef0"
 NLB_NACL_ID=<nlb-nacl-id>                   # Can be set automatically: e.g., "acl-0123456789abcdef0"
@@ -91,7 +91,7 @@ You can automatically populate most variables using Terraform outputs:
 NLB_DNS="$(terraform output --raw dns_name)"
 
 # Get the NLB IP address
-NLB_IP="$(terraform output --raw nfsproxy_loadbalancer_ipaddress)"
+NLB_IP="$(terraform output --raw loadbalancer_ipaddress)"
 
 # Get the VPC ID from the Auto Scaling Group
 ASG_NAME="$(terraform output --raw autoscaling_group_name)"

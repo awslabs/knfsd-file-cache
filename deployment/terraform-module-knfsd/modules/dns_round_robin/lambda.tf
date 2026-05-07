@@ -23,8 +23,8 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   asg_name   = "${var.PROXY_BASENAME}-asg"
   # determine zone ID based on whether we're creating a new zone or using existing
-  r53_zone_id = var.DNS_NAME == "" ? aws_route53_zone.nfsproxy[0].zone_id : data.aws_route53_zone.existing[0].zone_id
-  r53_fqdn    = var.DNS_NAME == "" ? "knfsd.${aws_route53_zone.nfsproxy[0].name}" : var.DNS_NAME
+  r53_zone_id = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].zone_id : data.aws_route53_zone.existing[0].zone_id
+  r53_fqdn    = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].name : var.DNS_NAME
 }
 
 # create zip file of the python script for the Lambda function
@@ -175,7 +175,7 @@ resource "aws_iam_role_policy_attachment" "lambda_static_ip" {
 # LAUNCHING: EventBridge Rule for launching instances
 resource "aws_cloudwatch_event_rule" "instance_launching" {
   name        = "${var.PROXY_BASENAME}-knfsd-instance-launching"
-  description = "Capture EC2 nfsproxy instance launching events"
+  description = "Capture EC2 KNFSD instance launching events"
   event_pattern = jsonencode({
     source      = ["aws.autoscaling"]
     detail-type = ["EC2 Instance-launch Lifecycle Action"]
@@ -204,7 +204,7 @@ resource "aws_lambda_permission" "allow_eventbridge_launching" {
 # TERMINATING: EventBridge Rule for terminating instances
 resource "aws_cloudwatch_event_rule" "instance_terminating" {
   name        = "${var.PROXY_BASENAME}-knfsd-instance-terminating"
-  description = "Capture EC2 nfsproxy instance terminating events"
+  description = "Capture EC2 KNFSD instance terminating events"
   event_pattern = jsonencode({
     source      = ["aws.autoscaling"]
     detail-type = ["EC2 Instance-terminate Lifecycle Action"]
@@ -233,7 +233,7 @@ resource "aws_lambda_permission" "allow_eventbridge_terminating" {
 # TERMINATED: EventBridge Rule for terminated instances
 resource "aws_cloudwatch_event_rule" "instance_terminated" {
   name        = "${var.PROXY_BASENAME}-knfsd-instance-terminated"
-  description = "Capture EC2 nfsproxy instance terminated events"
+  description = "Capture EC2 KNFSD instance terminated events"
   event_pattern = jsonencode({
     source      = ["aws.autoscaling"]
     detail-type = ["EC2 Instance Terminate Successful"]

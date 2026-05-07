@@ -1,5 +1,33 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.25
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: Project-wide naming alignment from `nfsproxy` and `nfs-proxy` to `knfsd`.
+
+* Packer: Updated to Linux kernel v7.0.4-knfsd.
+* Renamed `nfs-proxy.pkr.hcl` to `knfsd.pkr.hcl` in `packer/image` directory.
+* Changed `PROXY_BASENAME` default from `nfsproxy` to `knfsd` in `terraform-module-knfsd` and all `examples/*/variables.tf`.
+* Changed database module `NAME_PREFIX` default from `fsids` to `knfsd-fsids`.
+* Renamed user-facing module outputs: `nfsproxy_loadbalancer_ipaddress` → `loadbalancer_ipaddress` and `nfsproxy_security_group_id` → `knfsd_security_group_id`.
+* Removed `nfsproxy_loadbalancer_dnsaddress` output from `*/outputs.tf` as duplication of `dns_name` output.
+* Renamed internal Terraform resource addresses (`aws_security_group.nfsproxy_*` → `knfsd_*`, `aws_launch_template.nfsproxy_template` → `knfsd_launch_template`, `aws_lb.nfsproxy_lb` → `knfsd_lb`, `aws_lb_target_group.nfsproxy_lb_tg` → `knfsd_lb_tg`, `aws_route53_zone.nfsproxy` → `knfsd`, etc).
+* Added new project-wide IAM reference at `docs/iam.md` and the canonical IAM policy files under `docs/iam/`: `packer.json` (Packer AMI build), `tf-required.json` (always-required deploy Sids), and `tf-optional.json` (feature-gated deploy Sids).
+* Updated `deployment/docs/vpc-endpoints.md` with runtime-only scope, added missing `ec2messages` interface endpoint, and added cross-region interface endpoints for IAM (`com.amazonaws.iam`) and Route 53 (`com.amazonaws.route53`) in `us-east-1` per the November 2025 [AWS PrivateLink cross-region](https://aws.amazon.com/blogs/networking-and-content-delivery/aws-privatelink-extends-cross-region-connectivity-to-aws-services/) announcement.
+* Replaced the inline IAM policy example in `image/README.md` with a pointer to `docs/iam.md` and `docs/iam/packer.json`.
+* Fixed regression introduced in `v1.1.0-alpha.24` where the `terraform-module-knfsd` module rejected `FSID_DB_SUBNET_GROUP_NAME` / `FSID_DB_SUBNET_IDS` in multi-AZ deployments where sibling modules consume an existing FSID database via `FSID_DATABASE_CONFIG`.
+* Added `iamlive` tool to `.devcontainer/dev` environment for creating IAM policies.
+* Exposed `TRAFFIC_MODE` Terraform variable to the `fsx-zfs` example.
+* Set default value for `TRAFFIC_MODE` Terraform variable to `dns_round_robin`.
+* Packer: Added `snap_refresh` function to `10_build.sh` script to retry `snap refresh` commands up to 5 times with a 10-50s delay between attempts to guard against transient "unable to contact snap store" errors from `api.snapcraft.io`.
+* Updated KNFSD Monitoring Dashboard to `v13`.
+* Packer: Updated to `amzn/amzn-drivers` ENA driver v2.17.0.
+* Packer: Updated to `amazon-efs-utils` v3.1.1.
+* Updated to Packer v1.15.3.
+* Updated to Terraform `aws` provider v6.44.0.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.24
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

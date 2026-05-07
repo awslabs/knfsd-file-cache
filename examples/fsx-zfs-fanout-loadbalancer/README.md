@@ -20,9 +20,13 @@ This example creates the necessary security groups for the flow of NFS traffic b
 
 You will need to create or append to an existing security group(s) to allow for:
 
-* NFS traffic; NFS clients to the `nfs_proxy_cluster` network load balancer (provided by the Terraform outputs)
+* NFS traffic; NFS clients to the `knfsd_cluster` network load balancer (provided by the Terraform outputs)
 
 See [Security Groups](../../deployment/docs/security-groups.md).
+
+## IAM Permissions
+
+This example creates an Amazon FSx for OpenZFS file system (`aws_fsx_openzfs_file_system`) that is not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `fsx:*` and `iam:CreateServiceLinkedRole` (for `fsx.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json) (when applicable). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
 
 ## Inputs
 
@@ -38,7 +42,7 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 ## Outputs
 
-* `load_balancer_dns_address` - The DNS address of the Network Load Balancer that the NFS clients will connect to. Example: `lb-knfsd.nfsproxy-cluster.aws.internal`.
+* `load_balancer_dns_address` - The DNS address of the Network Load Balancer that the NFS clients will connect to. Example: `nlb.knfsd-cluster.aws.internal`.
 
 * `load_balancer_ip_address` - The IP address of the Network Load Balancer that the NFS clients will connect to.
 

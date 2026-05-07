@@ -14,7 +14,7 @@ These prerequisites are normally created by the main KNFSD proxy module.
 
 * `PROXY_BASENAME` - (Required) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account).
 
-* `DNS_NAME` - (Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: `lb-knfsd.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required].
+* `DNS_NAME` - (Optional) The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: `nlb.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required].
 
 * `NFS_PORTS` - (Required) The list of NFS ports (TCP & UDP) to use with the Network Load Balancer.
 

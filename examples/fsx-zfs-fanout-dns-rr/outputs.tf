@@ -5,10 +5,10 @@
 
 output "cluster_dns_name" {
   description = "The DNS name of the cluster proxy"
-  value       = module.nfs_proxy_cluster.dns_name
+  value       = module.knfsd_cluster.dns_name
 }
 
 output "fanout_dns_name" {
   description = "The DNS name of the fanout proxy"
-  value       = module.nfs_proxy_fanout.dns_name
+  value       = module.knfsd_fanout.dns_name
 }

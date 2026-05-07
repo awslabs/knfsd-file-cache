@@ -10,7 +10,7 @@
 ARCH="linux/amd64"
 PIP_PLATFORM="manylinux2014_x86_64"
 KNFSD_PYTHON_VERSION="3.14.4" # must match the MAJOR.MINOR version of the AWS Lambda runtime
-KNFSD_PSYCOPG_VERSION="3.3.3" # https://pypi.org/project/psycopg/
+KNFSD_PSYCOPG_VERSION="3.3.4" # https://pypi.org/project/psycopg/
 
 # ensure resources directory is writable by all users
 chmod 0777 resources
@@ -61,6 +61,7 @@ docker run --platform "${ARCH}" --rm \
 	bash -c "
 		rm -f /db/resources/db_setup.zip
 		export PIP_ROOT_USER_ACTION=ignore
+		pip install --upgrade pip
 		pip3 install \
 			--platform ${PIP_PLATFORM} \
 			--target=/src \

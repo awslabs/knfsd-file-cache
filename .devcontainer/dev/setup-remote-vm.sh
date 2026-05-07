@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.24"
+VERSION="1.1.0-alpha.25"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -136,27 +136,27 @@ KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.3.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.42.94
+KNFSD_BOTO3_VERSION=1.43.5
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.2.524
+KNFSD_CHECKOV_VERSION=3.2.526
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=3.6.1
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.11.4
+KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
 KNFSD_GOLANG_VERSION=1.26.2
 # https://github.com/securego/gosec/releases
-KNFSD_GOSEC_VERSION=2.25.0
+KNFSD_GOSEC_VERSION=2.26.1
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=1.20.2
+KNFSD_MYPY_VERSION=2.0.0
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.15.1
+KNFSD_PACKER_VERSION=1.15.3
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.6.0
 # https://pypi.org/project/psycopg/
-KNFSD_PSYCOPG_VERSION=3.3.3
+KNFSD_PSYCOPG_VERSION=3.3.4
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.5
 # https://github.com/semgrep/semgrep/releases
@@ -168,7 +168,7 @@ KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/gruntwork-io/terragrunt/releases
-KNFSD_TERRAGRUNT_VERSION=1.0.2
+KNFSD_TERRAGRUNT_VERSION=1.0.3
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.62.0
 # https://github.com/aquasecurity/trivy/releases
@@ -176,7 +176,7 @@ KNFSD_TRIVY_VERSION=0.70.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.11.7
+KNFSD_UV_VERSION=0.11.11
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -217,33 +217,46 @@ curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BA
 curl -fsSL "https://github.com/gruntwork-io/terragrunt/releases/download/v${KNFSD_TERRAGRUNT_VERSION}/terragrunt_linux_${BUILDARCH}" \
 	--output /usr/local/bin/terragrunt && chmod +x /usr/local/bin/terragrunt
 
+## install editorconfig-checker
+curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/ec-linux-${BUILDARCH}.tar.gz" \
+	--output ec.tar.gz \
+	&& sudo tar -xzf ec.tar.gz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${BUILDARCH}" \
+	&& sudo mv "/usr/local/bin/ec-linux-${BUILDARCH}" /usr/local/bin/editorconfig-checker \
+	&& sudo chmod +x /usr/local/bin/editorconfig-checker && rm ec.tar.gz
+
+## install shfmt
+sudo curl -fsSL "https://github.com/mvdan/sh/releases/download/v${KNFSD_SHFMT_VERSION}/shfmt_v${KNFSD_SHFMT_VERSION}_linux_${BUILDARCH}" \
+	--output /usr/local/bin/shfmt && sudo chmod +x /usr/local/bin/shfmt
+
+## install gosec
+curl -fsSL "https://github.com/securego/gosec/releases/download/v${KNFSD_GOSEC_VERSION}/gosec_${KNFSD_GOSEC_VERSION}_linux_${BUILDARCH}.tar.gz" \
+	--output gosec.tar.gz && sudo tar -xzf gosec.tar.gz -C /usr/local/bin gosec \
+	&& sudo chmod +x /usr/local/bin/gosec && rm gosec.tar.gz
+
 ## install uv
 curl -fsSL "https://astral.sh/uv/${KNFSD_UV_VERSION}/install.sh" | sudo env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
 
 ## run user-level tools as ${USERNAME}
-sudo -Hiu "${USERNAME}" bash -l << USERSETUP
+sudo -Hiu "${USERNAME}" bash -l << EOT
 set -eo pipefail
 
 ## add aliases, aws-cli completion, silence motd/sudo messages
-echo "alias cls='clear'" >> ~/.bashrc
-echo "alias tf='terraform'" >> ~/.bashrc
-echo "alias ec='editorconfig-checker'" >> ~/.bashrc
-echo 'complete -C "/usr/local/bin/aws_completer" aws' >> ~/.bashrc
+{
+	echo "alias cls='clear'"
+	echo "alias tf='terraform'"
+	echo "alias ec='editorconfig-checker'"
+	echo "complete -C /usr/local/bin/aws_completer aws"
+} >> ~/.bashrc
 touch ~/.hushlogin
 
 ## configure GOPROXY=direct
 go env -w GOPROXY=direct
 
 ## install golangci-lint
-curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
-	| sh -s -- -b "\$(go env GOPATH)/bin" v${KNFSD_GOLANGCI_LINT_VERSION}
+curl -sSfL "https://golangci-lint.run/install.sh" \
+	| sh -s -- -b "/home/${USERNAME}/go/bin" v${KNFSD_GOLANGCI_LINT_VERSION}
 mkdir -p ~/.cache/golangci-lint
 echo 'export GOLANGCI_LINT_CACHE=\$HOME/.cache/golangci-lint' >> ~/.bashrc
-
-## install golang tools
-go install mvdan.cc/sh/v3/cmd/shfmt@v${KNFSD_SHFMT_VERSION}
-go install github.com/editorconfig-checker/editorconfig-checker/v3/cmd/editorconfig-checker@v${KNFSD_EDITORCONFIG_VERSION}
-go install github.com/securego/gosec/v2/cmd/gosec@v${KNFSD_GOSEC_VERSION}
 
 ## create pre-commit cache directory
 mkdir -p ~/.cache/pre-commit
@@ -265,7 +278,7 @@ uv tool install -q "tzupdate==${KNFSD_TZUPDATE_VERSION}" \
 	&& uv tool install -q "shellcheck-py==${KNFSD_SHELLCHECK_PY_VERSION}" \
 	&& uv tool install -q "semgrep==${KNFSD_SEMGREP_VERSION}"
 
-## check versions available: $ uv pip index versions <package-name>
+## check versions available: see 'uv pip index versions PACKAGE'
 uv pip install -q --python ~/.venv/bin/python \
 	"boto3==${KNFSD_BOTO3_VERSION}" \
 	"mypy==${KNFSD_MYPY_VERSION}" \
@@ -274,7 +287,7 @@ uv pip install -q --python ~/.venv/bin/python \
 
 ## create empty ~/.aws directory
 mkdir -p ~/.aws
-USERSETUP
+EOT
 
 ## final root tasks
 ## set timezone/date to local location

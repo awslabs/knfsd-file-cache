@@ -34,13 +34,24 @@ variable "PROXY_AMI" {
 }
 
 variable "PROXY_BASENAME" {
-  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"nfsproxy\"."
+  description = "(Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: \"knfsd\"."
   type        = string
   nullable    = false
-  default     = "nfsproxy"
+  default     = "knfsd"
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{0,27}[a-zA-Z0-9]$", var.PROXY_BASENAME))
     error_message = "PROXY_BASENAME must be 2-29 characters long, contain only alphanumeric characters or hyphens, and cannot begin or end with a hyphen."
+  }
+}
+
+variable "TRAFFIC_MODE" {
+  description = "(Optional) The traffic distribution mode to use for the KNFSD proxy cluster. The options are `dns_round_robin`, `loadbalancer`, or `none`. Default: `dns_round_robin`."
+  type        = string
+  nullable    = false
+  default     = "dns_round_robin"
+  validation {
+    condition     = contains(["dns_round_robin", "loadbalancer", "none"], var.TRAFFIC_MODE)
+    error_message = "Valid values for TRAFFIC_MODE are 'dns_round_robin', 'loadbalancer', and 'none'."
   }
 }
 

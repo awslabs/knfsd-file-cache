@@ -4,13 +4,13 @@
 
 server "basic-attributes" {
     url      = "https://10.0.0.2:8080"
-    user     = "nfs-proxy"
+    user     = "knfsd"
     password = file("./netapp-password")
 }
 
 server "tls" {
     url      = "https://10.0.0.2:8080"
-    user     = "nfs-proxy"
+    user     = "knfsd"
     password = "secret"
 
     tls {
@@ -21,7 +21,7 @@ server "tls" {
 
 server "empty-tls" {
     url      = "https://10.0.0.2:8080"
-    user     = "nfs-proxy"
+    user     = "knfsd"
     password = "secret"
     tls {}
 }

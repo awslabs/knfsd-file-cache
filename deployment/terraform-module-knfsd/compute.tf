@@ -39,7 +39,7 @@ resource "aws_ec2_capacity_reservation" "knfsd_reservation" {
 }
 
 # Instance template for the KNFSD instances
-resource "aws_launch_template" "nfsproxy_template" {
+resource "aws_launch_template" "knfsd_launch_template" {
   name          = "${local.name}-lt"
   description   = "EC2 instance template for the KNFSD instances"
   image_id      = var.PROXY_AMI
@@ -61,7 +61,7 @@ resource "aws_launch_template" "nfsproxy_template" {
 
   # enable ENA-SRD only if the instance type supports it
   network_interfaces {
-    security_groups = [aws_security_group.nfsproxy_asg_sg.id]
+    security_groups = [aws_security_group.knfsd_asg_sg.id]
     dynamic "ena_srd_specification" {
       for_each = data.aws_ec2_instance_type.selected.ena_srd_supported ? [1] : []
       content {

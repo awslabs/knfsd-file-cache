@@ -51,6 +51,12 @@ repos:
         language: system
         pass_filenames: false
         args: [pylint]
+      - id: iam-size
+        name: iam-size
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [iam-size]
       - id: packer-format
         name: packer-format
         entry: make

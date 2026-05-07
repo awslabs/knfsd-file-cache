@@ -202,7 +202,7 @@ def instance_launching(instance_id, asg_name, hook_name, token):
         logger.info("No available ENIs found, creating new ENI")
         eni_response = ec2.create_network_interface(
             SubnetId=subnet_id,
-            Description="Static secondary private IPv4 address for nfsproxy instance",
+            Description="Static secondary private IPv4 address for KNFSD instance",
             Groups=security_group_ids,
             TagSpecifications=[
                 {

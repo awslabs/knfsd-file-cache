@@ -65,7 +65,7 @@ function remove_packages() (
 # install latest ena driver
 function install_ena_driver() (
 	begin_command "Installing ENA driver"
-	git_clone --depth 1 --branch ena_linux_2.16.1 https://github.com/amzn/amzn-drivers.git amzn-drivers
+	git_clone --depth 1 --branch ena_linux_2.17.0 https://github.com/amzn/amzn-drivers.git amzn-drivers
 	cd amzn-drivers/kernel/linux/ena/
 	make
 	# ena.ko OR ena.ko.zst

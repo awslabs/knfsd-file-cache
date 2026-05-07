@@ -74,7 +74,7 @@ This method provides basic information on the KNFSD proxy node. It is useful for
 
 ```json
 {
-  "name": "nfsproxy-a1b2c3d4",
+  "name": "knfsd-a1b2c3d4",
   "instanceID": "i-09e5a3c0d764b4389",
   "hostname": "ip-172-31-74-7.eu-west-2.compute.internal",
   "interfaceConfig": {
@@ -515,7 +515,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "6.19.14-knfsd",
+  "kernel": "7.0.4-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",

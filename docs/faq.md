@@ -17,9 +17,9 @@ The AMI must be in the same AWS Region as the KNFSD proxy instances.
 ## Error: The DB instance and EC2 security group are in different VPCs
 
 ```hcl
-│ Error: creating RDS DB Instance (nfsproxy-fsids): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 150419e9-cbb0-4dc9-856e-4b8db915dd51, api error InvalidParameterCombination: The DB instance and EC2 security group are in different VPCs. The DB instance is in vpc-56786e19f2a7c041e and the EC2 security group is in vpc-1234ebfdfc54626ad
+│ Error: creating RDS DB Instance (knfsd-fsids): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 150419e9-cbb0-4dc9-856e-4b8db915dd51, api error InvalidParameterCombination: The DB instance and EC2 security group are in different VPCs. The DB instance is in vpc-56786e19f2a7c041e and the EC2 security group is in vpc-1234ebfdfc54626ad
 │
-│   with module.nfs_proxy.module.fsid_database[0].aws_db_instance.fsids,
+│   with module.knfsd.module.fsid_database[0].aws_db_instance.fsids,
 │   on ../database/main.tf line 64, in resource "aws_db_instance" "fsids":
 │   64: resource "aws_db_instance" "fsids" {
 ```
@@ -33,7 +33,7 @@ The two variables are mutually exclusive. The single AZ deployment of the DB ins
 
 ## Error creating resource: already exists
 
-Some of the resources created by Terraform must have a globally unique name. When deploying multiple KNFSD proxy clusters in the same AWS region, you *MUST* give each KNFSD proxy cluster a unique `PROXY_BASENAME`. The default value of `nfsproxy` will have 8 random characters appended to the end of the name to make it unique, such as `nfsproxy-a1b2c3d4` if the default value is used.
+Some of the resources created by Terraform must have a globally unique name. When deploying multiple KNFSD proxy clusters in the same AWS region, you *MUST* give each KNFSD proxy cluster a unique `PROXY_BASENAME`. The default value of `knfsd` will have 8 random characters appended to the end of the name to make it unique, such as `knfsd-a1b2c3d4` if the default value is used.
 
 ## Proxy instances are replaced every 10 minutes
 

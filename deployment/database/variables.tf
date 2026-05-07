@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.24"
+  default     = "1.1.0-alpha.25"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.24\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.25\"."
   }
 }
 
@@ -61,10 +61,10 @@ variable "FSID_DB_SUBNET_IDS" {
 }
 
 variable "NAME_PREFIX" {
-  description = "(Optional) Prefix to use when generating a RDS DB instance name. The name will be suffixed with a hyphen and 8 random letters/digits. Default: \"fsids\"."
+  description = "(Optional) Prefix to use when generating a RDS DB instance name. The name will be suffixed with a hyphen and 8 random letters/digits. Default: \"knfsd-fsids\"."
   type        = string
   nullable    = false
-  default     = "fsids"
+  default     = "knfsd-fsids"
 }
 
 variable "NAME" {
