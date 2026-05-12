@@ -63,7 +63,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-alpha.25"
+VERSION="1.1.0-alpha.26"
 
 # terminal colors
 SHELL_RED='\033[0;31m'

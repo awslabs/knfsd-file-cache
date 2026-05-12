@@ -39,6 +39,8 @@ func (r *testRunner) Name() string {
 	return r.name
 }
 
+func (r *testRunner) Helper() {}
+
 func (r *testRunner) log(s string) {
 	if !strings.HasSuffix(s, "\n") {
 		s += "\n"

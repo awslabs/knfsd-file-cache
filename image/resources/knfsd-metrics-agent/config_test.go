@@ -30,7 +30,7 @@ func TestMetricTransformsMatch(t *testing.T) {
 		Processors struct {
 			MetricsTransform struct {
 				Transforms []Transform `yaml:"transforms"`
-			} `yaml:"metricstransform"`
+			} `yaml:"metrics_transform"`
 		} `yaml:"processors"`
 	}
 

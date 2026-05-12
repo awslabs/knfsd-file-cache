@@ -14,6 +14,54 @@ variable "SUBNET" {
   default     = ""
 }
 
+variable "DISTRIBUTION_REGIONS" {
+  description = "(Optional) A list of AWS regions to distribute the AMI to. Default: \"[]\"."
+  type        = list(string)
+  default     = []
+}
+
+variable "AMI_ENCRYPTED" {
+  description = "(Optional) Whether the resulting AMI is encrypted. When \"true\" (default), the AMI is encrypted using the key referenced by \"KMS_KEY_ID\" (or the region's default \"aws/ebs\" key if \"KMS_KEY_ID\" is empty). When \"false\", the AMI is unencrypted. The AWS account-level \"EBS encryption by default\" setting (when enabled) overrides this to \"true\". Default: \"true\"."
+  type        = bool
+  default     = true
+}
+
+variable "KMS_KEY_ID" {
+  description = "(Optional) Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt the AMI in the AWS build region. Empty uses the region's default \"aws/ebs\" key when \"AMI_ENCRYPTED = true\". Default: \"\"."
+  type        = string
+  default     = ""
+  validation {
+    condition = (
+      var.KMS_KEY_ID == ""
+      || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.KMS_KEY_ID))
+      || can(regex("^mrk-[0-9a-f]{32}$", var.KMS_KEY_ID))
+      || can(regex("^alias/[a-zA-Z0-9/_-]+$", var.KMS_KEY_ID))
+      || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.KMS_KEY_ID))
+    )
+    error_message = "KMS_KEY_ID must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
+  }
+}
+
+variable "REGION_KMS_KEY_IDS" {
+  description = "(Optional) Map of AWS region to customer-managed KMS key identifier used when distributing the AMI to that region via \"DISTRIBUTION_REGIONS\". Use when each destination region has a distinct CMK. Empty string in the map means use that AWS region's default \"aws/ebs\" key. When this map is empty, \"KMS_KEY_ID\" is reused for every region in \"DISTRIBUTION_REGIONS\" (suitable for multi-region KMS keys or AWS-managed \"aws/ebs\" defaults). Default: \"{}\"."
+  type        = map(string)
+  default     = {}
+  validation {
+    condition = alltrue([
+      for k, v in var.REGION_KMS_KEY_IDS :
+      can(regex("^[a-z]{2}-[a-z]+-[0-9]+$", k))
+      && (
+        v == ""
+        || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", v))
+        || can(regex("^mrk-[0-9a-f]{32}$", v))
+        || can(regex("^alias/[a-zA-Z0-9/_-]+$", v))
+        || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", v))
+      )
+    ])
+    error_message = "REGION_KMS_KEY_IDS keys must be valid AWS region names and values must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
+  }
+}
+
 variable "ASSOCIATE_PUBLIC_IP_ADDRESS" {
   description = "(Optional) If using a non-default VPC, whether to forcefully associate a public IP address with the EC2 instance. Default: \"null\"."
   type        = bool

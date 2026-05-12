@@ -60,6 +60,10 @@ Enter at least the following required variable (additional `SUBNET` variable is 
 * `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources. Default: `""`.
 * `CUSTOM_PRE_BUILD_SCRIPT` (string) - Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
 * `CUSTOM_POST_BUILD_SCRIPT` (string) - Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
+* `DISTRIBUTION_REGIONS` (list(string)) - Additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Default: `[]`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
+* `AMI_ENCRYPTED` (bool) - Whether the resulting AMI is encrypted. When `true` (default) the AMI is encrypted with `KMS_KEY_ID` (or the region's default `aws/ebs` key when `KMS_KEY_ID` is empty). When `false` the AMI is unencrypted. The AWS account-level "EBS encryption by default" setting (when enabled) overrides this to `true`. Default: `true`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
+* `KMS_KEY_ID` (string) - Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt the AMI in the AWS build region. Empty uses the AWS region's default `aws/ebs` key when `AMI_ENCRYPTED = true`. Default: `""`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
+* `REGION_KMS_KEY_IDS` (map(string)) - Map of AWS region to customer-managed KMS key identifier used when distributing the AMI via `DISTRIBUTION_REGIONS`. Use when each destination region has a distinct CMK. Empty string in the map means use that AWS region's default `aws/ebs` key. When this map is empty, `KMS_KEY_ID` is reused for every region in `DISTRIBUTION_REGIONS` (suitable for multi-region KMS keys or AWS-managed `aws/ebs` defaults). Default: `{}`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
 
 #### Example: `image.pkrvars.hcl`
 
@@ -105,6 +109,30 @@ By default, a new AWS account will have 5 vCPUs (Spot) available. This is insuff
 You will need to request a [quota increase](https://console.aws.amazon.com/servicequotas/home) for the appropriate EC2 [Spot Instance quotas](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html).
 
 See [AWS Service Quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for more information.
+
+### AMI Encryption and Cross-Region Distribution
+
+The Packer build supports three encryption modes for the resulting AMI in the AWS build region (`REGION`) and an independent option for distributing copies to additional AWS regions (`DISTRIBUTION_REGIONS`). All customer-managed KMS keys, key policies, and cross-account access are the customer's responsibility - this build only consumes KMS key identifiers.
+
+#### Encryption modes (build region)
+
+* **Default `aws/ebs`** - Leave `KMS_KEY_ID = ""` and `AMI_ENCRYPTED = true` (default). The AMI is encrypted with the AWS build region's AWS-managed `aws/ebs` key. The AMI cannot be shared cross-account because the `aws/ebs` key policy is not editable and AWS region bound.
+* **Customer-managed key (CMK)** - Set `KMS_KEY_ID` to your CMK's key ID, alias, key ARN, or alias ARN. The CMK and its key policy must be created and managed by you in the build account/region.
+* **Unencrypted** - Set `AMI_ENCRYPTED = false` and leave `KMS_KEY_ID = ""`. The AMI is unencrypted in the build region. The AWS account-level [EBS encryption by default](https://docs.aws.amazon.com/ebs/latest/userguide/work-with-ebs-encr.html#encryption-by-default) setting (when enabled) overrides this back to encrypted.
+
+#### Cross-region distribution (optional)
+
+Set `DISTRIBUTION_REGIONS` to a list of additional AWS regions to copy the KNFSD AMI into. The AWS build region is always governed by `REGION` - do not add it to `DISTRIBUTION_REGIONS`. Three sub-cases:
+
+* **Single multi-region CMK** - Leave `REGION_KMS_KEY_IDS = {}` and use the same identifier in `KMS_KEY_ID` for the build region. The map is auto-populated to reuse `KMS_KEY_ID` for every destination region. Suitable for [AWS KMS multi-Region keys](https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html) where the same identifier resolves in every region.
+* **Per-region CMKs** - Populate `REGION_KMS_KEY_IDS` with an entry per destination region pointing at the region-local CMK. Each region needs a separate key because KMS keys are regional.
+* **Default `aws/ebs` per region** - Leave `KMS_KEY_ID = ""` and `REGION_KMS_KEY_IDS = {}`. Packer copies the AMI to each region encrypted under that AWS region's own `aws/ebs` key.
+
+For full upstream semantics see the [Packer `amazon-ebs` AMI configuration](https://developer.hashicorp.com/packer/integrations/hashicorp/amazon/latest/components/builder/ebs#ami-configuration) docs.
+
+#### Cross-account use by an Auto Scaling Group
+
+When the consuming AWS account launches the KNFSD AMI via an Auto Scaling Group with a CMK-encrypted AMI (or sets `EBS_KMS_KEY_ID` in the deployment module), the customer must update the CMK key policy to grant the `AWSServiceRoleForAutoScaling` service-linked role the necessary actions. See [AWS docs - Required AWS KMS key policy for use with encrypted volumes](https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html).
 
 ### SSH Connectivity
 
@@ -207,7 +235,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.knfsd: Release:      24.04
 amazon-ebs.knfsd: Codename:     noble
-amazon-ebs.knfsd: Kernel:       7.0.4-knfsd
+amazon-ebs.knfsd: Kernel:       7.0.6-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -265,7 +293,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.25"
+VERSION="1.1.0-alpha.26"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -428,7 +456,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       7.0.4-knfsd
+Kernel:       7.0.6-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

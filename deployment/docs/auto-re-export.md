@@ -58,7 +58,7 @@ Use of an FSID service to automatically allocate FSIDs for exports is required w
 ```terraform
 module "knfsd" {
 
-    source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.25"
+    source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.26"
 
     # Include your standard KNFSD configuration, this example only shows the
     # configuration values specific to the auto re-export feature.

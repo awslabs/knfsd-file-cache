@@ -9,7 +9,7 @@
 # always use x86_64 only for the DB setup image
 ARCH="linux/amd64"
 PIP_PLATFORM="manylinux2014_x86_64"
-KNFSD_PYTHON_VERSION="3.14.4" # must match the MAJOR.MINOR version of the AWS Lambda runtime
+KNFSD_PYTHON_VERSION="3.14.5" # must match the MAJOR.MINOR version of the AWS Lambda runtime
 KNFSD_PSYCOPG_VERSION="3.3.4" # https://pypi.org/project/psycopg/
 
 # ensure resources directory is writable by all users

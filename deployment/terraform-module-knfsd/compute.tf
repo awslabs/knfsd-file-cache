@@ -56,6 +56,7 @@ resource "aws_launch_template" "knfsd_launch_template" {
       volume_type           = "gp3"
       delete_on_termination = true
       encrypted             = true
+      kms_key_id            = var.EBS_KMS_KEY_ID != "" ? var.EBS_KMS_KEY_ID : null
     }
   }
 
@@ -93,6 +94,7 @@ resource "aws_launch_template" "knfsd_launch_template" {
         throughput            = var.CACHEFILESD_EBS_THROUGHPUT
         delete_on_termination = true
         encrypted             = true
+        kms_key_id            = var.EBS_KMS_KEY_ID != "" ? var.EBS_KMS_KEY_ID : null
       }
     }
   }

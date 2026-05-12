@@ -369,10 +369,10 @@ Ensure you configure GitLab Dependency Proxy in your GitLab group/project with [
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.26.2
+image: golang:1.26.3
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.2
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.3
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

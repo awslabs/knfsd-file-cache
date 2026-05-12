@@ -14,7 +14,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.25"
+  version       = "1.1.0-alpha.26"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -140,10 +140,23 @@ source "amazon-ebs" "knfsd-amd64" {
     length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) == 0
   ) ? var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP : null
 
+  # KMS encryption / AMI distribution configuration
+  encrypt_boot = var.AMI_ENCRYPTED
+  kms_key_id   = (var.AMI_ENCRYPTED && var.KMS_KEY_ID != "") ? var.KMS_KEY_ID : null
+  ami_regions  = var.DISTRIBUTION_REGIONS
+  region_kms_key_ids = (
+    length(var.REGION_KMS_KEY_IDS) > 0
+    ? var.REGION_KMS_KEY_IDS
+    : (var.AMI_ENCRYPTED && length(var.DISTRIBUTION_REGIONS) > 0
+      ? { for region in var.DISTRIBUTION_REGIONS : region => var.KMS_KEY_ID }
+    : {})
+  )
+
   # EBS root build volume configuration
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
-    encrypted             = true
+    encrypted             = var.AMI_ENCRYPTED
+    kms_key_id            = (var.AMI_ENCRYPTED && var.KMS_KEY_ID != "") ? var.KMS_KEY_ID : null
     volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true
@@ -164,7 +177,6 @@ source "amazon-ebs" "knfsd-amd64" {
   # EBS root volume configuration
   ami_block_device_mappings {
     device_name           = "/dev/sda1"
-    encrypted             = true
     volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true
@@ -260,10 +272,23 @@ source "amazon-ebs" "knfsd-arm64" {
     length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) == 0
   ) ? var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP : null
 
+  # KMS encryption / AMI distribution configuration
+  encrypt_boot = var.AMI_ENCRYPTED
+  kms_key_id   = (var.AMI_ENCRYPTED && var.KMS_KEY_ID != "") ? var.KMS_KEY_ID : null
+  ami_regions  = var.DISTRIBUTION_REGIONS
+  region_kms_key_ids = (
+    length(var.REGION_KMS_KEY_IDS) > 0
+    ? var.REGION_KMS_KEY_IDS
+    : (var.AMI_ENCRYPTED && length(var.DISTRIBUTION_REGIONS) > 0
+      ? { for region in var.DISTRIBUTION_REGIONS : region => var.KMS_KEY_ID }
+    : {})
+  )
+
   # EBS root build volume configuration
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
-    encrypted             = true
+    encrypted             = var.AMI_ENCRYPTED
+    kms_key_id            = (var.AMI_ENCRYPTED && var.KMS_KEY_ID != "") ? var.KMS_KEY_ID : null
     volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true
@@ -284,7 +309,6 @@ source "amazon-ebs" "knfsd-arm64" {
   # EBS root volume configuration
   ami_block_device_mappings {
     device_name           = "/dev/sda1"
-    encrypted             = true
     volume_size           = 10
     volume_type           = "gp3"
     delete_on_termination = true

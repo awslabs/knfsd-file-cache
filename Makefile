@@ -120,11 +120,15 @@ pylint:
 define IAM_SIZE_PY
 import glob, json, re, sys
 LIMIT = 6144
-PATTERN = "docs/iam/*.json"
+PATTERNS = ("docs/iam/*.json", "examples/*/iam.json")
+RED = "\033[31m" if sys.stderr.isatty() else ""
+RESET = "\033[0m" if sys.stderr.isatty() else ""
 fails = []
-files = sorted(glob.glob(PATTERN))
+files = sorted({p for pattern in PATTERNS for p in glob.glob(pattern)})
 if not files:
-	sys.stderr.write(f"[iam-size] FAIL: no files matched {PATTERN}\n")
+	sys.stderr.write(
+		f"[iam-size] {RED}ERROR:{RESET} no files matched any of {PATTERNS}\n"
+	)
 	sys.exit(1)
 for path in files:
 	with open(path, encoding="utf-8") as fh:
@@ -132,16 +136,14 @@ for path in files:
 	try:
 		json.loads(raw)
 	except json.JSONDecodeError as exc:
-		sys.stderr.write(f"[iam-size] FAIL: {path} is not valid JSON: {exc}\n")
+		sys.stderr.write(f"{RED}ERROR: {path} is not valid JSON: {exc}{RESET}\n")
 		sys.exit(1)
 	n = len(re.sub(r"\s", "", raw))
-	print(f"  {path}: {n}/{LIMIT} chars")
 	if n > LIMIT:
 		fails.append((path, n))
 if fails:
 	sys.stderr.write(
-		"\n[iam-size] FAIL: each docs/iam/*.json must fit the AWS "
-		"customer-managed-policy 6144 non-whitespace char limit. Trim or split:\n"
+		f"{RED}ERROR: IAM policy JSON must fit the AWS customer-managed-policy 6,144 character limit{RESET}\n"
 	)
 	for path, n in fails:
 		sys.stderr.write(f"  {path}: over by {n - LIMIT} chars\n")

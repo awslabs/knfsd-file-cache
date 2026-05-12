@@ -13,7 +13,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.25"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-alpha.26"
     ]
   }
 }

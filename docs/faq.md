@@ -39,6 +39,13 @@ Some of the resources created by Terraform must have a globally unique name. Whe
 
 The KNFSD proxy instances in the Auto Scaling Group (ASG) never become healthy. When the initial grace period expires the instances are replaced. The initial grace period defaults to 10 minutes (600 seconds) and can be changed by setting `HEALTHCHECK_INITIAL_DELAY_SECONDS`. See [check the KNFSD proxy instance is starting correctly](./check-startup.md).
 
+## EC2 Auto Scaling Group (ASG) *Cancelled*: Launching a new EC2 instance: i-092623a491680dab4. Status Reason: Instance became unhealthy while waiting for instance to be in InService state. Termination Reason: Client.InvalidKMSKey.InvalidState: The KMS key provided is in an incorrect state
+
+The KMS key must be in a valid state (`Enabled`) and the `AWSServiceRoleForAutoScaling` role must be attached to the KMS key policy. See:
+
+* [Required AWS KMS key policy for use with encrypted volumes](https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html)
+* [Default key policy](https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html#key-policy-default-allow-users)
+
 ## Every file shows an I/O error in `ls`, or when trying to read/write
 
 This could have one of two causes:

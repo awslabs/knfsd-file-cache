@@ -1,5 +1,22 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.26
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Updated to Linux kernel v7.0.6-knfsd.
+* Added support for customer-managed KMS keys for AMI encryption, AMI cross-region distribution, and EBS volume encryption.
+* Packer: Added new Packer variables for AMI encryption and cross-region distribution: `KMS_KEY_ID`, `AMI_ENCRYPTED`, `DISTRIBUTION_REGIONS`, and `REGION_KMS_KEY_IDS`. See [image/README.md](image/README.md) for usage and the three supported encryption modes (default `aws/ebs`, customer-managed key, unencrypted). Customer-managed KMS keys and key policies are the customer's responsibility and not created or managed by this project.
+* Packer: Added `ec2:CopyImage`, `ec2:CopySnapshot`, and `ec2:DeregisterImage` to [docs/iam/packer.json](docs/iam/packer.json) (`KnfsdPackerBuild` Sid) to support cross-region AMI distribution.
+* Added new Terraform variable `EBS_KMS_KEY_ID` to `terraform-module-knfsd` for customer-managed encryption of launch-template EBS volumes. Volumes remain encrypted by default; when empty, AWS uses the account's default `aws/ebs` key. See [deployment/README.md](deployment/README.md).
+* Added no-op `Helper()` method to `testRunner` in `testing/examples/testing/runner.go` to satisfy the `Helper()` method now required by `terratest.TestingT` (added upstream in Terratest v1.0.0).
+* Updated `opentelemetry-collector` to v0.152.0.
+* Updated `opentelemetry-collector-contrib` to v0.152.0.
+* Renamed `metricstransform` processor to `metrics_transform` as per Open Telemetry Collector Contrib issue [#45339](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/45339).
+* Updated to Golang v1.26.3.
+* Updated to Python v3.14.5.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.25
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

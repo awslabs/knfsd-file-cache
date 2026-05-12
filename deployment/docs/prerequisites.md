@@ -117,3 +117,6 @@ For reference, the following AWS services are used in this solution (and should 
 Optional:
 
 - [Amazon Elastic File System](https://aws.amazon.com/efs/) (needed for [examples/efs](../../examples/efs/README.md))
+- [FSx for OpenZFS](https://aws.amazon.com/fsx/openzfs/) (needed for [examples/fsx-zfs](../../examples/fsx-zfs/README.md))
+- [FSx for NetApp ONTAP](https://aws.amazon.com/fsx/netapp-ontap/) (needed for [examples/fsx-netapp](../../examples/fsx-netapp/README.md))
+- [Amazon S3 Files](https://aws.amazon.com/s3/features/files/) (needed for [examples/s3-files](../../examples/s3-files/README.md))

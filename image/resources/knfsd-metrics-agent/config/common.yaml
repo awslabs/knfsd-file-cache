@@ -271,7 +271,7 @@ processors:
   # NOTE: the open telemetry collector will interpolate environment variables
   # Thus $1 will be replaced with the value of the environment variable named "1"
   # This is escaped by using two dollars, thus use $$ in regexp.
-  metricstransform:
+  metrics_transform:
     transforms:
       - action: update
         include: nfs.clients

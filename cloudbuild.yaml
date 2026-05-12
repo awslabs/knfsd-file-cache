@@ -35,28 +35,28 @@ options:
     - IMAGE_NAME=${_IMAGE_NAME}
 
 steps:
-  - name: golang:1.26.2
+  - name: golang:1.26.3
     id: filter-exports:test
     dir: image/resources/filter-exports
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.26.2
+  - name: golang:1.26.3
     id: knfsd-agent:test
     dir: image/resources/knfsd-agent
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.26.2
+  - name: golang:1.26.3
     id: knfsd-metrics-agent:test
     dir: image/resources/knfsd-metrics-agent
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.26.2
+  - name: golang:1.26.3
     id: netapp-exports:test
     dir: image/resources/netapp-exports
     script: make test
@@ -70,7 +70,7 @@ steps:
     waitFor: ['-']
     timeout: 1200s # 20m
 
-  - name: golang:1.26.2
+  - name: golang:1.26.3
     id: knfsd-fsidd:test
     dir: image/resources/knfsd-fsidd
     script: ./test.sh run

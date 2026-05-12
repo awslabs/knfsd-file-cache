@@ -8,10 +8,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.25"
+  default     = "1.1.0-alpha.26"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.25\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.26\"."
   }
 }
 
@@ -397,6 +397,23 @@ variable "ROOT_DISK_SIZE" {
   validation {
     condition     = var.ROOT_DISK_SIZE >= 10 && var.ROOT_DISK_SIZE <= 65536
     error_message = "ROOT_DISK_SIZE must be between 10 and 65536 GB."
+  }
+}
+
+variable "EBS_KMS_KEY_ID" {
+  description = "(Optional) Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt EBS volumes. When empty, AWS uses the account's default \"aws/ebs\" key. Volumes are always encrypted. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition = (
+      var.EBS_KMS_KEY_ID == ""
+      || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.EBS_KMS_KEY_ID))
+      || can(regex("^mrk-[0-9a-f]{32}$", var.EBS_KMS_KEY_ID))
+      || can(regex("^alias/[a-zA-Z0-9/_-]+$", var.EBS_KMS_KEY_ID))
+      || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.EBS_KMS_KEY_ID))
+    )
+    error_message = "EBS_KMS_KEY_ID must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
   }
 }
 
