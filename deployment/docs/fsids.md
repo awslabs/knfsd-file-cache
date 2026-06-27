@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.26"
+  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.27"
   SUBNET = "subnet-038e337f0ff4cd53f"
 }
 
@@ -217,7 +217,7 @@ FSID_DATABASE_CONFIG = {
   enable_metrics = true
 }
 // replace ${} variables with the appropriate values
-FSID_DATABASE_IAM_POLICY = "arn:aws:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"
+FSID_DATABASE_IAM_POLICY = "arn:*:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"
 ```
 
 Before deploying the knfsd proxy cluster, create a suitable Amazon RDS PostgreSQL database (the `knfsd-fsidd` service only supports PostgreSQL).

@@ -134,12 +134,12 @@ SG_ID=$(aws ec2 describe-security-groups \
 echo "SG_ID: $SG_ID"
 
 # Get the first subnet ID in the VPC
-SUBNET_ID=$(aws ec2 describe-subnets \
+SUBNET=$(aws ec2 describe-subnets \
   --filters "Name=vpc-id,Values=$VPC_ID" \
   --query 'Subnets[0].SubnetId' \
   --output text)
 
-echo "SUBNET_ID: $SUBNET_ID"
+echo "SUBNET: $SUBNET"
 ```
 
 > **NOTE**: The default security group allows all traffic between instances that use the same security group within your VPC, which means all NFS ports (111, 2049, etc) will work automatically between your tutorial instances.
@@ -185,7 +185,7 @@ echo "Using AMI: $AMI_ID"
 SERVER_INSTANCE_ID=$(aws ec2 run-instances \
   --image-id $AMI_ID \
   --instance-type c6i.xlarge \
-  --subnet-id $SUBNET_ID \
+  --subnet-id $SUBNET \
   --key-name knfsd-tutorial \
   --security-group-ids $SG_ID \
   --user-data file://nfs-server-startup.sh \
@@ -247,7 +247,7 @@ EOF
 PROXY_INSTANCE_ID=$(aws ec2 run-instances \
   --image-id $AMI_ID \
   --instance-type i4i.4xlarge \
-  --subnet-id $SUBNET_ID \
+  --subnet-id $SUBNET \
   --key-name knfsd-tutorial \
   --security-group-ids $SG_ID \
   --user-data file://nfs-proxy-startup-user-data.sh \
@@ -310,7 +310,7 @@ EOF
 CLIENT_INSTANCE_ID=$(aws ec2 run-instances \
   --image-id $AMI_ID \
   --instance-type c6in.4xlarge \
-  --subnet-id $SUBNET_ID \
+  --subnet-id $SUBNET \
   --key-name knfsd-tutorial \
   --security-group-ids $SG_ID \
   --user-data file://nfs-client-startup-user-data.sh \

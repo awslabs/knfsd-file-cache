@@ -8,7 +8,7 @@ config {
 
 plugin "terraform" {
   enabled = true
-  version = "0.14.1"
+  version = "0.15.0"
   source  = "github.com/terraform-linters/tflint-ruleset-terraform"
   preset  = "all"
 }
@@ -16,7 +16,7 @@ plugin "terraform" {
 rule "terraform_naming_convention" {
   enabled = true
   variable {
-    custom = "^[A-Z]+([_][A-Z]+)*$"
+    custom = "^[A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*$"
   }
 }
 

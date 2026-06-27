@@ -10,6 +10,7 @@ We assume [bash](https://www.gnu.org/software/bash/) and [jq](https://stedolan.g
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://www.terraform.io/downloads.html)
 - [Docker](https://docs.docker.com/get-docker/) (only required to deploy the RDS database module or if running the `.devcontainer` configuration)
+- [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (only required if running the `smoke-tests` module)
 
 ### Git
 
@@ -36,6 +37,10 @@ If you wish to use the `.devcontainer/prod` configuration (which is recommended 
 For KNFSD developers, you can use either VS Code or Cursor to run a `.devcontainer/dev` workspace. See [developer.md](../../docs/developer.md) for detailed steps.
 
 > **NOTE**: Cursor now maintains its own Dev Containers Extension. You should use it instead of the VS Code Dev Containers Extension.
+
+### AWS SSM Session Manager Plugin (Optional)
+
+You should ensure that you have the [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed if you wish to run the `smoke-tests` module. This is already installed in both the `.devcontainer/dev` and `.devcontainer/prod` configurations.
 
 ## AWS Service Quotas
 
@@ -89,6 +94,8 @@ When deploying KNFSD File Cache in a private subnet without any internet connect
 
 ## IAM Permissions
 
+See [IAM Permissions](../../docs/iam.md) for detailed information on the IAM permissions required for the KNFSD File Cache solution.
+
 The Terraform module(s) will automatically create an IAM instance profile, role(s) and least-privilege policies for all resources within this solution to operate correctly. Please review the following Terraform files to understand the permissions that are created:
 
 - [terraform-module-knfsd/iam.tf](../terraform-module-knfsd/iam.tf)
@@ -97,7 +104,7 @@ The Terraform module(s) will automatically create an IAM instance profile, role(
 
 ## AWS Services
 
-For reference, the following AWS services are used in this solution (and should be available in all new AWS regions as well as AWS GovCloud (US) regions):
+For reference, the following AWS services are used in this solution (and should be available in all new AWS regions as well as GovCloud (US) and China (CN) regions):
 
 - [Amazon EC2](https://aws.amazon.com/ec2/)
 - [Amazon Elastic Block Store](https://aws.amazon.com/ebs/)
@@ -116,7 +123,5 @@ For reference, the following AWS services are used in this solution (and should 
 
 Optional:
 
-- [Amazon Elastic File System](https://aws.amazon.com/efs/) (needed for [examples/efs](../../examples/efs/README.md))
 - [FSx for OpenZFS](https://aws.amazon.com/fsx/openzfs/) (needed for [examples/fsx-zfs](../../examples/fsx-zfs/README.md))
 - [FSx for NetApp ONTAP](https://aws.amazon.com/fsx/netapp-ontap/) (needed for [examples/fsx-netapp](../../examples/fsx-netapp/README.md))
-- [Amazon S3 Files](https://aws.amazon.com/s3/features/files/) (needed for [examples/s3-files](../../examples/s3-files/README.md))

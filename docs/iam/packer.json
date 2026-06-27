@@ -58,7 +58,7 @@
       "Sid": "KnfsdPackerServiceLinkedRoles",
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/spot.amazonaws.com/*",
+      "Resource": "arn:*:iam::*:role/aws-service-role/spot.amazonaws.com/*",
       "Condition": {
         "StringEquals": {
           "iam:AWSServiceName": "spot.amazonaws.com"
@@ -69,7 +69,7 @@
       "Sid": "KnfsdSsmPublicParameters",
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:*::parameter/aws/service/canonical/*"
+      "Resource": "arn:*:ssm:*::parameter/aws/service/canonical/*"
     },
     {
       "Sid": "KnfsdKms",

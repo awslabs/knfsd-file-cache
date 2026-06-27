@@ -93,10 +93,10 @@ The root [`Makefile`](../Makefile) provides the following targets:
 
 ### Testing
 
-| Command     | Purpose                     | Tool                                      | Reference                                                                   |
-|-------------|-----------------------------|-------------------------------------------|-----------------------------------------------------------------------------|
-| `make bats` | Run BATS deployment tests   | [BATS](https://bats-core.readthedocs.io/) | [BATS Documentation](https://bats-core.readthedocs.io/en/stable/usage.html) |
-| `make test` | Run all Go project tests    | Go testing framework                      | [Go Testing](https://golang.org/pkg/testing/)                               |
+| Command       | Purpose                       | Tool                                      | Reference                                                                   |
+|---------------|-------------------------------|-------------------------------------------|-----------------------------------------------------------------------------|
+| `make bats`   | Run BATS deployment tests     | [BATS](https://bats-core.readthedocs.io/) | [BATS Documentation](https://bats-core.readthedocs.io/en/stable/usage.html) |
+| `make gotest` | Run all Go project unit tests | Go testing framework                      | [Go Testing](https://golang.org/pkg/testing/)                               |
 
 ### Security Scanning
 
@@ -138,7 +138,6 @@ Each Go project has its own Makefile with standardized targets:
 - [`image/resources/knfsd-metrics-agent/Makefile`](../image/resources/knfsd-metrics-agent/Makefile)
 - [`image/resources/netapp-exports/Makefile`](../image/resources/netapp-exports/Makefile)
 - [`image/smoke-tests/Makefile`](../image/smoke-tests/Makefile)
-- [`testing/examples/Makefile`](../testing/examples/Makefile)
 
 ### Standard Go Targets
 

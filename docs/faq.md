@@ -46,6 +46,22 @@ The KMS key must be in a valid state (`Enabled`) and the `AWSServiceRoleForAutoS
 * [Required AWS KMS key policy for use with encrypted volumes](https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html)
 * [Default key policy](https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html#key-policy-default-allow-users)
 
+## SSH `Permission denied (publickey)` when connecting to a proxy instance
+
+When you try to connect over SSH to a proxy instance, the connection opens (Security Group rule and routing are confirmed as correct) but the handshake fails with a public key rejection, even though `KEY_NAME` is set and the EC2 key pair shows as correctly associated in the AWS console.
+
+```text
+Permission denied (publickey).
+```
+
+The most common cause is connecting as the wrong login user. The KNFSD proxy AMI is built from the Canonical **Ubuntu LTS** cloud image, so the EC2 key pair's public key is installed into the `ubuntu` user's `~/.ssh/authorized_keys` (not `ec2-user`, `root`, `admin`, etc.). Connect as `ubuntu`:
+
+```bash
+ssh -i /path/to/your-key.pem ubuntu@<proxy-private-ip>
+```
+
+To use SSH you must have set `KEY_NAME` to an existing EC2 key pair and added a Security Group rule allowing inbound TCP `22` from your source. Alternatively, you can use EC2 Instance Connect/Endpoint or Session Manager to connect to the proxy instance. EC2 Serial Console can also be used to connect to the proxy instance if no other method is working.
+
 ## Every file shows an I/O error in `ls`, or when trying to read/write
 
 This could have one of two causes:

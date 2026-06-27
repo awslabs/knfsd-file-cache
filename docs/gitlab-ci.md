@@ -29,19 +29,18 @@ To enable this pipeline, you should:
 1. Copy the `.gitlab-ci-aws.yml` file and rename it to `.gitlab-ci.yml` (already added to the `.gitignore` file)
 2. Create a GitLab Personal Access Token named `RENOVATE_TOKEN` with the following scopes:
 
-    ```shell
+    ```bash
     api,read_api,read_user,self_rotate,read_repository,write_repository,read_registry
     ```
 
 3. Create a GitLab `environment` named `renovate`.
 4. Add the following variables to `Settings > CI/CD > Variables` in your GitLab project:
 
-    | Variable Name (Key)         | Environment   | Visibility | Expanded | Description                                                                                                                                   |
-    |-----------------------------|---------------|------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-    | `PACKER_GITHUB_API_TOKEN`   | All (default) | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `RENOVATE_GITHUB_COM_TOKEN`).                 |
-    | `RENOVATE_GITHUB_COM_TOKEN` | `renovate`    | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `PACKER_GITHUB_API_TOKEN`).                   |
-    | `RENOVATE_TOKEN`            | `renovate`    | Masked     | Yes      | A GitLab PAT (personal access token) with access to the `knfsd-file-cache` repository. Insert the `RENOVATE_TOKEN` value from step 2 above.   |
-    | `TERM`                      | All (default) | Visible    | Yes      | The terminal type to use for the pipeline. Set value to `ansi`.                                                                               |
+    | Variable Name (Key)         | Environment   | Visibility | Expanded | Description                                                                                                                                 |
+    |-----------------------------|---------------|------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|
+    | `PACKER_GITHUB_API_TOKEN`   | All (default) | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `RENOVATE_GITHUB_COM_TOKEN`).               |
+    | `RENOVATE_GITHUB_COM_TOKEN` | `renovate`    | Masked     | Yes      | A GitHub PAT (personal access token) to reduce throttling from GitHub API (can be same value as `PACKER_GITHUB_API_TOKEN`).                 |
+    | `RENOVATE_TOKEN`            | `renovate`    | Masked     | Yes      | A GitLab PAT (personal access token) with access to the `knfsd-file-cache` repository. Insert the `RENOVATE_TOKEN` value from step 2 above. |
 
     **URL Links:**
 
@@ -137,7 +136,14 @@ The most compute and/or network intensive CI jobs are configured with a `2xlarge
 
 #### `hcl-validate-image`
 
-- **Purpose**: Validates Packer template syntax and configuration
+- **Purpose**: Validates Packer template syntax and configuration for knfsd proxy image
+- **Tool**: Packer built-in validator
+- **Reference**: [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)
+- **Failure Policy**: Blocking
+
+#### `hcl-validate-testing`
+
+- **Purpose**: Validates Packer template syntax and configuration for testing client image
 - **Tool**: Packer built-in validator
 - **Reference**: [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)
 - **Failure Policy**: Blocking
@@ -277,7 +283,7 @@ Includes certificate generation for testing TLS functionality.
 - **Purpose**: Comprehensive security scanning for secrets, vulnerabilities, misconfigurations, and licenses
 - **Tool**: [Trivy](https://github.com/aquasecurity/trivy)
 - **Reference**: [Trivy Documentation](https://trivy.dev/)
-- **Configuration**: Uses `.trivyignore.yaml` for exclusions
+- **Configuration**: Uses `.trivyignore.yaml` for exclusions, `.trivy.tfvars` for Terraform variables
 - **Cache**: Maintains vulnerability database cache
 - **Failure Policy**: Warning
 
@@ -369,10 +375,10 @@ Ensure you configure GitLab Dependency Proxy in your GitLab group/project with [
 
 ```yaml
 # BAD: Direct Docker Hub image
-image: golang:1.26.3
+image: golang:1.26.4
 
 # GOOD: via Dependency Proxy
-image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.3
+image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.4
 ```
 
 **Reference**: [GitLab Dependency Proxy Documentation](https://docs.gitlab.com/ee/user/packages/dependency_proxy/)

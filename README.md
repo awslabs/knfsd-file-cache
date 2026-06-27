@@ -1,8 +1,8 @@
 # KNFSD File Cache
 
-Please log issues/feature requests in the [GitHub issue tracker](https://github.com/awslabs/knfsd-file-cache/issues)
+Please log issues/feature requests in [GitHub](https://github.com/awslabs/knfsd-file-cache/issues). For questions & comments, reach out to `knfsd-file-cache@amazon.com`
 
-For questions & comments, reach out to `knfsd-file-cache@amazon.com`
+![Arch](docs/images/arch.png)
 
 ## Overview
 
@@ -37,6 +37,8 @@ You should start with the [Packer build](image/). Once built, you can use this A
 ## Metrics
 
 KNFSD provides a number of metrics for monitoring and observability. These are collected by the [Amazon CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent.html) and [KNFSD Metrics Agent](image/resources/knfsd-metrics-agent/README.md) and published to Amazon CloudWatch. See the [Metrics Dashboard](deployment/metrics/README.md) documentation for more details. Third party tools can also be used to collect and visualise the Open-Telemetry based metrics, such as [Prometheus](https://prometheus.io/) and [Grafana](https://grafana.com/). Client-side metrics can be collected by the [KNFSD Metrics Agent](image/resources/knfsd-metrics-agent/README.md) running on the NFS client instances. See the [Client Metrics](docs/client-metrics.md) documentation for more details.
+
+![Metrics](docs/images/metrics.png)
 
 ## Dev Container
 

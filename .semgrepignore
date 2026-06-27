@@ -2,7 +2,6 @@
 .devcontainer/
 .trivycache/
 .gitlab-ci.yml
-testing/
 testcert.go
 *_test.go
 *.tfstate

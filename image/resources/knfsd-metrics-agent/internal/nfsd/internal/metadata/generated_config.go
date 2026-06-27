@@ -6,13 +6,113 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// NfsPacketsArrivedMetricConfig provides config for the nfs.packets.arrived metric.
+type NfsPacketsArrivedMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *NfsPacketsArrivedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsPacketsDeferredMetricConfig provides config for the nfs.packets.deferred metric.
+type NfsPacketsDeferredMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsPacketsDeferredMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsSocketsEnqueuedMetricConfig provides config for the nfs.sockets.enqueued metric.
+type NfsSocketsEnqueuedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsSocketsEnqueuedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsThreadsMetricConfig provides config for the nfs.threads metric.
+type NfsThreadsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsThreadsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsThreadsTimedoutMetricConfig provides config for the nfs.threads.timedout metric.
+type NfsThreadsTimedoutMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsThreadsTimedoutMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsThreadsWokenMetricConfig provides config for the nfs.threads.woken metric.
+type NfsThreadsWokenMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsThreadsWokenMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,32 +128,32 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for nfsd metrics.
 type MetricsConfig struct {
-	NfsPacketsArrived  MetricConfig `mapstructure:"nfs.packets.arrived"`
-	NfsPacketsDeferred MetricConfig `mapstructure:"nfs.packets.deferred"`
-	NfsSocketsEnqueued MetricConfig `mapstructure:"nfs.sockets.enqueued"`
-	NfsThreads         MetricConfig `mapstructure:"nfs.threads"`
-	NfsThreadsTimedout MetricConfig `mapstructure:"nfs.threads.timedout"`
-	NfsThreadsWoken    MetricConfig `mapstructure:"nfs.threads.woken"`
+	NfsPacketsArrived  NfsPacketsArrivedMetricConfig  `mapstructure:"nfs.packets.arrived"`
+	NfsPacketsDeferred NfsPacketsDeferredMetricConfig `mapstructure:"nfs.packets.deferred"`
+	NfsSocketsEnqueued NfsSocketsEnqueuedMetricConfig `mapstructure:"nfs.sockets.enqueued"`
+	NfsThreads         NfsThreadsMetricConfig         `mapstructure:"nfs.threads"`
+	NfsThreadsTimedout NfsThreadsTimedoutMetricConfig `mapstructure:"nfs.threads.timedout"`
+	NfsThreadsWoken    NfsThreadsWokenMetricConfig    `mapstructure:"nfs.threads.woken"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		NfsPacketsArrived: MetricConfig{
+		NfsPacketsArrived: NfsPacketsArrivedMetricConfig{
 			Enabled: true,
 		},
-		NfsPacketsDeferred: MetricConfig{
+		NfsPacketsDeferred: NfsPacketsDeferredMetricConfig{
 			Enabled: true,
 		},
-		NfsSocketsEnqueued: MetricConfig{
+		NfsSocketsEnqueued: NfsSocketsEnqueuedMetricConfig{
 			Enabled: true,
 		},
-		NfsThreads: MetricConfig{
+		NfsThreads: NfsThreadsMetricConfig{
 			Enabled: true,
 		},
-		NfsThreadsTimedout: MetricConfig{
+		NfsThreadsTimedout: NfsThreadsTimedoutMetricConfig{
 			Enabled: true,
 		},
-		NfsThreadsWoken: MetricConfig{
+		NfsThreadsWoken: NfsThreadsWokenMetricConfig{
 			Enabled: true,
 		},
 	}

@@ -35,10 +35,6 @@
     {
       "name": "go/image/smoke-tests",
       "path": "image/smoke-tests"
-    },
-    {
-      "name": "go/testing/examples",
-      "path": "testing/examples"
     }
   ],
   "settings": {
@@ -96,8 +92,7 @@
           "go/knfsd-fsidd",
           "go/knfsd-metrics-agent",
           "go/netapp-exports",
-          "go/image/smoke-tests",
-          "go/testing/examples"
+          "go/image/smoke-tests"
         ]
       },
       {
@@ -291,35 +286,6 @@
         },
         "options": {
           "cwd": "${workspaceFolder}/image/smoke-tests"
-        },
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "echo": false,
-          "focus": false,
-          "panel": "shared"
-        },
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
-      },
-      {
-        "label": "go/testing/examples",
-        "type": "process",
-        "command": "/usr/bin/bash",
-        "windows": {
-          "command": "powershell",
-        },
-        "osx": {
-          "command": "/bin/bash",
-          "args": [ "-il" ]
-        },
-        "linux": {
-          "command": "/usr/bin/bash",
-          "args": [ "-il" ]
-        },
-        "options": {
-          "cwd": "${workspaceFolder}/testing/examples"
         },
         "isBackground": true,
         "problemMatcher": [],

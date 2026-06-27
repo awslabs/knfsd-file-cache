@@ -1,19 +1,17 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.44.0"
+      version = "~> 6.52.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/weka/1.1.0-alpha.26"
+      "knfsd-file-cache/examples/weka/1.1.0-alpha.27"
     ]
   }
 }
@@ -53,10 +51,12 @@ module "projects" {
   FSID_MODE                 = "external"
   FSID_DB_SUBNET_GROUP_NAME = null # if using a non-default VPC, you must specify the name of the DB subnet group
   FSID_DB_SUBNET_IDS        = null # alternative: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
-  EXPORT_MAP                = "${var.WEKA_NFS_GATEWAY};/;/"
-  NFS_MOUNT_VERSION         = "4.1"
-  DISABLED_NFS_VERSIONS     = "3"
-  AUTO_REEXPORT             = true
+  EXPORT_MAP                = "${var.WEKA_NFS_GATEWAY};/projects;/projects"
+  # EXPORT_HOST_AUTO_DETECT   = true  # auto-discovery of exports via "showmount -e <WEKA_NFS_GATEWAY>"
+  # EXCLUDED_EXPORTS          = ["/"] # exclude the root export from auto-discovery, Weka NFS gateway root ["/" (everyone)] is unmountable
+  NFS_MOUNT_VERSION     = "4.1"
+  DISABLED_NFS_VERSIONS = "3"
+  AUTO_REEXPORT         = true
 }
 
 ################################################### SOFTWARE ##################################################

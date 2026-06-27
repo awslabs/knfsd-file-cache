@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -262,13 +268,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricFscacheAcquireOk struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   FscacheAcquireOkMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills fscache.acquire.ok metric with initial data.
@@ -307,7 +314,7 @@ func (m *metricFscacheAcquireOk) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheAcquireOk(cfg MetricConfig) metricFscacheAcquireOk {
+func newMetricFscacheAcquireOk(cfg FscacheAcquireOkMetricConfig) metricFscacheAcquireOk {
 	m := metricFscacheAcquireOk{config: cfg}
 
 	if cfg.Enabled {
@@ -318,9 +325,9 @@ func newMetricFscacheAcquireOk(cfg MetricConfig) metricFscacheAcquireOk {
 }
 
 type metricFscacheAcquireOom struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   FscacheAcquireOomMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills fscache.acquire.oom metric with initial data.
@@ -359,7 +366,7 @@ func (m *metricFscacheAcquireOom) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheAcquireOom(cfg MetricConfig) metricFscacheAcquireOom {
+func newMetricFscacheAcquireOom(cfg FscacheAcquireOomMetricConfig) metricFscacheAcquireOom {
 	m := metricFscacheAcquireOom{config: cfg}
 
 	if cfg.Enabled {
@@ -370,9 +377,9 @@ func newMetricFscacheAcquireOom(cfg MetricConfig) metricFscacheAcquireOom {
 }
 
 type metricFscacheAcquireRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   FscacheAcquireRequestsMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills fscache.acquire.requests metric with initial data.
@@ -411,7 +418,7 @@ func (m *metricFscacheAcquireRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheAcquireRequests(cfg MetricConfig) metricFscacheAcquireRequests {
+func newMetricFscacheAcquireRequests(cfg FscacheAcquireRequestsMetricConfig) metricFscacheAcquireRequests {
 	m := metricFscacheAcquireRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -422,9 +429,9 @@ func newMetricFscacheAcquireRequests(cfg MetricConfig) metricFscacheAcquireReque
 }
 
 type metricFscacheCookiesData struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   FscacheCookiesDataMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills fscache.cookies.data metric with initial data.
@@ -463,7 +470,7 @@ func (m *metricFscacheCookiesData) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheCookiesData(cfg MetricConfig) metricFscacheCookiesData {
+func newMetricFscacheCookiesData(cfg FscacheCookiesDataMetricConfig) metricFscacheCookiesData {
 	m := metricFscacheCookiesData{config: cfg}
 
 	if cfg.Enabled {
@@ -474,9 +481,9 @@ func newMetricFscacheCookiesData(cfg MetricConfig) metricFscacheCookiesData {
 }
 
 type metricFscacheCookiesVolume struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   FscacheCookiesVolumeMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills fscache.cookies.volume metric with initial data.
@@ -515,7 +522,7 @@ func (m *metricFscacheCookiesVolume) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheCookiesVolume(cfg MetricConfig) metricFscacheCookiesVolume {
+func newMetricFscacheCookiesVolume(cfg FscacheCookiesVolumeMetricConfig) metricFscacheCookiesVolume {
 	m := metricFscacheCookiesVolume{config: cfg}
 
 	if cfg.Enabled {
@@ -526,9 +533,9 @@ func newMetricFscacheCookiesVolume(cfg MetricConfig) metricFscacheCookiesVolume 
 }
 
 type metricFscacheCookiesVolumeCollisions struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                             // data buffer for generated metric.
+	config   FscacheCookiesVolumeCollisionsMetricConfig // metric config provided by user.
+	capacity int                                        // max observed number of data points added to the metric.
 }
 
 // init fills fscache.cookies.volume_collisions metric with initial data.
@@ -567,7 +574,7 @@ func (m *metricFscacheCookiesVolumeCollisions) emit(metrics pmetric.MetricSlice)
 	}
 }
 
-func newMetricFscacheCookiesVolumeCollisions(cfg MetricConfig) metricFscacheCookiesVolumeCollisions {
+func newMetricFscacheCookiesVolumeCollisions(cfg FscacheCookiesVolumeCollisionsMetricConfig) metricFscacheCookiesVolumeCollisions {
 	m := metricFscacheCookiesVolumeCollisions{config: cfg}
 
 	if cfg.Enabled {
@@ -578,9 +585,9 @@ func newMetricFscacheCookiesVolumeCollisions(cfg MetricConfig) metricFscacheCook
 }
 
 type metricFscacheCookiesVolumeOom struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                      // data buffer for generated metric.
+	config   FscacheCookiesVolumeOomMetricConfig // metric config provided by user.
+	capacity int                                 // max observed number of data points added to the metric.
 }
 
 // init fills fscache.cookies.volume_oom metric with initial data.
@@ -619,7 +626,7 @@ func (m *metricFscacheCookiesVolumeOom) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheCookiesVolumeOom(cfg MetricConfig) metricFscacheCookiesVolumeOom {
+func newMetricFscacheCookiesVolumeOom(cfg FscacheCookiesVolumeOomMetricConfig) metricFscacheCookiesVolumeOom {
 	m := metricFscacheCookiesVolumeOom{config: cfg}
 
 	if cfg.Enabled {
@@ -630,9 +637,9 @@ func newMetricFscacheCookiesVolumeOom(cfg MetricConfig) metricFscacheCookiesVolu
 }
 
 type metricFscacheInvalidations struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   FscacheInvalidationsMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills fscache.invalidations metric with initial data.
@@ -671,7 +678,7 @@ func (m *metricFscacheInvalidations) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheInvalidations(cfg MetricConfig) metricFscacheInvalidations {
+func newMetricFscacheInvalidations(cfg FscacheInvalidationsMetricConfig) metricFscacheInvalidations {
 	m := metricFscacheInvalidations{config: cfg}
 
 	if cfg.Enabled {
@@ -682,9 +689,9 @@ func newMetricFscacheInvalidations(cfg MetricConfig) metricFscacheInvalidations 
 }
 
 type metricFscacheIoMisfit struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   FscacheIoMisfitMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills fscache.io.misfit metric with initial data.
@@ -723,7 +730,7 @@ func (m *metricFscacheIoMisfit) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheIoMisfit(cfg MetricConfig) metricFscacheIoMisfit {
+func newMetricFscacheIoMisfit(cfg FscacheIoMisfitMetricConfig) metricFscacheIoMisfit {
 	m := metricFscacheIoMisfit{config: cfg}
 
 	if cfg.Enabled {
@@ -734,9 +741,9 @@ func newMetricFscacheIoMisfit(cfg MetricConfig) metricFscacheIoMisfit {
 }
 
 type metricFscacheIoRead struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric            // data buffer for generated metric.
+	config   FscacheIoReadMetricConfig // metric config provided by user.
+	capacity int                       // max observed number of data points added to the metric.
 }
 
 // init fills fscache.io.read metric with initial data.
@@ -775,7 +782,7 @@ func (m *metricFscacheIoRead) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheIoRead(cfg MetricConfig) metricFscacheIoRead {
+func newMetricFscacheIoRead(cfg FscacheIoReadMetricConfig) metricFscacheIoRead {
 	m := metricFscacheIoRead{config: cfg}
 
 	if cfg.Enabled {
@@ -786,9 +793,9 @@ func newMetricFscacheIoRead(cfg MetricConfig) metricFscacheIoRead {
 }
 
 type metricFscacheIoWrite struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric             // data buffer for generated metric.
+	config   FscacheIoWriteMetricConfig // metric config provided by user.
+	capacity int                        // max observed number of data points added to the metric.
 }
 
 // init fills fscache.io.write metric with initial data.
@@ -827,7 +834,7 @@ func (m *metricFscacheIoWrite) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheIoWrite(cfg MetricConfig) metricFscacheIoWrite {
+func newMetricFscacheIoWrite(cfg FscacheIoWriteMetricConfig) metricFscacheIoWrite {
 	m := metricFscacheIoWrite{config: cfg}
 
 	if cfg.Enabled {
@@ -838,9 +845,9 @@ func newMetricFscacheIoWrite(cfg MetricConfig) metricFscacheIoWrite {
 }
 
 type metricFscacheLruCount struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   FscacheLruCountMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills fscache.lru.count metric with initial data.
@@ -879,7 +886,7 @@ func (m *metricFscacheLruCount) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheLruCount(cfg MetricConfig) metricFscacheLruCount {
+func newMetricFscacheLruCount(cfg FscacheLruCountMetricConfig) metricFscacheLruCount {
 	m := metricFscacheLruCount{config: cfg}
 
 	if cfg.Enabled {
@@ -890,9 +897,9 @@ func newMetricFscacheLruCount(cfg MetricConfig) metricFscacheLruCount {
 }
 
 type metricFscacheLruDropped struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   FscacheLruDroppedMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills fscache.lru.dropped metric with initial data.
@@ -931,7 +938,7 @@ func (m *metricFscacheLruDropped) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheLruDropped(cfg MetricConfig) metricFscacheLruDropped {
+func newMetricFscacheLruDropped(cfg FscacheLruDroppedMetricConfig) metricFscacheLruDropped {
 	m := metricFscacheLruDropped{config: cfg}
 
 	if cfg.Enabled {
@@ -942,9 +949,9 @@ func newMetricFscacheLruDropped(cfg MetricConfig) metricFscacheLruDropped {
 }
 
 type metricFscacheLruExpired struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   FscacheLruExpiredMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills fscache.lru.expired metric with initial data.
@@ -983,7 +990,7 @@ func (m *metricFscacheLruExpired) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheLruExpired(cfg MetricConfig) metricFscacheLruExpired {
+func newMetricFscacheLruExpired(cfg FscacheLruExpiredMetricConfig) metricFscacheLruExpired {
 	m := metricFscacheLruExpired{config: cfg}
 
 	if cfg.Enabled {
@@ -994,9 +1001,9 @@ func newMetricFscacheLruExpired(cfg MetricConfig) metricFscacheLruExpired {
 }
 
 type metricFscacheLruRemoved struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   FscacheLruRemovedMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills fscache.lru.removed metric with initial data.
@@ -1035,7 +1042,7 @@ func (m *metricFscacheLruRemoved) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheLruRemoved(cfg MetricConfig) metricFscacheLruRemoved {
+func newMetricFscacheLruRemoved(cfg FscacheLruRemovedMetricConfig) metricFscacheLruRemoved {
 	m := metricFscacheLruRemoved{config: cfg}
 
 	if cfg.Enabled {
@@ -1046,9 +1053,9 @@ func newMetricFscacheLruRemoved(cfg MetricConfig) metricFscacheLruRemoved {
 }
 
 type metricFscacheNospaceCreate struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   FscacheNospaceCreateMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills fscache.nospace.create metric with initial data.
@@ -1087,7 +1094,7 @@ func (m *metricFscacheNospaceCreate) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheNospaceCreate(cfg MetricConfig) metricFscacheNospaceCreate {
+func newMetricFscacheNospaceCreate(cfg FscacheNospaceCreateMetricConfig) metricFscacheNospaceCreate {
 	m := metricFscacheNospaceCreate{config: cfg}
 
 	if cfg.Enabled {
@@ -1098,9 +1105,9 @@ func newMetricFscacheNospaceCreate(cfg MetricConfig) metricFscacheNospaceCreate 
 }
 
 type metricFscacheNospaceCull struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   FscacheNospaceCullMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills fscache.nospace.cull metric with initial data.
@@ -1139,7 +1146,7 @@ func (m *metricFscacheNospaceCull) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheNospaceCull(cfg MetricConfig) metricFscacheNospaceCull {
+func newMetricFscacheNospaceCull(cfg FscacheNospaceCullMetricConfig) metricFscacheNospaceCull {
 	m := metricFscacheNospaceCull{config: cfg}
 
 	if cfg.Enabled {
@@ -1150,9 +1157,9 @@ func newMetricFscacheNospaceCull(cfg MetricConfig) metricFscacheNospaceCull {
 }
 
 type metricFscacheNospaceWrite struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   FscacheNospaceWriteMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills fscache.nospace.write metric with initial data.
@@ -1191,7 +1198,7 @@ func (m *metricFscacheNospaceWrite) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheNospaceWrite(cfg MetricConfig) metricFscacheNospaceWrite {
+func newMetricFscacheNospaceWrite(cfg FscacheNospaceWriteMetricConfig) metricFscacheNospaceWrite {
 	m := metricFscacheNospaceWrite{config: cfg}
 
 	if cfg.Enabled {
@@ -1202,9 +1209,9 @@ func newMetricFscacheNospaceWrite(cfg MetricConfig) metricFscacheNospaceWrite {
 }
 
 type metricFscacheRelinquishDrop struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                    // data buffer for generated metric.
+	config   FscacheRelinquishDropMetricConfig // metric config provided by user.
+	capacity int                               // max observed number of data points added to the metric.
 }
 
 // init fills fscache.relinquish.drop metric with initial data.
@@ -1243,7 +1250,7 @@ func (m *metricFscacheRelinquishDrop) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheRelinquishDrop(cfg MetricConfig) metricFscacheRelinquishDrop {
+func newMetricFscacheRelinquishDrop(cfg FscacheRelinquishDropMetricConfig) metricFscacheRelinquishDrop {
 	m := metricFscacheRelinquishDrop{config: cfg}
 
 	if cfg.Enabled {
@@ -1254,9 +1261,9 @@ func newMetricFscacheRelinquishDrop(cfg MetricConfig) metricFscacheRelinquishDro
 }
 
 type metricFscacheRelinquishRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                        // data buffer for generated metric.
+	config   FscacheRelinquishRequestsMetricConfig // metric config provided by user.
+	capacity int                                   // max observed number of data points added to the metric.
 }
 
 // init fills fscache.relinquish.requests metric with initial data.
@@ -1295,7 +1302,7 @@ func (m *metricFscacheRelinquishRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheRelinquishRequests(cfg MetricConfig) metricFscacheRelinquishRequests {
+func newMetricFscacheRelinquishRequests(cfg FscacheRelinquishRequestsMetricConfig) metricFscacheRelinquishRequests {
 	m := metricFscacheRelinquishRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -1306,9 +1313,9 @@ func newMetricFscacheRelinquishRequests(cfg MetricConfig) metricFscacheRelinquis
 }
 
 type metricFscacheRelinquishRetire struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                      // data buffer for generated metric.
+	config   FscacheRelinquishRetireMetricConfig // metric config provided by user.
+	capacity int                                 // max observed number of data points added to the metric.
 }
 
 // init fills fscache.relinquish.retire metric with initial data.
@@ -1347,7 +1354,7 @@ func (m *metricFscacheRelinquishRetire) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheRelinquishRetire(cfg MetricConfig) metricFscacheRelinquishRetire {
+func newMetricFscacheRelinquishRetire(cfg FscacheRelinquishRetireMetricConfig) metricFscacheRelinquishRetire {
 	m := metricFscacheRelinquishRetire{config: cfg}
 
 	if cfg.Enabled {
@@ -1358,9 +1365,9 @@ func newMetricFscacheRelinquishRetire(cfg MetricConfig) metricFscacheRelinquishR
 }
 
 type metricFscacheUpdatesRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   FscacheUpdatesRequestsMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills fscache.updates.requests metric with initial data.
@@ -1399,7 +1406,7 @@ func (m *metricFscacheUpdatesRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheUpdatesRequests(cfg MetricConfig) metricFscacheUpdatesRequests {
+func newMetricFscacheUpdatesRequests(cfg FscacheUpdatesRequestsMetricConfig) metricFscacheUpdatesRequests {
 	m := metricFscacheUpdatesRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -1410,9 +1417,9 @@ func newMetricFscacheUpdatesRequests(cfg MetricConfig) metricFscacheUpdatesReque
 }
 
 type metricFscacheUpdatesResize struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   FscacheUpdatesResizeMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills fscache.updates.resize metric with initial data.
@@ -1451,7 +1458,7 @@ func (m *metricFscacheUpdatesResize) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheUpdatesResize(cfg MetricConfig) metricFscacheUpdatesResize {
+func newMetricFscacheUpdatesResize(cfg FscacheUpdatesResizeMetricConfig) metricFscacheUpdatesResize {
 	m := metricFscacheUpdatesResize{config: cfg}
 
 	if cfg.Enabled {
@@ -1462,9 +1469,9 @@ func newMetricFscacheUpdatesResize(cfg MetricConfig) metricFscacheUpdatesResize 
 }
 
 type metricFscacheUpdatesResizeSkipped struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                          // data buffer for generated metric.
+	config   FscacheUpdatesResizeSkippedMetricConfig // metric config provided by user.
+	capacity int                                     // max observed number of data points added to the metric.
 }
 
 // init fills fscache.updates.resize_skipped metric with initial data.
@@ -1503,7 +1510,7 @@ func (m *metricFscacheUpdatesResizeSkipped) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheUpdatesResizeSkipped(cfg MetricConfig) metricFscacheUpdatesResizeSkipped {
+func newMetricFscacheUpdatesResizeSkipped(cfg FscacheUpdatesResizeSkippedMetricConfig) metricFscacheUpdatesResizeSkipped {
 	m := metricFscacheUpdatesResizeSkipped{config: cfg}
 
 	if cfg.Enabled {
@@ -1514,9 +1521,9 @@ func newMetricFscacheUpdatesResizeSkipped(cfg MetricConfig) metricFscacheUpdates
 }
 
 type metricNetfsCacheReadDone struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   NetfsCacheReadDoneMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_read.done metric with initial data.
@@ -1555,7 +1562,7 @@ func (m *metricNetfsCacheReadDone) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheReadDone(cfg MetricConfig) metricNetfsCacheReadDone {
+func newMetricNetfsCacheReadDone(cfg NetfsCacheReadDoneMetricConfig) metricNetfsCacheReadDone {
 	m := metricNetfsCacheReadDone{config: cfg}
 
 	if cfg.Enabled {
@@ -1566,9 +1573,9 @@ func newMetricNetfsCacheReadDone(cfg MetricConfig) metricNetfsCacheReadDone {
 }
 
 type metricNetfsCacheReadFailed struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsCacheReadFailedMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_read.failed metric with initial data.
@@ -1607,7 +1614,7 @@ func (m *metricNetfsCacheReadFailed) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheReadFailed(cfg MetricConfig) metricNetfsCacheReadFailed {
+func newMetricNetfsCacheReadFailed(cfg NetfsCacheReadFailedMetricConfig) metricNetfsCacheReadFailed {
 	m := metricNetfsCacheReadFailed{config: cfg}
 
 	if cfg.Enabled {
@@ -1618,9 +1625,9 @@ func newMetricNetfsCacheReadFailed(cfg MetricConfig) metricNetfsCacheReadFailed 
 }
 
 type metricNetfsCacheReadRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   NetfsCacheReadRequestsMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_read.requests metric with initial data.
@@ -1659,7 +1666,7 @@ func (m *metricNetfsCacheReadRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheReadRequests(cfg MetricConfig) metricNetfsCacheReadRequests {
+func newMetricNetfsCacheReadRequests(cfg NetfsCacheReadRequestsMetricConfig) metricNetfsCacheReadRequests {
 	m := metricNetfsCacheReadRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -1670,9 +1677,9 @@ func newMetricNetfsCacheReadRequests(cfg MetricConfig) metricNetfsCacheReadReque
 }
 
 type metricNetfsCacheWriteDone struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsCacheWriteDoneMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_write.done metric with initial data.
@@ -1711,7 +1718,7 @@ func (m *metricNetfsCacheWriteDone) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheWriteDone(cfg MetricConfig) metricNetfsCacheWriteDone {
+func newMetricNetfsCacheWriteDone(cfg NetfsCacheWriteDoneMetricConfig) metricNetfsCacheWriteDone {
 	m := metricNetfsCacheWriteDone{config: cfg}
 
 	if cfg.Enabled {
@@ -1722,9 +1729,9 @@ func newMetricNetfsCacheWriteDone(cfg MetricConfig) metricNetfsCacheWriteDone {
 }
 
 type metricNetfsCacheWriteFailed struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                    // data buffer for generated metric.
+	config   NetfsCacheWriteFailedMetricConfig // metric config provided by user.
+	capacity int                               // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_write.failed metric with initial data.
@@ -1763,7 +1770,7 @@ func (m *metricNetfsCacheWriteFailed) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheWriteFailed(cfg MetricConfig) metricNetfsCacheWriteFailed {
+func newMetricNetfsCacheWriteFailed(cfg NetfsCacheWriteFailedMetricConfig) metricNetfsCacheWriteFailed {
 	m := metricNetfsCacheWriteFailed{config: cfg}
 
 	if cfg.Enabled {
@@ -1774,9 +1781,9 @@ func newMetricNetfsCacheWriteFailed(cfg MetricConfig) metricNetfsCacheWriteFaile
 }
 
 type metricNetfsCacheWriteRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                      // data buffer for generated metric.
+	config   NetfsCacheWriteRequestsMetricConfig // metric config provided by user.
+	capacity int                                 // max observed number of data points added to the metric.
 }
 
 // init fills netfs.cache_write.requests metric with initial data.
@@ -1815,7 +1822,7 @@ func (m *metricNetfsCacheWriteRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsCacheWriteRequests(cfg MetricConfig) metricNetfsCacheWriteRequests {
+func newMetricNetfsCacheWriteRequests(cfg NetfsCacheWriteRequestsMetricConfig) metricNetfsCacheWriteRequests {
 	m := metricNetfsCacheWriteRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -1826,9 +1833,9 @@ func newMetricNetfsCacheWriteRequests(cfg MetricConfig) metricNetfsCacheWriteReq
 }
 
 type metricNetfsDownloadDone struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   NetfsDownloadDoneMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills netfs.download.done metric with initial data.
@@ -1867,7 +1874,7 @@ func (m *metricNetfsDownloadDone) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsDownloadDone(cfg MetricConfig) metricNetfsDownloadDone {
+func newMetricNetfsDownloadDone(cfg NetfsDownloadDoneMetricConfig) metricNetfsDownloadDone {
 	m := metricNetfsDownloadDone{config: cfg}
 
 	if cfg.Enabled {
@@ -1878,9 +1885,9 @@ func newMetricNetfsDownloadDone(cfg MetricConfig) metricNetfsDownloadDone {
 }
 
 type metricNetfsDownloadFailed struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsDownloadFailedMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.download.failed metric with initial data.
@@ -1919,7 +1926,7 @@ func (m *metricNetfsDownloadFailed) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsDownloadFailed(cfg MetricConfig) metricNetfsDownloadFailed {
+func newMetricNetfsDownloadFailed(cfg NetfsDownloadFailedMetricConfig) metricNetfsDownloadFailed {
 	m := metricNetfsDownloadFailed{config: cfg}
 
 	if cfg.Enabled {
@@ -1930,9 +1937,9 @@ func newMetricNetfsDownloadFailed(cfg MetricConfig) metricNetfsDownloadFailed {
 }
 
 type metricNetfsDownloadInstead struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsDownloadInsteadMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.download.instead metric with initial data.
@@ -1971,7 +1978,7 @@ func (m *metricNetfsDownloadInstead) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsDownloadInstead(cfg MetricConfig) metricNetfsDownloadInstead {
+func newMetricNetfsDownloadInstead(cfg NetfsDownloadInsteadMetricConfig) metricNetfsDownloadInstead {
 	m := metricNetfsDownloadInstead{config: cfg}
 
 	if cfg.Enabled {
@@ -1982,9 +1989,9 @@ func newMetricNetfsDownloadInstead(cfg MetricConfig) metricNetfsDownloadInstead 
 }
 
 type metricNetfsDownloadRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                    // data buffer for generated metric.
+	config   NetfsDownloadRequestsMetricConfig // metric config provided by user.
+	capacity int                               // max observed number of data points added to the metric.
 }
 
 // init fills netfs.download.requests metric with initial data.
@@ -2023,7 +2030,7 @@ func (m *metricNetfsDownloadRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsDownloadRequests(cfg MetricConfig) metricNetfsDownloadRequests {
+func newMetricNetfsDownloadRequests(cfg NetfsDownloadRequestsMetricConfig) metricNetfsDownloadRequests {
 	m := metricNetfsDownloadRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -2034,9 +2041,9 @@ func newMetricNetfsDownloadRequests(cfg MetricConfig) metricNetfsDownloadRequest
 }
 
 type metricNetfsObjectsFolioQueue struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   NetfsObjectsFolioQueueMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills netfs.objects.folio_queue metric with initial data.
@@ -2075,7 +2082,7 @@ func (m *metricNetfsObjectsFolioQueue) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsObjectsFolioQueue(cfg MetricConfig) metricNetfsObjectsFolioQueue {
+func newMetricNetfsObjectsFolioQueue(cfg NetfsObjectsFolioQueueMetricConfig) metricNetfsObjectsFolioQueue {
 	m := metricNetfsObjectsFolioQueue{config: cfg}
 
 	if cfg.Enabled {
@@ -2086,9 +2093,9 @@ func newMetricNetfsObjectsFolioQueue(cfg MetricConfig) metricNetfsObjectsFolioQu
 }
 
 type metricNetfsObjectsReadReqs struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsObjectsReadReqsMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.objects.read_reqs metric with initial data.
@@ -2127,7 +2134,7 @@ func (m *metricNetfsObjectsReadReqs) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsObjectsReadReqs(cfg MetricConfig) metricNetfsObjectsReadReqs {
+func newMetricNetfsObjectsReadReqs(cfg NetfsObjectsReadReqsMetricConfig) metricNetfsObjectsReadReqs {
 	m := metricNetfsObjectsReadReqs{config: cfg}
 
 	if cfg.Enabled {
@@ -2138,9 +2145,9 @@ func newMetricNetfsObjectsReadReqs(cfg MetricConfig) metricNetfsObjectsReadReqs 
 }
 
 type metricNetfsObjectsSubreqs struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsObjectsSubreqsMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.objects.subreqs metric with initial data.
@@ -2179,7 +2186,7 @@ func (m *metricNetfsObjectsSubreqs) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsObjectsSubreqs(cfg MetricConfig) metricNetfsObjectsSubreqs {
+func newMetricNetfsObjectsSubreqs(cfg NetfsObjectsSubreqsMetricConfig) metricNetfsObjectsSubreqs {
 	m := metricNetfsObjectsSubreqs{config: cfg}
 
 	if cfg.Enabled {
@@ -2190,9 +2197,9 @@ func newMetricNetfsObjectsSubreqs(cfg MetricConfig) metricNetfsObjectsSubreqs {
 }
 
 type metricNetfsObjectsWriteConflicts struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                         // data buffer for generated metric.
+	config   NetfsObjectsWriteConflictsMetricConfig // metric config provided by user.
+	capacity int                                    // max observed number of data points added to the metric.
 }
 
 // init fills netfs.objects.write_conflicts metric with initial data.
@@ -2231,7 +2238,7 @@ func (m *metricNetfsObjectsWriteConflicts) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsObjectsWriteConflicts(cfg MetricConfig) metricNetfsObjectsWriteConflicts {
+func newMetricNetfsObjectsWriteConflicts(cfg NetfsObjectsWriteConflictsMetricConfig) metricNetfsObjectsWriteConflicts {
 	m := metricNetfsObjectsWriteConflicts{config: cfg}
 
 	if cfg.Enabled {
@@ -2242,9 +2249,9 @@ func newMetricNetfsObjectsWriteConflicts(cfg MetricConfig) metricNetfsObjectsWri
 }
 
 type metricNetfsReadsDirect struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   NetfsReadsDirectMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.direct metric with initial data.
@@ -2283,7 +2290,7 @@ func (m *metricNetfsReadsDirect) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsDirect(cfg MetricConfig) metricNetfsReadsDirect {
+func newMetricNetfsReadsDirect(cfg NetfsReadsDirectMetricConfig) metricNetfsReadsDirect {
 	m := metricNetfsReadsDirect{config: cfg}
 
 	if cfg.Enabled {
@@ -2294,9 +2301,9 @@ func newMetricNetfsReadsDirect(cfg MetricConfig) metricNetfsReadsDirect {
 }
 
 type metricNetfsReadsFolio struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   NetfsReadsFolioMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.folio metric with initial data.
@@ -2335,7 +2342,7 @@ func (m *metricNetfsReadsFolio) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsFolio(cfg MetricConfig) metricNetfsReadsFolio {
+func newMetricNetfsReadsFolio(cfg NetfsReadsFolioMetricConfig) metricNetfsReadsFolio {
 	m := metricNetfsReadsFolio{config: cfg}
 
 	if cfg.Enabled {
@@ -2346,9 +2353,9 @@ func newMetricNetfsReadsFolio(cfg MetricConfig) metricNetfsReadsFolio {
 }
 
 type metricNetfsReadsReadahead struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsReadsReadaheadMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.readahead metric with initial data.
@@ -2387,7 +2394,7 @@ func (m *metricNetfsReadsReadahead) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsReadahead(cfg MetricConfig) metricNetfsReadsReadahead {
+func newMetricNetfsReadsReadahead(cfg NetfsReadsReadaheadMetricConfig) metricNetfsReadsReadahead {
 	m := metricNetfsReadsReadahead{config: cfg}
 
 	if cfg.Enabled {
@@ -2398,9 +2405,9 @@ func newMetricNetfsReadsReadahead(cfg MetricConfig) metricNetfsReadsReadahead {
 }
 
 type metricNetfsReadsSingle struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   NetfsReadsSingleMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.single metric with initial data.
@@ -2439,7 +2446,7 @@ func (m *metricNetfsReadsSingle) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsSingle(cfg MetricConfig) metricNetfsReadsSingle {
+func newMetricNetfsReadsSingle(cfg NetfsReadsSingleMetricConfig) metricNetfsReadsSingle {
 	m := metricNetfsReadsSingle{config: cfg}
 
 	if cfg.Enabled {
@@ -2450,9 +2457,9 @@ func newMetricNetfsReadsSingle(cfg MetricConfig) metricNetfsReadsSingle {
 }
 
 type metricNetfsReadsWriteBegin struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsReadsWriteBeginMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.write_begin metric with initial data.
@@ -2491,7 +2498,7 @@ func (m *metricNetfsReadsWriteBegin) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsWriteBegin(cfg MetricConfig) metricNetfsReadsWriteBegin {
+func newMetricNetfsReadsWriteBegin(cfg NetfsReadsWriteBeginMetricConfig) metricNetfsReadsWriteBegin {
 	m := metricNetfsReadsWriteBegin{config: cfg}
 
 	if cfg.Enabled {
@@ -2502,9 +2509,9 @@ func newMetricNetfsReadsWriteBegin(cfg MetricConfig) metricNetfsReadsWriteBegin 
 }
 
 type metricNetfsReadsWriteZskip struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsReadsWriteZskipMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.reads.write_zskip metric with initial data.
@@ -2543,7 +2550,7 @@ func (m *metricNetfsReadsWriteZskip) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsReadsWriteZskip(cfg MetricConfig) metricNetfsReadsWriteZskip {
+func newMetricNetfsReadsWriteZskip(cfg NetfsReadsWriteZskipMetricConfig) metricNetfsReadsWriteZskip {
 	m := metricNetfsReadsWriteZskip{config: cfg}
 
 	if cfg.Enabled {
@@ -2554,9 +2561,9 @@ func newMetricNetfsReadsWriteZskip(cfg MetricConfig) metricNetfsReadsWriteZskip 
 }
 
 type metricNetfsRetriesReadReq struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsRetriesReadReqMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.retries.read_req metric with initial data.
@@ -2595,7 +2602,7 @@ func (m *metricNetfsRetriesReadReq) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsRetriesReadReq(cfg MetricConfig) metricNetfsRetriesReadReq {
+func newMetricNetfsRetriesReadReq(cfg NetfsRetriesReadReqMetricConfig) metricNetfsRetriesReadReq {
 	m := metricNetfsRetriesReadReq{config: cfg}
 
 	if cfg.Enabled {
@@ -2606,9 +2613,9 @@ func newMetricNetfsRetriesReadReq(cfg MetricConfig) metricNetfsRetriesReadReq {
 }
 
 type metricNetfsRetriesReadSubreq struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   NetfsRetriesReadSubreqMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills netfs.retries.read_subreq metric with initial data.
@@ -2647,7 +2654,7 @@ func (m *metricNetfsRetriesReadSubreq) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsRetriesReadSubreq(cfg MetricConfig) metricNetfsRetriesReadSubreq {
+func newMetricNetfsRetriesReadSubreq(cfg NetfsRetriesReadSubreqMetricConfig) metricNetfsRetriesReadSubreq {
 	m := metricNetfsRetriesReadSubreq{config: cfg}
 
 	if cfg.Enabled {
@@ -2658,9 +2665,9 @@ func newMetricNetfsRetriesReadSubreq(cfg MetricConfig) metricNetfsRetriesReadSub
 }
 
 type metricNetfsRetriesWriteReq struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                   // data buffer for generated metric.
+	config   NetfsRetriesWriteReqMetricConfig // metric config provided by user.
+	capacity int                              // max observed number of data points added to the metric.
 }
 
 // init fills netfs.retries.write_req metric with initial data.
@@ -2699,7 +2706,7 @@ func (m *metricNetfsRetriesWriteReq) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsRetriesWriteReq(cfg MetricConfig) metricNetfsRetriesWriteReq {
+func newMetricNetfsRetriesWriteReq(cfg NetfsRetriesWriteReqMetricConfig) metricNetfsRetriesWriteReq {
 	m := metricNetfsRetriesWriteReq{config: cfg}
 
 	if cfg.Enabled {
@@ -2710,9 +2717,9 @@ func newMetricNetfsRetriesWriteReq(cfg MetricConfig) metricNetfsRetriesWriteReq 
 }
 
 type metricNetfsRetriesWriteSubreq struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                      // data buffer for generated metric.
+	config   NetfsRetriesWriteSubreqMetricConfig // metric config provided by user.
+	capacity int                                 // max observed number of data points added to the metric.
 }
 
 // init fills netfs.retries.write_subreq metric with initial data.
@@ -2751,7 +2758,7 @@ func (m *metricNetfsRetriesWriteSubreq) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsRetriesWriteSubreq(cfg MetricConfig) metricNetfsRetriesWriteSubreq {
+func newMetricNetfsRetriesWriteSubreq(cfg NetfsRetriesWriteSubreqMetricConfig) metricNetfsRetriesWriteSubreq {
 	m := metricNetfsRetriesWriteSubreq{config: cfg}
 
 	if cfg.Enabled {
@@ -2762,9 +2769,9 @@ func newMetricNetfsRetriesWriteSubreq(cfg MetricConfig) metricNetfsRetriesWriteS
 }
 
 type metricNetfsUploadDone struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   NetfsUploadDoneMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills netfs.upload.done metric with initial data.
@@ -2803,7 +2810,7 @@ func (m *metricNetfsUploadDone) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsUploadDone(cfg MetricConfig) metricNetfsUploadDone {
+func newMetricNetfsUploadDone(cfg NetfsUploadDoneMetricConfig) metricNetfsUploadDone {
 	m := metricNetfsUploadDone{config: cfg}
 
 	if cfg.Enabled {
@@ -2814,9 +2821,9 @@ func newMetricNetfsUploadDone(cfg MetricConfig) metricNetfsUploadDone {
 }
 
 type metricNetfsUploadFailed struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   NetfsUploadFailedMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills netfs.upload.failed metric with initial data.
@@ -2855,7 +2862,7 @@ func (m *metricNetfsUploadFailed) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsUploadFailed(cfg MetricConfig) metricNetfsUploadFailed {
+func newMetricNetfsUploadFailed(cfg NetfsUploadFailedMetricConfig) metricNetfsUploadFailed {
 	m := metricNetfsUploadFailed{config: cfg}
 
 	if cfg.Enabled {
@@ -2866,9 +2873,9 @@ func newMetricNetfsUploadFailed(cfg MetricConfig) metricNetfsUploadFailed {
 }
 
 type metricNetfsUploadRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsUploadRequestsMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.upload.requests metric with initial data.
@@ -2907,7 +2914,7 @@ func (m *metricNetfsUploadRequests) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsUploadRequests(cfg MetricConfig) metricNetfsUploadRequests {
+func newMetricNetfsUploadRequests(cfg NetfsUploadRequestsMetricConfig) metricNetfsUploadRequests {
 	m := metricNetfsUploadRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -2918,9 +2925,9 @@ func newMetricNetfsUploadRequests(cfg MetricConfig) metricNetfsUploadRequests {
 }
 
 type metricNetfsWblockSkip struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   NetfsWblockSkipMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills netfs.wblock.skip metric with initial data.
@@ -2959,7 +2966,7 @@ func (m *metricNetfsWblockSkip) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWblockSkip(cfg MetricConfig) metricNetfsWblockSkip {
+func newMetricNetfsWblockSkip(cfg NetfsWblockSkipMetricConfig) metricNetfsWblockSkip {
 	m := metricNetfsWblockSkip{config: cfg}
 
 	if cfg.Enabled {
@@ -2970,9 +2977,9 @@ func newMetricNetfsWblockSkip(cfg MetricConfig) metricNetfsWblockSkip {
 }
 
 type metricNetfsWblockWait struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   NetfsWblockWaitMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills netfs.wblock.wait metric with initial data.
@@ -3011,7 +3018,7 @@ func (m *metricNetfsWblockWait) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWblockWait(cfg MetricConfig) metricNetfsWblockWait {
+func newMetricNetfsWblockWait(cfg NetfsWblockWaitMetricConfig) metricNetfsWblockWait {
 	m := metricNetfsWblockWait{config: cfg}
 
 	if cfg.Enabled {
@@ -3022,9 +3029,9 @@ func newMetricNetfsWblockWait(cfg MetricConfig) metricNetfsWblockWait {
 }
 
 type metricNetfsWritesBuffered struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   NetfsWritesBufferedMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
 }
 
 // init fills netfs.writes.buffered metric with initial data.
@@ -3063,7 +3070,7 @@ func (m *metricNetfsWritesBuffered) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWritesBuffered(cfg MetricConfig) metricNetfsWritesBuffered {
+func newMetricNetfsWritesBuffered(cfg NetfsWritesBufferedMetricConfig) metricNetfsWritesBuffered {
 	m := metricNetfsWritesBuffered{config: cfg}
 
 	if cfg.Enabled {
@@ -3074,9 +3081,9 @@ func newMetricNetfsWritesBuffered(cfg MetricConfig) metricNetfsWritesBuffered {
 }
 
 type metricNetfsWritesCopyToCache struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   NetfsWritesCopyToCacheMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills netfs.writes.copy_to_cache metric with initial data.
@@ -3115,7 +3122,7 @@ func (m *metricNetfsWritesCopyToCache) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWritesCopyToCache(cfg MetricConfig) metricNetfsWritesCopyToCache {
+func newMetricNetfsWritesCopyToCache(cfg NetfsWritesCopyToCacheMetricConfig) metricNetfsWritesCopyToCache {
 	m := metricNetfsWritesCopyToCache{config: cfg}
 
 	if cfg.Enabled {
@@ -3126,9 +3133,9 @@ func newMetricNetfsWritesCopyToCache(cfg MetricConfig) metricNetfsWritesCopyToCa
 }
 
 type metricNetfsWritesDirect struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   NetfsWritesDirectMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills netfs.writes.direct metric with initial data.
@@ -3167,7 +3174,7 @@ func (m *metricNetfsWritesDirect) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWritesDirect(cfg MetricConfig) metricNetfsWritesDirect {
+func newMetricNetfsWritesDirect(cfg NetfsWritesDirectMetricConfig) metricNetfsWritesDirect {
 	m := metricNetfsWritesDirect{config: cfg}
 
 	if cfg.Enabled {
@@ -3178,9 +3185,9 @@ func newMetricNetfsWritesDirect(cfg MetricConfig) metricNetfsWritesDirect {
 }
 
 type metricNetfsWritesPages struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   NetfsWritesPagesMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills netfs.writes.pages metric with initial data.
@@ -3219,7 +3226,7 @@ func (m *metricNetfsWritesPages) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWritesPages(cfg MetricConfig) metricNetfsWritesPages {
+func newMetricNetfsWritesPages(cfg NetfsWritesPagesMetricConfig) metricNetfsWritesPages {
 	m := metricNetfsWritesPages{config: cfg}
 
 	if cfg.Enabled {
@@ -3230,9 +3237,9 @@ func newMetricNetfsWritesPages(cfg MetricConfig) metricNetfsWritesPages {
 }
 
 type metricNetfsWritesWritethrough struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                      // data buffer for generated metric.
+	config   NetfsWritesWritethroughMetricConfig // metric config provided by user.
+	capacity int                                 // max observed number of data points added to the metric.
 }
 
 // init fills netfs.writes.writethrough metric with initial data.
@@ -3271,7 +3278,7 @@ func (m *metricNetfsWritesWritethrough) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsWritesWritethrough(cfg MetricConfig) metricNetfsWritesWritethrough {
+func newMetricNetfsWritesWritethrough(cfg NetfsWritesWritethroughMetricConfig) metricNetfsWritesWritethrough {
 	m := metricNetfsWritesWritethrough{config: cfg}
 
 	if cfg.Enabled {
@@ -3282,9 +3289,9 @@ func newMetricNetfsWritesWritethrough(cfg MetricConfig) metricNetfsWritesWriteth
 }
 
 type metricNetfsZeroOpsShort struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   NetfsZeroOpsShortMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills netfs.zero_ops.short metric with initial data.
@@ -3323,7 +3330,7 @@ func (m *metricNetfsZeroOpsShort) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsZeroOpsShort(cfg MetricConfig) metricNetfsZeroOpsShort {
+func newMetricNetfsZeroOpsShort(cfg NetfsZeroOpsShortMetricConfig) metricNetfsZeroOpsShort {
 	m := metricNetfsZeroOpsShort{config: cfg}
 
 	if cfg.Enabled {
@@ -3334,9 +3341,9 @@ func newMetricNetfsZeroOpsShort(cfg MetricConfig) metricNetfsZeroOpsShort {
 }
 
 type metricNetfsZeroOpsSkip struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   NetfsZeroOpsSkipMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills netfs.zero_ops.skip metric with initial data.
@@ -3375,7 +3382,7 @@ func (m *metricNetfsZeroOpsSkip) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsZeroOpsSkip(cfg MetricConfig) metricNetfsZeroOpsSkip {
+func newMetricNetfsZeroOpsSkip(cfg NetfsZeroOpsSkipMetricConfig) metricNetfsZeroOpsSkip {
 	m := metricNetfsZeroOpsSkip{config: cfg}
 
 	if cfg.Enabled {
@@ -3386,9 +3393,9 @@ func newMetricNetfsZeroOpsSkip(cfg MetricConfig) metricNetfsZeroOpsSkip {
 }
 
 type metricNetfsZeroOpsZero struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric               // data buffer for generated metric.
+	config   NetfsZeroOpsZeroMetricConfig // metric config provided by user.
+	capacity int                          // max observed number of data points added to the metric.
 }
 
 // init fills netfs.zero_ops.zero metric with initial data.
@@ -3427,7 +3434,7 @@ func (m *metricNetfsZeroOpsZero) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNetfsZeroOpsZero(cfg MetricConfig) metricNetfsZeroOpsZero {
+func newMetricNetfsZeroOpsZero(cfg NetfsZeroOpsZeroMetricConfig) metricNetfsZeroOpsZero {
 	m := metricNetfsZeroOpsZero{config: cfg}
 
 	if cfg.Enabled {

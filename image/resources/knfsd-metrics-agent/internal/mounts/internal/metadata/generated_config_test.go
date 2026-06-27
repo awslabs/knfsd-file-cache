@@ -26,44 +26,70 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsMountOperationErrors: MetricConfig{
-						Enabled: true,
+					NfsMountOperationErrors: NfsMountOperationErrorsMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationErrorsMetricAttributeKey{NfsMountOperationErrorsMetricAttributeKeyServer, NfsMountOperationErrorsMetricAttributeKeyInstance, NfsMountOperationErrorsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationMajorTimeouts: MetricConfig{
-						Enabled: true,
+					NfsMountOperationMajorTimeouts: NfsMountOperationMajorTimeoutsMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationMajorTimeoutsMetricAttributeKey{NfsMountOperationMajorTimeoutsMetricAttributeKeyServer, NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance, NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationReceivedBytes: MetricConfig{
-						Enabled: true,
+					NfsMountOperationReceivedBytes: NfsMountOperationReceivedBytesMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationReceivedBytesMetricAttributeKey{NfsMountOperationReceivedBytesMetricAttributeKeyServer, NfsMountOperationReceivedBytesMetricAttributeKeyInstance, NfsMountOperationReceivedBytesMetricAttributeKeyOperation},
 					},
-					NfsMountOperationRequests: MetricConfig{
-						Enabled: true,
+					NfsMountOperationRequests: NfsMountOperationRequestsMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationRequestsMetricAttributeKey{NfsMountOperationRequestsMetricAttributeKeyServer, NfsMountOperationRequestsMetricAttributeKeyInstance, NfsMountOperationRequestsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationSentBytes: MetricConfig{
-						Enabled: true,
+					NfsMountOperationSentBytes: NfsMountOperationSentBytesMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationSentBytesMetricAttributeKey{NfsMountOperationSentBytesMetricAttributeKeyServer, NfsMountOperationSentBytesMetricAttributeKeyInstance, NfsMountOperationSentBytesMetricAttributeKeyOperation},
 					},
-					NfsMountOpsPerSecond: MetricConfig{
-						Enabled: true,
+					NfsMountOpsPerSecond: NfsMountOpsPerSecondMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountOpsPerSecondMetricAttributeKey{NfsMountOpsPerSecondMetricAttributeKeyServer, NfsMountOpsPerSecondMetricAttributeKeyInstance},
 					},
-					NfsMountReadBytes: MetricConfig{
-						Enabled: true,
+					NfsMountReadBytes: NfsMountReadBytesMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountReadBytesMetricAttributeKey{NfsMountReadBytesMetricAttributeKeyServer, NfsMountReadBytesMetricAttributeKeyInstance},
 					},
-					NfsMountReadExe: MetricConfig{
-						Enabled: true,
+					NfsMountReadExe: NfsMountReadExeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountReadExeMetricAttributeKey{NfsMountReadExeMetricAttributeKeyServer, NfsMountReadExeMetricAttributeKeyInstance},
 					},
-					NfsMountReadRtt: MetricConfig{
-						Enabled: true,
+					NfsMountReadRtt: NfsMountReadRttMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountReadRttMetricAttributeKey{NfsMountReadRttMetricAttributeKeyServer, NfsMountReadRttMetricAttributeKeyInstance},
 					},
-					NfsMountRPCBacklog: MetricConfig{
-						Enabled: true,
+					NfsMountRPCBacklog: NfsMountRPCBacklogMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountRPCBacklogMetricAttributeKey{NfsMountRPCBacklogMetricAttributeKeyServer, NfsMountRPCBacklogMetricAttributeKeyInstance},
 					},
-					NfsMountWriteBytes: MetricConfig{
-						Enabled: true,
+					NfsMountWriteBytes: NfsMountWriteBytesMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountWriteBytesMetricAttributeKey{NfsMountWriteBytesMetricAttributeKeyServer, NfsMountWriteBytesMetricAttributeKeyInstance},
 					},
-					NfsMountWriteExe: MetricConfig{
-						Enabled: true,
+					NfsMountWriteExe: NfsMountWriteExeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountWriteExeMetricAttributeKey{NfsMountWriteExeMetricAttributeKeyServer, NfsMountWriteExeMetricAttributeKeyInstance},
 					},
-					NfsMountWriteRtt: MetricConfig{
-						Enabled: true,
+					NfsMountWriteRtt: NfsMountWriteRttMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountWriteRttMetricAttributeKey{NfsMountWriteRttMetricAttributeKeyServer, NfsMountWriteRttMetricAttributeKeyInstance},
 					},
 				},
 			},
@@ -72,44 +98,70 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsMountOperationErrors: MetricConfig{
-						Enabled: false,
+					NfsMountOperationErrors: NfsMountOperationErrorsMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationErrorsMetricAttributeKey{NfsMountOperationErrorsMetricAttributeKeyServer, NfsMountOperationErrorsMetricAttributeKeyInstance, NfsMountOperationErrorsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationMajorTimeouts: MetricConfig{
-						Enabled: false,
+					NfsMountOperationMajorTimeouts: NfsMountOperationMajorTimeoutsMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationMajorTimeoutsMetricAttributeKey{NfsMountOperationMajorTimeoutsMetricAttributeKeyServer, NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance, NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationReceivedBytes: MetricConfig{
-						Enabled: false,
+					NfsMountOperationReceivedBytes: NfsMountOperationReceivedBytesMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationReceivedBytesMetricAttributeKey{NfsMountOperationReceivedBytesMetricAttributeKeyServer, NfsMountOperationReceivedBytesMetricAttributeKeyInstance, NfsMountOperationReceivedBytesMetricAttributeKeyOperation},
 					},
-					NfsMountOperationRequests: MetricConfig{
-						Enabled: false,
+					NfsMountOperationRequests: NfsMountOperationRequestsMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationRequestsMetricAttributeKey{NfsMountOperationRequestsMetricAttributeKeyServer, NfsMountOperationRequestsMetricAttributeKeyInstance, NfsMountOperationRequestsMetricAttributeKeyOperation},
 					},
-					NfsMountOperationSentBytes: MetricConfig{
-						Enabled: false,
+					NfsMountOperationSentBytes: NfsMountOperationSentBytesMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountOperationSentBytesMetricAttributeKey{NfsMountOperationSentBytesMetricAttributeKeyServer, NfsMountOperationSentBytesMetricAttributeKeyInstance, NfsMountOperationSentBytesMetricAttributeKeyOperation},
 					},
-					NfsMountOpsPerSecond: MetricConfig{
-						Enabled: false,
+					NfsMountOpsPerSecond: NfsMountOpsPerSecondMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountOpsPerSecondMetricAttributeKey{NfsMountOpsPerSecondMetricAttributeKeyServer, NfsMountOpsPerSecondMetricAttributeKeyInstance},
 					},
-					NfsMountReadBytes: MetricConfig{
-						Enabled: false,
+					NfsMountReadBytes: NfsMountReadBytesMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountReadBytesMetricAttributeKey{NfsMountReadBytesMetricAttributeKeyServer, NfsMountReadBytesMetricAttributeKeyInstance},
 					},
-					NfsMountReadExe: MetricConfig{
-						Enabled: false,
+					NfsMountReadExe: NfsMountReadExeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountReadExeMetricAttributeKey{NfsMountReadExeMetricAttributeKeyServer, NfsMountReadExeMetricAttributeKeyInstance},
 					},
-					NfsMountReadRtt: MetricConfig{
-						Enabled: false,
+					NfsMountReadRtt: NfsMountReadRttMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountReadRttMetricAttributeKey{NfsMountReadRttMetricAttributeKeyServer, NfsMountReadRttMetricAttributeKeyInstance},
 					},
-					NfsMountRPCBacklog: MetricConfig{
-						Enabled: false,
+					NfsMountRPCBacklog: NfsMountRPCBacklogMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountRPCBacklogMetricAttributeKey{NfsMountRPCBacklogMetricAttributeKeyServer, NfsMountRPCBacklogMetricAttributeKeyInstance},
 					},
-					NfsMountWriteBytes: MetricConfig{
-						Enabled: false,
+					NfsMountWriteBytes: NfsMountWriteBytesMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []NfsMountWriteBytesMetricAttributeKey{NfsMountWriteBytesMetricAttributeKeyServer, NfsMountWriteBytesMetricAttributeKeyInstance},
 					},
-					NfsMountWriteExe: MetricConfig{
-						Enabled: false,
+					NfsMountWriteExe: NfsMountWriteExeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountWriteExeMetricAttributeKey{NfsMountWriteExeMetricAttributeKeyServer, NfsMountWriteExeMetricAttributeKeyInstance},
 					},
-					NfsMountWriteRtt: MetricConfig{
-						Enabled: false,
+					NfsMountWriteRtt: NfsMountWriteRttMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []NfsMountWriteRttMetricAttributeKey{NfsMountWriteRttMetricAttributeKeyServer, NfsMountWriteRttMetricAttributeKeyInstance},
 					},
 				},
 			},
@@ -118,10 +170,165 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(NfsMountOperationErrorsMetricConfig{}, NfsMountOperationMajorTimeoutsMetricConfig{}, NfsMountOperationReceivedBytesMetricConfig{}, NfsMountOperationRequestsMetricConfig{}, NfsMountOperationSentBytesMetricConfig{}, NfsMountOpsPerSecondMetricConfig{}, NfsMountReadBytesMetricConfig{}, NfsMountReadExeMetricConfig{}, NfsMountReadRttMetricConfig{}, NfsMountRPCBacklogMetricConfig{}, NfsMountWriteBytesMetricConfig{}, NfsMountWriteExeMetricConfig{}, NfsMountWriteRttMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}
+}
+func TestNfsMountOperationErrorsMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOperationErrors
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOperationErrorsMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.operation.errors doesn't have an attribute invalid, valid attributes: [server, instance, operation]")
+
+	cfg = DefaultMetricsConfig().NfsMountOperationErrors
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountOperationMajorTimeoutsMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOperationMajorTimeouts
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOperationMajorTimeoutsMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.operation.major_timeouts doesn't have an attribute invalid, valid attributes: [server, instance, operation]")
+
+	cfg = DefaultMetricsConfig().NfsMountOperationMajorTimeouts
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountOperationReceivedBytesMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOperationReceivedBytes
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOperationReceivedBytesMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.operation.received_bytes doesn't have an attribute invalid, valid attributes: [server, instance, operation]")
+
+	cfg = DefaultMetricsConfig().NfsMountOperationReceivedBytes
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountOperationRequestsMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOperationRequests
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOperationRequestsMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.operation.requests doesn't have an attribute invalid, valid attributes: [server, instance, operation]")
+
+	cfg = DefaultMetricsConfig().NfsMountOperationRequests
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountOperationSentBytesMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOperationSentBytes
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOperationSentBytesMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.operation.sent_bytes doesn't have an attribute invalid, valid attributes: [server, instance, operation]")
+
+	cfg = DefaultMetricsConfig().NfsMountOperationSentBytes
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountOpsPerSecondMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountOpsPerSecond
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountOpsPerSecondMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.ops_per_second doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountOpsPerSecond
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountReadBytesMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountReadBytes
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountReadBytesMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.read_bytes doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountReadBytes
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountReadExeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountReadExe
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountReadExeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.read_exe doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountReadExe
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountReadRttMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountReadRtt
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountReadRttMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.read_rtt doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountReadRtt
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountRPCBacklogMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountRPCBacklog
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountRPCBacklogMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.rpc_backlog doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountRPCBacklog
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountWriteBytesMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountWriteBytes
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountWriteBytesMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.write_bytes doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountWriteBytes
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountWriteExeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountWriteExe
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountWriteExeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.write_exe doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountWriteExe
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestNfsMountWriteRttMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().NfsMountWriteRtt
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []NfsMountWriteRttMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric nfs.mount.write_rtt doesn't have an attribute invalid, valid attributes: [server, instance]")
+
+	cfg = DefaultMetricsConfig().NfsMountWriteRtt
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
 }
 
 func loadMetricsBuilderConfig(t *testing.T, name string) MetricsBuilderConfig {

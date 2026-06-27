@@ -21,6 +21,7 @@ gotidy:
 
 .PHONY: gosec
 gosec:
+	@go vet ./...
 	gosec ./...
 
 .PHONY: goget goupdate
@@ -41,7 +42,7 @@ test: build-remote
 	@go test $(GO_FLAGS)
 
 .PHONY: apply
-apply:
+apply: build-remote
 	@$(SINGLE_STAGE) SKIP_apply= go test $(GO_FLAGS)
 
 # Runs only the test stage without applying or destroy Terraform. Useful when
@@ -56,11 +57,11 @@ destroy:
 
 .PHONY: clean
 clean:
-	cd terraform && if [ -f terraform.tfstate ] && [ "$$(terraform state list | wc -l)" -ne 0 ]; then \
+	@cd terraform && if [ -f terraform.tfstate ] && [ "$$(terraform state list | wc -l)" -ne 0 ]; then \
 		echo >&2 "Terraform has state, run 'make destroy' first."; \
 		exit 1; \
 	fi
-	rm -rf \
+	@rm -rf \
 		./remote.test \
 		./terraform/terraform.tfstate \
 		./terraform/terraform.tfstate.backup \

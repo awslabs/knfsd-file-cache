@@ -7,24 +7,22 @@
 package smoke_tests
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	// "github.com/gruntwork-io/terratest/modules/gcp"
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/shell"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	scope "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	TestSSHUser = "test"
-)
-
-var cloudbuild bool = os.Getenv("CI") == "cloudbuild"
+const sshUser = "ubuntu"
 
 func TestEnv(t *testing.T) {
 	env := os.Environ()
@@ -36,11 +34,9 @@ func TestEnv(t *testing.T) {
 }
 
 func TestSmoke(t *testing.T) {
-	var applied bool
-
 	defer scope.RunTestStage(t, "destroy", func() {
 		terraformOptions := scope.LoadTerraformOptions(t, "terraform")
-		terraform.Destroy(t, terraformOptions)
+		terraform.DestroyContext(t, context.Background(), terraformOptions)
 	})
 
 	scope.RunTestStage(t, "check", func() {
@@ -51,100 +47,92 @@ func TestSmoke(t *testing.T) {
 	})
 
 	scope.RunTestStage(t, "apply", func() {
+		ctx := t.Context()
 		terraformOptions := &terraform.Options{
 			TerraformDir: "terraform",
 			Vars: map[string]any{
-				// "prefix": gcp.RandomValidGcpName(),
-				"prefix": "test", // temp hack to workaround "ambiguous import" in go.mod (we will remove 'gcp' anyway in the future)
+				"PREFIX": fmt.Sprintf("knfsd-smoke-%s", strings.ToLower(random.UniqueID())),
 			},
 		}
 
 		scope.SaveTerraformOptionsIfNotPresent(t, "terraform", terraformOptions)
 		terraformOptions = scope.LoadTerraformOptions(t, "terraform")
 
-		terraform.Init(t, terraformOptions)
-		terraform.Apply(t, terraformOptions)
-		applied = true
+		terraform.InitContext(t, ctx, terraformOptions)
+		terraform.ApplyContext(t, ctx, terraformOptions)
 	})
 
 	scope.RunTestStage(t, "check", func() {
+		ctx := t.Context()
 		terraformOptions := scope.LoadTerraformOptions(t, "terraform")
-		outputs := Outputs(terraform.OutputAll(t, terraformOptions))
+		outputs := Outputs(terraform.OutputAllContext(t, ctx, terraformOptions))
 
-		if applied {
-			// TODO: find a better way to test if the client VM is ready.
-			// Currently terraform apply will complete before the client VM is
-			// ready, so the scp command fails because sshd is not yet running.
-			d := 1 * time.Minute
-			terraformOptions.Logger.Logf(t, "Waiting %s for client VM", d)
-			time.Sleep(d)
-		}
+		region := outputs.Region(t)
+		instanceID := outputs.ClientInstanceID(t)
 
-		copyRemote(t, outputs)
-		executeRemote(t, outputs)
+		// Terraform apply returns once the instance state is "running", which is
+		// well before the SSM agent has registered and before the startup script
+		// has finished. Wait for the agent to report Online, then gate on the
+		// "knfsd-file-cache:status=ready" tag so we don't race the startup script
+		// (e.g. mounting NFS before the mount helper exists). These polls return
+		// immediately once satisfied, so they are also a cheap no-op when "check"
+		// runs as a separate invocation after the instance is already ready.
+		d := 5 * time.Minute
+		terraformOptions.Logger.Logf(t, "Waiting up to %s for client SSM agent to report [online]", d)
+		require.NoError(t, waitInstanceOnline(ctx, region, instanceID, d))
+
+		r := 5 * time.Minute
+		terraformOptions.Logger.Logf(t, "Waiting up to %s for client startup to report [ready]", r)
+		require.NoError(t, waitInstanceReady(ctx, region, instanceID, r))
+
+		// Push a single ephemeral key and reuse one multiplexed SSM tunnel
+		// for both the scp and the ssh below.
+		keyPath, cleanup, err := sendEphemeralKey(ctx, region, instanceID, sshUser)
+		require.NoError(t, err)
+		defer cleanup()
+
+		controlDir, err := os.MkdirTemp("", "ssm-ssh-cm-")
+		require.NoError(t, err)
+		defer os.RemoveAll(controlDir)
+		controlPath := filepath.Join(controlDir, "cm.sock")
+
+		copyRemote(ctx, t, region, instanceID, keyPath, controlPath)
+		executeRemote(ctx, t, region, instanceID, keyPath, controlPath)
 	})
 }
 
-func copyRemote(t *testing.T, outputs Outputs) {
-	project := outputs.Project(t)
-	zone := outputs.Zone(t)
-	instance := outputs.ClientInstance(t)
-
-	var args []string
-	args = append(args,
-		"compute", "scp",
-		"--project", project,
-		"--zone", zone,
-	)
-	if cloudbuild {
-		args = append(args, "--internal-ip")
-	}
+func copyRemote(ctx context.Context, t *testing.T, region, instanceID, keyPath, controlPath string) {
+	args := proxyArgs(region, keyPath, controlPath)
 	args = append(args,
 		"./remote.test",
-		fmt.Sprintf("%s@%s:./remote.test", TestSSHUser, instance),
+		fmt.Sprintf("%s@%s:./remote.test", sshUser, instanceID),
 	)
-	shell.RunCommand(t, shell.Command{
-		Command: "gcloud",
+	shell.RunCommandContext(t, ctx, &shell.Command{
+		Command: "scp",
 		Args:    args,
 	})
 }
 
-func executeRemote(t *testing.T, outputs Outputs) {
-	project := outputs.Project(t)
-	zone := outputs.Zone(t)
-	instance := outputs.ClientInstance(t)
-
-	var args []string
+func executeRemote(ctx context.Context, t *testing.T, region, instanceID, keyPath, controlPath string) {
+	args := proxyArgs(region, keyPath, controlPath)
 	args = append(args,
-		"compute", "ssh",
-		"--project", project,
-		"--zone", zone,
+		fmt.Sprintf("%s@%s", sshUser, instanceID),
+		"sudo ./remote.test",
 	)
-	if cloudbuild {
-		args = append(args, "--internal-ip")
-	}
-	args = append(args,
-		"--command", "sudo ./remote.test",
-		fmt.Sprintf("%s@%s", TestSSHUser, instance),
-	)
-	shell.RunCommand(t, shell.Command{
-		Command: "gcloud",
+	shell.RunCommandContext(t, ctx, &shell.Command{
+		Command: "ssh",
 		Args:    args,
 	})
 }
 
 type Outputs map[string]any
 
-func (o Outputs) Project(t *testing.T) string {
-	return o.GetString(t, "project")
+func (o Outputs) ClientInstanceID(t *testing.T) string {
+	return o.GetString(t, "client_instance_id")
 }
 
-func (o Outputs) Zone(t *testing.T) string {
-	return o.GetString(t, "zone")
-}
-
-func (o Outputs) ClientInstance(t *testing.T) string {
-	return o.GetString(t, "client_instance")
+func (o Outputs) Region(t *testing.T) string {
+	return o.GetString(t, "region")
 }
 
 func (o Outputs) GetString(t *testing.T, key string) string {

@@ -26,16 +26,16 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SlabDentryCacheActiveObjects: MetricConfig{
+					SlabDentryCacheActiveObjects: SlabDentryCacheActiveObjectsMetricConfig{
 						Enabled: true,
 					},
-					SlabDentryCacheObjsize: MetricConfig{
+					SlabDentryCacheObjsize: SlabDentryCacheObjsizeMetricConfig{
 						Enabled: true,
 					},
-					SlabNfsInodeCacheActiveObjects: MetricConfig{
+					SlabNfsInodeCacheActiveObjects: SlabNfsInodeCacheActiveObjectsMetricConfig{
 						Enabled: true,
 					},
-					SlabNfsInodeCacheObjsize: MetricConfig{
+					SlabNfsInodeCacheObjsize: SlabNfsInodeCacheObjsizeMetricConfig{
 						Enabled: true,
 					},
 				},
@@ -45,16 +45,16 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SlabDentryCacheActiveObjects: MetricConfig{
+					SlabDentryCacheActiveObjects: SlabDentryCacheActiveObjectsMetricConfig{
 						Enabled: false,
 					},
-					SlabDentryCacheObjsize: MetricConfig{
+					SlabDentryCacheObjsize: SlabDentryCacheObjsizeMetricConfig{
 						Enabled: false,
 					},
-					SlabNfsInodeCacheActiveObjects: MetricConfig{
+					SlabNfsInodeCacheActiveObjects: SlabNfsInodeCacheActiveObjectsMetricConfig{
 						Enabled: false,
 					},
-					SlabNfsInodeCacheObjsize: MetricConfig{
+					SlabNfsInodeCacheObjsize: SlabNfsInodeCacheObjsizeMetricConfig{
 						Enabled: false,
 					},
 				},
@@ -64,7 +64,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(SlabDentryCacheActiveObjectsMetricConfig{}, SlabDentryCacheObjsizeMetricConfig{}, SlabNfsInodeCacheActiveObjectsMetricConfig{}, SlabNfsInodeCacheObjsizeMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

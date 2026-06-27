@@ -1,0 +1,10 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Used when running the knfsd-fsidd integration tests on AWS CodeBuild.
+# CodeBuild containers do not have an external user-defined network for docker
+# compose to attach to, so use a standard local bridge network. The CodeBuild
+# build container reaches the postgres service via its bound host port 5432.
+networks:
+  default:
+    driver: bridge

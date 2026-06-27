@@ -4,7 +4,7 @@ Generate a list of overrides to enable/disable individual metrics.
 
 This is intended to be executed directly from the `knfsd-metrics-agent` directory.
 
-```sh
+```bash
 go run ./cmd/gen-overrides/
 ```
 

@@ -30,7 +30,7 @@ Before running this test, ensure you have:
 
 ## Setup
 
-Create a KNFSD proxy cluster with a source NFS server (such as Amazon FSx for NetApp ONTAP, FSx for OpenZFS, or EFS) and at least one client instance in AWS.
+Create a KNFSD proxy cluster with a source NFS server (such as Amazon FSx for NetApp ONTAP or FSx for OpenZFS) and at least one client instance in AWS.
 
 * [Build the NFS proxy image](../../image/README.md)
 * [Deploy the proxy](../../deployment/README.md)
@@ -517,7 +517,7 @@ The source server *MUST* have the same IP address when it recovers. Even if the 
 
 If the source server changes IP address the proxy will need to be restarted. The clients will be unaffected as clients are connected to the proxy via the Network Load Balancer (or DNS round-robin). When the proxy restarts, the clients will reconnect automatically and resume.
 
-For AWS managed NFS services like Amazon FSx for NetApp ONTAP, FSx for OpenZFS, and EFS, the IP addresses are typically stable and managed by AWS, reducing the likelihood of IP address changes.
+For AWS managed NFS services like Amazon FSx for NetApp ONTAP or FSx for OpenZFS, the IP addresses are typically stable and managed by AWS, reducing the likelihood of IP address changes.
 
 ### Best Practices
 

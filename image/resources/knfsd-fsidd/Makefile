@@ -4,7 +4,7 @@
 
 ROOT_DIR ?= "../../.."
 
-.PHONY: default golint gotidy goget gosec test test-codebuild
+.PHONY: default golint gotidy gosec goget gotest test-codebuild
 
 .PHONY: default
 default:
@@ -32,5 +32,5 @@ goget goupdate:
 # with the other tools.
 # When developing locally it's faster when repeatedly running tests to
 # use once "./test.sh up", then use "./test.sh run".
-test:
+gotest:
 	./test.sh

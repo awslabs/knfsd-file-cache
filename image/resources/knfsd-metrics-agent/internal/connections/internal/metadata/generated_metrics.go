@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -26,13 +32,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricNfsClients struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric         // data buffer for generated metric.
+	config   NfsClientsMetricConfig // metric config provided by user.
+	capacity int                    // max observed number of data points added to the metric.
 }
 
 // init fills nfs.clients metric with initial data.
@@ -69,7 +76,7 @@ func (m *metricNfsClients) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsClients(cfg MetricConfig) metricNfsClients {
+func newMetricNfsClients(cfg NfsClientsMetricConfig) metricNfsClients {
 	m := metricNfsClients{config: cfg}
 
 	if cfg.Enabled {
@@ -80,9 +87,9 @@ func newMetricNfsClients(cfg MetricConfig) metricNfsClients {
 }
 
 type metricNfsConnections struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric             // data buffer for generated metric.
+	config   NfsConnectionsMetricConfig // metric config provided by user.
+	capacity int                        // max observed number of data points added to the metric.
 }
 
 // init fills nfs.connections metric with initial data.
@@ -119,7 +126,7 @@ func (m *metricNfsConnections) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsConnections(cfg MetricConfig) metricNfsConnections {
+func newMetricNfsConnections(cfg NfsConnectionsMetricConfig) metricNfsConnections {
 	m := metricNfsConnections{config: cfg}
 
 	if cfg.Enabled {

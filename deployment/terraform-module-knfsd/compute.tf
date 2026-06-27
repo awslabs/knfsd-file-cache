@@ -1,8 +1,6 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 # local variables
 locals {
@@ -62,7 +60,8 @@ resource "aws_launch_template" "knfsd_launch_template" {
 
   # enable ENA-SRD only if the instance type supports it
   network_interfaces {
-    security_groups = [aws_security_group.knfsd_asg_sg.id]
+    security_groups             = [aws_security_group.knfsd_asg_sg.id]
+    associate_public_ip_address = var.ASSOCIATE_PUBLIC_IP_ADDRESS
     dynamic "ena_srd_specification" {
       for_each = data.aws_ec2_instance_type.selected.ena_srd_supported ? [1] : []
       content {

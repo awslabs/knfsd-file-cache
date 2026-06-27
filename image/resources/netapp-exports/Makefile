@@ -4,7 +4,7 @@
 
 ROOT_DIR ?= "../../.."
 
-.PHONY: default golint gotidy gosec goget test
+.PHONY: default golint gotidy gosec goget gotest
 
 .PHONY: default
 default:
@@ -33,6 +33,6 @@ goget goupdate: gen_cert
 	go get -t -u ./...
 	go mod tidy
 
-.PHONY: test
-test: gen_cert
+.PHONY: gotest
+gotest: gen_cert
 	go test -cover -vet=all -v ./...

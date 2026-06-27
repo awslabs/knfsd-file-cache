@@ -3,18 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 packer {
-  required_version = ">= 1.15.3"
+  # https://github.com/hashicorp/packer/releases
+  required_version = ">= 1.15.4"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = "~> 1.8.0"
+      version = "~> 1.8.1"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-alpha.26"
+  version       = "1.1.0-alpha.27"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8

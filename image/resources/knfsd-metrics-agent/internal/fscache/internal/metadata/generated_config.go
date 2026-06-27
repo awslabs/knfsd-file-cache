@@ -6,13 +6,1213 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// FscacheAcquireOkMetricConfig provides config for the fscache.acquire.ok metric.
+type FscacheAcquireOkMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *FscacheAcquireOkMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheAcquireOomMetricConfig provides config for the fscache.acquire.oom metric.
+type FscacheAcquireOomMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheAcquireOomMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheAcquireRequestsMetricConfig provides config for the fscache.acquire.requests metric.
+type FscacheAcquireRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheAcquireRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheCookiesDataMetricConfig provides config for the fscache.cookies.data metric.
+type FscacheCookiesDataMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheCookiesDataMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheCookiesVolumeMetricConfig provides config for the fscache.cookies.volume metric.
+type FscacheCookiesVolumeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheCookiesVolumeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheCookiesVolumeCollisionsMetricConfig provides config for the fscache.cookies.volume_collisions metric.
+type FscacheCookiesVolumeCollisionsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheCookiesVolumeCollisionsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheCookiesVolumeOomMetricConfig provides config for the fscache.cookies.volume_oom metric.
+type FscacheCookiesVolumeOomMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheCookiesVolumeOomMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheInvalidationsMetricConfig provides config for the fscache.invalidations metric.
+type FscacheInvalidationsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheInvalidationsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheIoMisfitMetricConfig provides config for the fscache.io.misfit metric.
+type FscacheIoMisfitMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheIoMisfitMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheIoReadMetricConfig provides config for the fscache.io.read metric.
+type FscacheIoReadMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheIoReadMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheIoWriteMetricConfig provides config for the fscache.io.write metric.
+type FscacheIoWriteMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheIoWriteMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheLruCountMetricConfig provides config for the fscache.lru.count metric.
+type FscacheLruCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheLruCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheLruDroppedMetricConfig provides config for the fscache.lru.dropped metric.
+type FscacheLruDroppedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheLruDroppedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheLruExpiredMetricConfig provides config for the fscache.lru.expired metric.
+type FscacheLruExpiredMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheLruExpiredMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheLruRemovedMetricConfig provides config for the fscache.lru.removed metric.
+type FscacheLruRemovedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheLruRemovedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheNospaceCreateMetricConfig provides config for the fscache.nospace.create metric.
+type FscacheNospaceCreateMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheNospaceCreateMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheNospaceCullMetricConfig provides config for the fscache.nospace.cull metric.
+type FscacheNospaceCullMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheNospaceCullMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheNospaceWriteMetricConfig provides config for the fscache.nospace.write metric.
+type FscacheNospaceWriteMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheNospaceWriteMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheRelinquishDropMetricConfig provides config for the fscache.relinquish.drop metric.
+type FscacheRelinquishDropMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheRelinquishDropMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheRelinquishRequestsMetricConfig provides config for the fscache.relinquish.requests metric.
+type FscacheRelinquishRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheRelinquishRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheRelinquishRetireMetricConfig provides config for the fscache.relinquish.retire metric.
+type FscacheRelinquishRetireMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheRelinquishRetireMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheUpdatesRequestsMetricConfig provides config for the fscache.updates.requests metric.
+type FscacheUpdatesRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheUpdatesRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheUpdatesResizeMetricConfig provides config for the fscache.updates.resize metric.
+type FscacheUpdatesResizeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheUpdatesResizeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// FscacheUpdatesResizeSkippedMetricConfig provides config for the fscache.updates.resize_skipped metric.
+type FscacheUpdatesResizeSkippedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *FscacheUpdatesResizeSkippedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheReadDoneMetricConfig provides config for the netfs.cache_read.done metric.
+type NetfsCacheReadDoneMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheReadDoneMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheReadFailedMetricConfig provides config for the netfs.cache_read.failed metric.
+type NetfsCacheReadFailedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheReadFailedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheReadRequestsMetricConfig provides config for the netfs.cache_read.requests metric.
+type NetfsCacheReadRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheReadRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheWriteDoneMetricConfig provides config for the netfs.cache_write.done metric.
+type NetfsCacheWriteDoneMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheWriteDoneMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheWriteFailedMetricConfig provides config for the netfs.cache_write.failed metric.
+type NetfsCacheWriteFailedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheWriteFailedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsCacheWriteRequestsMetricConfig provides config for the netfs.cache_write.requests metric.
+type NetfsCacheWriteRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsCacheWriteRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsDownloadDoneMetricConfig provides config for the netfs.download.done metric.
+type NetfsDownloadDoneMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsDownloadDoneMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsDownloadFailedMetricConfig provides config for the netfs.download.failed metric.
+type NetfsDownloadFailedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsDownloadFailedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsDownloadInsteadMetricConfig provides config for the netfs.download.instead metric.
+type NetfsDownloadInsteadMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsDownloadInsteadMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsDownloadRequestsMetricConfig provides config for the netfs.download.requests metric.
+type NetfsDownloadRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsDownloadRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsObjectsFolioQueueMetricConfig provides config for the netfs.objects.folio_queue metric.
+type NetfsObjectsFolioQueueMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsObjectsFolioQueueMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsObjectsReadReqsMetricConfig provides config for the netfs.objects.read_reqs metric.
+type NetfsObjectsReadReqsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsObjectsReadReqsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsObjectsSubreqsMetricConfig provides config for the netfs.objects.subreqs metric.
+type NetfsObjectsSubreqsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsObjectsSubreqsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsObjectsWriteConflictsMetricConfig provides config for the netfs.objects.write_conflicts metric.
+type NetfsObjectsWriteConflictsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsObjectsWriteConflictsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsDirectMetricConfig provides config for the netfs.reads.direct metric.
+type NetfsReadsDirectMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsDirectMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsFolioMetricConfig provides config for the netfs.reads.folio metric.
+type NetfsReadsFolioMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsFolioMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsReadaheadMetricConfig provides config for the netfs.reads.readahead metric.
+type NetfsReadsReadaheadMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsReadaheadMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsSingleMetricConfig provides config for the netfs.reads.single metric.
+type NetfsReadsSingleMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsSingleMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsWriteBeginMetricConfig provides config for the netfs.reads.write_begin metric.
+type NetfsReadsWriteBeginMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsWriteBeginMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsReadsWriteZskipMetricConfig provides config for the netfs.reads.write_zskip metric.
+type NetfsReadsWriteZskipMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsReadsWriteZskipMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsRetriesReadReqMetricConfig provides config for the netfs.retries.read_req metric.
+type NetfsRetriesReadReqMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsRetriesReadReqMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsRetriesReadSubreqMetricConfig provides config for the netfs.retries.read_subreq metric.
+type NetfsRetriesReadSubreqMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsRetriesReadSubreqMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsRetriesWriteReqMetricConfig provides config for the netfs.retries.write_req metric.
+type NetfsRetriesWriteReqMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsRetriesWriteReqMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsRetriesWriteSubreqMetricConfig provides config for the netfs.retries.write_subreq metric.
+type NetfsRetriesWriteSubreqMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsRetriesWriteSubreqMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsUploadDoneMetricConfig provides config for the netfs.upload.done metric.
+type NetfsUploadDoneMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsUploadDoneMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsUploadFailedMetricConfig provides config for the netfs.upload.failed metric.
+type NetfsUploadFailedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsUploadFailedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsUploadRequestsMetricConfig provides config for the netfs.upload.requests metric.
+type NetfsUploadRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsUploadRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWblockSkipMetricConfig provides config for the netfs.wblock.skip metric.
+type NetfsWblockSkipMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWblockSkipMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWblockWaitMetricConfig provides config for the netfs.wblock.wait metric.
+type NetfsWblockWaitMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWblockWaitMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWritesBufferedMetricConfig provides config for the netfs.writes.buffered metric.
+type NetfsWritesBufferedMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWritesBufferedMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWritesCopyToCacheMetricConfig provides config for the netfs.writes.copy_to_cache metric.
+type NetfsWritesCopyToCacheMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWritesCopyToCacheMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWritesDirectMetricConfig provides config for the netfs.writes.direct metric.
+type NetfsWritesDirectMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWritesDirectMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWritesPagesMetricConfig provides config for the netfs.writes.pages metric.
+type NetfsWritesPagesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWritesPagesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsWritesWritethroughMetricConfig provides config for the netfs.writes.writethrough metric.
+type NetfsWritesWritethroughMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsWritesWritethroughMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsZeroOpsShortMetricConfig provides config for the netfs.zero_ops.short metric.
+type NetfsZeroOpsShortMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsZeroOpsShortMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsZeroOpsSkipMetricConfig provides config for the netfs.zero_ops.skip metric.
+type NetfsZeroOpsSkipMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsZeroOpsSkipMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NetfsZeroOpsZeroMetricConfig provides config for the netfs.zero_ops.zero metric.
+type NetfsZeroOpsZeroMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NetfsZeroOpsZeroMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,252 +1228,252 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for fscache metrics.
 type MetricsConfig struct {
-	FscacheAcquireOk               MetricConfig `mapstructure:"fscache.acquire.ok"`
-	FscacheAcquireOom              MetricConfig `mapstructure:"fscache.acquire.oom"`
-	FscacheAcquireRequests         MetricConfig `mapstructure:"fscache.acquire.requests"`
-	FscacheCookiesData             MetricConfig `mapstructure:"fscache.cookies.data"`
-	FscacheCookiesVolume           MetricConfig `mapstructure:"fscache.cookies.volume"`
-	FscacheCookiesVolumeCollisions MetricConfig `mapstructure:"fscache.cookies.volume_collisions"`
-	FscacheCookiesVolumeOom        MetricConfig `mapstructure:"fscache.cookies.volume_oom"`
-	FscacheInvalidations           MetricConfig `mapstructure:"fscache.invalidations"`
-	FscacheIoMisfit                MetricConfig `mapstructure:"fscache.io.misfit"`
-	FscacheIoRead                  MetricConfig `mapstructure:"fscache.io.read"`
-	FscacheIoWrite                 MetricConfig `mapstructure:"fscache.io.write"`
-	FscacheLruCount                MetricConfig `mapstructure:"fscache.lru.count"`
-	FscacheLruDropped              MetricConfig `mapstructure:"fscache.lru.dropped"`
-	FscacheLruExpired              MetricConfig `mapstructure:"fscache.lru.expired"`
-	FscacheLruRemoved              MetricConfig `mapstructure:"fscache.lru.removed"`
-	FscacheNospaceCreate           MetricConfig `mapstructure:"fscache.nospace.create"`
-	FscacheNospaceCull             MetricConfig `mapstructure:"fscache.nospace.cull"`
-	FscacheNospaceWrite            MetricConfig `mapstructure:"fscache.nospace.write"`
-	FscacheRelinquishDrop          MetricConfig `mapstructure:"fscache.relinquish.drop"`
-	FscacheRelinquishRequests      MetricConfig `mapstructure:"fscache.relinquish.requests"`
-	FscacheRelinquishRetire        MetricConfig `mapstructure:"fscache.relinquish.retire"`
-	FscacheUpdatesRequests         MetricConfig `mapstructure:"fscache.updates.requests"`
-	FscacheUpdatesResize           MetricConfig `mapstructure:"fscache.updates.resize"`
-	FscacheUpdatesResizeSkipped    MetricConfig `mapstructure:"fscache.updates.resize_skipped"`
-	NetfsCacheReadDone             MetricConfig `mapstructure:"netfs.cache_read.done"`
-	NetfsCacheReadFailed           MetricConfig `mapstructure:"netfs.cache_read.failed"`
-	NetfsCacheReadRequests         MetricConfig `mapstructure:"netfs.cache_read.requests"`
-	NetfsCacheWriteDone            MetricConfig `mapstructure:"netfs.cache_write.done"`
-	NetfsCacheWriteFailed          MetricConfig `mapstructure:"netfs.cache_write.failed"`
-	NetfsCacheWriteRequests        MetricConfig `mapstructure:"netfs.cache_write.requests"`
-	NetfsDownloadDone              MetricConfig `mapstructure:"netfs.download.done"`
-	NetfsDownloadFailed            MetricConfig `mapstructure:"netfs.download.failed"`
-	NetfsDownloadInstead           MetricConfig `mapstructure:"netfs.download.instead"`
-	NetfsDownloadRequests          MetricConfig `mapstructure:"netfs.download.requests"`
-	NetfsObjectsFolioQueue         MetricConfig `mapstructure:"netfs.objects.folio_queue"`
-	NetfsObjectsReadReqs           MetricConfig `mapstructure:"netfs.objects.read_reqs"`
-	NetfsObjectsSubreqs            MetricConfig `mapstructure:"netfs.objects.subreqs"`
-	NetfsObjectsWriteConflicts     MetricConfig `mapstructure:"netfs.objects.write_conflicts"`
-	NetfsReadsDirect               MetricConfig `mapstructure:"netfs.reads.direct"`
-	NetfsReadsFolio                MetricConfig `mapstructure:"netfs.reads.folio"`
-	NetfsReadsReadahead            MetricConfig `mapstructure:"netfs.reads.readahead"`
-	NetfsReadsSingle               MetricConfig `mapstructure:"netfs.reads.single"`
-	NetfsReadsWriteBegin           MetricConfig `mapstructure:"netfs.reads.write_begin"`
-	NetfsReadsWriteZskip           MetricConfig `mapstructure:"netfs.reads.write_zskip"`
-	NetfsRetriesReadReq            MetricConfig `mapstructure:"netfs.retries.read_req"`
-	NetfsRetriesReadSubreq         MetricConfig `mapstructure:"netfs.retries.read_subreq"`
-	NetfsRetriesWriteReq           MetricConfig `mapstructure:"netfs.retries.write_req"`
-	NetfsRetriesWriteSubreq        MetricConfig `mapstructure:"netfs.retries.write_subreq"`
-	NetfsUploadDone                MetricConfig `mapstructure:"netfs.upload.done"`
-	NetfsUploadFailed              MetricConfig `mapstructure:"netfs.upload.failed"`
-	NetfsUploadRequests            MetricConfig `mapstructure:"netfs.upload.requests"`
-	NetfsWblockSkip                MetricConfig `mapstructure:"netfs.wblock.skip"`
-	NetfsWblockWait                MetricConfig `mapstructure:"netfs.wblock.wait"`
-	NetfsWritesBuffered            MetricConfig `mapstructure:"netfs.writes.buffered"`
-	NetfsWritesCopyToCache         MetricConfig `mapstructure:"netfs.writes.copy_to_cache"`
-	NetfsWritesDirect              MetricConfig `mapstructure:"netfs.writes.direct"`
-	NetfsWritesPages               MetricConfig `mapstructure:"netfs.writes.pages"`
-	NetfsWritesWritethrough        MetricConfig `mapstructure:"netfs.writes.writethrough"`
-	NetfsZeroOpsShort              MetricConfig `mapstructure:"netfs.zero_ops.short"`
-	NetfsZeroOpsSkip               MetricConfig `mapstructure:"netfs.zero_ops.skip"`
-	NetfsZeroOpsZero               MetricConfig `mapstructure:"netfs.zero_ops.zero"`
+	FscacheAcquireOk               FscacheAcquireOkMetricConfig               `mapstructure:"fscache.acquire.ok"`
+	FscacheAcquireOom              FscacheAcquireOomMetricConfig              `mapstructure:"fscache.acquire.oom"`
+	FscacheAcquireRequests         FscacheAcquireRequestsMetricConfig         `mapstructure:"fscache.acquire.requests"`
+	FscacheCookiesData             FscacheCookiesDataMetricConfig             `mapstructure:"fscache.cookies.data"`
+	FscacheCookiesVolume           FscacheCookiesVolumeMetricConfig           `mapstructure:"fscache.cookies.volume"`
+	FscacheCookiesVolumeCollisions FscacheCookiesVolumeCollisionsMetricConfig `mapstructure:"fscache.cookies.volume_collisions"`
+	FscacheCookiesVolumeOom        FscacheCookiesVolumeOomMetricConfig        `mapstructure:"fscache.cookies.volume_oom"`
+	FscacheInvalidations           FscacheInvalidationsMetricConfig           `mapstructure:"fscache.invalidations"`
+	FscacheIoMisfit                FscacheIoMisfitMetricConfig                `mapstructure:"fscache.io.misfit"`
+	FscacheIoRead                  FscacheIoReadMetricConfig                  `mapstructure:"fscache.io.read"`
+	FscacheIoWrite                 FscacheIoWriteMetricConfig                 `mapstructure:"fscache.io.write"`
+	FscacheLruCount                FscacheLruCountMetricConfig                `mapstructure:"fscache.lru.count"`
+	FscacheLruDropped              FscacheLruDroppedMetricConfig              `mapstructure:"fscache.lru.dropped"`
+	FscacheLruExpired              FscacheLruExpiredMetricConfig              `mapstructure:"fscache.lru.expired"`
+	FscacheLruRemoved              FscacheLruRemovedMetricConfig              `mapstructure:"fscache.lru.removed"`
+	FscacheNospaceCreate           FscacheNospaceCreateMetricConfig           `mapstructure:"fscache.nospace.create"`
+	FscacheNospaceCull             FscacheNospaceCullMetricConfig             `mapstructure:"fscache.nospace.cull"`
+	FscacheNospaceWrite            FscacheNospaceWriteMetricConfig            `mapstructure:"fscache.nospace.write"`
+	FscacheRelinquishDrop          FscacheRelinquishDropMetricConfig          `mapstructure:"fscache.relinquish.drop"`
+	FscacheRelinquishRequests      FscacheRelinquishRequestsMetricConfig      `mapstructure:"fscache.relinquish.requests"`
+	FscacheRelinquishRetire        FscacheRelinquishRetireMetricConfig        `mapstructure:"fscache.relinquish.retire"`
+	FscacheUpdatesRequests         FscacheUpdatesRequestsMetricConfig         `mapstructure:"fscache.updates.requests"`
+	FscacheUpdatesResize           FscacheUpdatesResizeMetricConfig           `mapstructure:"fscache.updates.resize"`
+	FscacheUpdatesResizeSkipped    FscacheUpdatesResizeSkippedMetricConfig    `mapstructure:"fscache.updates.resize_skipped"`
+	NetfsCacheReadDone             NetfsCacheReadDoneMetricConfig             `mapstructure:"netfs.cache_read.done"`
+	NetfsCacheReadFailed           NetfsCacheReadFailedMetricConfig           `mapstructure:"netfs.cache_read.failed"`
+	NetfsCacheReadRequests         NetfsCacheReadRequestsMetricConfig         `mapstructure:"netfs.cache_read.requests"`
+	NetfsCacheWriteDone            NetfsCacheWriteDoneMetricConfig            `mapstructure:"netfs.cache_write.done"`
+	NetfsCacheWriteFailed          NetfsCacheWriteFailedMetricConfig          `mapstructure:"netfs.cache_write.failed"`
+	NetfsCacheWriteRequests        NetfsCacheWriteRequestsMetricConfig        `mapstructure:"netfs.cache_write.requests"`
+	NetfsDownloadDone              NetfsDownloadDoneMetricConfig              `mapstructure:"netfs.download.done"`
+	NetfsDownloadFailed            NetfsDownloadFailedMetricConfig            `mapstructure:"netfs.download.failed"`
+	NetfsDownloadInstead           NetfsDownloadInsteadMetricConfig           `mapstructure:"netfs.download.instead"`
+	NetfsDownloadRequests          NetfsDownloadRequestsMetricConfig          `mapstructure:"netfs.download.requests"`
+	NetfsObjectsFolioQueue         NetfsObjectsFolioQueueMetricConfig         `mapstructure:"netfs.objects.folio_queue"`
+	NetfsObjectsReadReqs           NetfsObjectsReadReqsMetricConfig           `mapstructure:"netfs.objects.read_reqs"`
+	NetfsObjectsSubreqs            NetfsObjectsSubreqsMetricConfig            `mapstructure:"netfs.objects.subreqs"`
+	NetfsObjectsWriteConflicts     NetfsObjectsWriteConflictsMetricConfig     `mapstructure:"netfs.objects.write_conflicts"`
+	NetfsReadsDirect               NetfsReadsDirectMetricConfig               `mapstructure:"netfs.reads.direct"`
+	NetfsReadsFolio                NetfsReadsFolioMetricConfig                `mapstructure:"netfs.reads.folio"`
+	NetfsReadsReadahead            NetfsReadsReadaheadMetricConfig            `mapstructure:"netfs.reads.readahead"`
+	NetfsReadsSingle               NetfsReadsSingleMetricConfig               `mapstructure:"netfs.reads.single"`
+	NetfsReadsWriteBegin           NetfsReadsWriteBeginMetricConfig           `mapstructure:"netfs.reads.write_begin"`
+	NetfsReadsWriteZskip           NetfsReadsWriteZskipMetricConfig           `mapstructure:"netfs.reads.write_zskip"`
+	NetfsRetriesReadReq            NetfsRetriesReadReqMetricConfig            `mapstructure:"netfs.retries.read_req"`
+	NetfsRetriesReadSubreq         NetfsRetriesReadSubreqMetricConfig         `mapstructure:"netfs.retries.read_subreq"`
+	NetfsRetriesWriteReq           NetfsRetriesWriteReqMetricConfig           `mapstructure:"netfs.retries.write_req"`
+	NetfsRetriesWriteSubreq        NetfsRetriesWriteSubreqMetricConfig        `mapstructure:"netfs.retries.write_subreq"`
+	NetfsUploadDone                NetfsUploadDoneMetricConfig                `mapstructure:"netfs.upload.done"`
+	NetfsUploadFailed              NetfsUploadFailedMetricConfig              `mapstructure:"netfs.upload.failed"`
+	NetfsUploadRequests            NetfsUploadRequestsMetricConfig            `mapstructure:"netfs.upload.requests"`
+	NetfsWblockSkip                NetfsWblockSkipMetricConfig                `mapstructure:"netfs.wblock.skip"`
+	NetfsWblockWait                NetfsWblockWaitMetricConfig                `mapstructure:"netfs.wblock.wait"`
+	NetfsWritesBuffered            NetfsWritesBufferedMetricConfig            `mapstructure:"netfs.writes.buffered"`
+	NetfsWritesCopyToCache         NetfsWritesCopyToCacheMetricConfig         `mapstructure:"netfs.writes.copy_to_cache"`
+	NetfsWritesDirect              NetfsWritesDirectMetricConfig              `mapstructure:"netfs.writes.direct"`
+	NetfsWritesPages               NetfsWritesPagesMetricConfig               `mapstructure:"netfs.writes.pages"`
+	NetfsWritesWritethrough        NetfsWritesWritethroughMetricConfig        `mapstructure:"netfs.writes.writethrough"`
+	NetfsZeroOpsShort              NetfsZeroOpsShortMetricConfig              `mapstructure:"netfs.zero_ops.short"`
+	NetfsZeroOpsSkip               NetfsZeroOpsSkipMetricConfig               `mapstructure:"netfs.zero_ops.skip"`
+	NetfsZeroOpsZero               NetfsZeroOpsZeroMetricConfig               `mapstructure:"netfs.zero_ops.zero"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		FscacheAcquireOk: MetricConfig{
+		FscacheAcquireOk: FscacheAcquireOkMetricConfig{
 			Enabled: true,
 		},
-		FscacheAcquireOom: MetricConfig{
+		FscacheAcquireOom: FscacheAcquireOomMetricConfig{
 			Enabled: true,
 		},
-		FscacheAcquireRequests: MetricConfig{
+		FscacheAcquireRequests: FscacheAcquireRequestsMetricConfig{
 			Enabled: true,
 		},
-		FscacheCookiesData: MetricConfig{
+		FscacheCookiesData: FscacheCookiesDataMetricConfig{
 			Enabled: true,
 		},
-		FscacheCookiesVolume: MetricConfig{
+		FscacheCookiesVolume: FscacheCookiesVolumeMetricConfig{
 			Enabled: true,
 		},
-		FscacheCookiesVolumeCollisions: MetricConfig{
+		FscacheCookiesVolumeCollisions: FscacheCookiesVolumeCollisionsMetricConfig{
 			Enabled: true,
 		},
-		FscacheCookiesVolumeOom: MetricConfig{
+		FscacheCookiesVolumeOom: FscacheCookiesVolumeOomMetricConfig{
 			Enabled: true,
 		},
-		FscacheInvalidations: MetricConfig{
+		FscacheInvalidations: FscacheInvalidationsMetricConfig{
 			Enabled: true,
 		},
-		FscacheIoMisfit: MetricConfig{
+		FscacheIoMisfit: FscacheIoMisfitMetricConfig{
 			Enabled: true,
 		},
-		FscacheIoRead: MetricConfig{
+		FscacheIoRead: FscacheIoReadMetricConfig{
 			Enabled: true,
 		},
-		FscacheIoWrite: MetricConfig{
+		FscacheIoWrite: FscacheIoWriteMetricConfig{
 			Enabled: true,
 		},
-		FscacheLruCount: MetricConfig{
+		FscacheLruCount: FscacheLruCountMetricConfig{
 			Enabled: true,
 		},
-		FscacheLruDropped: MetricConfig{
+		FscacheLruDropped: FscacheLruDroppedMetricConfig{
 			Enabled: true,
 		},
-		FscacheLruExpired: MetricConfig{
+		FscacheLruExpired: FscacheLruExpiredMetricConfig{
 			Enabled: true,
 		},
-		FscacheLruRemoved: MetricConfig{
+		FscacheLruRemoved: FscacheLruRemovedMetricConfig{
 			Enabled: true,
 		},
-		FscacheNospaceCreate: MetricConfig{
+		FscacheNospaceCreate: FscacheNospaceCreateMetricConfig{
 			Enabled: true,
 		},
-		FscacheNospaceCull: MetricConfig{
+		FscacheNospaceCull: FscacheNospaceCullMetricConfig{
 			Enabled: true,
 		},
-		FscacheNospaceWrite: MetricConfig{
+		FscacheNospaceWrite: FscacheNospaceWriteMetricConfig{
 			Enabled: true,
 		},
-		FscacheRelinquishDrop: MetricConfig{
+		FscacheRelinquishDrop: FscacheRelinquishDropMetricConfig{
 			Enabled: true,
 		},
-		FscacheRelinquishRequests: MetricConfig{
+		FscacheRelinquishRequests: FscacheRelinquishRequestsMetricConfig{
 			Enabled: true,
 		},
-		FscacheRelinquishRetire: MetricConfig{
+		FscacheRelinquishRetire: FscacheRelinquishRetireMetricConfig{
 			Enabled: true,
 		},
-		FscacheUpdatesRequests: MetricConfig{
+		FscacheUpdatesRequests: FscacheUpdatesRequestsMetricConfig{
 			Enabled: true,
 		},
-		FscacheUpdatesResize: MetricConfig{
+		FscacheUpdatesResize: FscacheUpdatesResizeMetricConfig{
 			Enabled: true,
 		},
-		FscacheUpdatesResizeSkipped: MetricConfig{
+		FscacheUpdatesResizeSkipped: FscacheUpdatesResizeSkippedMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheReadDone: MetricConfig{
+		NetfsCacheReadDone: NetfsCacheReadDoneMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheReadFailed: MetricConfig{
+		NetfsCacheReadFailed: NetfsCacheReadFailedMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheReadRequests: MetricConfig{
+		NetfsCacheReadRequests: NetfsCacheReadRequestsMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheWriteDone: MetricConfig{
+		NetfsCacheWriteDone: NetfsCacheWriteDoneMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheWriteFailed: MetricConfig{
+		NetfsCacheWriteFailed: NetfsCacheWriteFailedMetricConfig{
 			Enabled: true,
 		},
-		NetfsCacheWriteRequests: MetricConfig{
+		NetfsCacheWriteRequests: NetfsCacheWriteRequestsMetricConfig{
 			Enabled: true,
 		},
-		NetfsDownloadDone: MetricConfig{
+		NetfsDownloadDone: NetfsDownloadDoneMetricConfig{
 			Enabled: true,
 		},
-		NetfsDownloadFailed: MetricConfig{
+		NetfsDownloadFailed: NetfsDownloadFailedMetricConfig{
 			Enabled: true,
 		},
-		NetfsDownloadInstead: MetricConfig{
+		NetfsDownloadInstead: NetfsDownloadInsteadMetricConfig{
 			Enabled: true,
 		},
-		NetfsDownloadRequests: MetricConfig{
+		NetfsDownloadRequests: NetfsDownloadRequestsMetricConfig{
 			Enabled: true,
 		},
-		NetfsObjectsFolioQueue: MetricConfig{
+		NetfsObjectsFolioQueue: NetfsObjectsFolioQueueMetricConfig{
 			Enabled: true,
 		},
-		NetfsObjectsReadReqs: MetricConfig{
+		NetfsObjectsReadReqs: NetfsObjectsReadReqsMetricConfig{
 			Enabled: true,
 		},
-		NetfsObjectsSubreqs: MetricConfig{
+		NetfsObjectsSubreqs: NetfsObjectsSubreqsMetricConfig{
 			Enabled: true,
 		},
-		NetfsObjectsWriteConflicts: MetricConfig{
+		NetfsObjectsWriteConflicts: NetfsObjectsWriteConflictsMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsDirect: MetricConfig{
+		NetfsReadsDirect: NetfsReadsDirectMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsFolio: MetricConfig{
+		NetfsReadsFolio: NetfsReadsFolioMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsReadahead: MetricConfig{
+		NetfsReadsReadahead: NetfsReadsReadaheadMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsSingle: MetricConfig{
+		NetfsReadsSingle: NetfsReadsSingleMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsWriteBegin: MetricConfig{
+		NetfsReadsWriteBegin: NetfsReadsWriteBeginMetricConfig{
 			Enabled: true,
 		},
-		NetfsReadsWriteZskip: MetricConfig{
+		NetfsReadsWriteZskip: NetfsReadsWriteZskipMetricConfig{
 			Enabled: true,
 		},
-		NetfsRetriesReadReq: MetricConfig{
+		NetfsRetriesReadReq: NetfsRetriesReadReqMetricConfig{
 			Enabled: true,
 		},
-		NetfsRetriesReadSubreq: MetricConfig{
+		NetfsRetriesReadSubreq: NetfsRetriesReadSubreqMetricConfig{
 			Enabled: true,
 		},
-		NetfsRetriesWriteReq: MetricConfig{
+		NetfsRetriesWriteReq: NetfsRetriesWriteReqMetricConfig{
 			Enabled: true,
 		},
-		NetfsRetriesWriteSubreq: MetricConfig{
+		NetfsRetriesWriteSubreq: NetfsRetriesWriteSubreqMetricConfig{
 			Enabled: true,
 		},
-		NetfsUploadDone: MetricConfig{
+		NetfsUploadDone: NetfsUploadDoneMetricConfig{
 			Enabled: true,
 		},
-		NetfsUploadFailed: MetricConfig{
+		NetfsUploadFailed: NetfsUploadFailedMetricConfig{
 			Enabled: true,
 		},
-		NetfsUploadRequests: MetricConfig{
+		NetfsUploadRequests: NetfsUploadRequestsMetricConfig{
 			Enabled: true,
 		},
-		NetfsWblockSkip: MetricConfig{
+		NetfsWblockSkip: NetfsWblockSkipMetricConfig{
 			Enabled: true,
 		},
-		NetfsWblockWait: MetricConfig{
+		NetfsWblockWait: NetfsWblockWaitMetricConfig{
 			Enabled: true,
 		},
-		NetfsWritesBuffered: MetricConfig{
+		NetfsWritesBuffered: NetfsWritesBufferedMetricConfig{
 			Enabled: true,
 		},
-		NetfsWritesCopyToCache: MetricConfig{
+		NetfsWritesCopyToCache: NetfsWritesCopyToCacheMetricConfig{
 			Enabled: true,
 		},
-		NetfsWritesDirect: MetricConfig{
+		NetfsWritesDirect: NetfsWritesDirectMetricConfig{
 			Enabled: true,
 		},
-		NetfsWritesPages: MetricConfig{
+		NetfsWritesPages: NetfsWritesPagesMetricConfig{
 			Enabled: true,
 		},
-		NetfsWritesWritethrough: MetricConfig{
+		NetfsWritesWritethrough: NetfsWritesWritethroughMetricConfig{
 			Enabled: true,
 		},
-		NetfsZeroOpsShort: MetricConfig{
+		NetfsZeroOpsShort: NetfsZeroOpsShortMetricConfig{
 			Enabled: true,
 		},
-		NetfsZeroOpsSkip: MetricConfig{
+		NetfsZeroOpsSkip: NetfsZeroOpsSkipMetricConfig{
 			Enabled: true,
 		},
-		NetfsZeroOpsZero: MetricConfig{
+		NetfsZeroOpsZero: NetfsZeroOpsZeroMetricConfig{
 			Enabled: true,
 		},
 	}

@@ -26,7 +26,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.26"
+VERSION="1.1.0-alpha.27"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -330,7 +330,7 @@ function modify-instance() {
 
 	local new_instance_type=$2
 	# check if instance type is valid
-	if ! echo "${new_instance_type}" | grep -qE '^[a-z][0-9]?[a-z]*\.(metal-[0-9]+xl|[a-z0-9]+)$'; then
+	if ! echo "${new_instance_type}" | grep -qE '^[a-z][a-z0-9-]*\.(metal(-[0-9]+xl)?|[a-z0-9]+)$'; then
 		echo -e "${SHELL_RED}ERROR: invalid instance type: ${new_instance_type}${SHELL_DEFAULT}"
 		exit 1
 	fi

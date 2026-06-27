@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
-// getMetadataValue fetches a metadata path from the AWS Instance Metadata Service (IMDS)
+// getMetadataValue fetches a metadata path from the AWS Instance Metadata Service (IMDSv2)
 // returning the output as a string. If multiline is set to true, it will combine
 // multiline strings into a single string.
 func getMetadataValue(uri string, multiline bool) (string, error) {
@@ -33,7 +33,7 @@ func getMetadataValue(uri string, multiline bool) (string, error) {
 	})
 
 	// Create new context from previous ctx with a custom 2s timeout
-	// https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/retries-timeouts/#timeouts
+	// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html#timeouts
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 

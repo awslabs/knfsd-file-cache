@@ -138,14 +138,12 @@ The KNFSD deployment automatically configures the following NetApp parameters:
 
 ## CA Certificate
 
-If running this example in a `GovCloud` or `AWS China` region, you will need to update the Terraform data source `"aws_ca_bundle"` to use the correct CA certificate bundle URL as per [AWS documentation](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-resources-ontap-apps.html#netapp-ontap-api).
+The Terraform data source `"aws_ca_bundle"` automatically selects the correct CA certificate bundle URL for the detected AWS partition (`aws`, `aws-us-gov`, or `aws-cn`) via a partition-keyed `local` in `main.tf`, as per the [AWS documentation](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-resources-ontap-apps.html#netapp-ontap-api). The per-partition hosts are:
 
 ```bash
-data "http" "aws_ca_bundle" {
-  url = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-${var.REGION}.pem" # Public AWS Regions
-  # url = "https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/bundle-${var.REGION}.pem" # AWSGovCloud Regions
-  # url = "https://fsx-aws-cn-certificates.s3.cn-north-1.amazonaws.com.cn/bundle-${var.REGION}.pem" # AWS China Regions
-}
+# aws        -> https://fsx-aws-certificates.s3.amazonaws.com/bundle-${var.REGION}.pem
+# aws-us-gov -> https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/bundle-${var.REGION}.pem
+# aws-cn     -> https://fsx-aws-cn-certificates.s3.cn-north-1.amazonaws.com.cn/bundle-${var.REGION}.pem
 ```
 
 ## Security Considerations

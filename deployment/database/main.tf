@@ -1,28 +1,26 @@
-/*
- * Copyright 2022 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2022 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.44.0"
+      version = "~> 6.52.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.8.1"
+      version = "~> 3.9.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.4"
+      version = "~> 3.3.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/database/1.1.0-alpha.26"
+      "knfsd-file-cache/database/1.1.0-alpha.27"
     ]
   }
 }
@@ -41,6 +39,9 @@ resource "random_id" "name" {
 # get the current AWS account id
 data "aws_caller_identity" "current" {}
 
+# get the current AWS partition (aws, aws-us-gov, aws-cn)
+data "aws_partition" "current" {}
+
 # get the selected subnet
 data "aws_subnet" "selected" {
   id = var.SUBNET
@@ -51,6 +52,13 @@ data "aws_vpc" "selected" {
   id = data.aws_subnet.selected.vpc_id
 }
 
+# resolve the partition-correct Secrets Manager interface endpoint service name
+# (e.g. com.amazonaws.<region>.secretsmanager in aws/aws-us-gov,
+# cn.com.amazonaws.<region>.secretsmanager in aws-cn)
+data "aws_vpc_endpoint_service" "secretsmanager" {
+  service = "secretsmanager"
+}
+
 # local variables
 locals {
   tags            = { "knfsd-file-cache:version" = var.VERSION }
@@ -58,8 +66,9 @@ locals {
   db_user         = "fsidd"
   db_name         = "fsids"
   account_id      = data.aws_caller_identity.current.account_id
+  partition       = data.aws_partition.current.partition
   az              = data.aws_subnet.selected.availability_zone
-  region          = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
+  region          = regex("^([a-z]{2}(?:-[a-z]+)+-[0-9]+)", local.az)[0]
   vpc_id          = data.aws_vpc.selected.id
   vpc_cidr        = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
   is_windows      = can(env("USERPROFILE"))
@@ -74,7 +83,7 @@ resource "aws_db_instance" "fsids" {
   identifier               = "${local.name}-fsids"
   db_name                  = local.db_name
   engine                   = "postgres"
-  engine_version           = "18.3"
+  engine_version           = "18.4"
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   parameter_group_name     = aws_db_parameter_group.fsids_pg.name
   username                 = var.MASTER_USERNAME # master db user
@@ -173,7 +182,7 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
 # attach enhanced monitoring policy to role
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
   role       = aws_iam_role.rds_enhanced_monitoring.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+  policy_arn = "arn:${local.partition}:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
 # policy to allow assume role by enhanced monitoring service
@@ -194,7 +203,7 @@ data "aws_iam_policy_document" "rds_enhanced_monitoring" {
     condition {
       test     = "StringLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:rds:${local.region}:${local.account_id}:db:*"]
+      values   = ["arn:${local.partition}:rds:${local.region}:${local.account_id}:db:*"]
     }
   }
 }
@@ -211,7 +220,7 @@ data "aws_iam_policy_document" "db_role_document" {
   statement {
     effect    = "Allow"
     actions   = ["rds-db:connect"]
-    resources = ["arn:aws:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"]
+    resources = ["arn:${local.partition}:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"]
   }
 }
 
@@ -288,7 +297,7 @@ resource "aws_lambda_function" "db_setup" {
 # CloudWatch log group for Lambda function
 # nosemgrep: aws-cloudwatch-log-group-unencrypted, missing-cloudwatch-log-group-kms-key
 resource "aws_cloudwatch_log_group" "lambda_db_setup" {
-  name              = "knfsd/lambda/db-setup/${local.name}"
+  name              = "/knfsd/lambda/db-setup/${local.name}"
   retention_in_days = 30
   tags              = local.tags
 }
@@ -296,7 +305,7 @@ resource "aws_cloudwatch_log_group" "lambda_db_setup" {
 # VPC endpoint for Lambda function to access Secrets Manager
 resource "aws_vpc_endpoint" "lambda_db_setup" {
   vpc_id              = local.vpc_id
-  service_name        = "com.amazonaws.${local.region}.secretsmanager"
+  service_name        = data.aws_vpc_endpoint_service.secretsmanager.service_name
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [var.SUBNET]
   private_dns_enabled = false
@@ -325,7 +334,7 @@ resource "aws_iam_role" "lambda_db_setup" {
 # attach Lambda VPC access/CW logging policy to role
 resource "aws_iam_role_policy_attachment" "lambda_db_setup" {
   role       = aws_iam_role.lambda_db_setup.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+  policy_arn = "arn:${local.partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 # custom IAM policy to retrieve master password from Secrets Manager
@@ -398,32 +407,6 @@ resource "null_resource" "trigger_lambda_after_rds" {
     EOF
   }
 }
-
-# cleanup (destroy) single-shot Lambda components after execution (optional, causes longer terraform apply time)
-# resource "null_resource" "cleanup_lambda" {
-#   depends_on = [null_resource.trigger_lambda_after_rds]
-
-#   provisioner "local-exec" {
-#     when    = create
-#     command = <<-EOT
-#       rm -f ${path.module}/resources/db_setup.zip
-#       terraform destroy -auto-approve \
-#         -target=aws_lambda_function.db_setup \
-#         -target=aws_vpc_endpoint.lambda_db_setup \
-#         -target=aws_security_group.lambda_db_setup_sg > /dev/null
-#     EOT
-#   }
-
-#   provisioner "local-exec" {
-#     when    = create
-#     command = <<-EOT
-#       terraform destroy -auto-approve \
-#         -target=aws_iam_role.lambda_db_setup \
-#         -target=aws_iam_role_policy_attachment.lambda_db_setup \
-#         -target=aws_iam_role_policy.lambda_db_setup > /dev/null
-#     EOT
-#   }
-# }
 
 # this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution
 resource "aws_cloudformation_stack" "metrics_database" {

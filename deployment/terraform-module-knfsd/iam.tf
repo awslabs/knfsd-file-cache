@@ -1,14 +1,16 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 # get the current AWS account id
 data "aws_caller_identity" "current" {}
 
+# get the current AWS partition (aws, aws-us-gov, aws-cn)
+data "aws_partition" "current" {}
+
 # local variables
 locals {
   account_id     = data.aws_caller_identity.current.account_id
+  partition      = data.aws_partition.current.partition
   netapp_enabled = var.ENABLE_NETAPP_AUTO_DETECT && var.NETAPP_SECRET != ""
   netapp_region  = var.NETAPP_SECRET_REGION != "" ? var.NETAPP_SECRET_REGION : local.region
 }
@@ -43,7 +45,7 @@ data "aws_iam_policy_document" "ec2_instance_tags_policy_document" {
   statement {
     effect    = "Allow"
     actions   = ["ec2:CreateTags", "ec2:DescribeTags"]
-    resources = ["arn:aws:ec2:${local.region}:${local.account_id}:*"]
+    resources = ["arn:${local.partition}:ec2:${local.region}:${local.account_id}:*"]
   }
 }
 
@@ -87,7 +89,7 @@ data "aws_iam_policy_document" "ssm_parameter_store_policy_document" {
   statement {
     effect    = "Allow"
     actions   = ["ssm:GetParametersByPath"]
-    resources = ["arn:aws:ssm:${local.region}:${local.account_id}:parameter/knfsd/*"]
+    resources = ["arn:${local.partition}:ssm:${local.region}:${local.account_id}:parameter/knfsd/*"]
   }
 }
 
@@ -107,13 +109,13 @@ resource "aws_iam_role_policy_attachment" "ssm_parameter_store_policy_attachment
 # IAM role policy attachment for CloudWatch
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_cloudwatch_policy" {
   role       = aws_iam_role.knfsd_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  policy_arn = "arn:${local.partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # IAM role policy attachment for Amazon SSM
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_ssm_policy" {
   role       = aws_iam_role.knfsd_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # new DATABASE deployment
@@ -139,7 +141,7 @@ data "aws_iam_policy_document" "netapp_exports_policy_document" {
   statement {
     effect    = "Allow"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = ["arn:aws:secretsmanager:${local.netapp_region}:${local.account_id}:secret:${var.NETAPP_SECRET}-??????"]
+    resources = ["arn:${local.partition}:secretsmanager:${local.netapp_region}:${local.account_id}:secret:${var.NETAPP_SECRET}-??????"]
   }
 }
 

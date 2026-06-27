@@ -3,16 +3,30 @@
 package metadata
 
 import (
+	"fmt"
+
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// NfsMountOperationErrorsMetricAttributeKey specifies the key of an attribute for the nfs.mount.operation.errors metric.
+type NfsMountOperationErrorsMetricAttributeKey string
+
+const (
+	NfsMountOperationErrorsMetricAttributeKeyServer    NfsMountOperationErrorsMetricAttributeKey = "server"
+	NfsMountOperationErrorsMetricAttributeKeyInstance  NfsMountOperationErrorsMetricAttributeKey = "instance"
+	NfsMountOperationErrorsMetricAttributeKeyOperation NfsMountOperationErrorsMetricAttributeKey = "operation"
+)
+
+// NfsMountOperationErrorsMetricConfig provides config for the nfs.mount.operation.errors metric.
+type NfsMountOperationErrorsMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
+
+	AggregationStrategy string                                      `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOperationErrorsMetricAttributeKey `mapstructure:"attributes"`
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *NfsMountOperationErrorsMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -26,63 +40,699 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
+func (ms *NfsMountOperationErrorsMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOperationErrorsMetricAttributeKeyServer, NfsMountOperationErrorsMetricAttributeKeyInstance, NfsMountOperationErrorsMetricAttributeKeyOperation:
+		default:
+			return fmt.Errorf("metric nfs.mount.operation.errors doesn't have an attribute %v, valid attributes: [server, instance, operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountOperationMajorTimeoutsMetricAttributeKey specifies the key of an attribute for the nfs.mount.operation.major_timeouts metric.
+type NfsMountOperationMajorTimeoutsMetricAttributeKey string
+
+const (
+	NfsMountOperationMajorTimeoutsMetricAttributeKeyServer    NfsMountOperationMajorTimeoutsMetricAttributeKey = "server"
+	NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance  NfsMountOperationMajorTimeoutsMetricAttributeKey = "instance"
+	NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation NfsMountOperationMajorTimeoutsMetricAttributeKey = "operation"
+)
+
+// NfsMountOperationMajorTimeoutsMetricConfig provides config for the nfs.mount.operation.major_timeouts metric.
+type NfsMountOperationMajorTimeoutsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                             `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOperationMajorTimeoutsMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountOperationMajorTimeoutsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountOperationMajorTimeoutsMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOperationMajorTimeoutsMetricAttributeKeyServer, NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance, NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation:
+		default:
+			return fmt.Errorf("metric nfs.mount.operation.major_timeouts doesn't have an attribute %v, valid attributes: [server, instance, operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountOperationReceivedBytesMetricAttributeKey specifies the key of an attribute for the nfs.mount.operation.received_bytes metric.
+type NfsMountOperationReceivedBytesMetricAttributeKey string
+
+const (
+	NfsMountOperationReceivedBytesMetricAttributeKeyServer    NfsMountOperationReceivedBytesMetricAttributeKey = "server"
+	NfsMountOperationReceivedBytesMetricAttributeKeyInstance  NfsMountOperationReceivedBytesMetricAttributeKey = "instance"
+	NfsMountOperationReceivedBytesMetricAttributeKeyOperation NfsMountOperationReceivedBytesMetricAttributeKey = "operation"
+)
+
+// NfsMountOperationReceivedBytesMetricConfig provides config for the nfs.mount.operation.received_bytes metric.
+type NfsMountOperationReceivedBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                             `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOperationReceivedBytesMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountOperationReceivedBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountOperationReceivedBytesMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOperationReceivedBytesMetricAttributeKeyServer, NfsMountOperationReceivedBytesMetricAttributeKeyInstance, NfsMountOperationReceivedBytesMetricAttributeKeyOperation:
+		default:
+			return fmt.Errorf("metric nfs.mount.operation.received_bytes doesn't have an attribute %v, valid attributes: [server, instance, operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountOperationRequestsMetricAttributeKey specifies the key of an attribute for the nfs.mount.operation.requests metric.
+type NfsMountOperationRequestsMetricAttributeKey string
+
+const (
+	NfsMountOperationRequestsMetricAttributeKeyServer    NfsMountOperationRequestsMetricAttributeKey = "server"
+	NfsMountOperationRequestsMetricAttributeKeyInstance  NfsMountOperationRequestsMetricAttributeKey = "instance"
+	NfsMountOperationRequestsMetricAttributeKeyOperation NfsMountOperationRequestsMetricAttributeKey = "operation"
+)
+
+// NfsMountOperationRequestsMetricConfig provides config for the nfs.mount.operation.requests metric.
+type NfsMountOperationRequestsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                        `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOperationRequestsMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountOperationRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountOperationRequestsMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOperationRequestsMetricAttributeKeyServer, NfsMountOperationRequestsMetricAttributeKeyInstance, NfsMountOperationRequestsMetricAttributeKeyOperation:
+		default:
+			return fmt.Errorf("metric nfs.mount.operation.requests doesn't have an attribute %v, valid attributes: [server, instance, operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountOperationSentBytesMetricAttributeKey specifies the key of an attribute for the nfs.mount.operation.sent_bytes metric.
+type NfsMountOperationSentBytesMetricAttributeKey string
+
+const (
+	NfsMountOperationSentBytesMetricAttributeKeyServer    NfsMountOperationSentBytesMetricAttributeKey = "server"
+	NfsMountOperationSentBytesMetricAttributeKeyInstance  NfsMountOperationSentBytesMetricAttributeKey = "instance"
+	NfsMountOperationSentBytesMetricAttributeKeyOperation NfsMountOperationSentBytesMetricAttributeKey = "operation"
+)
+
+// NfsMountOperationSentBytesMetricConfig provides config for the nfs.mount.operation.sent_bytes metric.
+type NfsMountOperationSentBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                         `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOperationSentBytesMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountOperationSentBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountOperationSentBytesMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOperationSentBytesMetricAttributeKeyServer, NfsMountOperationSentBytesMetricAttributeKeyInstance, NfsMountOperationSentBytesMetricAttributeKeyOperation:
+		default:
+			return fmt.Errorf("metric nfs.mount.operation.sent_bytes doesn't have an attribute %v, valid attributes: [server, instance, operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountOpsPerSecondMetricAttributeKey specifies the key of an attribute for the nfs.mount.ops_per_second metric.
+type NfsMountOpsPerSecondMetricAttributeKey string
+
+const (
+	NfsMountOpsPerSecondMetricAttributeKeyServer   NfsMountOpsPerSecondMetricAttributeKey = "server"
+	NfsMountOpsPerSecondMetricAttributeKeyInstance NfsMountOpsPerSecondMetricAttributeKey = "instance"
+)
+
+// NfsMountOpsPerSecondMetricConfig provides config for the nfs.mount.ops_per_second metric.
+type NfsMountOpsPerSecondMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                   `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountOpsPerSecondMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountOpsPerSecondMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountOpsPerSecondMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountOpsPerSecondMetricAttributeKeyServer, NfsMountOpsPerSecondMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.ops_per_second doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountReadBytesMetricAttributeKey specifies the key of an attribute for the nfs.mount.read_bytes metric.
+type NfsMountReadBytesMetricAttributeKey string
+
+const (
+	NfsMountReadBytesMetricAttributeKeyServer   NfsMountReadBytesMetricAttributeKey = "server"
+	NfsMountReadBytesMetricAttributeKeyInstance NfsMountReadBytesMetricAttributeKey = "instance"
+)
+
+// NfsMountReadBytesMetricConfig provides config for the nfs.mount.read_bytes metric.
+type NfsMountReadBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountReadBytesMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountReadBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountReadBytesMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountReadBytesMetricAttributeKeyServer, NfsMountReadBytesMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.read_bytes doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountReadExeMetricAttributeKey specifies the key of an attribute for the nfs.mount.read_exe metric.
+type NfsMountReadExeMetricAttributeKey string
+
+const (
+	NfsMountReadExeMetricAttributeKeyServer   NfsMountReadExeMetricAttributeKey = "server"
+	NfsMountReadExeMetricAttributeKeyInstance NfsMountReadExeMetricAttributeKey = "instance"
+)
+
+// NfsMountReadExeMetricConfig provides config for the nfs.mount.read_exe metric.
+type NfsMountReadExeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                              `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountReadExeMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountReadExeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountReadExeMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountReadExeMetricAttributeKeyServer, NfsMountReadExeMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.read_exe doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountReadRttMetricAttributeKey specifies the key of an attribute for the nfs.mount.read_rtt metric.
+type NfsMountReadRttMetricAttributeKey string
+
+const (
+	NfsMountReadRttMetricAttributeKeyServer   NfsMountReadRttMetricAttributeKey = "server"
+	NfsMountReadRttMetricAttributeKeyInstance NfsMountReadRttMetricAttributeKey = "instance"
+)
+
+// NfsMountReadRttMetricConfig provides config for the nfs.mount.read_rtt metric.
+type NfsMountReadRttMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                              `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountReadRttMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountReadRttMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountReadRttMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountReadRttMetricAttributeKeyServer, NfsMountReadRttMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.read_rtt doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountRPCBacklogMetricAttributeKey specifies the key of an attribute for the nfs.mount.rpc_backlog metric.
+type NfsMountRPCBacklogMetricAttributeKey string
+
+const (
+	NfsMountRPCBacklogMetricAttributeKeyServer   NfsMountRPCBacklogMetricAttributeKey = "server"
+	NfsMountRPCBacklogMetricAttributeKeyInstance NfsMountRPCBacklogMetricAttributeKey = "instance"
+)
+
+// NfsMountRPCBacklogMetricConfig provides config for the nfs.mount.rpc_backlog metric.
+type NfsMountRPCBacklogMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                 `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountRPCBacklogMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountRPCBacklogMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountRPCBacklogMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountRPCBacklogMetricAttributeKeyServer, NfsMountRPCBacklogMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.rpc_backlog doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountWriteBytesMetricAttributeKey specifies the key of an attribute for the nfs.mount.write_bytes metric.
+type NfsMountWriteBytesMetricAttributeKey string
+
+const (
+	NfsMountWriteBytesMetricAttributeKeyServer   NfsMountWriteBytesMetricAttributeKey = "server"
+	NfsMountWriteBytesMetricAttributeKeyInstance NfsMountWriteBytesMetricAttributeKey = "instance"
+)
+
+// NfsMountWriteBytesMetricConfig provides config for the nfs.mount.write_bytes metric.
+type NfsMountWriteBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                 `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountWriteBytesMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountWriteBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountWriteBytesMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountWriteBytesMetricAttributeKeyServer, NfsMountWriteBytesMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.write_bytes doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountWriteExeMetricAttributeKey specifies the key of an attribute for the nfs.mount.write_exe metric.
+type NfsMountWriteExeMetricAttributeKey string
+
+const (
+	NfsMountWriteExeMetricAttributeKeyServer   NfsMountWriteExeMetricAttributeKey = "server"
+	NfsMountWriteExeMetricAttributeKeyInstance NfsMountWriteExeMetricAttributeKey = "instance"
+)
+
+// NfsMountWriteExeMetricConfig provides config for the nfs.mount.write_exe metric.
+type NfsMountWriteExeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                               `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountWriteExeMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountWriteExeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountWriteExeMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountWriteExeMetricAttributeKeyServer, NfsMountWriteExeMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.write_exe doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// NfsMountWriteRttMetricAttributeKey specifies the key of an attribute for the nfs.mount.write_rtt metric.
+type NfsMountWriteRttMetricAttributeKey string
+
+const (
+	NfsMountWriteRttMetricAttributeKeyServer   NfsMountWriteRttMetricAttributeKey = "server"
+	NfsMountWriteRttMetricAttributeKeyInstance NfsMountWriteRttMetricAttributeKey = "instance"
+)
+
+// NfsMountWriteRttMetricConfig provides config for the nfs.mount.write_rtt metric.
+type NfsMountWriteRttMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                               `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []NfsMountWriteRttMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *NfsMountWriteRttMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *NfsMountWriteRttMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case NfsMountWriteRttMetricAttributeKeyServer, NfsMountWriteRttMetricAttributeKeyInstance:
+		default:
+			return fmt.Errorf("metric nfs.mount.write_rtt doesn't have an attribute %v, valid attributes: [server, instance]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
 // MetricsConfig provides config for mounts metrics.
 type MetricsConfig struct {
-	NfsMountOperationErrors        MetricConfig `mapstructure:"nfs.mount.operation.errors"`
-	NfsMountOperationMajorTimeouts MetricConfig `mapstructure:"nfs.mount.operation.major_timeouts"`
-	NfsMountOperationReceivedBytes MetricConfig `mapstructure:"nfs.mount.operation.received_bytes"`
-	NfsMountOperationRequests      MetricConfig `mapstructure:"nfs.mount.operation.requests"`
-	NfsMountOperationSentBytes     MetricConfig `mapstructure:"nfs.mount.operation.sent_bytes"`
-	NfsMountOpsPerSecond           MetricConfig `mapstructure:"nfs.mount.ops_per_second"`
-	NfsMountReadBytes              MetricConfig `mapstructure:"nfs.mount.read_bytes"`
-	NfsMountReadExe                MetricConfig `mapstructure:"nfs.mount.read_exe"`
-	NfsMountReadRtt                MetricConfig `mapstructure:"nfs.mount.read_rtt"`
-	NfsMountRPCBacklog             MetricConfig `mapstructure:"nfs.mount.rpc_backlog"`
-	NfsMountWriteBytes             MetricConfig `mapstructure:"nfs.mount.write_bytes"`
-	NfsMountWriteExe               MetricConfig `mapstructure:"nfs.mount.write_exe"`
-	NfsMountWriteRtt               MetricConfig `mapstructure:"nfs.mount.write_rtt"`
+	NfsMountOperationErrors        NfsMountOperationErrorsMetricConfig        `mapstructure:"nfs.mount.operation.errors"`
+	NfsMountOperationMajorTimeouts NfsMountOperationMajorTimeoutsMetricConfig `mapstructure:"nfs.mount.operation.major_timeouts"`
+	NfsMountOperationReceivedBytes NfsMountOperationReceivedBytesMetricConfig `mapstructure:"nfs.mount.operation.received_bytes"`
+	NfsMountOperationRequests      NfsMountOperationRequestsMetricConfig      `mapstructure:"nfs.mount.operation.requests"`
+	NfsMountOperationSentBytes     NfsMountOperationSentBytesMetricConfig     `mapstructure:"nfs.mount.operation.sent_bytes"`
+	NfsMountOpsPerSecond           NfsMountOpsPerSecondMetricConfig           `mapstructure:"nfs.mount.ops_per_second"`
+	NfsMountReadBytes              NfsMountReadBytesMetricConfig              `mapstructure:"nfs.mount.read_bytes"`
+	NfsMountReadExe                NfsMountReadExeMetricConfig                `mapstructure:"nfs.mount.read_exe"`
+	NfsMountReadRtt                NfsMountReadRttMetricConfig                `mapstructure:"nfs.mount.read_rtt"`
+	NfsMountRPCBacklog             NfsMountRPCBacklogMetricConfig             `mapstructure:"nfs.mount.rpc_backlog"`
+	NfsMountWriteBytes             NfsMountWriteBytesMetricConfig             `mapstructure:"nfs.mount.write_bytes"`
+	NfsMountWriteExe               NfsMountWriteExeMetricConfig               `mapstructure:"nfs.mount.write_exe"`
+	NfsMountWriteRtt               NfsMountWriteRttMetricConfig               `mapstructure:"nfs.mount.write_rtt"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		NfsMountOperationErrors: MetricConfig{
-			Enabled: true,
+		NfsMountOperationErrors: NfsMountOperationErrorsMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountOperationErrorsMetricAttributeKey{NfsMountOperationErrorsMetricAttributeKeyServer, NfsMountOperationErrorsMetricAttributeKeyInstance, NfsMountOperationErrorsMetricAttributeKeyOperation},
 		},
-		NfsMountOperationMajorTimeouts: MetricConfig{
-			Enabled: true,
+		NfsMountOperationMajorTimeouts: NfsMountOperationMajorTimeoutsMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountOperationMajorTimeoutsMetricAttributeKey{NfsMountOperationMajorTimeoutsMetricAttributeKeyServer, NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance, NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation},
 		},
-		NfsMountOperationReceivedBytes: MetricConfig{
-			Enabled: true,
+		NfsMountOperationReceivedBytes: NfsMountOperationReceivedBytesMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountOperationReceivedBytesMetricAttributeKey{NfsMountOperationReceivedBytesMetricAttributeKeyServer, NfsMountOperationReceivedBytesMetricAttributeKeyInstance, NfsMountOperationReceivedBytesMetricAttributeKeyOperation},
 		},
-		NfsMountOperationRequests: MetricConfig{
-			Enabled: true,
+		NfsMountOperationRequests: NfsMountOperationRequestsMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountOperationRequestsMetricAttributeKey{NfsMountOperationRequestsMetricAttributeKeyServer, NfsMountOperationRequestsMetricAttributeKeyInstance, NfsMountOperationRequestsMetricAttributeKeyOperation},
 		},
-		NfsMountOperationSentBytes: MetricConfig{
-			Enabled: true,
+		NfsMountOperationSentBytes: NfsMountOperationSentBytesMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountOperationSentBytesMetricAttributeKey{NfsMountOperationSentBytesMetricAttributeKeyServer, NfsMountOperationSentBytesMetricAttributeKeyInstance, NfsMountOperationSentBytesMetricAttributeKeyOperation},
 		},
-		NfsMountOpsPerSecond: MetricConfig{
-			Enabled: true,
+		NfsMountOpsPerSecond: NfsMountOpsPerSecondMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountOpsPerSecondMetricAttributeKey{NfsMountOpsPerSecondMetricAttributeKeyServer, NfsMountOpsPerSecondMetricAttributeKeyInstance},
 		},
-		NfsMountReadBytes: MetricConfig{
-			Enabled: true,
+		NfsMountReadBytes: NfsMountReadBytesMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountReadBytesMetricAttributeKey{NfsMountReadBytesMetricAttributeKeyServer, NfsMountReadBytesMetricAttributeKeyInstance},
 		},
-		NfsMountReadExe: MetricConfig{
-			Enabled: true,
+		NfsMountReadExe: NfsMountReadExeMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountReadExeMetricAttributeKey{NfsMountReadExeMetricAttributeKeyServer, NfsMountReadExeMetricAttributeKeyInstance},
 		},
-		NfsMountReadRtt: MetricConfig{
-			Enabled: true,
+		NfsMountReadRtt: NfsMountReadRttMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountReadRttMetricAttributeKey{NfsMountReadRttMetricAttributeKeyServer, NfsMountReadRttMetricAttributeKeyInstance},
 		},
-		NfsMountRPCBacklog: MetricConfig{
-			Enabled: true,
+		NfsMountRPCBacklog: NfsMountRPCBacklogMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountRPCBacklogMetricAttributeKey{NfsMountRPCBacklogMetricAttributeKeyServer, NfsMountRPCBacklogMetricAttributeKeyInstance},
 		},
-		NfsMountWriteBytes: MetricConfig{
-			Enabled: true,
+		NfsMountWriteBytes: NfsMountWriteBytesMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []NfsMountWriteBytesMetricAttributeKey{NfsMountWriteBytesMetricAttributeKeyServer, NfsMountWriteBytesMetricAttributeKeyInstance},
 		},
-		NfsMountWriteExe: MetricConfig{
-			Enabled: true,
+		NfsMountWriteExe: NfsMountWriteExeMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountWriteExeMetricAttributeKey{NfsMountWriteExeMetricAttributeKeyServer, NfsMountWriteExeMetricAttributeKeyInstance},
 		},
-		NfsMountWriteRtt: MetricConfig{
-			Enabled: true,
+		NfsMountWriteRtt: NfsMountWriteRttMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []NfsMountWriteRttMetricAttributeKey{NfsMountWriteRttMetricAttributeKeyServer, NfsMountWriteRttMetricAttributeKeyInstance},
 		},
 	}
 }

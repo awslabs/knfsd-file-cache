@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -42,13 +48,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricNfsPacketsArrived struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   NfsPacketsArrivedMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills nfs.packets.arrived metric with initial data.
@@ -87,7 +94,7 @@ func (m *metricNfsPacketsArrived) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsPacketsArrived(cfg MetricConfig) metricNfsPacketsArrived {
+func newMetricNfsPacketsArrived(cfg NfsPacketsArrivedMetricConfig) metricNfsPacketsArrived {
 	m := metricNfsPacketsArrived{config: cfg}
 
 	if cfg.Enabled {
@@ -98,9 +105,9 @@ func newMetricNfsPacketsArrived(cfg MetricConfig) metricNfsPacketsArrived {
 }
 
 type metricNfsPacketsDeferred struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   NfsPacketsDeferredMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills nfs.packets.deferred metric with initial data.
@@ -137,7 +144,7 @@ func (m *metricNfsPacketsDeferred) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsPacketsDeferred(cfg MetricConfig) metricNfsPacketsDeferred {
+func newMetricNfsPacketsDeferred(cfg NfsPacketsDeferredMetricConfig) metricNfsPacketsDeferred {
 	m := metricNfsPacketsDeferred{config: cfg}
 
 	if cfg.Enabled {
@@ -148,9 +155,9 @@ func newMetricNfsPacketsDeferred(cfg MetricConfig) metricNfsPacketsDeferred {
 }
 
 type metricNfsSocketsEnqueued struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   NfsSocketsEnqueuedMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills nfs.sockets.enqueued metric with initial data.
@@ -189,7 +196,7 @@ func (m *metricNfsSocketsEnqueued) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsSocketsEnqueued(cfg MetricConfig) metricNfsSocketsEnqueued {
+func newMetricNfsSocketsEnqueued(cfg NfsSocketsEnqueuedMetricConfig) metricNfsSocketsEnqueued {
 	m := metricNfsSocketsEnqueued{config: cfg}
 
 	if cfg.Enabled {
@@ -200,9 +207,9 @@ func newMetricNfsSocketsEnqueued(cfg MetricConfig) metricNfsSocketsEnqueued {
 }
 
 type metricNfsThreads struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric         // data buffer for generated metric.
+	config   NfsThreadsMetricConfig // metric config provided by user.
+	capacity int                    // max observed number of data points added to the metric.
 }
 
 // init fills nfs.threads metric with initial data.
@@ -239,7 +246,7 @@ func (m *metricNfsThreads) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsThreads(cfg MetricConfig) metricNfsThreads {
+func newMetricNfsThreads(cfg NfsThreadsMetricConfig) metricNfsThreads {
 	m := metricNfsThreads{config: cfg}
 
 	if cfg.Enabled {
@@ -250,9 +257,9 @@ func newMetricNfsThreads(cfg MetricConfig) metricNfsThreads {
 }
 
 type metricNfsThreadsTimedout struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                 // data buffer for generated metric.
+	config   NfsThreadsTimedoutMetricConfig // metric config provided by user.
+	capacity int                            // max observed number of data points added to the metric.
 }
 
 // init fills nfs.threads.timedout metric with initial data.
@@ -291,7 +298,7 @@ func (m *metricNfsThreadsTimedout) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsThreadsTimedout(cfg MetricConfig) metricNfsThreadsTimedout {
+func newMetricNfsThreadsTimedout(cfg NfsThreadsTimedoutMetricConfig) metricNfsThreadsTimedout {
 	m := metricNfsThreadsTimedout{config: cfg}
 
 	if cfg.Enabled {
@@ -302,9 +309,9 @@ func newMetricNfsThreadsTimedout(cfg MetricConfig) metricNfsThreadsTimedout {
 }
 
 type metricNfsThreadsWoken struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   NfsThreadsWokenMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
 }
 
 // init fills nfs.threads.woken metric with initial data.
@@ -343,7 +350,7 @@ func (m *metricNfsThreadsWoken) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsThreadsWoken(cfg MetricConfig) metricNfsThreadsWoken {
+func newMetricNfsThreadsWoken(cfg NfsThreadsWokenMetricConfig) metricNfsThreadsWoken {
 	m := metricNfsThreadsWoken{config: cfg}
 
 	if cfg.Enabled {

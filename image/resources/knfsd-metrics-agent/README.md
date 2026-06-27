@@ -222,9 +222,9 @@ processors:
 # https://pkg.go.dev/github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsemfexporter#readme-exporter-configuration
 exporters:
   awsemf:
-    log_group_name: "knfsd/metrics"
+    log_group_name: "/knfsd/metrics"
     log_retention: 30
-    namespace: "knfsd/metrics"
+    namespace: "/knfsd/metrics"
     # minimize the number of metrics published to CloudWatch (save cost)
     dimension_rollup_option: "NoDimensionRollup"
     resource_to_telemetry_conversion:

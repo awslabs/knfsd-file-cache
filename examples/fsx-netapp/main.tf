@@ -1,31 +1,29 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.44.0"
+      version = "~> 6.52.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.8.1"
+      version = "~> 3.9.0"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.5.0"
+      version = "~> 3.6.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.4"
+      version = "~> 3.3.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.26"
+      "knfsd-file-cache/examples/fsx-netapp/1.1.0-alpha.27"
     ]
   }
 }
@@ -44,9 +42,20 @@ data "aws_vpc" "selected" {
   id = data.aws_subnet.selected.vpc_id
 }
 
+# get the current AWS partition (aws, aws-us-gov, aws-cn)
+data "aws_partition" "current" {}
+
 # local variables
 locals {
   vpc_cidr_block = data.aws_vpc.selected.cidr_block
+
+  # partition-specific FSx CA certificate bundle host (see README.md)
+  fsx_ca_bundle_hosts = {
+    "aws"        = "https://fsx-aws-certificates.s3.amazonaws.com"
+    "aws-us-gov" = "https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com"
+    "aws-cn"     = "https://fsx-aws-cn-certificates.s3.cn-north-1.amazonaws.com.cn"
+  }
+  fsx_ca_bundle_url = "${local.fsx_ca_bundle_hosts[data.aws_partition.current.partition]}/bundle-${var.REGION}.pem"
 }
 
 # generate a cryptographically secure password for "fsxadmin" user
@@ -164,11 +173,11 @@ resource "aws_fsx_ontap_volume" "volume5" {
 
 # GET the AWS FSx certificate bundle for the specific AWS region
 data "http" "aws_ca_bundle" {
-  url = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-${var.REGION}.pem"
+  url = local.fsx_ca_bundle_url
   retry {
-    attempts     = 2
+    attempts     = 4
     min_delay_ms = 2000
-    max_delay_ms = 8000
+    max_delay_ms = 10000
   }
 }
 

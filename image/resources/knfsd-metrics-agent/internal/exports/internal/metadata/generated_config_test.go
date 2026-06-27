@@ -26,13 +26,13 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsExportsTotalOperations: MetricConfig{
+					NfsExportsTotalOperations: NfsExportsTotalOperationsMetricConfig{
 						Enabled: true,
 					},
-					NfsExportsTotalReadBytes: MetricConfig{
+					NfsExportsTotalReadBytes: NfsExportsTotalReadBytesMetricConfig{
 						Enabled: true,
 					},
-					NfsExportsTotalWriteBytes: MetricConfig{
+					NfsExportsTotalWriteBytes: NfsExportsTotalWriteBytesMetricConfig{
 						Enabled: true,
 					},
 				},
@@ -42,13 +42,13 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsExportsTotalOperations: MetricConfig{
+					NfsExportsTotalOperations: NfsExportsTotalOperationsMetricConfig{
 						Enabled: false,
 					},
-					NfsExportsTotalReadBytes: MetricConfig{
+					NfsExportsTotalReadBytes: NfsExportsTotalReadBytesMetricConfig{
 						Enabled: false,
 					},
-					NfsExportsTotalWriteBytes: MetricConfig{
+					NfsExportsTotalWriteBytes: NfsExportsTotalWriteBytesMetricConfig{
 						Enabled: false,
 					},
 				},
@@ -58,7 +58,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(NfsExportsTotalOperationsMetricConfig{}, NfsExportsTotalReadBytesMetricConfig{}, NfsExportsTotalWriteBytesMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

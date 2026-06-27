@@ -155,7 +155,8 @@
           "label": "Auto Scaling Group Name",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_available_percent\"",
+          "inputPopulationType": "search",
+          "search": "{/knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_available_percent\"",
           "populateFrom": "AutoScalingGroupName"
       },
       {
@@ -166,7 +167,8 @@
           "label": "Instance ID",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/ec2,AutoScalingGroupName,InstanceId} MetricName=\"mem_available_percent\"",
+          "inputPopulationType": "search",
+          "search": "{/knfsd/ec2,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"mem_available_percent\"",
           "populateFrom": "InstanceId"
       },
       {
@@ -177,6 +179,7 @@
           "label": "RDS DB Instance Identifier",
           "defaultValue": "__FIRST",
           "visible": true,
+          "inputPopulationType": "search",
           "search": "AWS/RDS",
           "populateFrom": "DBInstanceIdentifier"
       },
@@ -188,7 +191,8 @@
           "label": "Source NFS Filer",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/metrics,AutoScalingGroupName,InstanceId,server} MetricName=\"knfsd/mount/read_bytes\"",
+          "inputPopulationType": "search",
+          "search": "{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"",
           "populateFrom": "server"
       },
       {
@@ -199,7 +203,8 @@
           "label": "Output NFS Filer",
           "defaultValue": "__FIRST",
           "visible": true,
-          "search": "{knfsd/metrics,AutoScalingGroupName,InstanceId,server} MetricName=\"knfsd/mount/read_bytes\"",
+          "inputPopulationType": "search",
+          "search": "{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"",
           "populateFrom": "server"
       }
   ],
@@ -223,7 +228,7 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_read_bytes\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_read_bytes\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "singleValue",
               "region": "${region_filter}",
@@ -239,7 +244,7 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_write_bytes\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_write_bytes\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "singleValue",
               "region": "${region_filter}",
@@ -255,7 +260,7 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" (MetricName=\"knfsd/exports/total_read_bytes\" OR MetricName=\"knfsd/exports/total_write_bytes\")', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" (MetricName=\"knfsd/exports/total_read_bytes\" OR MetricName=\"knfsd/exports/total_write_bytes\")', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "ABS(RATE(SUM(REMOVE_EMPTY(m1))))", "label": "ASG_FILTER", "color": "#08aad2", "id": "e1" } ]
               ],
               "view": "singleValue",
@@ -273,7 +278,7 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_operations\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/exports/total_operations\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY AutoScalingGroupName", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "singleValue",
               "stacked": false,
@@ -290,8 +295,8 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", { "id": "m1", "visible": false, "stat": "Sum" } ],
-                  [ "knfsd/metrics", "knfsd/exports/total_read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false, "stat": "Sum" } ],
+                  [ "/knfsd/metrics", "knfsd/mount/read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", { "id": "m1", "visible": false, "stat": "Sum" } ],
+                  [ "/knfsd/metrics", "knfsd/exports/total_read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false, "stat": "Sum" } ],
                   [ { "expression": "IF(m2 > 0, (1 - (m1/m2)) * 100, 0)", "label": "${PROP('Dim.InstanceId')}", "color": "#08aad2", "id": "e1" } ]
               ],
               "view": "singleValue",
@@ -336,7 +341,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(disk_used_percent) FROM SCHEMA(\"knfsd/ec2\", AutoScalingGroupName, InstanceId, fstype, path) WHERE path = '/var/cache/fscache' AND fstype = 'xfs' AND AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(disk_used_percent) FROM SCHEMA(\"/knfsd/ec2\", AutoScalingGroupName, InstanceId, fstype, path) WHERE path = '/var/cache/fscache' AND fstype = 'xfs' AND AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -377,7 +382,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MIN(disk_free) FROM SCHEMA(\"knfsd/ec2\", AutoScalingGroupName, InstanceId, fstype, path) WHERE path = '/var/cache/fscache' AND fstype = 'xfs' AND AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MIN(disk_free) FROM SCHEMA(\"/knfsd/ec2\", AutoScalingGroupName, InstanceId, fstype, path) WHERE path = '/var/cache/fscache' AND fstype = 'xfs' AND AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -401,7 +406,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum'))))", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum'))))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -424,7 +429,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum'))))", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "REMOVE_EMPTY(ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum'))))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -447,7 +452,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_inode_cache_active_objects\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_inode_cache_active_objects\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -471,7 +476,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_inode_cache_objsize\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_inode_cache_objsize\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -495,7 +500,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/dentry_cache_active_objects\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/dentry_cache_active_objects\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -519,7 +524,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/dentry_cache_objsize\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/dentry_cache_objsize\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -554,7 +559,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_connections\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_connections\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -578,7 +583,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_clients\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_clients\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": true,
@@ -602,7 +607,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/nfs_packets_arrived\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_packets_arrived\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -625,7 +630,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_packets_deferred\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_packets_deferred\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -648,7 +653,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/nfs_sockets_enqueued\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_sockets_enqueued\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -671,7 +676,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfs_threads\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT MAX(\"knfsd/nfs_threads\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -694,7 +699,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_timedout\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_timedout\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -717,7 +722,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_woken\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT SUM(\"knfsd/nfs_threads_woken\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId) WHERE AutoScalingGroupName = 'ASG_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -751,8 +756,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_recv\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -777,8 +782,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_bytes_sent\"', 'Sum')", "label": "${PROP('Dim.InstanceId')}: ${PROP('Dim.interface')}" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -859,7 +864,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "netstat_tcp_close_wait", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "tcp_close_wait" } ],
+                  [ "/knfsd/ec2", "netstat_tcp_close_wait", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "tcp_close_wait" } ],
                   [ ".", "netstat_tcp_established", ".", ".", ".", ".", { "label": "tcp_established" } ],
                   [ ".", "netstat_tcp_listen", ".", ".", ".", ".", { "label": "tcp_listen" } ],
                   [ ".", "netstat_tcp_syn_sent", ".", ".", ".", ".", { "label": "tcp_syn_sent" } ],
@@ -899,7 +904,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -924,7 +929,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -949,7 +954,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"OUTPUT_FILTER\" MetricName=\"knfsd/mount/write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"OUTPUT_FILTER\" MetricName=\"knfsd/mount/write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -974,7 +979,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId} AutoScalingGroupName=\"ASG_FILTER\" MetricName=\"knfsd/exports/total_write_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -1010,7 +1015,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/nfsiostat_ops_per_second\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" server=\"SOURCE_FILTER\" MetricName=\"knfsd/nfsiostat_ops_per_second\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(ABS(RATE(m1)))", "label": "${PROP('Dim.InstanceId')}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -1035,7 +1040,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(\"knfsd/nfsiostat_rpc_backlog\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "id": "m1", "visible": false } ],
+                  [ { "expression": "SELECT MAX(\"knfsd/nfsiostat_rpc_backlog\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "id": "m1", "visible": false } ],
                   [ { "expression": "FLOOR(m1)", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -1060,7 +1065,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_read_rtt\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_read_rtt\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1084,7 +1089,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_write_rtt\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'OUTPUT_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_write_rtt\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'OUTPUT_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1108,7 +1113,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_read_exe\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_read_exe\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'SOURCE_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1132,7 +1137,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_write_exe\") FROM SCHEMA(\"knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'OUTPUT_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SELECT AVG(\"knfsd/nfsiostat_mount_write_exe\") FROM SCHEMA(\"/knfsd/metrics\", AutoScalingGroupName, InstanceId, server) WHERE AutoScalingGroupName = 'ASG_FILTER' AND server = 'OUTPUT_FILTER' GROUP BY InstanceId", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -1167,7 +1172,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/mount/operation/sent_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
                   [ "...", "GETATTR", { "visible": false } ],
                   [ "...", "SETATTR", { "visible": false } ],
                   [ "...", "LOOKUP", { "visible": false } ],
@@ -1265,7 +1270,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/mount/operation/received_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
                   [ "...", "GETATTR", { "visible": false } ],
                   [ "...", "SETATTR", { "visible": false } ],
                   [ "...", "LOOKUP", { "visible": false } ],
@@ -1363,7 +1368,7 @@
           "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/mount/operation/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
                   [ "...", "GETATTR", { "visible": false } ],
                   [ "...", "SETATTR", { "visible": false } ],
                   [ "...", "LOOKUP", { "visible": false } ],
@@ -1461,7 +1466,7 @@
           "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/mount/operation/major_timeouts", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
                   [ "...", "GETATTR", { "visible": false } ],
                   [ "...", "SETATTR", { "visible": false } ],
                   [ "...", "LOOKUP", { "visible": false } ],
@@ -1559,7 +1564,7 @@
           "height": 9,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/mount/operation/errors", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", "operation", "NULL", { "visible": false } ],
                   [ "...", "GETATTR", { "visible": false } ],
                   [ "...", "SETATTR", { "visible": false } ],
                   [ "...", "LOOKUP", { "visible": false } ],
@@ -1668,7 +1673,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/reads/direct", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DR: dio_read" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/reads/direct", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DR: dio_read" } ],
                   [ ".", "knfsd/netfs/reads/readahead", ".", ".", ".", ".", { "label": "RA: readahead" } ],
                   [ ".", "knfsd/netfs/reads/folio", ".", ".", ".", ".", { "label": "RF: read_folio" } ],
                   [ ".", "knfsd/netfs/reads/single", ".", ".", ".", ".", { "label": "RS: read_single" } ],
@@ -1696,7 +1701,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/writes/buffered", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "BW: buffered_write" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/writes/buffered", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "BW: buffered_write" } ],
                   [ ".", "knfsd/netfs/writes/writethrough", ".", ".", ".", ".", { "label": "WT: writethrough" } ],
                   [ ".", "knfsd/netfs/writes/direct", ".", ".", ".", ".", { "label": "DW: dio_write" } ],
                   [ ".", "knfsd/netfs/writes/pages", ".", ".", ".", ".", { "label": "WP: writepages" } ],
@@ -1723,7 +1728,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/download/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DL: download" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/download/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "DL: download" } ],
                   [ ".", "knfsd/netfs/download/done", ".", ".", ".", ".", { "label": "ds: download_done" } ],
                   [ ".", "knfsd/netfs/download/failed", ".", ".", ".", ".", { "label": "df: download_failed" } ],
                   [ ".", "knfsd/netfs/download/instead", ".", ".", ".", ".", { "label": "di: download_instead" } ]
@@ -1749,7 +1754,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/cache_read/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "RD: read" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/cache_read/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "RD: read" } ],
                   [ ".", "knfsd/netfs/cache_read/done", ".", ".", ".", ".", { "label": "rs: read_done" } ],
                   [ ".", "knfsd/netfs/cache_read/failed", ".", ".", ".", ".", { "label": "rf: read_failed" } ]
               ],
@@ -1774,7 +1779,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/upload/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "UL: upload" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/upload/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "UL: upload" } ],
                   [ ".", "knfsd/netfs/upload/done", ".", ".", ".", ".", { "label": "us: upload_done" } ],
                   [ ".", "knfsd/netfs/upload/failed", ".", ".", ".", ".", { "label": "uf: upload_failed" } ]
               ],
@@ -1799,7 +1804,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/cache_write/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "WR: write" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/cache_write/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "WR: write" } ],
                   [ ".", "knfsd/netfs/cache_write/done", ".", ".", ".", ".", { "label": "ws: write_done" } ],
                   [ ".", "knfsd/netfs/cache_write/failed", ".", ".", ".", ".", { "label": "wf: write_failed" } ]
               ],
@@ -1824,7 +1829,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/zero_ops/zero", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "ZR: zero" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/zero_ops/zero", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "ZR: zero" } ],
                   [ ".", "knfsd/netfs/zero_ops/short", ".", ".", ".", ".", { "label": "sh: short_read" } ],
                   [ ".", "knfsd/netfs/zero_ops/skip", ".", ".", ".", ".", { "label": "sk: write_zskip" } ]
               ],
@@ -1849,7 +1854,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/retries/read_req", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rq: read_req" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/retries/read_req", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rq: read_req" } ],
                   [ ".", "knfsd/netfs/retries/read_subreq", ".", ".", ".", ".", { "label": "rs: read_subreq" } ],
                   [ ".", "knfsd/netfs/retries/write_req", ".", ".", ".", ".", { "label": "wq: write_req" } ],
                   [ ".", "knfsd/netfs/retries/write_subreq", ".", ".", ".", ".", { "label": "ws: write_subreq" } ]
@@ -1875,7 +1880,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/objects/read_reqs", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rr: read_req" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/objects/read_reqs", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rr: read_req" } ],
                   [ ".", "knfsd/netfs/objects/subreqs", ".", ".", ".", ".", { "label": "sr: subreq" } ],
                   [ ".", "knfsd/netfs/objects/folio_queue", ".", ".", ".", ".", { "label": "foq: folio_queue" } ],
                   [ ".", "knfsd/netfs/objects/write_conflicts", ".", ".", ".", ".", { "label": "wsc: write_stream_conflicts" } ]
@@ -1901,7 +1906,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/netfs/wblock/skip", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "skip: wb_lock_skip" } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/wblock/skip", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "skip: wb_lock_skip" } ],
                   [ ".", "knfsd/netfs/wblock/wait", ".", ".", ".", ".", { "label": "wait: wb_lock_wait" } ]
               ],
               "view": "timeSeries",
@@ -1936,7 +1941,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/cookies/data", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: data" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/cookies/data", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: data" } ],
                   [ ".", "knfsd/fscache/cookies/volume", ".", ".", ".", ".", { "label": "v: volume" } ],
                   [ ".", "knfsd/fscache/cookies/volume_collisions", ".", ".", ".", ".", { "label": "vcol: volume_collisions" } ],
                   [ ".", "knfsd/fscache/cookies/volume_oom", ".", ".", ".", ".", { "label": "voom: volume_oom" } ]
@@ -1962,7 +1967,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/acquire/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: acquire_requests" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/acquire/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: acquire_requests" } ],
                   [ ".", "knfsd/fscache/acquire/ok", ".", ".", ".", ".", { "label": "ok: acquire_ok" } ],
                   [ ".", "knfsd/fscache/acquire/oom", ".", ".", ".", ".", { "label": "oom: acquire_oom" } ]
               ],
@@ -1987,7 +1992,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/lru/count", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: lru_count" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/lru/count", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: lru_count" } ],
                   [ ".", "knfsd/fscache/lru/expired", ".", ".", ".", ".", { "label": "exp: lru_expired" } ],
                   [ ".", "knfsd/fscache/lru/removed", ".", ".", ".", ".", { "label": "rmv: lru_removed" } ],
                   [ ".", "knfsd/fscache/lru/dropped", ".", ".", ".", ".", { "label": "drp: lru_dropped" } ]
@@ -2013,7 +2018,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/invalidations", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: invalidations" } ]
+                  [ "/knfsd/metrics", "knfsd/fscache/invalidations", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: invalidations" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2036,7 +2041,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/updates/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: update_requests" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/updates/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: update_requests" } ],
                   [ ".", "knfsd/fscache/updates/resize", ".", ".", ".", ".", { "label": "rsz: resize_requests" } ],
                   [ ".", "knfsd/fscache/updates/resize_skipped", ".", ".", ".", ".", { "label": "rsn: skipped_resize_requests" } ]
               ],
@@ -2061,7 +2066,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/relinquish/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: relinquish_requests" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/relinquish/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "n: relinquish_requests" } ],
                   [ ".", "knfsd/fscache/relinquish/retire", ".", ".", ".", ".", { "label": "rtr: relinquish_retire" } ],
                   [ ".", "knfsd/fscache/relinquish/drop", ".", ".", ".", ".", { "label": "drop: relinquish_drop" } ]
               ],
@@ -2086,7 +2091,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/nospace/write", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "nwr: write_requests" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/nospace/write", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "nwr: write_requests" } ],
                   [ ".", "knfsd/fscache/nospace/create", ".", ".", ".", ".", { "label": "ncr: create_requests" } ],
                   [ ".", "knfsd/fscache/nospace/cull", ".", ".", ".", ".", { "label": "cull: culled_objects" } ]
               ],
@@ -2111,7 +2116,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/metrics", "knfsd/fscache/io/read", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rd: read_ops" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/io/read", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "rd: read_ops" } ],
                   [ ".", "knfsd/fscache/io/write", ".", ".", ".", ".", { "label": "wr: write_ops" } ],
                   [ ".", "knfsd/fscache/io/misfit", ".", ".", ".", ".", { "label": "mis: dio_misfit_ops" } ]
               ],
@@ -2147,8 +2152,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_reads\"', 'Sum')))", "id": "e1" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_writes\"', 'Sum')))", "id": "e2" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_reads\"', 'Sum')))", "id": "e1" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_writes\"', 'Sum')))", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2171,8 +2176,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum')))", "id": "e1" } ],
-                  [ { "expression": "ABS(RATE(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))", "id": "e2" } ]
+                  [ { "expression": "ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_bytes\"', 'Sum')))", "id": "e1" } ],
+                  [ { "expression": "ABS(RATE(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_bytes\"', 'Sum')))", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2195,10 +2200,10 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp", "id": "e1" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops", "id": "e2" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp", "id": "e3" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops", "id": "e4" } ]
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_tp\" ', 'Sum'))))", "label": "NVMe: perf_tp", "id": "e1" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_performance_exceeded_iops\" ', 'Sum'))))", "label": "NVMe: perf_iops", "id": "e2" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_tp\" ', 'Sum'))))", "label": "EBS: perf_tp", "id": "e3" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_ec2_instance_performance_exceeded_iops\" ', 'Sum'))))", "label": "EBS: perf_iops", "id": "e4" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2221,7 +2226,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_io_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ]
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_io_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2244,8 +2249,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_time\"', 'Sum')", "label": "${LABEL}", "id": "e2" } ]
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_read_time\"', 'Sum')", "label": "${LABEL}", "id": "e1" } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,fscdevice,name} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" ((fscdevice=\"md127\" AND name=\"md127\") OR (fscdevice=\"nvme0n1\" AND name=\"nvme0n1\") OR (fscdevice=\"nvme1n1\" AND name=\"nvme1n1\")) MetricName=\"diskio_write_time\"', 'Sum')", "label": "${LABEL}", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2268,8 +2273,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_volume_queue_length\" ', 'Sum'))", "label": "NVMe: volume_queue_length", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_volume_queue_length\" ', 'Sum'))", "label": "EBS: volume_queue_length", "id": "e2" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,SerialId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_instance_store_volume_queue_length\" ', 'Sum'))", "label": "NVMe: volume_queue_length", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,VolumeId} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"diskio_ebs_volume_queue_length\" ', 'Sum'))", "label": "EBS: volume_queue_length", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2339,8 +2344,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "cpu_usage_active", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "cpu", "cpu-total", { "label": "cpu_usage_active" } ],
-                  [ "knfsd/ec2", "cpu_usage_iowait", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "cpu", "cpu-total", { "label": "cpu_usage_iowait" } ]
+                  [ "/knfsd/ec2", "cpu_usage_active", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "cpu", "cpu-total", { "label": "cpu_usage_active" } ],
+                  [ "/knfsd/ec2", "cpu_usage_iowait", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "cpu", "cpu-total", { "label": "cpu_usage_iowait" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2366,7 +2371,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "mem_available_percent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_available %" } ]
+                  [ "/knfsd/ec2", "mem_available_percent", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_available %" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2402,8 +2407,8 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "mem_buffered", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_buffered" } ],
-                  [ "knfsd/ec2", "mem_cached", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_cached" } ]
+                  [ "/knfsd/ec2", "mem_buffered", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_buffered" } ],
+                  [ "/knfsd/ec2", "mem_cached", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mem_cached" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2427,21 +2432,21 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: drop_out", "id": "e1" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m2", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m2", "visible": false } ],
                   [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: drop_in", "id": "e2" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_out\"', 'Sum')", "id": "m3", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_out\"', 'Sum')", "id": "m3", "visible": false } ],
                   [ { "expression": "ABS(RATE(m3))", "label": "${PROP('Dim.interface')}: err_out", "id": "e3" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_in\"', 'Sum')", "id": "m4", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens5\" OR interface=\"enp39s0\" OR interface=\"ens35\" OR interface=\"ens37\") MetricName=\"net_err_in\"', 'Sum')", "id": "m4", "visible": false } ],
                   [ { "expression": "ABS(RATE(m4))", "label": "${PROP('Dim.interface')}: err_in", "id": "e4" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m5", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_out\"', 'Sum')", "id": "m5", "visible": false } ],
                   [ { "expression": "ABS(RATE(m5))", "label": "${PROP('Dim.interface')}: drop_out", "id": "e5" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m6", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_drop_in\"', 'Sum')", "id": "m6", "visible": false } ],
                   [ { "expression": "ABS(RATE(m6))", "label": "${PROP('Dim.interface')}: drop_in", "id": "e6" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_out\"', 'Sum')", "id": "m7", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_out\"', 'Sum')", "id": "m7", "visible": false } ],
                   [ { "expression": "ABS(RATE(m7))", "label": "${PROP('Dim.interface')}: err_out", "id": "e7" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_in\"', 'Sum')", "id": "m8", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_err_in\"', 'Sum')", "id": "m8", "visible": false } ],
                   [ { "expression": "ABS(RATE(m8))", "label": "${PROP('Dim.interface')}: err_in", "id": "e8" } ]
               ],
               "view": "timeSeries",
@@ -2466,11 +2471,11 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_out_allowance_exceeded\"','Sum'))))", "label": "bw_out_allowance_exceeded", "id": "e1" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_in_allowance_exceeded\"','Sum'))))", "label": "bw_in_allowance_exceeded", "id": "e2" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_pps_allowance_exceeded\"','Sum'))))", "label": "pps_allowance_exceeded", "id": "e3" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_conntrack_allowance_exceeded\"','Sum'))))", "label": "conntrack_allowance_exceeded", "id": "e4" } ],
-                  [ { "expression": "ABS(RATE(SUM(SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_linklocal_allowance_exceeded\"','Sum'))))", "label": "linklocal_allowance_exceeded", "id": "e5" } ]
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_out_allowance_exceeded\"','Sum'))))", "label": "bw_out_allowance_exceeded", "id": "e1" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_bw_in_allowance_exceeded\"','Sum'))))", "label": "bw_in_allowance_exceeded", "id": "e2" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_pps_allowance_exceeded\"','Sum'))))", "label": "pps_allowance_exceeded", "id": "e3" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_conntrack_allowance_exceeded\"','Sum'))))", "label": "conntrack_allowance_exceeded", "id": "e4" } ],
+                  [ { "expression": "ABS(RATE(SUM(SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" MetricName=\"ethtool_linklocal_allowance_exceeded\"','Sum'))))", "label": "linklocal_allowance_exceeded", "id": "e5" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2494,7 +2499,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "disk_used_percent", "path", "/", "fstype", "ext4", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "disk_used" } ]
+                  [ "/knfsd/ec2", "disk_used_percent", "path", "/", "fstype", "ext4", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "disk_used" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2520,11 +2525,11 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "knfsd/ec2", "processes_total", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "total" } ],
-                  [ "knfsd/ec2", "processes_total_threads", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "threads" } ],
-                  [ "knfsd/ec2", "processes_blocked", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "blocked" } ],
-                  [ "knfsd/ec2", "processes_stopped", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "stopped" } ],
-                  [ "knfsd/ec2", "processes_zombies", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "zombies" } ]
+                  [ "/knfsd/ec2", "processes_total", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "total" } ],
+                  [ "/knfsd/ec2", "processes_total_threads", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "threads" } ],
+                  [ "/knfsd/ec2", "processes_blocked", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "blocked" } ],
+                  [ "/knfsd/ec2", "processes_stopped", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "stopped" } ],
+                  [ "/knfsd/ec2", "processes_zombies", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "zombies" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2548,7 +2553,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_mode\"','Maximum')", "label": "ena_srd_mode" } ]
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_mode\"','Maximum')", "label": "ena_srd_mode" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2597,11 +2602,11 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_eligible_tx_pkts\"','Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_eligible_tx_pkts\"','Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: ena_srd_eligible_tx_pkts", "id": "e1" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_tx_pkts\"','Sum')", "id": "m2", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_tx_pkts\"','Sum')", "id": "m2", "visible": false } ],
                   [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: ena_srd_tx_pkts", "id": "e2" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_sent\"','Sum')", "id": "m3", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_sent\"','Sum')", "id": "m3", "visible": false } ],
                   [ { "expression": "ABS(RATE(m3))", "label": "${PROP('Dim.interface')}: net_packets_sent", "id": "e3" } ]
               ],
               "view": "timeSeries",
@@ -2626,9 +2631,9 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_rx_pkts\"','Sum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_rx_pkts\"','Sum')", "id": "m1", "visible": false } ],
                   [ { "expression": "ABS(RATE(m1))", "label": "${PROP('Dim.interface')}: ena_srd_rx_pkts", "id": "e1" } ],
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_recv\"','Sum')", "id": "m2", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"net_packets_recv\"','Sum')", "id": "m2", "visible": false } ],
                   [ { "expression": "ABS(RATE(m2))", "label": "${PROP('Dim.interface')}: net_packets_recv", "id": "e2" } ]
               ],
               "view": "timeSeries",
@@ -2653,7 +2658,7 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SEARCH('{knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_resource_utilization\"','Maximum')", "id": "m1", "visible": false } ],
+                  [ { "expression": "SEARCH('{/knfsd/ec2,AutoScalingGroupName,InstanceId,driver,interface} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" driver=\"ena\" (interface=\"ens6\" OR interface=\"enp40s0\" OR interface=\"ens36\" OR interface=\"ens38\") MetricName=\"ethtool_ena_srd_resource_utilization\"','Maximum')", "id": "m1", "visible": false } ],
                   [ { "expression": "REMOVE_EMPTY(m1)", "label": "${PROP('Dim.interface')}: ena_srd_resource_utilization", "id": "e1" } ]
               ],
               "view": "timeSeries",
@@ -2701,15 +2706,15 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_fsidnum", "id": "e4" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_or_create_fsidnum", "id": "e5" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_path", "id": "e6" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e7" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e8" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e9" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_fsidnum", "id": "e4" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_or_create_fsidnum", "id": "e5" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "retry: get_path", "id": "e6" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e7" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e8" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e9" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2733,15 +2738,15 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_fsidnum", "id": "e1" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_fsidnum", "id": "e4" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_or_create_fsidnum", "id": "e5" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_path", "id": "e6" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_fsidnum", "id": "e7" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_or_create_fsidnum", "id": "e8" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e9" } ]
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_fsidnum", "id": "e1" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_fsidnum", "id": "e4" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_or_create_fsidnum", "id": "e5" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" retry>0 MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "retry: get_path", "id": "e6" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_fsidnum", "id": "e7" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_or_create_fsidnum", "id": "e8" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result,retry} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/operation/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e9" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2766,12 +2771,12 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_fsid", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: allocate_fsid", "id": "e2" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_fsid", "id": "e4" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_fsid", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: allocate_fsid", "id": "e2" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_fsid", "id": "e4" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2795,12 +2800,12 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_fsid", "id": "e1" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: allocate_fsid", "id": "e2" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_fsid", "id": "e4" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_fsid", "id": "e1" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: allocate_fsid", "id": "e2" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_fsid", "id": "e4" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2824,12 +2829,12 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2853,12 +2858,12 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_fsidnum", "id": "e1" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
-                  [ { "expression": "AVG(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_fsidnum", "id": "e1" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -2883,12 +2888,12 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
-                  [ { "expression": "SUM(SEARCH('{knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_fsidnum", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_or_create_fsidnum", "id": "e2" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_fsidnum", "id": "e4" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_or_create_fsidnum\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_or_create_fsidnum", "id": "e5" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,command,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" command=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/request/retries\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,

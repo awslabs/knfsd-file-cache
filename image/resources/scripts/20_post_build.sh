@@ -80,7 +80,7 @@ function cleanup_image() (
 	begin_command "Cleaning up image"
 	apt-get -o DPkg::Lock::Timeout=60 autoremove -y
 	apt-get -o DPkg::Lock::Timeout=60 clean -y
-	rm -rf "/var/lib/apt/lists/*"
+	rm -rf /var/lib/apt/lists/*
 	find /root -mindepth 1 -delete
 	truncate -s 0 /etc/machine-id
 	complete_command

@@ -1,88 +1,81 @@
-/*
-  Copyright 2022 Google LLC
-  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-  SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Smoke-test infrastructure: source NFS EC2 instance, single-node KNFSD proxy
+# ASG, and a single test client EC2 instance, all running in an existing VPC
+# (an existing or default VPC subnet supplied via var.SUBNET). The source-NFS
+# and client security groups are self-created from the subnet's VPC CIDR.
+# SSH/SCP access for the Go test driver is keyless: the driver tunnels over SSM
+# (AWS-StartSSHSession) and pushes an ephemeral key via EC2 Instance Connect at
+# connect time, so no SSH key pair is created or stored.
+#
+# The deployment is wired from three modules:
+#   - source-nfs : the upstream NFS filer (modules/source-nfs)
+#   - proxy      : the KNFSD proxy ASG (deployment/terraform-module-knfsd)
+#   - nfs-client : the test client running remote.test (modules/nfs-client)
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 7.31.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.52.0"
     }
   }
-}
-
-provider "google" {
-  project = var.PROJECT
-  zone    = var.ZONE
-}
-
-locals {
-  source_host = google_filestore_instance.source.networks[0].ip_addresses[0]
-  proxy_host  = module.proxy.dns_name
-}
-
-resource "google_filestore_instance" "source" {
-  project  = var.PROJECT
-  name     = "${var.PREFIX}-source"
-  tier     = "BASIC_HDD"
-  location = var.ZONE
-
-  networks {
-    network = var.NETWORK
-    modes   = ["MODE_IPV4"]
+  provider_meta "aws" {
+    user_agent = [
+      "knfsd-file-cache/image/smoke-tests/1.1.0-alpha.27"
+    ]
   }
+}
 
-  file_shares {
-    name        = "files"
-    capacity_gb = 1024
+provider "aws" {
+  region = var.REGION
+}
+
+data "aws_subnet" "selected" {
+  id = var.SUBNET
+}
+
+data "aws_vpc" "selected" {
+  id = data.aws_subnet.selected.vpc_id
+}
+
+module "source_nfs" {
+  source                      = "../modules/source-nfs"
+  REGION                      = var.REGION
+  NAME                        = "${var.PREFIX}-source"
+  SUBNET                      = var.SUBNET
+  SECURITY_GROUP_ID           = aws_security_group.source_nfs.id
+  ASSOCIATE_PUBLIC_IP_ADDRESS = var.ASSOCIATE_PUBLIC_IP_ADDRESS
+  TAGS = {
+    "knfsd-file-cache:run" = var.PREFIX
   }
 }
 
 module "proxy" {
-  source = "../../../deployment/terraform-module-knfsd"
-
-  SUBNET = var.SUBNET
-
-  TRAFFIC_MODE = "dns_round_robin"
-
-  PROXY_BASENAME = "${var.PREFIX}-proxy"
-  PROXY_AMI      = var.PROXY_IMAGE
-
-  # The smoke tests rely on using a single node so that the test client reliably
-  # connects to a specific instance. Also, the smoke tests only create a single
-  # client so they'd only ever connect to one instance.
-  KNFSD_NODES = 1
-
-  EXPORT_MAP = "${local.source_host};/files;/files"
+  source                      = "../../../deployment/terraform-module-knfsd"
+  SUBNET                      = var.SUBNET
+  TRAFFIC_MODE                = "dns_round_robin"
+  PROXY_BASENAME              = "${var.PREFIX}-proxy"
+  PROXY_AMI                   = var.PROXY_AMI
+  KNFSD_NODES                 = 1
+  EXPORT_MAP                  = "${module.source_nfs.private_ip};/files;/files"
+  FSID_MODE                   = "static"
+  ENABLE_STATUS_CHECK         = true
+  ASSOCIATE_PUBLIC_IP_ADDRESS = var.ASSOCIATE_PUBLIC_IP_ADDRESS
 }
 
-# nosemgrep: gcp-compute-boot-disk-encryption
-resource "google_compute_instance" "client" {
-  name         = "${var.PREFIX}-client"
-  machine_type = "n1-standard-1"
-  tags         = ["nfs-client"]
-
-  boot_disk {
-    initialize_params {
-      image = var.CLIENT_IMAGE
-    }
-  }
-
-  shielded_instance_config {
-    enable_vtpm                 = true
-    enable_integrity_monitoring = true
-  }
-
-  network_interface {
-    network    = var.NETWORK
-    subnetwork = var.SUBNETWORK
-  }
-
-  metadata = {
-    "source_host" = local.source_host,
-    "proxy_host"  = local.proxy_host,
-  }
+module "nfs_client" {
+  source                      = "../modules/nfs-client"
+  REGION                      = var.REGION
+  SUBNET                      = var.SUBNET
+  SECURITY_GROUP_ID           = aws_security_group.client.id
+  PREFIX                      = var.PREFIX
+  ARCH                        = var.ARCH
+  INSTANCE_TYPE               = var.INSTANCE_TYPE
+  ASSOCIATE_PUBLIC_IP_ADDRESS = var.ASSOCIATE_PUBLIC_IP_ADDRESS
+  SOURCE_HOST                 = module.source_nfs.private_ip
+  PROXY_HOST                  = module.proxy.dns_name
+  CLUSTER_READY               = module.proxy.cluster_ready
 }

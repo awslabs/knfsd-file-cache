@@ -1,8 +1,6 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 output "autoscaling_group_name" {
   description = "Name of the KNFSD proxy Auto Scaling Group."

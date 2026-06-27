@@ -6,13 +6,53 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// NfsExportsTotalOperationsMetricConfig provides config for the nfs.exports.total_operations metric.
+type NfsExportsTotalOperationsMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *NfsExportsTotalOperationsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsExportsTotalReadBytesMetricConfig provides config for the nfs.exports.total_read_bytes metric.
+type NfsExportsTotalReadBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsExportsTotalReadBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsExportsTotalWriteBytesMetricConfig provides config for the nfs.exports.total_write_bytes metric.
+type NfsExportsTotalWriteBytesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsExportsTotalWriteBytesMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,20 +68,20 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for exports metrics.
 type MetricsConfig struct {
-	NfsExportsTotalOperations MetricConfig `mapstructure:"nfs.exports.total_operations"`
-	NfsExportsTotalReadBytes  MetricConfig `mapstructure:"nfs.exports.total_read_bytes"`
-	NfsExportsTotalWriteBytes MetricConfig `mapstructure:"nfs.exports.total_write_bytes"`
+	NfsExportsTotalOperations NfsExportsTotalOperationsMetricConfig `mapstructure:"nfs.exports.total_operations"`
+	NfsExportsTotalReadBytes  NfsExportsTotalReadBytesMetricConfig  `mapstructure:"nfs.exports.total_read_bytes"`
+	NfsExportsTotalWriteBytes NfsExportsTotalWriteBytesMetricConfig `mapstructure:"nfs.exports.total_write_bytes"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		NfsExportsTotalOperations: MetricConfig{
+		NfsExportsTotalOperations: NfsExportsTotalOperationsMetricConfig{
 			Enabled: true,
 		},
-		NfsExportsTotalReadBytes: MetricConfig{
+		NfsExportsTotalReadBytes: NfsExportsTotalReadBytesMetricConfig{
 			Enabled: true,
 		},
-		NfsExportsTotalWriteBytes: MetricConfig{
+		NfsExportsTotalWriteBytes: NfsExportsTotalWriteBytesMetricConfig{
 			Enabled: true,
 		},
 	}

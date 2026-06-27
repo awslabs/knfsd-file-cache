@@ -7,7 +7,7 @@
 # nosemgrep: dockerfile-source-not-pinned
 FROM bats/bats:1.13.0
 
-ARG VERSION="1.1.0-alpha.26"
+ARG VERSION="1.1.0-alpha.27"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache bats test container image"

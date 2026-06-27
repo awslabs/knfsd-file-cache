@@ -1,8 +1,6 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 output "dns_name" {
   description = "The DNS name that was created for the KNFSD proxy cluster."

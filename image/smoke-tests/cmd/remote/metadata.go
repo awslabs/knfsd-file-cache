@@ -7,35 +7,76 @@
 package main
 
 import (
-	"bytes"
-	"errors"
+	"context"
 	"fmt"
 	"io"
-	"net/http"
+	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
+// QueryAttribute reads an EC2 instance tag through IMDSv2. The Terraform
+// configuration tags the test client with "knfsd-file-cache:source-host" and
+// "knfsd-file-cache:proxy-host" which the smoke-test driver maps to the
+// well-known short names "source_host" / "proxy_host".
 func QueryAttribute(name string) (string, error) {
-	url := fmt.Sprintf("http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s?alt=text", name)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	tag := mapTagName(name)
+
+	value, err := getMetadataValue("tags/instance/" + tag)
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("IMDSv2 tag %s: %w", tag, err)
 	}
 
-	req.Header.Add("Metadata-Flavor", "Google")
-	res, err := http.DefaultClient.Do(req) // #nosec G704 -- URL host is hardcoded to metadata.google.internal; only the attribute name varies.
+	return strings.TrimSpace(value), nil
+}
+
+// getMetadataValue fetches a metadata path from the AWS Instance Metadata Service (IMDSv2)
+// returning the output as a string.
+func getMetadataValue(uri string) (string, error) {
+	ctx := context.Background()
+
+	// Create a default AWS configuration
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		return "", errors.New(res.Status)
-	}
+	// Create an IMDS client, disable default 5s timeout
+	client := imds.NewFromConfig(cfg, func(options *imds.Options) {
+		options.DisableDefaultTimeout = true
+	})
 
-	body, err := io.ReadAll(res.Body)
+	// Create new context from previous ctx with a custom 2s timeout
+	// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html#timeouts
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	// Fetch the metadata value
+	output, err := client.GetMetadata(ctx, &imds.GetMetadataInput{
+		Path: uri,
+	})
 	if err != nil {
 		return "", err
 	}
 
-	return string(bytes.TrimSpace(body)), nil
+	defer output.Content.Close()
+	bytes, err := io.ReadAll(output.Content)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+func mapTagName(name string) string {
+	switch name {
+	case "source_host":
+		return "knfsd-file-cache:source-host"
+	case "proxy_host":
+		return "knfsd-file-cache:proxy-host"
+	default:
+		return name
+	}
 }

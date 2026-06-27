@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -22,13 +28,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricFscacheOldestFile struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                // data buffer for generated metric.
+	config   FscacheOldestFileMetricConfig // metric config provided by user.
+	capacity int                           // max observed number of data points added to the metric.
 }
 
 // init fills fscache.oldest_file metric with initial data.
@@ -65,7 +72,7 @@ func (m *metricFscacheOldestFile) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricFscacheOldestFile(cfg MetricConfig) metricFscacheOldestFile {
+func newMetricFscacheOldestFile(cfg FscacheOldestFileMetricConfig) metricFscacheOldestFile {
 	m := metricFscacheOldestFile{config: cfg}
 
 	if cfg.Enabled {

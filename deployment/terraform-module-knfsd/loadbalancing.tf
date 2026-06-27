@@ -1,8 +1,6 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 module "loadbalancer" {
   count                           = var.TRAFFIC_MODE == "loadbalancer" ? 1 : 0

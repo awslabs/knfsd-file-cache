@@ -677,10 +677,10 @@ exporters:
   #   verbosity: basic
 
   awsemf:
-    log_group_name: "knfsd/metrics"
+    log_group_name: "/knfsd/metrics"
     log_retention: 30
     max_retries: 3
-    namespace: "knfsd/metrics"
+    namespace: "/knfsd/metrics"
     dimension_rollup_option: NoDimensionRollup
     resource_to_telemetry_conversion:
       enabled: true

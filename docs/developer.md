@@ -200,9 +200,6 @@ retry_command: go mod download
 caching.../knfsd-file-cache/image/smoke-tests
 retry_command: go mod tidy
 retry_command: go mod download
-caching.../knfsd-file-cache/testing/examples
-retry_command: go mod tidy
-retry_command: go mod download
 ```
 
 ### House Cleaning

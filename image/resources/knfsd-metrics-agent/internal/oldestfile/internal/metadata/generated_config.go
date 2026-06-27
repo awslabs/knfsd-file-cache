@@ -6,13 +6,13 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// FscacheOldestFileMetricConfig provides config for the fscache.oldest_file metric.
+type FscacheOldestFileMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *FscacheOldestFileMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,12 +28,12 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for oldestfile metrics.
 type MetricsConfig struct {
-	FscacheOldestFile MetricConfig `mapstructure:"fscache.oldest_file"`
+	FscacheOldestFile FscacheOldestFileMetricConfig `mapstructure:"fscache.oldest_file"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		FscacheOldestFile: MetricConfig{
+		FscacheOldestFile: FscacheOldestFileMetricConfig{
 			Enabled: true,
 		},
 	}

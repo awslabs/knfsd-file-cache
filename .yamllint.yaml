@@ -1,6 +1,8 @@
-# See https://yamllint.readthedocs.io/en/stable/configuration.html#extending-the-default-configuration
-# for configuration documentation
+# https://yamllint.readthedocs.io/en/stable/configuration.html#extending-the-default-configuration
 extends: default
+
+ignore:
+  - image/resources/knfsd-metrics-agent/internal/*/internal/metadata/testdata/config.yaml
 
 rules:
   document-start: disable

@@ -6,10 +6,11 @@ We acknowledge the contributions of:
 
 * Daire Byrne from DNEG, UK
 * Linux NFS open-source development community
-* Glenn Taylor, AWS, NZ for his early prototype work
+* Glenn Taylor, AWS, NZ for his early prototype work with Wētā FX
 * Google Cloud Platform knfsd-cache-utils project
 * Wētā FX, NZ for caching development for "Avatar: The Way of Water" and subsequent DIGIPRO'23 whitepaper
 * DJ Rahming, AWS, CA for his contributions to the project
+* Kim Wendt, AWS, US for her contributions (particulary security-related) to the project
 
 ## REFERENCES
 

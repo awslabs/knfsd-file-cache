@@ -6,13 +6,33 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// NfsClientsMetricConfig provides config for the nfs.clients metric.
+type NfsClientsMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *NfsClientsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// NfsConnectionsMetricConfig provides config for the nfs.connections metric.
+type NfsConnectionsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *NfsConnectionsMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,16 +48,16 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for connections metrics.
 type MetricsConfig struct {
-	NfsClients     MetricConfig `mapstructure:"nfs.clients"`
-	NfsConnections MetricConfig `mapstructure:"nfs.connections"`
+	NfsClients     NfsClientsMetricConfig     `mapstructure:"nfs.clients"`
+	NfsConnections NfsConnectionsMetricConfig `mapstructure:"nfs.connections"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		NfsClients: MetricConfig{
+		NfsClients: NfsClientsMetricConfig{
 			Enabled: true,
 		},
-		NfsConnections: MetricConfig{
+		NfsConnections: NfsConnectionsMetricConfig{
 			Enabled: true,
 		},
 	}

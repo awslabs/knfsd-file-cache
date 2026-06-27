@@ -1,5 +1,50 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.27
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: All CW/OTEL logs/metrics now use the `/knfsd/logs`, `/knfsd/ec2`, and `/knfsd/metrics` namespaces (all now prefixed with a leading `/`).
+
+> BREAKING CHANGES: The CloudWatch `metrics` dashboard `v14` is only compatible with `v1.1.0-alpha.27` and later.
+
+> EXPERIMENTAL: The `smoke-tests` module is experimental and subject to change.
+
+* Packer: Updated to Linux kernel v7.0.13-knfsd.
+* Changed all CloudWatch/Open-Telemetry log/metrics group names to use the `/knfsd/logs`, `/knfsd/ec2`, and `/knfsd/metrics` namespaces (all now prefixed with a leading `/`).
+* Removed the `testing/` directory and all related code.
+* Migrated the `image/smoke-tests` module to AWS. It now uses SSH-over-SSM to reach the test instances: `ssh`/`scp` tunnel through AWS Systems Manager (`AWS-StartSSHSession` via `session-manager-plugin`) and authenticate with a short-lived key pushed via EC2 Instance Connect immediately before each connection. See [smoke-tests/README.md](image/smoke-tests/README.md) for details.
+* Added AWS SSM `session-manager-plugin` to `.devcontainer/dev` and `.devcontainer/prod` configurations to support running the `smoke-tests` module.
+* Added AWS Session Manager Plugin to `prerequisites.md` documentation.
+* Added [docs/iam/testing.json](docs/iam/testing.json) documenting the test-harness IAM permissions (SSH-over-SSM + EC2 Instance Connect, scoped per resource) used by the `image/smoke-tests` driver, and documented it in [docs/iam.md](docs/iam.md).
+* Added new Terraform variable `ASSOCIATE_PUBLIC_IP_ADDRESS` to `terraform-module-knfsd` to allow forcefully associating (or suppressing) a public IPv4 address on the proxy EC2 instances via the launch template's `network_interfaces` block. Defaults to `null` (inherits the subnet's `MapPublicIpOnLaunch` attribute, preserving prior behavior). See [deployment/README.md](deployment/README.md).
+* Tuned `configure_network()` in `proxy-startup.sh` for ENA-X high-latency (inter-AZ) conditions: raised socket buffer defaults (`net.core.rmem_default`/`wmem_default`) to 4 MB, increased `tcp_limit_output_bytes` from 1 MB to 4 MB, disabled `tcp_autocorking` to reduce latency for request-response workloads, and explicitly set `tcp_congestion_control` to `cubic`.
+* Packer: Reverted change by Canonical preventing ENA driver from being built as a `module`, blocking it from being upgradable later in the AMI build process.
+* Packer: Fixed `rm -rf /var/lib/apt/lists/*` syntax error in `20_post_build.sh` script.
+* Enhanced Packer and Terraform variable validation checks to provide more detailed error messages and improve user experience.
+* Added support for AWS GovCloud regions (`us-gov-east-1` and `us-gov-west-1`).
+* Added support for AWS China regions (`cn-north-1` and `cn-northwest-1`).
+* Added [docs/security-considerations.md](docs/security-considerations.md) documentation.
+* Added [docs/images/arch.png](docs/images/arch.png) and [docs/images/metrics.png](docs/images/metrics.png) images to [README](README.md).
+* Added `.trivy.tfvars` file to Makefile and GitLab CI configuration for Trivy security scanning.
+* Removed `efs` and `s3-files` examples and related code from project.
+* Added support for 'linking' pattern variables in CloudWatch `metrics` dashboard by Auto Scaling Group (ASG) Name and Instance ID. Instance ID(s), Source NFS Filer, and Output NFS Filer filters are now filtered by the currently selected Auto Scaling Group (ASG) Name.
+* Updated KNFSD Monitoring Dashboard to `v14`.
+* Added inline comments for auto-discovery of exports via `showmount -e <WEKA_NFS_GATEWAY>` in `examples/weka` Terraform example.
+* `EXPORT_HOST_AUTO_DETECT` now skips any individual auto-detected NFS export that cannot be mounted after the existing 3 retries, instead of aborting the entire KNFSD proxy startup. This handles NFS servers that advertise an unmountable pseudo-root `/` via `showmount -e`. A new guard fails the proxy (`exit 1`) only when zero NFS exports are mounted. See [docs/known-issues.md](docs/known-issues.md).
+* Added 11 BATS tests for `proxy-startup.sh` script: `export-auto-detect.bats`.
+* Added FAQ entry for SSH `Permission denied (publickey)` when connecting to a proxy instance.
+* Enhanced EC2 instance type validation and added region exclusion feature in query script: `.devcontainer/dev/query-regions-for-ec2-instance-type.sh`.
+* Improved logging in `.devcontainer/dev/find_temp_files.sh` script.
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.1.
+* Packer: Updated to `amazon-ec2-net-utils` v2.7.3.
+* Updated to Terraform `aws` provider v6.52.0.
+* Updated to Golang v1.26.4.
+* Updated to PostgreSQL v18.4.
+* Updated to Packer v1.15.4.
+* Updated to Python v3.14.6.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.26
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

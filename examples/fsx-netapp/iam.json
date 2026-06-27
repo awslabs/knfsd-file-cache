@@ -27,7 +27,7 @@
       "Sid": "KnfsdFsxServiceLinkedRole",
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/fsx.amazonaws.com/*",
+      "Resource": "arn:*:iam::*:role/aws-service-role/fsx.amazonaws.com/*",
       "Condition": {
         "StringEquals": {
           "iam:AWSServiceName": "fsx.amazonaws.com"
@@ -46,7 +46,7 @@
         "secretsmanager:UpdateSecret",
         "secretsmanager:UpdateSecretVersionStage"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:knfsd-*"
+      "Resource": "arn:*:secretsmanager:*:*:secret:knfsd-*"
     }
   ]
 }

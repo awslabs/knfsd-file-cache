@@ -1,28 +1,26 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.44.0"
+      version = "~> 6.52.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.8.1"
+      version = "~> 3.9.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.4"
+      version = "~> 3.3.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.26"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-alpha.27"
     ]
   }
 }
@@ -54,7 +52,7 @@ locals {
     "knfsd-file-cache:version" = var.VERSION
   }
   az                   = data.aws_subnet.selected.availability_zone
-  region               = regex("^([a-z]+-[a-z]+-[0-9]+)", local.az)[0]
+  region               = regex("^([a-z]{2}(?:-[a-z]+)+-[0-9]+)", local.az)[0]
   vpc_id               = data.aws_vpc.selected.id
   vpc_cidr             = length(var.VPC_CIDR) > 0 ? var.VPC_CIDR : [data.aws_vpc.selected.cidr_block]
   export_cidr          = length(var.EXPORT_CIDR) > 0 ? var.EXPORT_CIDR : local.vpc_cidr

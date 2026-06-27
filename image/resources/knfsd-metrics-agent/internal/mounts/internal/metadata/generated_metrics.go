@@ -3,53 +3,73 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"slices"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
 	NfsMountOperationErrors: metricInfo{
-		Name: "nfs.mount.operation.errors",
+		Name:       "nfs.mount.operation.errors",
+		Attributes: []string{"server", "instance", "operation"},
 	},
 	NfsMountOperationMajorTimeouts: metricInfo{
-		Name: "nfs.mount.operation.major_timeouts",
+		Name:       "nfs.mount.operation.major_timeouts",
+		Attributes: []string{"server", "instance", "operation"},
 	},
 	NfsMountOperationReceivedBytes: metricInfo{
-		Name: "nfs.mount.operation.received_bytes",
+		Name:       "nfs.mount.operation.received_bytes",
+		Attributes: []string{"server", "instance", "operation"},
 	},
 	NfsMountOperationRequests: metricInfo{
-		Name: "nfs.mount.operation.requests",
+		Name:       "nfs.mount.operation.requests",
+		Attributes: []string{"server", "instance", "operation"},
 	},
 	NfsMountOperationSentBytes: metricInfo{
-		Name: "nfs.mount.operation.sent_bytes",
+		Name:       "nfs.mount.operation.sent_bytes",
+		Attributes: []string{"server", "instance", "operation"},
 	},
 	NfsMountOpsPerSecond: metricInfo{
-		Name: "nfs.mount.ops_per_second",
+		Name:       "nfs.mount.ops_per_second",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountReadBytes: metricInfo{
-		Name: "nfs.mount.read_bytes",
+		Name:       "nfs.mount.read_bytes",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountReadExe: metricInfo{
-		Name: "nfs.mount.read_exe",
+		Name:       "nfs.mount.read_exe",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountReadRtt: metricInfo{
-		Name: "nfs.mount.read_rtt",
+		Name:       "nfs.mount.read_rtt",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountRPCBacklog: metricInfo{
-		Name: "nfs.mount.rpc_backlog",
+		Name:       "nfs.mount.rpc_backlog",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountWriteBytes: metricInfo{
-		Name: "nfs.mount.write_bytes",
+		Name:       "nfs.mount.write_bytes",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountWriteExe: metricInfo{
-		Name: "nfs.mount.write_exe",
+		Name:       "nfs.mount.write_exe",
+		Attributes: []string{"server", "instance"},
 	},
 	NfsMountWriteRtt: metricInfo{
-		Name: "nfs.mount.write_rtt",
+		Name:       "nfs.mount.write_rtt",
+		Attributes: []string{"server", "instance"},
 	},
 }
 
@@ -70,13 +90,15 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricNfsMountOperationErrors struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                      // data buffer for generated metric.
+	config        NfsMountOperationErrorsMetricConfig // metric config provided by user.
+	capacity      int                                 // max observed number of data points added to the metric.
+	aggDataPoints []int64                             // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.operation.errors metric with initial data.
@@ -88,19 +110,54 @@ func (m *metricNfsMountOperationErrors) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOperationErrors) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationErrorsMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationErrorsMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationErrorsMetricAttributeKeyOperation) {
+		dp.Attributes().PutStr("operation", operationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
-	dp.Attributes().PutStr("operation", operationAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -113,13 +170,18 @@ func (m *metricNfsMountOperationErrors) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOperationErrors) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOperationErrors(cfg MetricConfig) metricNfsMountOperationErrors {
+func newMetricNfsMountOperationErrors(cfg NfsMountOperationErrorsMetricConfig) metricNfsMountOperationErrors {
 	m := metricNfsMountOperationErrors{config: cfg}
 
 	if cfg.Enabled {
@@ -130,9 +192,10 @@ func newMetricNfsMountOperationErrors(cfg MetricConfig) metricNfsMountOperationE
 }
 
 type metricNfsMountOperationMajorTimeouts struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                             // data buffer for generated metric.
+	config        NfsMountOperationMajorTimeoutsMetricConfig // metric config provided by user.
+	capacity      int                                        // max observed number of data points added to the metric.
+	aggDataPoints []int64                                    // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.operation.major_timeouts metric with initial data.
@@ -144,19 +207,54 @@ func (m *metricNfsMountOperationMajorTimeouts) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOperationMajorTimeouts) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationMajorTimeoutsMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationMajorTimeoutsMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationMajorTimeoutsMetricAttributeKeyOperation) {
+		dp.Attributes().PutStr("operation", operationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
-	dp.Attributes().PutStr("operation", operationAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -169,13 +267,18 @@ func (m *metricNfsMountOperationMajorTimeouts) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOperationMajorTimeouts) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOperationMajorTimeouts(cfg MetricConfig) metricNfsMountOperationMajorTimeouts {
+func newMetricNfsMountOperationMajorTimeouts(cfg NfsMountOperationMajorTimeoutsMetricConfig) metricNfsMountOperationMajorTimeouts {
 	m := metricNfsMountOperationMajorTimeouts{config: cfg}
 
 	if cfg.Enabled {
@@ -186,9 +289,10 @@ func newMetricNfsMountOperationMajorTimeouts(cfg MetricConfig) metricNfsMountOpe
 }
 
 type metricNfsMountOperationReceivedBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                             // data buffer for generated metric.
+	config        NfsMountOperationReceivedBytesMetricConfig // metric config provided by user.
+	capacity      int                                        // max observed number of data points added to the metric.
+	aggDataPoints []int64                                    // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.operation.received_bytes metric with initial data.
@@ -200,19 +304,54 @@ func (m *metricNfsMountOperationReceivedBytes) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOperationReceivedBytes) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationReceivedBytesMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationReceivedBytesMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationReceivedBytesMetricAttributeKeyOperation) {
+		dp.Attributes().PutStr("operation", operationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
-	dp.Attributes().PutStr("operation", operationAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -225,13 +364,18 @@ func (m *metricNfsMountOperationReceivedBytes) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOperationReceivedBytes) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOperationReceivedBytes(cfg MetricConfig) metricNfsMountOperationReceivedBytes {
+func newMetricNfsMountOperationReceivedBytes(cfg NfsMountOperationReceivedBytesMetricConfig) metricNfsMountOperationReceivedBytes {
 	m := metricNfsMountOperationReceivedBytes{config: cfg}
 
 	if cfg.Enabled {
@@ -242,9 +386,10 @@ func newMetricNfsMountOperationReceivedBytes(cfg MetricConfig) metricNfsMountOpe
 }
 
 type metricNfsMountOperationRequests struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                        // data buffer for generated metric.
+	config        NfsMountOperationRequestsMetricConfig // metric config provided by user.
+	capacity      int                                   // max observed number of data points added to the metric.
+	aggDataPoints []int64                               // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.operation.requests metric with initial data.
@@ -256,19 +401,54 @@ func (m *metricNfsMountOperationRequests) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOperationRequests) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationRequestsMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationRequestsMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationRequestsMetricAttributeKeyOperation) {
+		dp.Attributes().PutStr("operation", operationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
-	dp.Attributes().PutStr("operation", operationAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -281,13 +461,18 @@ func (m *metricNfsMountOperationRequests) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOperationRequests) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOperationRequests(cfg MetricConfig) metricNfsMountOperationRequests {
+func newMetricNfsMountOperationRequests(cfg NfsMountOperationRequestsMetricConfig) metricNfsMountOperationRequests {
 	m := metricNfsMountOperationRequests{config: cfg}
 
 	if cfg.Enabled {
@@ -298,9 +483,10 @@ func newMetricNfsMountOperationRequests(cfg MetricConfig) metricNfsMountOperatio
 }
 
 type metricNfsMountOperationSentBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                         // data buffer for generated metric.
+	config        NfsMountOperationSentBytesMetricConfig // metric config provided by user.
+	capacity      int                                    // max observed number of data points added to the metric.
+	aggDataPoints []int64                                // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.operation.sent_bytes metric with initial data.
@@ -312,19 +498,54 @@ func (m *metricNfsMountOperationSentBytes) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOperationSentBytes) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationSentBytesMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationSentBytesMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOperationSentBytesMetricAttributeKeyOperation) {
+		dp.Attributes().PutStr("operation", operationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
-	dp.Attributes().PutStr("operation", operationAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -337,13 +558,18 @@ func (m *metricNfsMountOperationSentBytes) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOperationSentBytes) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOperationSentBytes(cfg MetricConfig) metricNfsMountOperationSentBytes {
+func newMetricNfsMountOperationSentBytes(cfg NfsMountOperationSentBytesMetricConfig) metricNfsMountOperationSentBytes {
 	m := metricNfsMountOperationSentBytes{config: cfg}
 
 	if cfg.Enabled {
@@ -354,9 +580,10 @@ func newMetricNfsMountOperationSentBytes(cfg MetricConfig) metricNfsMountOperati
 }
 
 type metricNfsMountOpsPerSecond struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                   // data buffer for generated metric.
+	config        NfsMountOpsPerSecondMetricConfig // metric config provided by user.
+	capacity      int                              // max observed number of data points added to the metric.
+	aggDataPoints []float64                        // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.ops_per_second metric with initial data.
@@ -366,18 +593,51 @@ func (m *metricNfsMountOpsPerSecond) init() {
 	m.data.SetUnit("{count}")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountOpsPerSecond) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOpsPerSecondMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountOpsPerSecondMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -390,13 +650,18 @@ func (m *metricNfsMountOpsPerSecond) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountOpsPerSecond) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountOpsPerSecond(cfg MetricConfig) metricNfsMountOpsPerSecond {
+func newMetricNfsMountOpsPerSecond(cfg NfsMountOpsPerSecondMetricConfig) metricNfsMountOpsPerSecond {
 	m := metricNfsMountOpsPerSecond{config: cfg}
 
 	if cfg.Enabled {
@@ -407,9 +672,10 @@ func newMetricNfsMountOpsPerSecond(cfg MetricConfig) metricNfsMountOpsPerSecond 
 }
 
 type metricNfsMountReadBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                // data buffer for generated metric.
+	config        NfsMountReadBytesMetricConfig // metric config provided by user.
+	capacity      int                           // max observed number of data points added to the metric.
+	aggDataPoints []int64                       // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.read_bytes metric with initial data.
@@ -421,18 +687,51 @@ func (m *metricNfsMountReadBytes) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountReadBytes) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadBytesMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadBytesMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -445,13 +744,18 @@ func (m *metricNfsMountReadBytes) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountReadBytes) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountReadBytes(cfg MetricConfig) metricNfsMountReadBytes {
+func newMetricNfsMountReadBytes(cfg NfsMountReadBytesMetricConfig) metricNfsMountReadBytes {
 	m := metricNfsMountReadBytes{config: cfg}
 
 	if cfg.Enabled {
@@ -462,9 +766,10 @@ func newMetricNfsMountReadBytes(cfg MetricConfig) metricNfsMountReadBytes {
 }
 
 type metricNfsMountReadExe struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric              // data buffer for generated metric.
+	config        NfsMountReadExeMetricConfig // metric config provided by user.
+	capacity      int                         // max observed number of data points added to the metric.
+	aggDataPoints []float64                   // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.read_exe metric with initial data.
@@ -474,18 +779,51 @@ func (m *metricNfsMountReadExe) init() {
 	m.data.SetUnit("ms")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountReadExe) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadExeMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadExeMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -498,13 +836,18 @@ func (m *metricNfsMountReadExe) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountReadExe) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountReadExe(cfg MetricConfig) metricNfsMountReadExe {
+func newMetricNfsMountReadExe(cfg NfsMountReadExeMetricConfig) metricNfsMountReadExe {
 	m := metricNfsMountReadExe{config: cfg}
 
 	if cfg.Enabled {
@@ -515,9 +858,10 @@ func newMetricNfsMountReadExe(cfg MetricConfig) metricNfsMountReadExe {
 }
 
 type metricNfsMountReadRtt struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric              // data buffer for generated metric.
+	config        NfsMountReadRttMetricConfig // metric config provided by user.
+	capacity      int                         // max observed number of data points added to the metric.
+	aggDataPoints []float64                   // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.read_rtt metric with initial data.
@@ -527,18 +871,51 @@ func (m *metricNfsMountReadRtt) init() {
 	m.data.SetUnit("ms")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountReadRtt) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadRttMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountReadRttMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -551,13 +928,18 @@ func (m *metricNfsMountReadRtt) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountReadRtt) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountReadRtt(cfg MetricConfig) metricNfsMountReadRtt {
+func newMetricNfsMountReadRtt(cfg NfsMountReadRttMetricConfig) metricNfsMountReadRtt {
 	m := metricNfsMountReadRtt{config: cfg}
 
 	if cfg.Enabled {
@@ -568,9 +950,10 @@ func newMetricNfsMountReadRtt(cfg MetricConfig) metricNfsMountReadRtt {
 }
 
 type metricNfsMountRPCBacklog struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                 // data buffer for generated metric.
+	config        NfsMountRPCBacklogMetricConfig // metric config provided by user.
+	capacity      int                            // max observed number of data points added to the metric.
+	aggDataPoints []float64                      // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.rpc_backlog metric with initial data.
@@ -580,18 +963,51 @@ func (m *metricNfsMountRPCBacklog) init() {
 	m.data.SetUnit("{count}")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountRPCBacklog) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountRPCBacklogMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountRPCBacklogMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -604,13 +1020,18 @@ func (m *metricNfsMountRPCBacklog) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountRPCBacklog) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountRPCBacklog(cfg MetricConfig) metricNfsMountRPCBacklog {
+func newMetricNfsMountRPCBacklog(cfg NfsMountRPCBacklogMetricConfig) metricNfsMountRPCBacklog {
 	m := metricNfsMountRPCBacklog{config: cfg}
 
 	if cfg.Enabled {
@@ -621,9 +1042,10 @@ func newMetricNfsMountRPCBacklog(cfg MetricConfig) metricNfsMountRPCBacklog {
 }
 
 type metricNfsMountWriteBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric                 // data buffer for generated metric.
+	config        NfsMountWriteBytesMetricConfig // metric config provided by user.
+	capacity      int                            // max observed number of data points added to the metric.
+	aggDataPoints []int64                        // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.write_bytes metric with initial data.
@@ -635,18 +1057,51 @@ func (m *metricNfsMountWriteBytes) init() {
 	m.data.Sum().SetIsMonotonic(true)
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountWriteBytes) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteBytesMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteBytesMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -659,13 +1114,18 @@ func (m *metricNfsMountWriteBytes) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountWriteBytes) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountWriteBytes(cfg MetricConfig) metricNfsMountWriteBytes {
+func newMetricNfsMountWriteBytes(cfg NfsMountWriteBytesMetricConfig) metricNfsMountWriteBytes {
 	m := metricNfsMountWriteBytes{config: cfg}
 
 	if cfg.Enabled {
@@ -676,9 +1136,10 @@ func newMetricNfsMountWriteBytes(cfg MetricConfig) metricNfsMountWriteBytes {
 }
 
 type metricNfsMountWriteExe struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric               // data buffer for generated metric.
+	config        NfsMountWriteExeMetricConfig // metric config provided by user.
+	capacity      int                          // max observed number of data points added to the metric.
+	aggDataPoints []float64                    // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.write_exe metric with initial data.
@@ -688,18 +1149,51 @@ func (m *metricNfsMountWriteExe) init() {
 	m.data.SetUnit("ms")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountWriteExe) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteExeMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteExeMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -712,13 +1206,18 @@ func (m *metricNfsMountWriteExe) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountWriteExe) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountWriteExe(cfg MetricConfig) metricNfsMountWriteExe {
+func newMetricNfsMountWriteExe(cfg NfsMountWriteExeMetricConfig) metricNfsMountWriteExe {
 	m := metricNfsMountWriteExe{config: cfg}
 
 	if cfg.Enabled {
@@ -729,9 +1228,10 @@ func newMetricNfsMountWriteExe(cfg MetricConfig) metricNfsMountWriteExe {
 }
 
 type metricNfsMountWriteRtt struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data          pmetric.Metric               // data buffer for generated metric.
+	config        NfsMountWriteRttMetricConfig // metric config provided by user.
+	capacity      int                          // max observed number of data points added to the metric.
+	aggDataPoints []float64                    // slice containing number of aggregated datapoints at each index
 }
 
 // init fills nfs.mount.write_rtt metric with initial data.
@@ -741,18 +1241,51 @@ func (m *metricNfsMountWriteRtt) init() {
 	m.data.SetUnit("ms")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
 func (m *metricNfsMountWriteRtt) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+
+	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteRttMetricAttributeKeyServer) {
+		dp.Attributes().PutStr("server", serverAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, NfsMountWriteRttMetricAttributeKeyInstance) {
+		dp.Attributes().PutStr("instance", instanceAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
 	dp.SetDoubleValue(val)
-	dp.Attributes().PutStr("server", serverAttributeValue)
-	dp.Attributes().PutStr("instance", instanceAttributeValue)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -765,13 +1298,18 @@ func (m *metricNfsMountWriteRtt) updateCapacity() {
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricNfsMountWriteRtt) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricNfsMountWriteRtt(cfg MetricConfig) metricNfsMountWriteRtt {
+func newMetricNfsMountWriteRtt(cfg NfsMountWriteRttMetricConfig) metricNfsMountWriteRtt {
 	m := metricNfsMountWriteRtt{config: cfg}
 
 	if cfg.Enabled {

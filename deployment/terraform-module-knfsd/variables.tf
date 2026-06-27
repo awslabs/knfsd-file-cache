@@ -1,17 +1,15 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.26"
+  default     = "1.1.0-alpha.27"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.26\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.27\"."
   }
 }
 
@@ -20,7 +18,7 @@ variable "SUBNET" {
   type        = string
   nullable    = false
   validation {
-    condition     = var.SUBNET != "" && can(regex("^subnet-[a-z0-9]{8,17}$", var.SUBNET))
+    condition     = can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", var.SUBNET))
     error_message = "SUBNET must be a valid AWS Subnet ID format. Example: \"subnet-038e337f0ff4cd53f\"."
   }
 }
@@ -53,7 +51,7 @@ variable "DNS_NAME" {
   nullable    = false
   default     = ""
   validation {
-    condition     = var.DNS_NAME == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$$", var.DNS_NAME))
+    condition     = var.DNS_NAME == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$", var.DNS_NAME))
     error_message = "When provided, DNS_NAME must be a valid fully qualified domain name (FQDN) ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
   }
 }
@@ -63,6 +61,10 @@ variable "ASG_EGRESS_CIDR" {
   type        = string
   nullable    = false
   default     = "0.0.0.0/0"
+  validation {
+    condition     = can(cidrnetmask(var.ASG_EGRESS_CIDR))
+    error_message = "ASG_EGRESS_CIDR must be a valid IPv4 CIDR block. Example: \"0.0.0.0/0\"."
+  }
 }
 
 variable "NFS_PORTS" {
@@ -235,7 +237,7 @@ variable "NETAPP_SECRET_REGION" {
   nullable    = false
   default     = ""
   validation {
-    condition     = var.NETAPP_SECRET_REGION == "" || can(regex("^[a-z]{2}-[a-z]+-[1-9]$", var.NETAPP_SECRET_REGION))
+    condition     = var.NETAPP_SECRET_REGION == "" || can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", var.NETAPP_SECRET_REGION))
     error_message = "When provided, NETAPP_SECRET_REGION must be a valid AWS Region format. Example: \"us-east-1\"."
   }
 }
@@ -277,6 +279,10 @@ variable "VPC_CIDR" {
   type        = list(string)
   nullable    = false
   default     = []
+  validation {
+    condition     = alltrue([for c in var.VPC_CIDR : can(cidrnetmask(c))])
+    error_message = "VPC_CIDR must all be valid IPv4 CIDR blocks. Example: \"10.0.0.0/16\"."
+  }
 }
 
 variable "EXPORT_CIDR" {
@@ -284,6 +290,10 @@ variable "EXPORT_CIDR" {
   type        = list(string)
   nullable    = false
   default     = []
+  validation {
+    condition     = alltrue([for c in var.EXPORT_CIDR : can(cidrnetmask(c))])
+    error_message = "EXPORT_CIDR must all be valid IPv4 CIDR blocks. Example: \"10.0.0.0/16\"."
+  }
 }
 
 variable "PROXY_AMI" {
@@ -308,6 +318,13 @@ variable "KEY_NAME" {
   type        = string
   nullable    = false
   default     = ""
+}
+
+variable "ASSOCIATE_PUBLIC_IP_ADDRESS" {
+  description = "(Optional) Whether to associate a public IPv4 address with the KNFSD proxy EC2 instances. When \"null\", the instance inherits the subnet's \"MapPublicIpOnLaunch\" attribute. Set to \"true\" to force a public IP (e.g. for IGW-only subnets without a NAT or VPC endpoints), or \"false\" to never assign one regardless of the subnet setting. Default: \"null\"."
+  type        = bool
+  nullable    = true
+  default     = null
 }
 
 variable "KNFSD_NODES" {
@@ -341,7 +358,7 @@ variable "VFS_CACHE_PRESSURE" {
 }
 
 variable "READ_AHEAD" {
-  description = "(Optional) The NFS readahead value in bytes, applied via nfsrahead udev rule in \"/etc/nfs.conf.d/knfsd.conf\". Applies to all NFS mounts. EFS mounts use their own readahead via efs-utils. Default: \"8388608\" (8 * 1024 * 1024 bytes = 8 MiB)."
+  description = "(Optional) The NFS readahead value in bytes, applied via nfsrahead udev rule in \"/etc/nfs.conf.d/knfsd.conf\". Applies to all NFS mounts. Default: \"8388608\" (8 * 1024 * 1024 bytes = 8 MiB)."
   type        = number
   nullable    = false
   default     = 8388608
@@ -384,7 +401,7 @@ variable "INSTANCE_TYPE" {
   type        = string
   default     = "i3en.6xlarge"
   validation {
-    condition     = can(regex("^[a-z0-9-]+\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
   }
 }
@@ -411,7 +428,7 @@ variable "EBS_KMS_KEY_ID" {
       || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.EBS_KMS_KEY_ID))
       || can(regex("^mrk-[0-9a-f]{32}$", var.EBS_KMS_KEY_ID))
       || can(regex("^alias/[a-zA-Z0-9/_-]+$", var.EBS_KMS_KEY_ID))
-      || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.EBS_KMS_KEY_ID))
+      || can(regex("^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.EBS_KMS_KEY_ID))
     )
     error_message = "EBS_KMS_KEY_ID must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
   }
@@ -680,7 +697,7 @@ variable "FSID_DB_SUBNET_IDS" {
       : (
         length(var.FSID_DB_SUBNET_IDS) >= 2 &&
         length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
-        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[a-z0-9]{8,17}$", s))])
+        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", s))])
       )
     )
     error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
@@ -693,7 +710,7 @@ variable "FSID_DATABASE_IAM_POLICY" {
   nullable    = false
   default     = ""
   validation {
-    condition     = var.FSID_DATABASE_IAM_POLICY == "" || can(regex("^arn:aws:iam::([0-9]{12}|aws):policy/.+$", var.FSID_DATABASE_IAM_POLICY))
+    condition     = var.FSID_DATABASE_IAM_POLICY == "" || can(regex("^arn:aws[a-z-]*:iam::([0-9]{12}|aws):policy/.+$", var.FSID_DATABASE_IAM_POLICY))
     error_message = "When provided, FSID_DATABASE_IAM_POLICY must be a valid IAM policy ARN."
   }
 }
@@ -727,14 +744,14 @@ variable "KNFSD_AUTOSCALING_MAX_INSTANCES" {
 }
 
 variable "ASSUME_ROLE_ARN" {
-  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
+  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:*:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
   type        = string
   nullable    = true
   default     = null
   validation {
     condition = var.ASSUME_ROLE_ARN == null || (
-      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
+      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
     )
-    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/DeploymentRole\"."
   }
 }

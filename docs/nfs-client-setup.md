@@ -81,7 +81,7 @@ Attach an instance profile whose role allows the following. Tighten `Resource` a
             "Sid": "ModifyPrimaryEniEnaExpress",
             "Effect": "Allow",
             "Action": "ec2:ModifyNetworkInterfaceAttribute",
-            "Resource": "arn:aws:ec2:*:*:network-interface/*"
+            "Resource": "arn:*:ec2:*:*:network-interface/*"
         }
     ]
 }

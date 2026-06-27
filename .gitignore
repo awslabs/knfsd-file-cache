@@ -29,6 +29,7 @@ Thumbs.db
 # Terratest files
 TerraformOptions.json
 .test-data
+remote.test
 
 # Packer variables/debug files
 *.pkrvars.hcl
@@ -41,7 +42,6 @@ install-chronicle.sh
 install-chronicle.yaml
 
 # Exclude Specific Packer Variables File
-!/image/cloudbuild.pkrvars.hcl
 !/image/knfsd.pkr.hcl
 !/image/variables.pkr.hcl
 
@@ -67,8 +67,9 @@ response.json
 # Checkov report
 checkov-report.xml
 
-# Trivy cache
+# Trivy cache/files
 .trivycache
+!/.trivy.tfvars
 
 # NFS
 nfstrace.log

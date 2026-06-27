@@ -1,8 +1,6 @@
-/*
- * Copyright 2020 Google LLC
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google LLC
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 resource "aws_autoscaling_policy" "scale_up_policy" {
   count                  = var.ENABLE_KNFSD_AUTOSCALING ? 1 : 0
@@ -21,7 +19,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   actions_enabled     = true
   alarm_actions       = [aws_autoscaling_policy.scale_up_policy[0].arn]
   metric_name         = "knfsd/nfs_connections"
-  namespace           = "knfsd/metrics"
+  namespace           = "/knfsd/metrics"
   statistic           = "Average"
   threshold           = var.KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD
   period              = 60

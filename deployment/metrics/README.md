@@ -6,7 +6,7 @@ This module creates an Amazon CloudWatch dashboard for global monitoring of KNFS
 
 ## Quick Deploy
 
-```sh
+```bash
 cd knfsd-file-cache/deployment/metrics
 terraform init
 terraform apply
@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.26"
+  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-alpha.27"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -38,7 +38,7 @@ output "dashboard_name" {
 
 Once you have created your `deploy_metrics.tf`, you can deploy the metrics dashboard with:
 
-```sh
+```bash
 terraform init
 terraform apply
 ```
@@ -66,7 +66,7 @@ The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `R
 
 The dashboard combines metrics from multiple sources:
 
-### CloudWatch Agent Metrics (`knfsd/ec2` namespace)
+### CloudWatch Agent Metrics (`/knfsd/ec2` namespace)
 
 The CloudWatch Agent collects system-level metrics from EC2 instances. Configuration is defined in `amazon-cloudwatch-agent.json`.
 
@@ -122,7 +122,7 @@ The CloudWatch Agent collects system-level metrics from EC2 instances. Configura
 | `processes_total_threads`                           | Total number of threads                                             | Count        | 60s    |
 | `processes_zombies`                                 | Number of zombie processes                                          | Count        | 60s    |
 
-### OpenTelemetry Metrics (`knfsd/metrics` namespace)
+### OpenTelemetry Metrics (`/knfsd/metrics` namespace)
 
 OpenTelemetry metrics are collected by the `knfsd-metrics-agent` and provide NFS-specific performance data.
 

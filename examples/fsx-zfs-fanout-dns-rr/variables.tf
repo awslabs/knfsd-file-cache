@@ -1,14 +1,12 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 variable "REGION" {
   description = "(Required) The AWS region to use for deployment of the KNFSD File Cache. Example: \"us-east-1\". No default."
   type        = string
   nullable    = false
   validation {
-    condition     = can(regex("^[a-z]{2}-[a-z]+-[1-9]$", var.REGION))
+    condition     = can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", var.REGION))
     error_message = "REGION must be a valid AWS region format. Example: \"us-east-1\"."
   }
 }
@@ -18,7 +16,7 @@ variable "SUBNET" {
   type        = string
   nullable    = false
   validation {
-    condition     = var.SUBNET != "" && can(regex("^subnet-[a-z0-9]{8,17}$", var.SUBNET))
+    condition     = can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", var.SUBNET))
     error_message = "SUBNET must be a valid AWS subnet ID format. Example: \"subnet-038e337f0ff4cd53f\"."
   }
 }
@@ -45,7 +43,7 @@ variable "INSTANCE_TYPE" {
   type        = string
   default     = "i3en.12xlarge"
   validation {
-    condition     = can(regex("^[a-z0-9-]+\\.(metal-[0-9]+xl|[a-z0-9]+)$", var.INSTANCE_TYPE))
+    condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
   }
 }

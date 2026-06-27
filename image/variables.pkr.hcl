@@ -6,18 +6,30 @@ variable "REGION" {
   description = "(Required) The name of the AWS region, such as \"us-east-1\", in which to launch the EC2 instance to create the AMI. No default."
   type        = string
   default     = ""
+  validation {
+    condition     = var.REGION == "" || can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", var.REGION))
+    error_message = "REGION must be empty or a valid AWS region format. Example: \"us-east-1\"."
+  }
 }
 
 variable "SUBNET" {
   description = "(Optional) The subnet the EC2 instance will use. This is required if using a non-default VPC. Default: \"\"."
   type        = string
   default     = ""
+  validation {
+    condition     = var.SUBNET == "" || can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", var.SUBNET))
+    error_message = "SUBNET must be empty or a valid AWS subnet ID format. Example: \"subnet-038e337f0ff4cd53f\"."
+  }
 }
 
 variable "DISTRIBUTION_REGIONS" {
   description = "(Optional) A list of AWS regions to distribute the AMI to. Default: \"[]\"."
   type        = list(string)
   default     = []
+  validation {
+    condition     = alltrue([for r in var.DISTRIBUTION_REGIONS : can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", r))])
+    error_message = "DISTRIBUTION_REGIONS must all be valid AWS region formats. Example: \"us-east-1\"."
+  }
 }
 
 variable "AMI_ENCRYPTED" {
@@ -36,7 +48,7 @@ variable "KMS_KEY_ID" {
       || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.KMS_KEY_ID))
       || can(regex("^mrk-[0-9a-f]{32}$", var.KMS_KEY_ID))
       || can(regex("^alias/[a-zA-Z0-9/_-]+$", var.KMS_KEY_ID))
-      || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.KMS_KEY_ID))
+      || can(regex("^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", var.KMS_KEY_ID))
     )
     error_message = "KMS_KEY_ID must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
   }
@@ -49,13 +61,13 @@ variable "REGION_KMS_KEY_IDS" {
   validation {
     condition = alltrue([
       for k, v in var.REGION_KMS_KEY_IDS :
-      can(regex("^[a-z]{2}-[a-z]+-[0-9]+$", k))
+      can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", k))
       && (
         v == ""
         || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", v))
         || can(regex("^mrk-[0-9a-f]{32}$", v))
         || can(regex("^alias/[a-zA-Z0-9/_-]+$", v))
-        || can(regex("^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", v))
+        || can(regex("^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:(key|alias)/", v))
       )
     ])
     error_message = "REGION_KMS_KEY_IDS keys must be valid AWS region names and values must be empty or a valid KMS key ID, alias, key ARN, or alias ARN."
@@ -72,18 +84,30 @@ variable "SECURITY_GROUP_ID" {
   description = "(Optional) The ID of an existing, single security group to use instead of creating a temporary one. When specified, overrides \"TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP\" and \"TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS\". Default: \"\"."
   type        = string
   default     = ""
+  validation {
+    condition     = var.SECURITY_GROUP_ID == "" || can(regex("^sg-[0-9a-f]{8}([0-9a-f]{9})?$", var.SECURITY_GROUP_ID))
+    error_message = "SECURITY_GROUP_ID must be empty or a valid AWS security group ID format. Example: \"sg-038e337f0ff4cd53f\"."
+  }
 }
 
 variable "SECURITY_GROUP_IDS" {
   description = "(Optional) A list of security group IDs to use instead of creating a temporary one. When specified, overrides \"TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP\" and \"TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS\". Default: \"[]\"."
   type        = list(string)
   default     = []
+  validation {
+    condition     = alltrue([for s in var.SECURITY_GROUP_IDS : can(regex("^sg-[0-9a-f]{8}([0-9a-f]{9})?$", s))])
+    error_message = "SECURITY_GROUP_IDS must all be valid AWS security group ID formats. Example: \"sg-038e337f0ff4cd53f\"."
+  }
 }
 
 variable "TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS" {
   description = "(Optional) A list of CIDR blocks to allow access from when creating a temporary security group. When specified, overrides \"TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP\". Example: [\"10.0.0.0/8\", \"172.16.0.0/12\"]. Default: \"[]\"."
   type        = list(string)
   default     = []
+  validation {
+    condition     = alltrue([for c in var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS : can(cidrnetmask(c))])
+    error_message = "TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS must all be valid IPv4 CIDR blocks. Example: \"10.0.0.0/8\"."
+  }
 }
 
 variable "TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP" {

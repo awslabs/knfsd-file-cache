@@ -26,10 +26,10 @@ skip-check:
   - CKV_AWS_158  # Ensure that CloudWatch Log Group is encrypted by KMS (false-positive, encrypted by default)
   - CKV_AWS_173  # Check encryption settings for Lambda environmental variable (false-positive, encrypted by default)
   - CKV_AWS_178  # Ensure fx ontap file system is encrypted by KMS using a customer managed Key (CMK)
-  - CKV_AWS_184  # AWS Elastic File System (EFS) is not encrypted using Customer Managed Key (encrypted by default)
   - CKV_AWS_203  # Ensure resource is encrypted by KMS using a customer managed Key (CMK) (false-positive, encrypted by default)
   - CKV_AWS_272  # Ensure AWS Lambda function is configured to validate code-signing
   - CKV_AWS_293  # Ensure that AWS database instances have deletion protection enabled (false-positive)
+  - CKV_AWS_316  # Ensure that AWS CodeBuild project environment privileged mode is not enabled (CodeBuild privileged_mode required for Docker buildx)
   - CKV_AWS_337  # Ensure SSM parameters are using KMS CMK (unneccesary, encrypted by AWS managed key, non-sensitive data)
   - CKV_AWS_338  # Ensure CloudWatch log groups retains logs for at least 1 year (30 days is acceptable)
   - CKV_AWS_354  # Ensure RDS Performance Insights are encrypted using KMS CMKs (false-positive, encrypted by default)
@@ -43,14 +43,5 @@ skip-check:
   - CKV2_AWS_74  # Ensure AWS Load Balancers use strong ciphers (false-positive as we only use NLB, bug in checkov v3.2.407, waiting for fix)
   - CKV_DOCKER_3 # Ensure that a user for the container has been created
   - CKV_DOCKER_7 # Ensure the base image uses a non latest version tag
-  - CKV_GCP_26   # Ensure that VPC Flow Logs is enabled for every subnet in a VPC Network
-  - CKV_GCP_32   # Ensure 'Block Project-wide SSH keys' is enabled for VM instances
-  - CKV_GCP_37   # Ensure VM disks for critical VMs are encrypted with Customer Supplied Encryption Keys (CSEK)
-  - CKV_GCP_38   # Ensure VM disks for critical VMs are encrypted with Customer Supplied Encryption Keys (CSEK)
-  - CKV_GCP_39   # Ensure Compute instances are launched with Shielded VM enabled
-  - CKV_GCP_49   # Ensure roles do not impersonate or manage Service Accounts used at project level
-  - CKV_GCP_84   # Ensure Artifact Registry Repositories are encrypted with Customer Supplied Encryption Keys (CSEK)
-  - CKV_GCP_76   # Ensure that Private google access is enabled for IPV6 (Triggered in Probe)
-  - CKV_GCP_86   # Ensure Cloud build workers are private
 compact: true # For the CLI output, do not display code blocks
 quiet: true # For the CLI output, display only failed checks. Also disables progress bars

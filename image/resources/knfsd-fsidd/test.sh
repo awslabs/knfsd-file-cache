@@ -28,13 +28,11 @@ function stop_postgres() {
 }
 
 function url() {
-	if [[ $CI == "cloudbuild" ]]; then
-		# The docker compose command is not available from the container running
-		# the go tests on Cloud Build.
-		# When running on Cloud Build assume the PostgreSQL is accessible by
-		# host name, and is bound to port 5432 as Cloud Build uses a different
-		# networking setup.
-		printf 'host=postgres port=5432 user=fsidd password=fsid-test dbname=fsids'
+	if [[ $CI == "codebuild" ]]; then
+		# When running on AWS CodeBuild the postgres compose service is bound to
+		# port 5432 on the host (see codebuild.compose.yaml) so the build
+		# container can reach it via 127.0.0.1.
+		printf 'host=127.0.0.1 port=5432 user=fsidd password=fsid-test dbname=fsids'
 	else
 		local port
 		port="$(compose port postgres 5432)"

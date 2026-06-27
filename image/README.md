@@ -20,7 +20,7 @@ Alternatively, if your build procedure is more complex, you can replace the cust
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.15.3 or newer from <https://packer.io/downloads>.
+Download Packer 1.15.4 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -235,7 +235,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 24.04.4 LTS
 amazon-ebs.knfsd: Release:      24.04
 amazon-ebs.knfsd: Codename:     noble
-amazon-ebs.knfsd: Kernel:       7.0.6-knfsd
+amazon-ebs.knfsd: Kernel:       7.0.13-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -249,6 +249,15 @@ us-east-1: ami-0123456789abcdef0
 Once you have built and verified the AMI for KNFSD, you can deploy the supporting infrastructure by following the steps in the [deployment documentation](../deployment/README.md).
 
 ## Additional Information
+
+### Building in AWS GovCloud / China partitions
+
+The KNFSD proxy AMI can be built in AWS Commercial, GovCloud (`aws-us-gov`), and China (`aws-cn`) partitions. The base Canonical Ubuntu 24.04 image is resolved from the public `/aws/service/canonical/...` SSM parameters, which are published in all three partitions, so the Packer AMI lookup works without modification.
+
+The image build process does, however, download several packages from commercial AWS endpoints during provisioning (for example `awscli.amazonaws.com` and `amazoncloudwatch-agent.s3.amazonaws.com` in [resources/scripts/10_build.sh](resources/scripts/10_build.sh)). When building in China:
+
+* Run the build from a China-based pipeline (CodeBuild or an EC2 build host in a `cn-*` region) that has network egress to the appropriate China mirrors, or pre-stage the packages.
+* `checkip.amazonaws.com` (used only as a developer convenience to discover the build host's public IP) is a commercial-only endpoint and is not required for the build itself.
 
 ### Run Smoke Tests
 
@@ -293,7 +302,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.26"
+VERSION="1.1.0-alpha.27"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -456,7 +465,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 24.04.4 LTS
 Release:      24.04
 Codename:     noble
-Kernel:       7.0.6-knfsd
+Kernel:       7.0.13-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

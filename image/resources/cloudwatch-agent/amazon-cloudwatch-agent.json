@@ -9,43 +9,43 @@
         "collect_list": [
           {
             "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-            "log_group_name": "knfsd/logs/aws/cloudwatch/agent",
+            "log_group_name": "/knfsd/logs/aws/cloudwatch/agent",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/amazon/ssm/amazon-ssm-agent.log",
-            "log_group_name": "knfsd/logs/aws/ssm/agent",
+            "log_group_name": "/knfsd/logs/aws/ssm/agent",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/amazon/ssm/errors.log",
-            "log_group_name": "knfsd/logs/aws/ssm/errors",
+            "log_group_name": "/knfsd/logs/aws/ssm/errors",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/cloud-init-output.log",
-            "log_group_name": "knfsd/logs/aws/cloud-init-output",
+            "log_group_name": "/knfsd/logs/aws/cloud-init-output",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/syslog",
-            "log_group_name": "knfsd/logs/os/syslog",
+            "log_group_name": "/knfsd/logs/os/syslog",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/auth.log",
-            "log_group_name": "knfsd/logs/os/auth",
+            "log_group_name": "/knfsd/logs/os/auth",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           },
           {
             "file_path": "/var/log/kern.log",
-            "log_group_name": "knfsd/logs/os/kern",
+            "log_group_name": "/knfsd/logs/os/kern",
             "log_stream_name": "{instance_id}",
             "retention_in_days": 30
           }
@@ -54,7 +54,7 @@
     }
   },
   "metrics": {
-    "namespace": "knfsd/ec2",
+    "namespace": "/knfsd/ec2",
     "append_dimensions": {
       "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
       "InstanceId": "${aws:InstanceId}"

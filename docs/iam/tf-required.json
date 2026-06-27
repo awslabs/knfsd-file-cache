@@ -18,8 +18,12 @@
         "ec2:DetachNetworkInterface",
         "ec2:DeleteSecurityGroup",
         "ec2:DeleteTags",
+        "ec2:DescribeAddresses",
         "ec2:DescribeCapacityReservations",
+        "ec2:DescribeIamInstanceProfileAssociations",
         "ec2:DescribeImages",
+        "ec2:DescribeInstanceAttribute",
+        "ec2:DescribeInstanceCreditSpecifications",
         "ec2:DescribeInstanceTypeOfferings",
         "ec2:DescribeInstanceTypes",
         "ec2:DescribeInstances",
@@ -29,13 +33,17 @@
         "ec2:DescribeSecurityGroupRules",
         "ec2:DescribeSecurityGroups",
         "ec2:DescribeSubnets",
+        "ec2:DescribeTags",
+        "ec2:DescribeVolumes",
         "ec2:DescribeVpcAttribute",
         "ec2:DescribeVpcs",
         "ec2:ModifyCapacityReservation",
         "ec2:ModifyLaunchTemplate",
+        "ec2:MonitorInstances",
         "ec2:RevokeSecurityGroupEgress",
         "ec2:RevokeSecurityGroupIngress",
-        "ec2:RunInstances"
+        "ec2:RunInstances",
+        "ec2:UnmonitorInstances"
       ],
       "Resource": "*"
     },
@@ -114,7 +122,7 @@
         "cloudformation:ListStackResources",
         "cloudformation:UpdateStack"
       ],
-      "Resource": "arn:aws:cloudformation:*:*:stack/knfsd-*/*"
+      "Resource": "arn:*:cloudformation:*:*:stack/knfsd-*/*"
     },
     {
       "Sid": "KnfsdRoute53",
@@ -157,7 +165,7 @@
         "lambda:UpdateFunctionCode",
         "lambda:UpdateFunctionConfiguration"
       ],
-      "Resource": "arn:aws:lambda:*:*:function:knfsd-*"
+      "Resource": "arn:*:lambda:*:*:function:knfsd-*"
     },
     {
       "Sid": "KnfsdEventBridge",
@@ -172,7 +180,7 @@
         "events:RemoveTargets",
         "events:TagResource"
       ],
-      "Resource": "arn:aws:events:*:*:rule/knfsd-*"
+      "Resource": "arn:*:events:*:*:rule/knfsd-*"
     },
     {
       "Sid": "KnfsdCloudWatchLogs",
@@ -206,7 +214,7 @@
         "iam:UntagRole",
         "iam:UpdateAssumeRolePolicy"
       ],
-      "Resource": "arn:aws:iam::*:role/knfsd-*"
+      "Resource": "arn:*:iam::*:role/knfsd-*"
     },
     {
       "Sid": "KnfsdIamPolicies",
@@ -222,7 +230,7 @@
         "iam:SetDefaultPolicyVersion",
         "iam:TagPolicy"
       ],
-      "Resource": "arn:aws:iam::*:policy/knfsd-*"
+      "Resource": "arn:*:iam::*:policy/knfsd-*"
     },
     {
       "Sid": "KnfsdIamInstanceProfile",
@@ -235,13 +243,13 @@
         "iam:RemoveRoleFromInstanceProfile",
         "iam:TagInstanceProfile"
       ],
-      "Resource": "arn:aws:iam::*:instance-profile/knfsd-*"
+      "Resource": "arn:*:iam::*:instance-profile/knfsd-*"
     },
     {
       "Sid": "KnfsdIamPassRole",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::*:role/knfsd-*",
+      "Resource": "arn:*:iam::*:role/knfsd-*",
       "Condition": {
         "StringEquals": {
           "iam:PassedToService": [
@@ -259,13 +267,13 @@
         "iam:GetPolicy",
         "iam:GetPolicyVersion"
       ],
-      "Resource": "arn:aws:iam::aws:policy/*"
+      "Resource": "arn:*:iam::aws:policy/*"
     },
     {
       "Sid": "KnfsdAsgServiceLinkedRole",
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/autoscaling.amazonaws.com/*",
+      "Resource": "arn:*:iam::*:role/aws-service-role/autoscaling.amazonaws.com/*",
       "Condition": {
         "StringEquals": {
           "iam:AWSServiceName": "autoscaling.amazonaws.com"
@@ -276,7 +284,7 @@
       "Sid": "KnfsdAsgSlrCheck",
       "Effect": "Allow",
       "Action": "iam:GetRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+      "Resource": "arn:*:iam::*:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
     }
   ]
 }

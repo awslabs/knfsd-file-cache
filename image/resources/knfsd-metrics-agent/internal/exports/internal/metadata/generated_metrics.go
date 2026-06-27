@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -30,13 +36,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricNfsExportsTotalOperations struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                        // data buffer for generated metric.
+	config   NfsExportsTotalOperationsMetricConfig // metric config provided by user.
+	capacity int                                   // max observed number of data points added to the metric.
 }
 
 // init fills nfs.exports.total_operations metric with initial data.
@@ -75,7 +82,7 @@ func (m *metricNfsExportsTotalOperations) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsExportsTotalOperations(cfg MetricConfig) metricNfsExportsTotalOperations {
+func newMetricNfsExportsTotalOperations(cfg NfsExportsTotalOperationsMetricConfig) metricNfsExportsTotalOperations {
 	m := metricNfsExportsTotalOperations{config: cfg}
 
 	if cfg.Enabled {
@@ -86,9 +93,9 @@ func newMetricNfsExportsTotalOperations(cfg MetricConfig) metricNfsExportsTotalO
 }
 
 type metricNfsExportsTotalReadBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                       // data buffer for generated metric.
+	config   NfsExportsTotalReadBytesMetricConfig // metric config provided by user.
+	capacity int                                  // max observed number of data points added to the metric.
 }
 
 // init fills nfs.exports.total_read_bytes metric with initial data.
@@ -127,7 +134,7 @@ func (m *metricNfsExportsTotalReadBytes) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsExportsTotalReadBytes(cfg MetricConfig) metricNfsExportsTotalReadBytes {
+func newMetricNfsExportsTotalReadBytes(cfg NfsExportsTotalReadBytesMetricConfig) metricNfsExportsTotalReadBytes {
 	m := metricNfsExportsTotalReadBytes{config: cfg}
 
 	if cfg.Enabled {
@@ -138,9 +145,9 @@ func newMetricNfsExportsTotalReadBytes(cfg MetricConfig) metricNfsExportsTotalRe
 }
 
 type metricNfsExportsTotalWriteBytes struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                        // data buffer for generated metric.
+	config   NfsExportsTotalWriteBytesMetricConfig // metric config provided by user.
+	capacity int                                   // max observed number of data points added to the metric.
 }
 
 // init fills nfs.exports.total_write_bytes metric with initial data.
@@ -179,7 +186,7 @@ func (m *metricNfsExportsTotalWriteBytes) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricNfsExportsTotalWriteBytes(cfg MetricConfig) metricNfsExportsTotalWriteBytes {
+func newMetricNfsExportsTotalWriteBytes(cfg NfsExportsTotalWriteBytesMetricConfig) metricNfsExportsTotalWriteBytes {
 	m := metricNfsExportsTotalWriteBytes{config: cfg}
 
 	if cfg.Enabled {

@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.26"
+ARG VERSION="1.1.0-alpha.27"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -111,21 +111,28 @@ RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 
 ## build version args
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.3
+ARG KNFSD_PACKER_VERSION=1.15.4
+# https://github.com/aws/session-manager-plugin/tags
+ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 
 ## change current working directory
 WORKDIR /tmp
 
+## install aws ssm session-manager-plugin
+RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "arm64" || echo "64bit") \
+    && curl -fsSL "https://s3.amazonaws.com/session-manager-downloads/plugin/${KNFSD_SESSION_MANAGER_PLUGIN_VERSION}/ubuntu_${ARCH}/session-manager-plugin.deb" \
+    -o session-manager-plugin.deb && sudo dpkg -i session-manager-plugin.deb && rm session-manager-plugin.deb
+
 ## install packer
 RUN curl -fsSL "https://releases.hashicorp.com/packer/${KNFSD_PACKER_VERSION}/packer_${KNFSD_PACKER_VERSION}_linux_${BUILDARCH}.zip" \
-    --output packer.zip && sudo unzip -q -o packer.zip -d /usr/local/bin && rm packer.zip
+    -o packer.zip && sudo unzip -q -o packer.zip -d /usr/local/bin && rm packer.zip
 RUN mkdir -p "/home/${USERNAME}/.packer.d/plugins"
 ENV PACKER_PLUGIN_PATH="/home/${USERNAME}/.packer.d/plugins"
 
 ## install terraform
 RUN curl -fsSL "https://releases.hashicorp.com/terraform/${KNFSD_TERRAFORM_VERSION}/terraform_${KNFSD_TERRAFORM_VERSION}_linux_${BUILDARCH}.zip" \
-    --output terraform.zip && sudo unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip
+    -o terraform.zip && sudo unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip
 RUN mkdir -p "/home/${USERNAME}/.terraform.d/plugin-cache"
 ENV TF_PLUGIN_CACHE_DIR="/home/${USERNAME}/.terraform.d/plugin-cache"

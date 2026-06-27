@@ -170,62 +170,40 @@ function build_export_options() {
 # @param (str) $1 NFS Sever IP
 # @param (str) $2 NFS Server Export Path
 # @param (str) $3 Local Mount Path
-# @param (str) $4 FS Type <optional>
 function mount_nfs_server() {
 	if [[ -L $3 ]]; then
-		# terminate so that the proxy does not start with a bad configuration
 		echo "ERROR: Cannot mount $1:$2 because $3 matches a symlink" >&2
-		exit 1
+		return 1
 	fi
 
 	local remote="$1:$2"
 	local path="/srv/nfs/$3"
-	local fstype="${4:-nfs}"
-	local FSTYPE="${fstype^^}"
 
 	# skip if local $path is already mounted
 	if is_mounted "$path"; then
-		echo "Skipping $FSTYPE path, already mounted: $path"
+		echo "Skipping NFS path, already mounted: $path"
 		return
 	fi
 
 	# make the local export directory
 	mkdir -p "$path"
 
-	local mount_opts="$MOUNT_OPTIONS"
-
-	if [[ $fstype == "efs" || $fstype == "s3files" ]]; then
-		# remove nconnect option if fstype=efs or fstype=s3files
-		mount_opts="$(echo "$mount_opts" | sed -E 's/(^|,)(nconnect=[^,]*,?)/\1/g; s/,,+/,/g; s/^,+//; s/,+$//')"
-		echo "Removed [nconnect] option from MOUNT_OPTIONS: $mount_opts"
-
-		# EFS/S3 Files mount helper has its own retry logic, so attempt only once
-		echo "Mounting $FSTYPE share: $remote..."
-		if mount -t "$fstype" -o "$mount_opts" "$remote" "$path"; then
-			echo "$FSTYPE mount succeeded for $remote"
+	# try to mount the NFS share 3 times, 30 seconds apart
+	local -i attempt
+	for ((attempt = 1; ; attempt++)); do
+		echo "(Attempt ${attempt}/3) Mounting NFS share: $remote..."
+		if mount -t nfs -o "$MOUNT_OPTIONS" "$remote" "$path"; then
+			echo "NFS mount succeeded for $remote"
+			break
 		else
-			echo "ERROR: $FSTYPE mount failed for $remote" >&2
-			echo "INFO: See /var/log/amazon/efs/mount.log"
-			exit 1
-		fi
-	else
-		# try to mount the NFS share 3 times, 30 seconds apart
-		local -i attempt
-		for ((attempt = 1; ; attempt++)); do
-			echo "(Attempt ${attempt}/3) Mounting $FSTYPE share: $remote..."
-			if mount -t "$fstype" -o "$mount_opts" "$remote" "$path"; then
-				echo "$FSTYPE mount succeeded for $remote"
-				break
-			else
-				if ((attempt >= 3)); then
-					echo "ERROR: $FSTYPE mount failed for $remote. Maximum attempts reached, exiting with status 1..." >&2
-					exit 1
-				fi
-				echo "$FSTYPE mount failed for $remote. Retrying after 30 seconds..."
-				sleep 30
+			if ((attempt >= 3)); then
+				echo "ERROR: NFS mount failed for $remote. Maximum attempts reached..." >&2
+				return 1
 			fi
-		done
-	fi
+			echo "NFS mount failed for $remote. Retrying after 30 seconds..."
+			sleep 30
+		fi
+	done
 }
 
 # add_nfs_export() adds an entry to /etc/exports.d/knfsd.exports
@@ -293,7 +271,7 @@ function is_mounted() {
 # @param (str) $3 Local Mount Path
 # @param (str) $4 FS Type <optional>
 function reexport() {
-	mount_nfs_server "$1" "$2" "$3" "$4"
+	mount_nfs_server "$1" "$2" "$3" "$4" || return 1
 	add_nfs_export "$3"
 }
 
@@ -587,10 +565,14 @@ function configure_kernel() {
 function configure_network() {
 	begin_command "configure network"
 
-	# Raise socket buffer ceiling to 16MB so NFS can buffer 1MB
+	# Raise socket buffer ceiling to 16MB so NFS can buffer 1-4MB
 	# rsize/wsize responses under high concurrency.
 	sysctl -w net.core.rmem_max=16777216
 	sysctl -w net.core.wmem_max=16777216
+
+	# Raise socket buffer defaults to 4MB for ENA-X high-rtt conditions
+	sysctl -w net.core.rmem_default=4194304
+	sysctl -w net.core.wmem_default=4194304
 
 	# Increase network backlog from 1000 (default) to 16384 to
 	# prevent packet drops at high PPS before reaching the NFS stack.
@@ -602,8 +584,15 @@ function configure_network() {
 	sysctl -w net.ipv4.tcp_rmem="4096 131072 16777216"
 	sysctl -w net.ipv4.tcp_wmem="4096 131072 16777216"
 
-	# Raise TCP small queue limit to 1MB (default 128KB) for ENA-X
-	sysctl -w net.ipv4.tcp_limit_output_bytes=1048576
+	# Raise TCP small queue limit to 4MB (default 128KB) for ENA-X
+	sysctl -w net.ipv4.tcp_limit_output_bytes=4194304
+
+	# Disable tcp_autocorking for ENA-X
+	# reduces latency for request-response workloads
+	echo 0 > /proc/sys/net/ipv4/tcp_autocorking
+
+	# Set TCP congestion control algorithm to cubic for ENA-X
+	sysctl -w net.ipv4.tcp_congestion_control=cubic
 
 	# Disable TCP HyStart detection
 	echo "/sys/module/tcp_cubic/parameters/hystart_detect = 0"
@@ -878,15 +867,14 @@ function export_map() {
 	begin_command "export map"
 	if [[ -n ${EXPORT_MAP} ]]; then
 		echo "Beginning processing of NFS re-exports (EXPORT_MAP)..."
-		local i REMOTE_IP REMOTE_EXPORT LOCAL_EXPORT FSTYPE
+		local i REMOTE_IP REMOTE_EXPORT LOCAL_EXPORT
 
 		for i in $(echo "${EXPORT_MAP}" | sed "s/,/ /g"); do
 			# Split the components of the entry in EXPORT_MAP
 			REMOTE_IP="$(echo "$i" | cut -d';' -f1)"
 			REMOTE_EXPORT="$(echo "$i" | cut -d';' -f2)"
 			LOCAL_EXPORT="$(echo "$i" | cut -d';' -f3)"
-			FSTYPE="$(echo "$i" | cut -d';' -f4)"
-			reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${LOCAL_EXPORT}" "${FSTYPE}"
+			reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${LOCAL_EXPORT}"
 		done
 		echo "Finished processing of NFS re-exports (EXPORT_MAP)"
 	else
@@ -902,16 +890,34 @@ function export_auto_detect() {
 	if [[ -n ${EXPORT_HOST_AUTO_DETECT} ]]; then
 		echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
 		local REMOTE_IP REMOTE_EXPORT
+		local -a exports
+		local -i mounted=0 skipped=0
 
 		for REMOTE_IP in $(echo "${EXPORT_HOST_AUTO_DETECT}" | sed "s/,/ /g"); do
-			# Detect the mounts on the NFS Server
-			showmount -e --no-headers "$REMOTE_IP" | filter_exports -field 1 | awk '{print $1}' | sort \
-				| while read -r REMOTE_EXPORT; do
-					# Mount the NFS Server export
-					reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${REMOTE_EXPORT}"
-				done
+			# Detect the mounts on the NFS Server. Capture the discovered
+			# exports into an array first; process substitution isolates a
+			# showmount/pipe failure from errexit/pipefail and avoids relying
+			# on lastpipe semantics for the counters below.
+			mapfile -t exports < <(showmount -e --no-headers "$REMOTE_IP" | filter_exports -field 1 | awk '{print $1}' | sort)
+			for REMOTE_EXPORT in "${exports[@]}"; do
+				# Mount the NFS Server export. Unlike EXPORT_MAP, a single
+				# auto-detected export that cannot be mounted (for example a
+				# pseudo-root "/" advertised by some filers) is skipped rather
+				# than aborting startup.
+				if reexport "${REMOTE_IP}" "${REMOTE_EXPORT}" "${REMOTE_EXPORT}"; then
+					mounted+=1
+				else
+					skipped+=1
+					echo "WARNING: skipping auto-detected export ${REMOTE_IP}:${REMOTE_EXPORT}; mount failed after retries" >&2
+				fi
+			done
 		done
-		echo "Finished processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)"
+
+		if ((mounted == 0)); then
+			echo "ERROR: auto-detect (EXPORT_HOST_AUTO_DETECT) mounted zero exports; exiting" >&2
+			exit 1
+		fi
+		echo "Finished processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT) (mounted=${mounted}, skipped=${skipped})"
 	else
 		echo "Skipping..."
 	fi
@@ -1002,8 +1008,8 @@ function start_metrics() {
 		# pre-create the CloudWatch log group used by knfsd-metrics-agent to
 		# avoid OperationAbortedException when multiple scrapers concurrently
 		# call CreateLogGroup on first boot. Values must match 'config/common.yaml'
-		aws logs create-log-group --log-group-name "knfsd/metrics" 2> /dev/null || true
-		aws logs put-retention-policy --log-group-name "knfsd/metrics" --retention-in-days 30 2> /dev/null || true
+		aws logs create-log-group --log-group-name "/knfsd/metrics" 2> /dev/null || true
+		aws logs put-retention-policy --log-group-name "/knfsd/metrics" --retention-in-days 30 2> /dev/null || true
 
 		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
 		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then

@@ -1,6 +1,7 @@
 # KNFSD File Cache
 
 * [Prerequisites](../deployment/docs/prerequisites.md)
+* [Security Considerations](security-considerations.md)
 * [IAM Permissions](iam.md)
 
 ## Step 1: Build (Packer)
@@ -55,10 +56,6 @@
 
 ## Examples
 
-* [Basic NFS](../examples/nfs-basic/README.md)
-* [Standard NFS (Isilon/PowerScale, Qumulo)](../examples/nfs-standard/README.md)
-* [Elastic File System (EFS)](../examples/efs/README.md)
-* [Amazon S3 Files](../examples/s3-files/README.md)
 * [FSx for NetApp ONTAP](../examples/fsx-netapp/README.md)
 * [FSx for OpenZFS](../examples/fsx-zfs/README.md)
 * [FSx for OpenZFS Fanout (DNS Round Robin)](../examples/fsx-zfs-fanout-dns-rr/README.md)
@@ -81,9 +78,9 @@
 
 ## Testing
 
-* [Terratest](../testing/examples/README.md)
-* [CloudBuild](../testing/modules/cloudbuild/README.md)
-* [Source NFS Server](../testing/modules/source/README.md)
+* [Smoke Tests](../image/smoke-tests/README.md)
+* [NFS Client](../image/smoke-tests/modules/nfs-client/README.md)
+* [Source NFS Server](../image/smoke-tests/modules/source-nfs/README.md)
 
 ## Project Reference
 

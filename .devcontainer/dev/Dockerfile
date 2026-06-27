@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
 
-ARG VERSION="1.1.0-alpha.26"
+ARG VERSION="1.1.0-alpha.27"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -144,55 +144,55 @@ RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 # https://github.com/bats-core/bats-core/releases
 ARG KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
-ARG KNFSD_BLACK_VERSION=26.3.1
+ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.6
+ARG KNFSD_BOTO3_VERSION=1.43.36
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.2.527
+ARG KNFSD_CHECKOV_VERSION=3.3.2
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/go-delve/delve/tags
-ARG KNFSD_DLV_VERSION=1.26.3
+ARG KNFSD_DLV_VERSION=1.27.0
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.6.1
+ARG KNFSD_EDITORCONFIG_VERSION=3.7.0
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.26.3
+ARG KNFSD_GOLANG_VERSION=1.26.4
 # https://pkg.go.dev/golang.org/x/tools/gopls
-ARG KNFSD_GOPLS_VERSION=0.21.1
+ARG KNFSD_GOPLS_VERSION=0.22.0
 # https://github.com/securego/gosec/releases
-ARG KNFSD_GOSEC_VERSION=2.26.1
+ARG KNFSD_GOSEC_VERSION=2.27.1
 # https://github.com/iann0036/iamlive/releases
 ARG KNFSD_IAMLIVE_VERSION=1.1.28
 # https://github.com/python/mypy/tags
 ARG KNFSD_MYPY_VERSION=2.1.0
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.3
+ARG KNFSD_PACKER_VERSION=1.15.4
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.6.0
 # https://pypi.org/project/psycopg/
 ARG KNFSD_PSYCOPG_VERSION=3.3.4
 # https://github.com/pylint-dev/pylint/tags
-ARG KNFSD_PYLINT_VERSION=4.0.5
+ARG KNFSD_PYLINT_VERSION=4.0.6
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.162.0
+ARG KNFSD_SEMGREP_VERSION=1.168.0
+# https://github.com/aws/session-manager-plugin/tags
+ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
 ARG KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
-# https://github.com/gruntwork-io/terragrunt/releases
-ARG KNFSD_TERRAGRUNT_VERSION=1.0.4
 # https://github.com/terraform-linters/tflint/releases
-ARG KNFSD_TFLINT_VERSION=0.62.0
+ARG KNFSD_TFLINT_VERSION=0.63.1
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.70.0
+ARG KNFSD_TRIVY_VERSION=0.71.2
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.11.13
+ARG KNFSD_UV_VERSION=0.11.24
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -237,55 +237,56 @@ ENV PRE_COMMIT_HOME="/home/${USERNAME}/.cache/pre-commit"
 ## change current working directory
 WORKDIR /tmp
 
+## install aws ssm session-manager-plugin
+RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "arm64" || echo "64bit") \
+    && curl -fsSL "https://s3.amazonaws.com/session-manager-downloads/plugin/${KNFSD_SESSION_MANAGER_PLUGIN_VERSION}/ubuntu_${ARCH}/session-manager-plugin.deb" \
+    -o session-manager-plugin.deb && sudo dpkg -i session-manager-plugin.deb && rm session-manager-plugin.deb
+
 ## install packer
 RUN curl -fsSL "https://releases.hashicorp.com/packer/${KNFSD_PACKER_VERSION}/packer_${KNFSD_PACKER_VERSION}_linux_${BUILDARCH}.zip" \
-    --output packer.zip && sudo unzip -q -o packer.zip -d /usr/local/bin && rm packer.zip
+    -o packer.zip && sudo unzip -q -o packer.zip -d /usr/local/bin && rm packer.zip
 RUN mkdir -p "/home/${USERNAME}/.packer.d/plugins"
 ENV PACKER_PLUGIN_PATH="/home/${USERNAME}/.packer.d/plugins"
 
 ## install terraform
 RUN curl -fsSL "https://releases.hashicorp.com/terraform/${KNFSD_TERRAFORM_VERSION}/terraform_${KNFSD_TERRAFORM_VERSION}_linux_${BUILDARCH}.zip" \
-    --output terraform.zip && sudo unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip
+    -o terraform.zip && sudo unzip -q -o terraform.zip -d /usr/local/bin && rm terraform.zip
 RUN mkdir -p "/home/${USERNAME}/.terraform.d/plugin-cache"
 ENV TF_PLUGIN_CACHE_DIR="/home/${USERNAME}/.terraform.d/plugin-cache"
 
 ## install tflint
 RUN curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${KNFSD_TFLINT_VERSION}/tflint_linux_${BUILDARCH}.zip" \
-    --output tflint.zip && sudo unzip -q -o tflint.zip -d /usr/local/bin && rm tflint.zip
+    -o tflint.zip && sudo unzip -q -o tflint.zip -d /usr/local/bin && rm tflint.zip
 
 ## install trivy
 RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "ARM64" || echo "64bit") \
     && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${KNFSD_TRIVY_VERSION}/trivy_${KNFSD_TRIVY_VERSION}_Linux-${ARCH}.deb" \
-    --output trivy.deb && sudo dpkg -i trivy.deb && rm trivy.deb
+    -o trivy.deb && sudo dpkg -i trivy.deb && rm trivy.deb
 
 ## install bats-core
 RUN curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BATS_CORE_VERSION}.zip" \
-    --output bats-core.zip && unzip -q -o bats-core.zip && sudo ./bats-core-${KNFSD_BATS_CORE_VERSION}/install.sh /usr/local \
+    -o bats-core.zip && unzip -q -o bats-core.zip && sudo ./bats-core-${KNFSD_BATS_CORE_VERSION}/install.sh /usr/local \
     && rm -rf bats-core.zip bats-core-${KNFSD_BATS_CORE_VERSION}
-
-## install terragrunt
-RUN sudo curl -fsSL "https://github.com/gruntwork-io/terragrunt/releases/download/v${KNFSD_TERRAGRUNT_VERSION}/terragrunt_linux_${BUILDARCH}" \
-    --output /usr/local/bin/terragrunt && sudo chmod +x /usr/local/bin/terragrunt
 
 ## install editorconfig-checker
 RUN curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/ec-linux-${BUILDARCH}.tar.gz" \
-    --output ec.tar.gz \
+    -o ec.tar.gz \
     && sudo tar -xzf ec.tar.gz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${BUILDARCH}" \
     && sudo mv "/usr/local/bin/ec-linux-${BUILDARCH}" /usr/local/bin/editorconfig-checker \
     && sudo chmod +x /usr/local/bin/editorconfig-checker && rm ec.tar.gz
 
 ## install shfmt
 RUN sudo curl -fsSL "https://github.com/mvdan/sh/releases/download/v${KNFSD_SHFMT_VERSION}/shfmt_v${KNFSD_SHFMT_VERSION}_linux_${BUILDARCH}" \
-    --output /usr/local/bin/shfmt && sudo chmod +x /usr/local/bin/shfmt
+    -o /usr/local/bin/shfmt && sudo chmod +x /usr/local/bin/shfmt
 
 ## install iamlive
 RUN curl -fsSL "https://github.com/iann0036/iamlive/releases/download/v${KNFSD_IAMLIVE_VERSION}/iamlive_${KNFSD_IAMLIVE_VERSION}_linux_${BUILDARCH}.tar.gz" \
-    --output iamlive.tar.gz && sudo tar -xzf iamlive.tar.gz -C /usr/local/bin iamlive \
+    -o iamlive.tar.gz && sudo tar -xzf iamlive.tar.gz -C /usr/local/bin iamlive \
     && sudo chmod +x /usr/local/bin/iamlive && rm iamlive.tar.gz
 
 ## install gosec
 RUN curl -fsSL "https://github.com/securego/gosec/releases/download/v${KNFSD_GOSEC_VERSION}/gosec_${KNFSD_GOSEC_VERSION}_linux_${BUILDARCH}.tar.gz" \
-    --output gosec.tar.gz && sudo tar -xzf gosec.tar.gz -C /usr/local/bin gosec \
+    -o gosec.tar.gz && sudo tar -xzf gosec.tar.gz -C /usr/local/bin gosec \
     && sudo chmod +x /usr/local/bin/gosec && rm gosec.tar.gz
 
 ## install uv

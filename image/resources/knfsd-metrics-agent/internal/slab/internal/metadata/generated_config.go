@@ -6,13 +6,73 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
+// SlabDentryCacheActiveObjectsMetricConfig provides config for the slab.dentry_cache.active_objects metric.
+type SlabDentryCacheActiveObjectsMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *SlabDentryCacheActiveObjectsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// SlabDentryCacheObjsizeMetricConfig provides config for the slab.dentry_cache.objsize metric.
+type SlabDentryCacheObjsizeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *SlabDentryCacheObjsizeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// SlabNfsInodeCacheActiveObjectsMetricConfig provides config for the slab.nfs_inode_cache.active_objects metric.
+type SlabNfsInodeCacheActiveObjectsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *SlabNfsInodeCacheActiveObjectsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// SlabNfsInodeCacheObjsizeMetricConfig provides config for the slab.nfs_inode_cache.objsize metric.
+type SlabNfsInodeCacheObjsizeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *SlabNfsInodeCacheObjsizeMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -28,24 +88,24 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for slabinfo metrics.
 type MetricsConfig struct {
-	SlabDentryCacheActiveObjects   MetricConfig `mapstructure:"slab.dentry_cache.active_objects"`
-	SlabDentryCacheObjsize         MetricConfig `mapstructure:"slab.dentry_cache.objsize"`
-	SlabNfsInodeCacheActiveObjects MetricConfig `mapstructure:"slab.nfs_inode_cache.active_objects"`
-	SlabNfsInodeCacheObjsize       MetricConfig `mapstructure:"slab.nfs_inode_cache.objsize"`
+	SlabDentryCacheActiveObjects   SlabDentryCacheActiveObjectsMetricConfig   `mapstructure:"slab.dentry_cache.active_objects"`
+	SlabDentryCacheObjsize         SlabDentryCacheObjsizeMetricConfig         `mapstructure:"slab.dentry_cache.objsize"`
+	SlabNfsInodeCacheActiveObjects SlabNfsInodeCacheActiveObjectsMetricConfig `mapstructure:"slab.nfs_inode_cache.active_objects"`
+	SlabNfsInodeCacheObjsize       SlabNfsInodeCacheObjsizeMetricConfig       `mapstructure:"slab.nfs_inode_cache.objsize"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		SlabDentryCacheActiveObjects: MetricConfig{
+		SlabDentryCacheActiveObjects: SlabDentryCacheActiveObjectsMetricConfig{
 			Enabled: true,
 		},
-		SlabDentryCacheObjsize: MetricConfig{
+		SlabDentryCacheObjsize: SlabDentryCacheObjsizeMetricConfig{
 			Enabled: true,
 		},
-		SlabNfsInodeCacheActiveObjects: MetricConfig{
+		SlabNfsInodeCacheActiveObjects: SlabNfsInodeCacheActiveObjectsMetricConfig{
 			Enabled: true,
 		},
-		SlabNfsInodeCacheObjsize: MetricConfig{
+		SlabNfsInodeCacheObjsize: SlabNfsInodeCacheObjsizeMetricConfig{
 			Enabled: true,
 		},
 	}

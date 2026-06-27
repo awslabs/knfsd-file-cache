@@ -1,24 +1,22 @@
-/*
- * Copyright 2020 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2020 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 terraform {
   required_version = ">= 1.2.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.44.0"
+      version = "~> 6.52.0"
     }
     archive = {
       source  = "hashicorp/archive"
-      version = "~> 2.7.1"
+      version = "~> 2.8.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.26"
+      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.27"
     ]
   }
 }

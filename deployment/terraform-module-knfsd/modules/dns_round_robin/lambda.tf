@@ -1,13 +1,14 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 # child tf module inherits AWS region from provider in root module
 data "aws_region" "current" {}
 
 # child tf module inherits AWS account ID from provider in root module
 data "aws_caller_identity" "current" {}
+
+# get the current AWS partition (aws, aws-us-gov, aws-cn)
+data "aws_partition" "current" {}
 
 # lookup existing hosted zone when DNS_NAME is provided
 data "aws_route53_zone" "existing" {
@@ -21,6 +22,7 @@ locals {
   # child tf module inherits AWS region from provider in root module
   region     = data.aws_region.current.region
   account_id = data.aws_caller_identity.current.account_id
+  partition  = data.aws_partition.current.partition
   asg_name   = "${var.PROXY_BASENAME}-asg"
   # determine zone ID based on whether we're creating a new zone or using existing
   r53_zone_id = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].zone_id : data.aws_route53_zone.existing[0].zone_id
@@ -37,7 +39,7 @@ data "archive_file" "static_ip_zip" {
 
 # nosemgrep: aws-cloudwatch-log-group-unencrypted, missing-cloudwatch-log-group-kms-key
 resource "aws_cloudwatch_log_group" "lambda_static_ip" {
-  name              = "knfsd/lambda/static-ip/${var.PROXY_BASENAME}"
+  name              = "/knfsd/lambda/static-ip/${var.PROXY_BASENAME}"
   retention_in_days = 30
   tags              = local.tags
 }
@@ -109,8 +111,8 @@ resource "aws_iam_policy" "lambda_static_ip" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:logs:${local.region}:${local.account_id}:log-group:knfsd/lambda/static-ip/*:*",
-          "arn:aws:logs:${local.region}:${local.account_id}:log-group:knfsd/lambda/static-ip/*:log-stream:*"
+          "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:/knfsd/lambda/static-ip/*:*",
+          "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:/knfsd/lambda/static-ip/*:log-stream:*"
         ]
       },
       {
@@ -118,7 +120,7 @@ resource "aws_iam_policy" "lambda_static_ip" {
           "autoscaling:CompleteLifecycleAction"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:autoscaling:${local.region}:${local.account_id}:autoScalingGroup:*:autoScalingGroupName/${local.asg_name}"
+        Resource = "arn:${local.partition}:autoscaling:${local.region}:${local.account_id}:autoScalingGroup:*:autoScalingGroupName/${local.asg_name}"
       },
       {
         Action = [
@@ -126,9 +128,9 @@ resource "aws_iam_policy" "lambda_static_ip" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:ec2:${local.region}:${local.account_id}:network-interface/*",
-          "arn:aws:ec2:${local.region}:${local.account_id}:subnet/${var.SUBNET}",
-          "arn:aws:ec2:${local.region}:${local.account_id}:security-group/*"
+          "arn:${local.partition}:ec2:${local.region}:${local.account_id}:network-interface/*",
+          "arn:${local.partition}:ec2:${local.region}:${local.account_id}:subnet/${var.SUBNET}",
+          "arn:${local.partition}:ec2:${local.region}:${local.account_id}:security-group/*"
         ]
       },
       {
@@ -142,8 +144,8 @@ resource "aws_iam_policy" "lambda_static_ip" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:ec2:${local.region}:${local.account_id}:network-interface/*",
-          "arn:aws:ec2:${local.region}:${local.account_id}:instance/*"
+          "arn:${local.partition}:ec2:${local.region}:${local.account_id}:network-interface/*",
+          "arn:${local.partition}:ec2:${local.region}:${local.account_id}:instance/*"
         ]
       },
       {
@@ -160,7 +162,7 @@ resource "aws_iam_policy" "lambda_static_ip" {
           "route53:ChangeResourceRecordSets"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:route53:::hostedzone/${local.r53_zone_id}"
+        Resource = "arn:${local.partition}:route53:::hostedzone/${local.r53_zone_id}"
       }
     ]
   })

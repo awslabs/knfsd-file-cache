@@ -2,8 +2,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# This provides a convenient way to quickly run all the basic tests locally.
-# When running in CI/CD (eg. AWS Code Build) these steps should be separated out
+# This provides a convenient way to quickly run all the tests locally.
+# When running in CI/CD (eg. AWS Code Build or GitLab) these steps should be separated out
 # so they can run in parallel, and to log the output from each step independently.
 
 SHELL := /bin/bash
@@ -19,7 +19,10 @@ SHELL_DEFAULT := "\033[0m"
 default:
 
 .PHONY: all
-all: lint packer terraform bats scan golint test
+all: lint packer terraform bats scan golint gotest
+
+.PHONY: security sec
+security sec: scan-checkov scan-gosec scan-kics scan-semgrep scan-trivy
 
 .PHONY: image
 image:
@@ -76,8 +79,8 @@ lic-scan-ignore:
 	@echo "[license scan, ignore]"
 	@trivy fs --scanners license --license-full --ignorefile $(ROOT_DIR)/.trivyignore.yaml $(ROOT_DIR)
 
-.PHONY: lint ec codespell shfmt shellcheck black mypy pylint iam-size
-lint: ec codespell shfmt shellcheck black mypy pylint iam-size
+.PHONY: lint ec codespell shfmt shellcheck-sh shellcheck-bash shellcheck-bats black mypy pylint iam-size
+lint: ec codespell shfmt shellcheck-sh shellcheck-bash shellcheck-bats black mypy pylint iam-size
 
 ec:
 	@echo "[ec]"
@@ -85,16 +88,22 @@ ec:
 
 codespell:
 	@echo "[codespell]"
-	@codespell --skip "go.mod,go.sum,slabinfo"
+	@codespell --config $(ROOT_DIR)/.codespellrc
 
 shfmt:
 	@echo "[shfmt]"
 	@shfmt -d .
 
-shellcheck:
-	@echo "[shellcheck]"
+shellcheck-sh:
+	@echo "[shellcheck-sh]"
 	@git ls-files --exclude='*.sh' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
+
+shellcheck-bash:
+	@echo "[shellcheck-bash]"
 	@git ls-files --exclude='*.bash' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
+
+shellcheck-bats:
+	@echo "[shellcheck-bats]"
 	@git ls-files --exclude='*.bats' --ignored -c -z | xargs -0r shellcheck --shell=bash --external-sources --color=always --severity=style
 
 black:
@@ -172,8 +181,6 @@ packer: packer-val
 packer-val:
 	@echo "[packer validate 'image']"
 	@cd $(ROOT_DIR)/image && packer validate .
-	@#echo "[packer validate 'testing/images/client']"
-	@#cd $(ROOT_DIR)/testing/images/client && packer validate .
 
 .PHONY: terraform-format
 terraform: tf-fmt
@@ -226,6 +233,7 @@ scan-trivy trivy:
 	@echo "[trivy]"
 	@trivy fs --ignorefile $(ROOT_DIR)/.trivyignore.yaml --exit-code 1 \
 		--cache-dir "$(ROOT_DIR)/.trivycache" \
+		--tf-vars $(ROOT_DIR)/.trivy.tfvars \
 		--scanners secret,vuln,misconfig,license $(ROOT_DIR)
 
 .PHONY: scan-kics kics
@@ -242,7 +250,6 @@ golint:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-metrics-agent golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/netapp-exports golint
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests golint
-	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples golint
 
 .PHONY: gosec scan-gosec
 gosec scan-gosec:
@@ -252,7 +259,6 @@ gosec scan-gosec:
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/knfsd-metrics-agent gosec
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/resources/netapp-exports gosec
 	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C image/smoke-tests gosec
-	@$(MAKE) ROOT_DIR=$(ROOT_DIR) -C testing/examples gosec
 
 .PHONY: gotidy
 gotidy:
@@ -262,7 +268,6 @@ gotidy:
 	$(MAKE) -C image/resources/knfsd-metrics-agent gotidy
 	$(MAKE) -C image/resources/netapp-exports gotidy
 	$(MAKE) -C image/smoke-tests gotidy
-	$(MAKE) -C testing/examples gotidy
 
 .PHONY: goget goupdate
 goget goupdate:
@@ -272,29 +277,29 @@ goget goupdate:
 	$(MAKE) -C image/resources/knfsd-metrics-agent goget
 	$(MAKE) -C image/resources/netapp-exports goget
 	$(MAKE) -C image/smoke-tests goget
-	$(MAKE) -C testing/examples goget
 
-.PHONY: filter-exports-test
-test: filter-exports-test
-filter-exports-test:
-	$(MAKE) -C image/resources/filter-exports test
+.PHONY: filter-exports-gotest
+gotest: filter-exports-gotest
+filter-exports-gotest:
+	$(MAKE) -C image/resources/filter-exports gotest
 
-.PHONY: knfsd-agent-test
-test: knfsd-agent-test
-knfsd-agent-test:
-	$(MAKE) -C image/resources/knfsd-agent test
+.PHONY: knfsd-agent-gotest
+gotest: knfsd-agent-gotest
+knfsd-agent-gotest:
+	$(MAKE) -C image/resources/knfsd-agent gotest
 
-.PHONY: knfsd-fsidd-test
-test: knfsd-fsidd-test
-knfsd-fsidd-test:
-	$(MAKE) -C image/resources/knfsd-fsidd test
+.PHONY: knfsd-fsidd-gotest
+gotest: knfsd-fsidd-gotest
+knfsd-fsidd-gotest:
+	$(MAKE) -C image/resources/knfsd-fsidd gotest
 
-.PHONY: knfsd-metrics-agent-test
-test: knfsd-metrics-agent-test
-knfsd-metrics-agent-test:
-	$(MAKE) -C image/resources/knfsd-metrics-agent test
+.PHONY: knfsd-metrics-agent-gotest
+gotest: knfsd-metrics-agent-gotest
+knfsd-metrics-agent-gotest:
+	$(MAKE) -C image/resources/knfsd-metrics-agent gotest
 
-.PHONY: netapp-exports-test
-test: netapp-exports-test
-netapp-exports-test:
-	$(MAKE) -C image/resources/netapp-exports test
+.PHONY: netapp-exports-gotest
+gotest: netapp-exports-gotest
+netapp-exports-gotest:
+	$(MAKE) -C image/resources/netapp-exports gotest
+

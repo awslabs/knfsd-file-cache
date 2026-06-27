@@ -44,7 +44,7 @@ func TestSmoke(t *testing.T) {
 
 		# Create the directories for the mounts.
 		# Mark them as immutable so that if the mount fails no data
-		# can be accidentally wrote to the local disk.
+		# can be accidentally written to the local disk.
 		mkdir -p /mnt/source /mnt/proxy
 		chattr +i /mnt/source /mnt/proxy
 
@@ -56,7 +56,7 @@ func TestSmoke(t *testing.T) {
 
 	require.True(t, t.Run("mount source", func(t *testing.T) {
 		// Mount the source directly so that we can bypass the proxy to verify
-		// that data was wrote to the source, and setting up data to be read by
+		// that data was written to the source, and setting up data to be read by
 		// the proxy.
 		sourceMount := fmt.Sprintf("%s:/files", sourceHost)
 		err := Sudo(fmt.Sprintf(`
@@ -69,7 +69,7 @@ func TestSmoke(t *testing.T) {
 		# Create the test directory if it doesn't already exist and
 		# assign ownership to our test user.
 		mkdir -p "/mnt/source/smoke-tests"
-		rm -f "/mnt/source/smoke-tests/*"
+		rm -rf /mnt/source/smoke-tests/*
 		chown "$SUDO_UID:$SUDO_GID" "/mnt/source/smoke-tests"
 		chmod 775 "/mnt/source/smoke-tests"
 
@@ -125,21 +125,31 @@ func TestSmoke(t *testing.T) {
 		// remove the file from the source. The proxy should still have the
 		// metadata cached as the proxy will be unaware the file was removed.
 
-		name, err := createRandomFile("/test/source", "meta.*")
+		// Use a private directory for this subtest. The proxy caches a lookup
+		// result keyed against the parent directory's attributes; if other
+		// parallel subtests create or remove files in a shared parent directory
+		// the proxy observes the changed directory mtime and drops the cached
+		// entry, which would make this assertion racy. An isolated directory
+		// guarantees the only changes to it are this subtest's own out-of-band
+		// (source-side) mutations, which the proxy never sees.
+		dir, err := createTestDir("meta-positive")
 		require.NoError(t, err)
-		t.Cleanup(func() { removeTestFile(name) })
+		t.Cleanup(dir.cleanup)
 
-		before, err := os.Stat("/test/proxy/" + name)
+		name, err := createRandomFile(dir.source, "meta.*")
+		require.NoError(t, err)
+
+		before, err := os.Stat(dir.proxy + "/" + name)
 		require.NoError(t, err)
 
 		// A single stat doesn't always cache the metadata, so re-read.
 		for range 100 {
-			_, err = os.Stat("/test/proxy/" + name)
+			_, err = os.Stat(dir.proxy + "/" + name)
 			require.NoError(t, err)
 		}
 
 		// Remove the file directly via the source so the proxy is unaware.
-		err = os.Remove("/test/source/" + name)
+		err = os.Remove(dir.source + "/" + name)
 		require.NoError(t, err)
 
 		// Drop this machines caches so that it has to go back to the proxy.
@@ -147,10 +157,10 @@ func TestSmoke(t *testing.T) {
 		require.NoError(t, err)
 
 		// Read the metadata from the proxy for the now non-existent file.
-		require.FileExists(t, "/test/proxy/"+name)
-		assert.NoFileExists(t, "/test/source/"+name)
+		require.FileExists(t, dir.proxy+"/"+name)
+		assert.NoFileExists(t, dir.source+"/"+name)
 
-		after, err := os.Stat("/test/proxy/" + name)
+		after, err := os.Stat(dir.proxy + "/" + name)
 		require.NoError(t, err)
 		assert.Equal(t, before, after)
 	})
@@ -162,24 +172,39 @@ func TestSmoke(t *testing.T) {
 		// doesn't exist, then create it. The proxy should continue to think the
 		// file doesn't exist.
 
-		// Grab a random file name.
-		name, err := createRandomFile("/test/source", "meta.*")
+		// Use a private directory for this subtest. The proxy caches a negative
+		// lookup result keyed against the parent directory's attributes. Unlike
+		// a positive entry (which is backed by a cached file handle/inode and
+		// survives a directory change for acreg{min,max}), a negative entry
+		// lives entirely at the directory level and is dropped the moment the
+		// proxy observes the parent directory's mtime has changed. If this
+		// subtest shared a parent directory with the other parallel subtests,
+		// their concurrent file creates/removes would churn that directory's
+		// mtime, the proxy would refresh and invalidate the negative entry, and
+		// the assertion below would flake. Isolating the directory ensures the
+		// only mutation is this subtest's own source-side create, which the
+		// proxy never sees, so the cached negative entry remains valid.
+		dir, err := createTestDir("meta-negative")
 		require.NoError(t, err)
-		t.Cleanup(func() { removeTestFile(name) })
+		t.Cleanup(dir.cleanup)
+
+		// Grab a random file name.
+		name, err := createRandomFile(dir.source, "meta.*")
+		require.NoError(t, err)
 
 		// Remove the file and ensure it doesn't exist according to the proxy.
-		err = os.Remove("/test/source/" + name)
+		err = os.Remove(dir.source + "/" + name)
 		require.NoError(t, err)
-		require.NoFileExists(t, "/test/source/"+name)
-		require.NoFileExists(t, "/test/proxy/"+name)
+		require.NoFileExists(t, dir.source+"/"+name)
+		require.NoFileExists(t, dir.proxy+"/"+name)
 
 		// Ensure the negative lookup is cached on the proxy.
 		for range 100 {
-			os.Stat("/test/proxy/" + name)
+			os.Stat(dir.proxy + "/" + name)
 		}
 
 		// Create the file directly on the source so the proxy is unaware.
-		f, err := os.Create("/test/source/" + name)
+		f, err := os.Create(dir.source + "/" + name)
 		require.NoError(t, err)
 		f.Close()
 
@@ -187,8 +212,8 @@ func TestSmoke(t *testing.T) {
 		err = dropLocalVMCaches()
 		require.NoError(t, err)
 
-		assert.NoFileExists(t, "/test/proxy/"+name)
-		assert.FileExists(t, "/test/source/"+name)
+		assert.NoFileExists(t, dir.proxy+"/"+name)
+		assert.FileExists(t, dir.source+"/"+name)
 	})
 
 	t.Run("proxy caches file data", func(t *testing.T) {
@@ -276,6 +301,43 @@ func createRandomFile(dir, pattern string) (string, error) {
 	}
 	f.Close()
 	return filepath.Base(f.Name()), nil
+}
+
+// testDir is a per-subtest directory that exists under the shared smoke-test
+// directory on both the source and the proxy. Subtests that depend on the
+// proxy's directory-level metadata cache (e.g. negative-lookup caching) must
+// use a private directory so concurrent parallel subtests cannot churn the
+// parent directory's mtime and invalidate the cached entry under test.
+type testDir struct {
+	source string // absolute path to the directory via the source mount
+	proxy  string // absolute path to the directory via the proxy mount
+}
+
+// cleanup best-effort removes the directory and its contents via the source.
+// It removes contents via the proxy first so the proxy is aware they are gone.
+func (d testDir) cleanup() {
+	entries, _ := os.ReadDir(d.source)
+	for _, e := range entries {
+		_ = os.Remove(d.proxy + "/" + e.Name())
+		_ = os.Remove(d.source + "/" + e.Name())
+	}
+	_ = os.Remove(d.proxy)
+	_ = os.Remove(d.source)
+}
+
+// createTestDir creates a unique directory on the source under the shared
+// smoke-test root and returns the source and proxy paths to it. The directory
+// is created via the source mount so the proxy discovers it on first lookup.
+func createTestDir(prefix string) (testDir, error) {
+	path, err := os.MkdirTemp("/test/source", prefix+".*")
+	if err != nil {
+		return testDir{}, err
+	}
+	name := filepath.Base(path)
+	return testDir{
+		source: "/test/source/" + name,
+		proxy:  "/test/proxy/" + name,
+	}, nil
 }
 
 func writeRandomData(path string, size uint64) error {

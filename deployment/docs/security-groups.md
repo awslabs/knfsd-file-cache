@@ -28,12 +28,12 @@ Create a [Security Group](https://docs.aws.amazon.com/vpc/latest/userguide/creat
 
    * Protocol: `TCP`, `UDP`
    * Port: `111, 2049, 20048, 20050, 20051, 20053, 20055`
-   * Source: `<VPC_CIDR_BLOCK or PROXY_SECURITY_GROUP_ID>` where `<PROXY_SECURITY_GROUP_ID>` is the ID of the KNFSD proxy security group, provided by the `output.knfsd_security_group_id` in the Terraform output.
+   * Source: `<VPC_CIDR_BLOCK or KNFSD_SECURITY_GROUP_ID>` where `<KNFSD_SECURITY_GROUP_ID>` is the ID of the KNFSD proxy security group, provided by the `output.knfsd_security_group_id` in the Terraform output.
 
 7. Add **outbound rule**, choose **Add rule** and specify:
 
    * Protocol: `-1`
-   * Destination: `<VPC_CIDR_BLOCK or PROXY_SECURITY_GROUP_ID>` where `<PROXY_SECURITY_GROUP_ID>` is the ID of the KNFSD proxy security group, provided by the `output.knfsd_security_group_id` in the Terraform output.
+   * Destination: `<VPC_CIDR_BLOCK or KNFSD_SECURITY_GROUP_ID>` where `<KNFSD_SECURITY_GROUP_ID>` is the ID of the KNFSD proxy security group, provided by the `output.knfsd_security_group_id` in the Terraform output.
 
 8. (Optional) To add a tag, choose **Add new tag** and enter the tag key and value.
 

@@ -10,9 +10,9 @@
 ## USAGE:
 ## ./run-fio-nfs.sh help|-h|--help
 ## ./run-fio-nfs.sh status
-## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
-## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
-## ./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
+## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
+## ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
+## ./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/create-files.fio> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/run-test.fio> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID>] [OPTIONS]
@@ -23,7 +23,7 @@
 ## CRITICAL: The SECONDARY ENI (Device Index: 1, "ens6") PRIVATE IP address of the KNFSD proxy must be used here.
 ## Do NOT use the PRIMARY ENI (Device Index: 0, "ens5") PRIVATE IP address.
 
-## SUBNET-ID
+## SUBNET
 ## Ideally this should be the same subnet as the KNFSD proxy
 
 ## SECURITY-GROUP-ID
@@ -42,7 +42,7 @@
 ## More info: https://github.com/awslabs/knfsd-file-cache/blob/main/docs/developer.md#remote-ssh-considerations
 
 ## fscache deadlock notes:
-## 1. ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID>
+## 1. ./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet <ID> --security-group-id <ID>
 ## 2. ./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock/create-files.fio (6.3TB ~41 mins)
 ## 3. SSH into KNFSD proxy (add EC2 Security Group if applicable to allow access):
 ##    sudo systemctl stop cachefilesd
@@ -63,7 +63,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-alpha.26"
+VERSION="1.1.0-alpha.27"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -90,7 +90,7 @@ FIO_VERSION="3.41"
 NUM_CLIENTS=10
 INSTANCE_TYPE="c6i.8xlarge"
 AMI_ID=""
-SUBNET_ID=""
+SUBNET=""
 SG_ID=""
 IAM_PROFILE_NAME="knfsd-instance-role"
 MOUNT_PATH="/mnt/fsx"
@@ -116,13 +116,13 @@ Ensure AWS credentials/region are configured.
 Commands:
 	./run-fio-nfs.sh help|-h|--help
 		Show this message.
-	./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
+	./run-fio-nfs.sh apply --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
 		Provision captain (t4g.small arm64) and N FIO server instances.
 		--knfsd-ip is required (KNFSD proxy IP for NFS mounts).
-		--subnet-id is required (ID of the subnet to launch the instances in).
+		--subnet is required (ID of the subnet to launch the instances in).
 		--security-group-id is required (ID of the security group to launch the instances in).
 		Optional: --key-name <KEYPAIR_NAME> attaches an EC2 keypair to the captain instance. Must match private key identified by: IDENTITY_FILE=<path>
-	./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet-id <ID> --security-group-id <ID> [OPTIONS]
+	./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
 		Add N additional FIO client instances to an existing fleet.
 		Requires an existing captain (run apply first).
 	./run-fio-nfs.sh run [OPTIONS] [--instance-connect-endpoint-id <EICE_ID>] [--key-name <KEYPAIR_NAME>]
@@ -174,9 +174,9 @@ function parse_args() {
 				KNFSD_IP="$2"
 				shift 2
 				;;
-			--subnet-id)
+			--subnet)
 				require_option_value "$1" "${2:-}"
-				SUBNET_ID="$2"
+				SUBNET="$2"
 				shift 2
 				;;
 			--security-group-id)
@@ -326,7 +326,7 @@ function launch_clients() {
 	client_ids=$(aws ec2 run-instances \
 		--image-id "${client_ami_id}" \
 		--instance-type "${INSTANCE_TYPE}" \
-		--subnet-id "${SUBNET_ID}" \
+		--subnet-id "${SUBNET}" \
 		--security-group-ids "${SG_ID}" \
 		--iam-instance-profile "Name=${IAM_PROFILE_NAME}" \
 		--block-device-mappings "[{\"DeviceName\":\"${root_device_name}\",\"Ebs\":{\"VolumeSize\":20,\"VolumeType\":\"gp3\",\"Encrypted\":true}}]" \
@@ -350,8 +350,8 @@ function launch_clients() {
 }
 
 function cmd_apply() {
-	if [[ -z "${KNFSD_IP}" || -z "${SUBNET_ID}" || -z "${SG_ID}" ]]; then
-		echo -e "${SHELL_RED}ERROR: --knfsd-ip, --subnet-id and --security-group-id are required for apply${SHELL_DEFAULT}" >&2
+	if [[ -z "${KNFSD_IP}" || -z "${SUBNET}" || -z "${SG_ID}" ]]; then
+		echo -e "${SHELL_RED}ERROR: --knfsd-ip, --subnet and --security-group-id are required for apply${SHELL_DEFAULT}" >&2
 		exit 1
 	fi
 
@@ -389,7 +389,7 @@ function cmd_apply() {
 	captain_id=$(aws ec2 run-instances \
 		--image-id "${captain_ami_id}" \
 		--instance-type "${CAPTAIN_INSTANCE_TYPE}" \
-		--subnet-id "${SUBNET_ID}" \
+		--subnet-id "${SUBNET}" \
 		--security-group-ids "${SG_ID}" \
 		--iam-instance-profile "Name=${IAM_PROFILE_NAME}" \
 		--user-data "${captain_ud}" \
@@ -440,8 +440,8 @@ function get_client_private_dns() {
 }
 
 function cmd_scale() {
-	if [[ -z "${NUM_CLIENTS}" || -z "${KNFSD_IP}" || -z "${SUBNET_ID}" || -z "${SG_ID}" ]]; then
-		echo -e "${SHELL_RED}ERROR: --num-clients, --knfsd-ip, --subnet-id and --security-group-id are required for scale${SHELL_DEFAULT}" >&2
+	if [[ -z "${NUM_CLIENTS}" || -z "${KNFSD_IP}" || -z "${SUBNET}" || -z "${SG_ID}" ]]; then
+		echo -e "${SHELL_RED}ERROR: --num-clients, --knfsd-ip, --subnet and --security-group-id are required for scale${SHELL_DEFAULT}" >&2
 		exit 1
 	fi
 

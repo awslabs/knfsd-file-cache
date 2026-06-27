@@ -9,21 +9,25 @@ The canonical, region-agnostic IAM policies live under [iam/](iam/) and are spli
 
 The two phases can use a single combined IAM principal for simple setups, or be split across separate principals (one for AMI builds, one for deployments) for stronger separation of duties.
 
+A fourth policy, [`testing.json`](iam/testing.json), is **not** required to build or deploy KNFSD. It grants the SSH-over-SSM / EC2 Instance Connect permissions used only by this repository's own test harness ([`image/smoke-tests/`](../image/smoke-tests/)) to reach the ephemeral test instances.
+
 > INFO: These IAM policies do not cover any additional IAM requirements for the KNFSD File Cache [`examples/`](../examples/).
 
 ## Files at a glance
 
-| File               | Status            | Description                                                                                                                                                                              |
-| ------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packer.json`      | AMI build         | Standalone IAM policy for `packer build` in [`image/`](../image/).                                                                                                                       |
-| `tf-required.json` | Deploy (required) | Always-required Sids for `terraform apply` in [`deployment/`](../deployment/).                                                                                                           |
-| `tf-optional.json` | Deploy (deps)     | Feature-gated Sids; attach only when `var.FSID_DATABASE_DEPLOY = true`, `var.ENABLE_NETAPP_AUTO_DETECT = true` (with `var.NETAPP_SECRET != ""`), or `var.TRAFFIC_MODE = "loadbalancer"`. |
+| File               | Status            | Description                                                                                                                                                                               |
+| ------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packer.json`      | AMI build         | Standalone IAM policy for `packer build` in [`image/`](../image/).                                                                                                                        |
+| `tf-required.json` | Deploy (required) | Always-required Sids for `terraform apply` in [`deployment/`](../deployment/).                                                                                                            |
+| `tf-optional.json` | Deploy (deps)     | Feature-gated Sids; attach only when `var.FSID_DATABASE_DEPLOY = true`, `var.ENABLE_NETAPP_AUTO_DETECT = true` (with `var.NETAPP_SECRET != ""`), or `var.TRAFFIC_MODE = "loadbalancer"`.  |
+| `testing.json`     | Testing           | Standalone IAM policy for the test-harness; grants SSH-over-SSM + EC2 Instance Connect to reach instances in [`image/smoke-tests/`](../image/smoke-tests/).                               |
 
 ## How to attach
 
 * **AMI-build-only principal** - attach `iam/packer.json`.
 * **Deploy-only principal** - attach `iam/tf-required.json` (required) and `iam/tf-optional.json` (only when at least one gating TF variable is in use).
 * **Single combined principal that does both phases** - attach all three files.
+* **Test-harness** - attach `iam/testing.json` to the identity that runs `image/smoke-tests/`.
 
 ## Required vs Optional Sids
 
@@ -32,6 +36,7 @@ The two phases can use a single combined IAM principal for simple setups, or be 
 * **AMI build** - required by `packer build`.
 * **Deploy (required)** - required by every `terraform apply` regardless of feature flags.
 * **Deploy (deps)** - required only when the gating Terraform variable is set.
+* **Testing** - required only to run this repository's own test harnesses; not used to build or deploy KNFSD.
 
 | Sid                             | File                             | Status            | Notes                                                                                                                                                             |
 | ------------------------------- | -------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -64,6 +69,10 @@ The two phases can use a single combined IAM principal for simple setups, or be 
 | `KnfsdVpcEndpoints`             | `tf-optional.json`               | Deploy (deps)     | Required when `FSID_DATABASE_DEPLOY = true`; creates the Secrets Manager VPC endpoint and reads its prefix list.                                                  |
 | `KnfsdElbServiceLinkedRole`     | `tf-optional.json`               | Deploy (deps)     | Required when `TRAFFIC_MODE = "loadbalancer"`; creates the Elastic Load Balancing service-linked role on first use.                                               |
 | `KnfsdLoadBalancer`             | `tf-optional.json`               | Deploy (deps)     | Required when `TRAFFIC_MODE = "loadbalancer"`; manages the Network Load Balancer, target groups, and listeners.                                                   |
+| `KnfsdTestingSsmChannels`       | `testing.json`                   | Testing           | `ssm:DescribeInstanceInformation` (SSM-agent online poll) plus the `ssmmessages:*Channel` actions; none support resource-level scoping, so `*`.                   |
+| `KnfsdTestingSsmStartSession`   | `testing.json`                   | Testing           | Opens the SSH tunnel; scoped to EC2 instances and the `AWS-StartSSHSession` document.                                                                             |
+| `KnfsdTestingSsmManageSession`  | `testing.json`                   | Testing           | `ssm:TerminateSession` / `ssm:ResumeSession`; scoped to SSM session resources.                                                                                    |
+| `KnfsdTestingInstanceConnect`   | `testing.json`                   | Testing           | `ec2-instance-connect:SendSSHPublicKey` to push the short-lived ephemeral key; scoped to EC2 instances.                                                           |
 
 ## Narrowing scope with Conditions
 

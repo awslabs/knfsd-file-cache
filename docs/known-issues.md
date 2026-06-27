@@ -10,8 +10,6 @@ $ showmount -e localhost # NFS server
 clnt_create: RPC: Program not registered
 ```
 
-> INFO: Amazon EFS does not support `showmount` and only supports NFS v4.1.
-
 This is caused by the NFS server not supporting NFSv3. Ensure `vers3=yes` is set in `/etc/nfs.conf.d/knfsd.conf` and is excluded from the `DISABLED_NFS_VERSIONS` parameter.
 
 You can check the current running NFS server configuration:
@@ -22,6 +20,26 @@ You can check the current running NFS server configuration:
 ```
 
 Alternatively, do not use `EXPORT_HOST_AUTO_DETECT` and use `EXPORT_MAP` to list the exports explicitly.
+
+## Auto-detect skips exports that cannot be mounted
+
+Some NFS servers advertise an export via `showmount -e` that cannot actually be mounted. For example, a NFSv4 pseudo-root `/` that returns `mount.nfs: access denied by server` when the proxy attempts to mount it.
+
+When using `EXPORT_HOST_AUTO_DETECT`, the proxy attempts each advertised export with the standard 3 retries. If an individual export still cannot be mounted, it is skipped with a warning and startup continues with the remaining exports:
+
+```text
+WARNING: skipping auto-detected export 10.12.0.194:/; mount failed after retries
+```
+
+The proxy only aborts (`exit 1`) if **zero** auto-detected exports are mounted:
+
+```text
+ERROR: auto-detect (EXPORT_HOST_AUTO_DETECT) mounted zero exports; exiting
+```
+
+This tolerance is scoped to `EXPORT_HOST_AUTO_DETECT`. `EXPORT_MAP` and NetApp auto-detect (`ENABLE_NETAPP_AUTO_DETECT`) still fail immediately if any of their exports cannot be mounted, since those exports are requested explicitly.
+
+To suppress the skip warning, add the unmountable path (e.g. `/`) to `EXCLUDED_EXPORTS` so it is filtered out before mounting. This is optional; auto-detect tolerates the unmountable export either way.
 
 ## rpc.mountd reports "can't stat exported dir"
 

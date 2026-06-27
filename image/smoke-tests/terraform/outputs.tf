@@ -1,17 +1,14 @@
-/*
-  Copyright 2022 Google LLC
-  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-  SPDX-License-Identifier: Apache-2.0
- */
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 output "source_host" {
-  description = "Name of the source NFS server."
-  value       = local.source_host
+  description = "Private IP of the source NFS server."
+  value       = module.source_nfs.private_ip
 }
 
 output "proxy_host" {
   description = "DNS name of the KNFSD proxy."
-  value       = local.proxy_host
+  value       = module.proxy.dns_name
 }
 
 output "proxy_asg" {
@@ -19,7 +16,12 @@ output "proxy_asg" {
   value       = module.proxy.autoscaling_group_name
 }
 
-output "client_instance" {
-  description = "DNS name of the KNFSD client instance."
-  value       = google_compute_instance.client.name
+output "client_instance_id" {
+  description = "Instance ID of the test NFS client."
+  value       = module.nfs_client.instance_id
+}
+
+output "region" {
+  description = "AWS region of the smoke-test deployment."
+  value       = var.REGION
 }

@@ -26,187 +26,187 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FscacheAcquireOk: MetricConfig{
+					FscacheAcquireOk: FscacheAcquireOkMetricConfig{
 						Enabled: true,
 					},
-					FscacheAcquireOom: MetricConfig{
+					FscacheAcquireOom: FscacheAcquireOomMetricConfig{
 						Enabled: true,
 					},
-					FscacheAcquireRequests: MetricConfig{
+					FscacheAcquireRequests: FscacheAcquireRequestsMetricConfig{
 						Enabled: true,
 					},
-					FscacheCookiesData: MetricConfig{
+					FscacheCookiesData: FscacheCookiesDataMetricConfig{
 						Enabled: true,
 					},
-					FscacheCookiesVolume: MetricConfig{
+					FscacheCookiesVolume: FscacheCookiesVolumeMetricConfig{
 						Enabled: true,
 					},
-					FscacheCookiesVolumeCollisions: MetricConfig{
+					FscacheCookiesVolumeCollisions: FscacheCookiesVolumeCollisionsMetricConfig{
 						Enabled: true,
 					},
-					FscacheCookiesVolumeOom: MetricConfig{
+					FscacheCookiesVolumeOom: FscacheCookiesVolumeOomMetricConfig{
 						Enabled: true,
 					},
-					FscacheInvalidations: MetricConfig{
+					FscacheInvalidations: FscacheInvalidationsMetricConfig{
 						Enabled: true,
 					},
-					FscacheIoMisfit: MetricConfig{
+					FscacheIoMisfit: FscacheIoMisfitMetricConfig{
 						Enabled: true,
 					},
-					FscacheIoRead: MetricConfig{
+					FscacheIoRead: FscacheIoReadMetricConfig{
 						Enabled: true,
 					},
-					FscacheIoWrite: MetricConfig{
+					FscacheIoWrite: FscacheIoWriteMetricConfig{
 						Enabled: true,
 					},
-					FscacheLruCount: MetricConfig{
+					FscacheLruCount: FscacheLruCountMetricConfig{
 						Enabled: true,
 					},
-					FscacheLruDropped: MetricConfig{
+					FscacheLruDropped: FscacheLruDroppedMetricConfig{
 						Enabled: true,
 					},
-					FscacheLruExpired: MetricConfig{
+					FscacheLruExpired: FscacheLruExpiredMetricConfig{
 						Enabled: true,
 					},
-					FscacheLruRemoved: MetricConfig{
+					FscacheLruRemoved: FscacheLruRemovedMetricConfig{
 						Enabled: true,
 					},
-					FscacheNospaceCreate: MetricConfig{
+					FscacheNospaceCreate: FscacheNospaceCreateMetricConfig{
 						Enabled: true,
 					},
-					FscacheNospaceCull: MetricConfig{
+					FscacheNospaceCull: FscacheNospaceCullMetricConfig{
 						Enabled: true,
 					},
-					FscacheNospaceWrite: MetricConfig{
+					FscacheNospaceWrite: FscacheNospaceWriteMetricConfig{
 						Enabled: true,
 					},
-					FscacheRelinquishDrop: MetricConfig{
+					FscacheRelinquishDrop: FscacheRelinquishDropMetricConfig{
 						Enabled: true,
 					},
-					FscacheRelinquishRequests: MetricConfig{
+					FscacheRelinquishRequests: FscacheRelinquishRequestsMetricConfig{
 						Enabled: true,
 					},
-					FscacheRelinquishRetire: MetricConfig{
+					FscacheRelinquishRetire: FscacheRelinquishRetireMetricConfig{
 						Enabled: true,
 					},
-					FscacheUpdatesRequests: MetricConfig{
+					FscacheUpdatesRequests: FscacheUpdatesRequestsMetricConfig{
 						Enabled: true,
 					},
-					FscacheUpdatesResize: MetricConfig{
+					FscacheUpdatesResize: FscacheUpdatesResizeMetricConfig{
 						Enabled: true,
 					},
-					FscacheUpdatesResizeSkipped: MetricConfig{
+					FscacheUpdatesResizeSkipped: FscacheUpdatesResizeSkippedMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheReadDone: MetricConfig{
+					NetfsCacheReadDone: NetfsCacheReadDoneMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheReadFailed: MetricConfig{
+					NetfsCacheReadFailed: NetfsCacheReadFailedMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheReadRequests: MetricConfig{
+					NetfsCacheReadRequests: NetfsCacheReadRequestsMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheWriteDone: MetricConfig{
+					NetfsCacheWriteDone: NetfsCacheWriteDoneMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheWriteFailed: MetricConfig{
+					NetfsCacheWriteFailed: NetfsCacheWriteFailedMetricConfig{
 						Enabled: true,
 					},
-					NetfsCacheWriteRequests: MetricConfig{
+					NetfsCacheWriteRequests: NetfsCacheWriteRequestsMetricConfig{
 						Enabled: true,
 					},
-					NetfsDownloadDone: MetricConfig{
+					NetfsDownloadDone: NetfsDownloadDoneMetricConfig{
 						Enabled: true,
 					},
-					NetfsDownloadFailed: MetricConfig{
+					NetfsDownloadFailed: NetfsDownloadFailedMetricConfig{
 						Enabled: true,
 					},
-					NetfsDownloadInstead: MetricConfig{
+					NetfsDownloadInstead: NetfsDownloadInsteadMetricConfig{
 						Enabled: true,
 					},
-					NetfsDownloadRequests: MetricConfig{
+					NetfsDownloadRequests: NetfsDownloadRequestsMetricConfig{
 						Enabled: true,
 					},
-					NetfsObjectsFolioQueue: MetricConfig{
+					NetfsObjectsFolioQueue: NetfsObjectsFolioQueueMetricConfig{
 						Enabled: true,
 					},
-					NetfsObjectsReadReqs: MetricConfig{
+					NetfsObjectsReadReqs: NetfsObjectsReadReqsMetricConfig{
 						Enabled: true,
 					},
-					NetfsObjectsSubreqs: MetricConfig{
+					NetfsObjectsSubreqs: NetfsObjectsSubreqsMetricConfig{
 						Enabled: true,
 					},
-					NetfsObjectsWriteConflicts: MetricConfig{
+					NetfsObjectsWriteConflicts: NetfsObjectsWriteConflictsMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsDirect: MetricConfig{
+					NetfsReadsDirect: NetfsReadsDirectMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsFolio: MetricConfig{
+					NetfsReadsFolio: NetfsReadsFolioMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsReadahead: MetricConfig{
+					NetfsReadsReadahead: NetfsReadsReadaheadMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsSingle: MetricConfig{
+					NetfsReadsSingle: NetfsReadsSingleMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsWriteBegin: MetricConfig{
+					NetfsReadsWriteBegin: NetfsReadsWriteBeginMetricConfig{
 						Enabled: true,
 					},
-					NetfsReadsWriteZskip: MetricConfig{
+					NetfsReadsWriteZskip: NetfsReadsWriteZskipMetricConfig{
 						Enabled: true,
 					},
-					NetfsRetriesReadReq: MetricConfig{
+					NetfsRetriesReadReq: NetfsRetriesReadReqMetricConfig{
 						Enabled: true,
 					},
-					NetfsRetriesReadSubreq: MetricConfig{
+					NetfsRetriesReadSubreq: NetfsRetriesReadSubreqMetricConfig{
 						Enabled: true,
 					},
-					NetfsRetriesWriteReq: MetricConfig{
+					NetfsRetriesWriteReq: NetfsRetriesWriteReqMetricConfig{
 						Enabled: true,
 					},
-					NetfsRetriesWriteSubreq: MetricConfig{
+					NetfsRetriesWriteSubreq: NetfsRetriesWriteSubreqMetricConfig{
 						Enabled: true,
 					},
-					NetfsUploadDone: MetricConfig{
+					NetfsUploadDone: NetfsUploadDoneMetricConfig{
 						Enabled: true,
 					},
-					NetfsUploadFailed: MetricConfig{
+					NetfsUploadFailed: NetfsUploadFailedMetricConfig{
 						Enabled: true,
 					},
-					NetfsUploadRequests: MetricConfig{
+					NetfsUploadRequests: NetfsUploadRequestsMetricConfig{
 						Enabled: true,
 					},
-					NetfsWblockSkip: MetricConfig{
+					NetfsWblockSkip: NetfsWblockSkipMetricConfig{
 						Enabled: true,
 					},
-					NetfsWblockWait: MetricConfig{
+					NetfsWblockWait: NetfsWblockWaitMetricConfig{
 						Enabled: true,
 					},
-					NetfsWritesBuffered: MetricConfig{
+					NetfsWritesBuffered: NetfsWritesBufferedMetricConfig{
 						Enabled: true,
 					},
-					NetfsWritesCopyToCache: MetricConfig{
+					NetfsWritesCopyToCache: NetfsWritesCopyToCacheMetricConfig{
 						Enabled: true,
 					},
-					NetfsWritesDirect: MetricConfig{
+					NetfsWritesDirect: NetfsWritesDirectMetricConfig{
 						Enabled: true,
 					},
-					NetfsWritesPages: MetricConfig{
+					NetfsWritesPages: NetfsWritesPagesMetricConfig{
 						Enabled: true,
 					},
-					NetfsWritesWritethrough: MetricConfig{
+					NetfsWritesWritethrough: NetfsWritesWritethroughMetricConfig{
 						Enabled: true,
 					},
-					NetfsZeroOpsShort: MetricConfig{
+					NetfsZeroOpsShort: NetfsZeroOpsShortMetricConfig{
 						Enabled: true,
 					},
-					NetfsZeroOpsSkip: MetricConfig{
+					NetfsZeroOpsSkip: NetfsZeroOpsSkipMetricConfig{
 						Enabled: true,
 					},
-					NetfsZeroOpsZero: MetricConfig{
+					NetfsZeroOpsZero: NetfsZeroOpsZeroMetricConfig{
 						Enabled: true,
 					},
 				},
@@ -216,187 +216,187 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					FscacheAcquireOk: MetricConfig{
+					FscacheAcquireOk: FscacheAcquireOkMetricConfig{
 						Enabled: false,
 					},
-					FscacheAcquireOom: MetricConfig{
+					FscacheAcquireOom: FscacheAcquireOomMetricConfig{
 						Enabled: false,
 					},
-					FscacheAcquireRequests: MetricConfig{
+					FscacheAcquireRequests: FscacheAcquireRequestsMetricConfig{
 						Enabled: false,
 					},
-					FscacheCookiesData: MetricConfig{
+					FscacheCookiesData: FscacheCookiesDataMetricConfig{
 						Enabled: false,
 					},
-					FscacheCookiesVolume: MetricConfig{
+					FscacheCookiesVolume: FscacheCookiesVolumeMetricConfig{
 						Enabled: false,
 					},
-					FscacheCookiesVolumeCollisions: MetricConfig{
+					FscacheCookiesVolumeCollisions: FscacheCookiesVolumeCollisionsMetricConfig{
 						Enabled: false,
 					},
-					FscacheCookiesVolumeOom: MetricConfig{
+					FscacheCookiesVolumeOom: FscacheCookiesVolumeOomMetricConfig{
 						Enabled: false,
 					},
-					FscacheInvalidations: MetricConfig{
+					FscacheInvalidations: FscacheInvalidationsMetricConfig{
 						Enabled: false,
 					},
-					FscacheIoMisfit: MetricConfig{
+					FscacheIoMisfit: FscacheIoMisfitMetricConfig{
 						Enabled: false,
 					},
-					FscacheIoRead: MetricConfig{
+					FscacheIoRead: FscacheIoReadMetricConfig{
 						Enabled: false,
 					},
-					FscacheIoWrite: MetricConfig{
+					FscacheIoWrite: FscacheIoWriteMetricConfig{
 						Enabled: false,
 					},
-					FscacheLruCount: MetricConfig{
+					FscacheLruCount: FscacheLruCountMetricConfig{
 						Enabled: false,
 					},
-					FscacheLruDropped: MetricConfig{
+					FscacheLruDropped: FscacheLruDroppedMetricConfig{
 						Enabled: false,
 					},
-					FscacheLruExpired: MetricConfig{
+					FscacheLruExpired: FscacheLruExpiredMetricConfig{
 						Enabled: false,
 					},
-					FscacheLruRemoved: MetricConfig{
+					FscacheLruRemoved: FscacheLruRemovedMetricConfig{
 						Enabled: false,
 					},
-					FscacheNospaceCreate: MetricConfig{
+					FscacheNospaceCreate: FscacheNospaceCreateMetricConfig{
 						Enabled: false,
 					},
-					FscacheNospaceCull: MetricConfig{
+					FscacheNospaceCull: FscacheNospaceCullMetricConfig{
 						Enabled: false,
 					},
-					FscacheNospaceWrite: MetricConfig{
+					FscacheNospaceWrite: FscacheNospaceWriteMetricConfig{
 						Enabled: false,
 					},
-					FscacheRelinquishDrop: MetricConfig{
+					FscacheRelinquishDrop: FscacheRelinquishDropMetricConfig{
 						Enabled: false,
 					},
-					FscacheRelinquishRequests: MetricConfig{
+					FscacheRelinquishRequests: FscacheRelinquishRequestsMetricConfig{
 						Enabled: false,
 					},
-					FscacheRelinquishRetire: MetricConfig{
+					FscacheRelinquishRetire: FscacheRelinquishRetireMetricConfig{
 						Enabled: false,
 					},
-					FscacheUpdatesRequests: MetricConfig{
+					FscacheUpdatesRequests: FscacheUpdatesRequestsMetricConfig{
 						Enabled: false,
 					},
-					FscacheUpdatesResize: MetricConfig{
+					FscacheUpdatesResize: FscacheUpdatesResizeMetricConfig{
 						Enabled: false,
 					},
-					FscacheUpdatesResizeSkipped: MetricConfig{
+					FscacheUpdatesResizeSkipped: FscacheUpdatesResizeSkippedMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheReadDone: MetricConfig{
+					NetfsCacheReadDone: NetfsCacheReadDoneMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheReadFailed: MetricConfig{
+					NetfsCacheReadFailed: NetfsCacheReadFailedMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheReadRequests: MetricConfig{
+					NetfsCacheReadRequests: NetfsCacheReadRequestsMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheWriteDone: MetricConfig{
+					NetfsCacheWriteDone: NetfsCacheWriteDoneMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheWriteFailed: MetricConfig{
+					NetfsCacheWriteFailed: NetfsCacheWriteFailedMetricConfig{
 						Enabled: false,
 					},
-					NetfsCacheWriteRequests: MetricConfig{
+					NetfsCacheWriteRequests: NetfsCacheWriteRequestsMetricConfig{
 						Enabled: false,
 					},
-					NetfsDownloadDone: MetricConfig{
+					NetfsDownloadDone: NetfsDownloadDoneMetricConfig{
 						Enabled: false,
 					},
-					NetfsDownloadFailed: MetricConfig{
+					NetfsDownloadFailed: NetfsDownloadFailedMetricConfig{
 						Enabled: false,
 					},
-					NetfsDownloadInstead: MetricConfig{
+					NetfsDownloadInstead: NetfsDownloadInsteadMetricConfig{
 						Enabled: false,
 					},
-					NetfsDownloadRequests: MetricConfig{
+					NetfsDownloadRequests: NetfsDownloadRequestsMetricConfig{
 						Enabled: false,
 					},
-					NetfsObjectsFolioQueue: MetricConfig{
+					NetfsObjectsFolioQueue: NetfsObjectsFolioQueueMetricConfig{
 						Enabled: false,
 					},
-					NetfsObjectsReadReqs: MetricConfig{
+					NetfsObjectsReadReqs: NetfsObjectsReadReqsMetricConfig{
 						Enabled: false,
 					},
-					NetfsObjectsSubreqs: MetricConfig{
+					NetfsObjectsSubreqs: NetfsObjectsSubreqsMetricConfig{
 						Enabled: false,
 					},
-					NetfsObjectsWriteConflicts: MetricConfig{
+					NetfsObjectsWriteConflicts: NetfsObjectsWriteConflictsMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsDirect: MetricConfig{
+					NetfsReadsDirect: NetfsReadsDirectMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsFolio: MetricConfig{
+					NetfsReadsFolio: NetfsReadsFolioMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsReadahead: MetricConfig{
+					NetfsReadsReadahead: NetfsReadsReadaheadMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsSingle: MetricConfig{
+					NetfsReadsSingle: NetfsReadsSingleMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsWriteBegin: MetricConfig{
+					NetfsReadsWriteBegin: NetfsReadsWriteBeginMetricConfig{
 						Enabled: false,
 					},
-					NetfsReadsWriteZskip: MetricConfig{
+					NetfsReadsWriteZskip: NetfsReadsWriteZskipMetricConfig{
 						Enabled: false,
 					},
-					NetfsRetriesReadReq: MetricConfig{
+					NetfsRetriesReadReq: NetfsRetriesReadReqMetricConfig{
 						Enabled: false,
 					},
-					NetfsRetriesReadSubreq: MetricConfig{
+					NetfsRetriesReadSubreq: NetfsRetriesReadSubreqMetricConfig{
 						Enabled: false,
 					},
-					NetfsRetriesWriteReq: MetricConfig{
+					NetfsRetriesWriteReq: NetfsRetriesWriteReqMetricConfig{
 						Enabled: false,
 					},
-					NetfsRetriesWriteSubreq: MetricConfig{
+					NetfsRetriesWriteSubreq: NetfsRetriesWriteSubreqMetricConfig{
 						Enabled: false,
 					},
-					NetfsUploadDone: MetricConfig{
+					NetfsUploadDone: NetfsUploadDoneMetricConfig{
 						Enabled: false,
 					},
-					NetfsUploadFailed: MetricConfig{
+					NetfsUploadFailed: NetfsUploadFailedMetricConfig{
 						Enabled: false,
 					},
-					NetfsUploadRequests: MetricConfig{
+					NetfsUploadRequests: NetfsUploadRequestsMetricConfig{
 						Enabled: false,
 					},
-					NetfsWblockSkip: MetricConfig{
+					NetfsWblockSkip: NetfsWblockSkipMetricConfig{
 						Enabled: false,
 					},
-					NetfsWblockWait: MetricConfig{
+					NetfsWblockWait: NetfsWblockWaitMetricConfig{
 						Enabled: false,
 					},
-					NetfsWritesBuffered: MetricConfig{
+					NetfsWritesBuffered: NetfsWritesBufferedMetricConfig{
 						Enabled: false,
 					},
-					NetfsWritesCopyToCache: MetricConfig{
+					NetfsWritesCopyToCache: NetfsWritesCopyToCacheMetricConfig{
 						Enabled: false,
 					},
-					NetfsWritesDirect: MetricConfig{
+					NetfsWritesDirect: NetfsWritesDirectMetricConfig{
 						Enabled: false,
 					},
-					NetfsWritesPages: MetricConfig{
+					NetfsWritesPages: NetfsWritesPagesMetricConfig{
 						Enabled: false,
 					},
-					NetfsWritesWritethrough: MetricConfig{
+					NetfsWritesWritethrough: NetfsWritesWritethroughMetricConfig{
 						Enabled: false,
 					},
-					NetfsZeroOpsShort: MetricConfig{
+					NetfsZeroOpsShort: NetfsZeroOpsShortMetricConfig{
 						Enabled: false,
 					},
-					NetfsZeroOpsSkip: MetricConfig{
+					NetfsZeroOpsSkip: NetfsZeroOpsSkipMetricConfig{
 						Enabled: false,
 					},
-					NetfsZeroOpsZero: MetricConfig{
+					NetfsZeroOpsZero: NetfsZeroOpsZeroMetricConfig{
 						Enabled: false,
 					},
 				},
@@ -406,7 +406,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(FscacheAcquireOkMetricConfig{}, FscacheAcquireOomMetricConfig{}, FscacheAcquireRequestsMetricConfig{}, FscacheCookiesDataMetricConfig{}, FscacheCookiesVolumeMetricConfig{}, FscacheCookiesVolumeCollisionsMetricConfig{}, FscacheCookiesVolumeOomMetricConfig{}, FscacheInvalidationsMetricConfig{}, FscacheIoMisfitMetricConfig{}, FscacheIoReadMetricConfig{}, FscacheIoWriteMetricConfig{}, FscacheLruCountMetricConfig{}, FscacheLruDroppedMetricConfig{}, FscacheLruExpiredMetricConfig{}, FscacheLruRemovedMetricConfig{}, FscacheNospaceCreateMetricConfig{}, FscacheNospaceCullMetricConfig{}, FscacheNospaceWriteMetricConfig{}, FscacheRelinquishDropMetricConfig{}, FscacheRelinquishRequestsMetricConfig{}, FscacheRelinquishRetireMetricConfig{}, FscacheUpdatesRequestsMetricConfig{}, FscacheUpdatesResizeMetricConfig{}, FscacheUpdatesResizeSkippedMetricConfig{}, NetfsCacheReadDoneMetricConfig{}, NetfsCacheReadFailedMetricConfig{}, NetfsCacheReadRequestsMetricConfig{}, NetfsCacheWriteDoneMetricConfig{}, NetfsCacheWriteFailedMetricConfig{}, NetfsCacheWriteRequestsMetricConfig{}, NetfsDownloadDoneMetricConfig{}, NetfsDownloadFailedMetricConfig{}, NetfsDownloadInsteadMetricConfig{}, NetfsDownloadRequestsMetricConfig{}, NetfsObjectsFolioQueueMetricConfig{}, NetfsObjectsReadReqsMetricConfig{}, NetfsObjectsSubreqsMetricConfig{}, NetfsObjectsWriteConflictsMetricConfig{}, NetfsReadsDirectMetricConfig{}, NetfsReadsFolioMetricConfig{}, NetfsReadsReadaheadMetricConfig{}, NetfsReadsSingleMetricConfig{}, NetfsReadsWriteBeginMetricConfig{}, NetfsReadsWriteZskipMetricConfig{}, NetfsRetriesReadReqMetricConfig{}, NetfsRetriesReadSubreqMetricConfig{}, NetfsRetriesWriteReqMetricConfig{}, NetfsRetriesWriteSubreqMetricConfig{}, NetfsUploadDoneMetricConfig{}, NetfsUploadFailedMetricConfig{}, NetfsUploadRequestsMetricConfig{}, NetfsWblockSkipMetricConfig{}, NetfsWblockWaitMetricConfig{}, NetfsWritesBufferedMetricConfig{}, NetfsWritesCopyToCacheMetricConfig{}, NetfsWritesDirectMetricConfig{}, NetfsWritesPagesMetricConfig{}, NetfsWritesWritethroughMetricConfig{}, NetfsZeroOpsShortMetricConfig{}, NetfsZeroOpsSkipMetricConfig{}, NetfsZeroOpsZeroMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

@@ -27,12 +27,24 @@ repos:
         language: system
         pass_filenames: false
         args: [shfmt]
-      - id: shellcheck
-        name: shellcheck
+      - id: shellcheck-sh
+        name: shellcheck-sh
         entry: make
         language: system
         pass_filenames: false
-        args: [shellcheck]
+        args: [shellcheck-sh]
+      - id: shellcheck-bash
+        name: shellcheck-bash
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [shellcheck-bash]
+      - id: shellcheck-bats
+        name: shellcheck-bats
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [shellcheck-bats]
       - id: black
         name: black
         entry: make

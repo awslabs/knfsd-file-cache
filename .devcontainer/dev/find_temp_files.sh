@@ -29,7 +29,10 @@ fi
 SEARCH_TARGETS=(
 	"Thumbs.db"
 	".DS_Store"
+	"remote.test"
 	".terraform"
+	"/terraform/.ssh"
+	"/terraform/.test-data"
 	".terraform.lock.hcl"
 	".terraform.tfstate.lock.info"
 	"*.tfstate"
@@ -50,11 +53,21 @@ SEARCH_TARGETS=(
 	"tutorial/nfs-client-startup-user-data.sh"
 )
 
+# list of dirs (relative to repo root) to delete in delete mode
+DIR_TARGETS=(
+	".mypy_cache"
+	".trivycache"
+)
+
 cd ../..
 
 if $DELETE_MODE; then
-	rm -rf .mypy_cache
-	rm -rf .trivycache
+	for dir in "${DIR_TARGETS[@]}"; do
+		if [ -d "$dir" ]; then
+			echo "Deleted: $dir"
+			rm -rf "$dir"
+		fi
+	done
 fi
 
 for target in "${SEARCH_TARGETS[@]}"; do

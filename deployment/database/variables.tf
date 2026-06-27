@@ -1,17 +1,15 @@
-/*
- * Copyright 2022 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2022 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.26"
+  default     = "1.1.0-alpha.27"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.26\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.27\"."
   }
 }
 
@@ -21,7 +19,7 @@ variable "SUBNET" {
   nullable    = false
 
   validation {
-    condition     = var.SUBNET != "" && can(regex("^subnet-[a-z0-9]{8,17}$", var.SUBNET))
+    condition     = can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", var.SUBNET))
     error_message = "SUBNET must be a valid AWS subnet ID format. Example: \"subnet-038e337f0ff4cd53f\"."
   }
 }
@@ -53,7 +51,7 @@ variable "FSID_DB_SUBNET_IDS" {
       : (
         length(var.FSID_DB_SUBNET_IDS) >= 2 &&
         length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
-        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[a-z0-9]{8,17}$", s))])
+        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", s))])
       )
     )
     error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
@@ -114,15 +112,15 @@ variable "MASTER_USERNAME" {
 }
 
 variable "ASSUME_ROLE_ARN" {
-  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
+  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:*:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
   type        = string
   nullable    = true
   default     = null
 
   validation {
     condition = var.ASSUME_ROLE_ARN == null || (
-      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
+      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
     )
-    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:aws:iam::123456789012:role/DeploymentRole\"."
+    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/DeploymentRole\"."
   }
 }

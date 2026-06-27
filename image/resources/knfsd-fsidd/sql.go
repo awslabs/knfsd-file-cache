@@ -86,7 +86,7 @@ func getRegion(ctx context.Context) (string, error) {
 	})
 
 	// Create new context from previous ctx with a custom 2s timeout
-	// https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/retries-timeouts/#timeouts
+	// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html#timeouts
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
@@ -147,7 +147,7 @@ func connect(ctx context.Context, config DatabaseConfig) (DB, error) {
 			log.Debug.Print("generating fresh IAM token for new connection")
 
 			endpoint := fmt.Sprintf("%s:%d", connConfig.Host, connConfig.Port)
-			// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/rds/
+			// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/sdk-utilities-rds.html
 			authToken, err := auth.BuildAuthToken(
 				ctx,
 				endpoint,

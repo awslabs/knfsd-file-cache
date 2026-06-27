@@ -3,7 +3,7 @@
 name: db-postgres
 services:
   postgres:
-    image: postgres:18.3-alpine3.23
+    image: postgres:18.4-alpine3.23
     platform: linux/amd64
     healthcheck:
       test: "pg_isready --host=127.0.0.1 --username=\"$$POSTGRES_USER\" --dbname=\"$$POSTGRES_DB\""
@@ -26,3 +26,5 @@ services:
       - CAP_SETUID
       - CAP_CHOWN
       - CAP_FOWNER
+    security_opt:
+      - no-new-privileges:true

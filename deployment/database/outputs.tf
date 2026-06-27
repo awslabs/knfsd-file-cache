@@ -1,8 +1,6 @@
-/*
- * Copyright 2022 Google Inc.
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
+# Copyright 2022 Google Inc.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 output "db_address" {
   description = "The hostname of the RDS DB instance."
   value       = aws_db_instance.fsids.address

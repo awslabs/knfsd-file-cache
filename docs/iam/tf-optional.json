@@ -29,7 +29,7 @@
       "Sid": "KnfsdRdsPassRole",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::*:role/knfsd-*-rds-enhanced-monitoring"
+      "Resource": "arn:*:iam::*:role/knfsd-*-rds-enhanced-monitoring"
     },
     {
       "Sid": "KnfsdRdsManagedSecret",
@@ -39,7 +39,7 @@
         "secretsmanager:DescribeSecret",
         "secretsmanager:TagResource"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:rds!*"
+      "Resource": "arn:*:secretsmanager:*:*:secret:rds!*"
     },
     {
       "Sid": "KnfsdRdsManagedSecretKms",
@@ -56,7 +56,7 @@
         "secretsmanager:ListSecrets",
         "secretsmanager:TagResource"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:knfsd-*"
+      "Resource": "arn:*:secretsmanager:*:*:secret:knfsd-*"
     },
     {
       "Sid": "KnfsdVpcEndpoints",
@@ -68,6 +68,7 @@
         "ec2:DeleteVpcEndpoints",
         "ec2:DescribePrefixLists",
         "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeVpcEndpointServices",
         "ec2:ModifyVpcEndpoint"
       ],
       "Resource": "*"
@@ -76,7 +77,7 @@
       "Sid": "KnfsdElbServiceLinkedRole",
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/*",
+      "Resource": "arn:*:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/*",
       "Condition": {
         "StringEquals": {
           "iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"

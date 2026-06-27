@@ -1,0 +1,45 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "KnfsdTestingSsmChannels",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeInstanceInformation",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdTestingSsmStartSession",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:StartSession"
+      ],
+      "Resource": [
+        "arn:*:ec2:*:*:instance/*",
+        "arn:*:ssm:*:*:document/AWS-StartSSHSession"
+      ]
+    },
+    {
+      "Sid": "KnfsdTestingSsmManageSession",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:TerminateSession",
+        "ssm:ResumeSession"
+      ],
+      "Resource": "arn:*:ssm:*:*:session/*"
+    },
+    {
+      "Sid": "KnfsdTestingInstanceConnect",
+      "Effect": "Allow",
+      "Action": [
+        "ec2-instance-connect:SendSSHPublicKey"
+      ],
+      "Resource": "arn:*:ec2:*:*:instance/*"
+    }
+  ]
+}

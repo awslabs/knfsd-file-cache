@@ -3,12 +3,18 @@
 package metadata
 
 import (
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"time"
+)
+
+const (
+	AggregationStrategySum = "sum"
+	AggregationStrategyAvg = "avg"
+	AggregationStrategyMin = "min"
+	AggregationStrategyMax = "max"
 )
 
 var MetricsInfo = metricsInfo{
@@ -34,13 +40,14 @@ type metricsInfo struct {
 }
 
 type metricInfo struct {
-	Name string
+	Name       string
+	Attributes []string
 }
 
 type metricSlabDentryCacheActiveObjects struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                           // data buffer for generated metric.
+	config   SlabDentryCacheActiveObjectsMetricConfig // metric config provided by user.
+	capacity int                                      // max observed number of data points added to the metric.
 }
 
 // init fills slab.dentry_cache.active_objects metric with initial data.
@@ -77,7 +84,7 @@ func (m *metricSlabDentryCacheActiveObjects) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSlabDentryCacheActiveObjects(cfg MetricConfig) metricSlabDentryCacheActiveObjects {
+func newMetricSlabDentryCacheActiveObjects(cfg SlabDentryCacheActiveObjectsMetricConfig) metricSlabDentryCacheActiveObjects {
 	m := metricSlabDentryCacheActiveObjects{config: cfg}
 
 	if cfg.Enabled {
@@ -88,9 +95,9 @@ func newMetricSlabDentryCacheActiveObjects(cfg MetricConfig) metricSlabDentryCac
 }
 
 type metricSlabDentryCacheObjsize struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                     // data buffer for generated metric.
+	config   SlabDentryCacheObjsizeMetricConfig // metric config provided by user.
+	capacity int                                // max observed number of data points added to the metric.
 }
 
 // init fills slab.dentry_cache.objsize metric with initial data.
@@ -127,7 +134,7 @@ func (m *metricSlabDentryCacheObjsize) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSlabDentryCacheObjsize(cfg MetricConfig) metricSlabDentryCacheObjsize {
+func newMetricSlabDentryCacheObjsize(cfg SlabDentryCacheObjsizeMetricConfig) metricSlabDentryCacheObjsize {
 	m := metricSlabDentryCacheObjsize{config: cfg}
 
 	if cfg.Enabled {
@@ -138,9 +145,9 @@ func newMetricSlabDentryCacheObjsize(cfg MetricConfig) metricSlabDentryCacheObjs
 }
 
 type metricSlabNfsInodeCacheActiveObjects struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                             // data buffer for generated metric.
+	config   SlabNfsInodeCacheActiveObjectsMetricConfig // metric config provided by user.
+	capacity int                                        // max observed number of data points added to the metric.
 }
 
 // init fills slab.nfs_inode_cache.active_objects metric with initial data.
@@ -177,7 +184,7 @@ func (m *metricSlabNfsInodeCacheActiveObjects) emit(metrics pmetric.MetricSlice)
 	}
 }
 
-func newMetricSlabNfsInodeCacheActiveObjects(cfg MetricConfig) metricSlabNfsInodeCacheActiveObjects {
+func newMetricSlabNfsInodeCacheActiveObjects(cfg SlabNfsInodeCacheActiveObjectsMetricConfig) metricSlabNfsInodeCacheActiveObjects {
 	m := metricSlabNfsInodeCacheActiveObjects{config: cfg}
 
 	if cfg.Enabled {
@@ -188,9 +195,9 @@ func newMetricSlabNfsInodeCacheActiveObjects(cfg MetricConfig) metricSlabNfsInod
 }
 
 type metricSlabNfsInodeCacheObjsize struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
+	data     pmetric.Metric                       // data buffer for generated metric.
+	config   SlabNfsInodeCacheObjsizeMetricConfig // metric config provided by user.
+	capacity int                                  // max observed number of data points added to the metric.
 }
 
 // init fills slab.nfs_inode_cache.objsize metric with initial data.
@@ -227,7 +234,7 @@ func (m *metricSlabNfsInodeCacheObjsize) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSlabNfsInodeCacheObjsize(cfg MetricConfig) metricSlabNfsInodeCacheObjsize {
+func newMetricSlabNfsInodeCacheObjsize(cfg SlabNfsInodeCacheObjsizeMetricConfig) metricSlabNfsInodeCacheObjsize {
 	m := metricSlabNfsInodeCacheObjsize{config: cfg}
 
 	if cfg.Enabled {

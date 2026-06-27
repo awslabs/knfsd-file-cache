@@ -26,22 +26,22 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsPacketsArrived: MetricConfig{
+					NfsPacketsArrived: NfsPacketsArrivedMetricConfig{
 						Enabled: true,
 					},
-					NfsPacketsDeferred: MetricConfig{
+					NfsPacketsDeferred: NfsPacketsDeferredMetricConfig{
 						Enabled: true,
 					},
-					NfsSocketsEnqueued: MetricConfig{
+					NfsSocketsEnqueued: NfsSocketsEnqueuedMetricConfig{
 						Enabled: true,
 					},
-					NfsThreads: MetricConfig{
+					NfsThreads: NfsThreadsMetricConfig{
 						Enabled: true,
 					},
-					NfsThreadsTimedout: MetricConfig{
+					NfsThreadsTimedout: NfsThreadsTimedoutMetricConfig{
 						Enabled: true,
 					},
-					NfsThreadsWoken: MetricConfig{
+					NfsThreadsWoken: NfsThreadsWokenMetricConfig{
 						Enabled: true,
 					},
 				},
@@ -51,22 +51,22 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					NfsPacketsArrived: MetricConfig{
+					NfsPacketsArrived: NfsPacketsArrivedMetricConfig{
 						Enabled: false,
 					},
-					NfsPacketsDeferred: MetricConfig{
+					NfsPacketsDeferred: NfsPacketsDeferredMetricConfig{
 						Enabled: false,
 					},
-					NfsSocketsEnqueued: MetricConfig{
+					NfsSocketsEnqueued: NfsSocketsEnqueuedMetricConfig{
 						Enabled: false,
 					},
-					NfsThreads: MetricConfig{
+					NfsThreads: NfsThreadsMetricConfig{
 						Enabled: false,
 					},
-					NfsThreadsTimedout: MetricConfig{
+					NfsThreadsTimedout: NfsThreadsTimedoutMetricConfig{
 						Enabled: false,
 					},
-					NfsThreadsWoken: MetricConfig{
+					NfsThreadsWoken: NfsThreadsWokenMetricConfig{
 						Enabled: false,
 					},
 				},
@@ -76,7 +76,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(NfsPacketsArrivedMetricConfig{}, NfsPacketsDeferredMetricConfig{}, NfsSocketsEnqueuedMetricConfig{}, NfsThreadsMetricConfig{}, NfsThreadsTimedoutMetricConfig{}, NfsThreadsWokenMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

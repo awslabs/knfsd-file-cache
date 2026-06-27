@@ -1,14 +1,14 @@
-# https://trivy.dev/v0.61/docs/configuration/filtering/#trivyignoreyaml
+# https://trivy.dev/docs/latest/guide/configuration/filtering/#trivyignoreyaml
 misconfigurations:
-  - id: DS-0001
-    paths:
-      - "testing/images/terratest/Dockerfile"
   - id: DS-0002
     paths:
       - "image/resources/startup/tests/Dockerfile"
       - "deployment/database/resources/Dockerfile"
-      - "testing/images/terratest/Dockerfile"
   - id: DS-0010
+    paths:
+      - ".devcontainer/dev/Dockerfile"
+      - ".devcontainer/prod/Dockerfile"
+  - id: DS-0029
     paths:
       - ".devcontainer/dev/Dockerfile"
       - ".devcontainer/prod/Dockerfile"
@@ -16,47 +16,28 @@ misconfigurations:
     paths:
       - "deployment/database/main.tf"
       - "deployment/terraform-module-knfsd/modules/dns_round_robin/lambda.tf"
-  - id: DS-0029
-    paths:
-      - ".devcontainer/dev/Dockerfile"
-      - ".devcontainer/prod/Dockerfile"
-      - "testing/images/terratest/Dockerfile"
   - id: AWS-0078
     paths:
       - "deployment/database/main.tf"
-  - id: AWS-0089
-    paths:
-      - "examples/s3-files/main.tf"
   - id: AWS-0098
     paths:
       - "examples/fsx-netapp/main.tf"
   - id: AWS-0104
     paths:
       - "deployment/terraform-module-knfsd/vpc.tf"
-      - "deployment/test/main.tf"
-  - id: AWS-0132
-    paths:
-      - "examples/s3-files/main.tf"
+      - "image/smoke-tests/terraform/network.tf"
   - id: AWS-0177
     paths:
       - "deployment/database/main.tf"
   - id: AWS-0344
     paths:
-      - "examples/efs/main.tf"
       - "examples/fsx-netapp/main.tf"
+      - "examples/fsx-zfs/main.tf"
       - "examples/fsx-zfs-fanout-dns-rr/main.tf"
       - "examples/fsx-zfs-fanout-loadbalancer/main.tf"
-      - "examples/fsx-zfs/main.tf"
-      - "examples/s3-files/main.tf"
-  - id: GCP-0029
-  - id: GCP-0030
-  - id: GCP-0033
-  - id: GCP-0034
-  - id: GCP-0036
-  - id: GCP-0041
-  - id: GCP-0045
-  - id: GCP-0067
-  - id: GCP-0076
+      - "image/smoke-tests/modules/nfs-client/main.tf"
+      - "image/smoke-tests/modules/source-nfs/main.tf"
+      - "image/smoke-tests/terraform/network.tf"
 
 licenses:
   - id: Apache-2.0
