@@ -173,9 +173,9 @@ chmod 400 knfsd-tutorial.pem
 Get the Ubuntu AMI ID and launch the NFS server instance:
 
 ```bash
-# Get the latest Ubuntu 24.04 AMI ID
+# Get the latest Ubuntu 26.04 AMI ID
 AMI_ID=$(aws ssm get-parameters \
-  --names /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+  --names /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
   --query 'Parameters[].Value' \
   --output text)
 

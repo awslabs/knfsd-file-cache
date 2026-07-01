@@ -14,13 +14,28 @@ export NEEDRESTART_MODE=a
 export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
+export MAKE_VERBOSITY="-s" # quiet: warnings/errors/summary
 
 # set the working directory to "/mnt/build"
 cd "$(dirname "$0")"/../
 
+# cloud-init queries
+REGION=$(cloud-init query region)
+INSTANCE_ID=$(cloud-init query instance_id)
+
+# update_status() updates the tag:"knfsd-file-cache:status" of the instance
+# @param (str) $1 message
+function update_status() {
+	aws ec2 create-tags \
+		--region "${REGION}" \
+		--resources "${INSTANCE_ID}" \
+		--tags "Key=knfsd-file-cache:status,Value=$1"
+}
+
 # format the terminal for a command output
 function begin_command() {
 	echo -e "\n${SHELL_YELLOW}---- RUNNING: $1${SHELL_DEFAULT}"
+	update_status "post-build: $1"
 	COMMAND_START_TIME=$(date +%s)
 }
 
@@ -57,17 +72,17 @@ function git_clone() {
 
 # remove unnecessary packages, reduce syslog noise
 function remove_packages() (
-	begin_command "Removing packages"
+	begin_command "removing packages"
 	apt-get -o DPkg::Lock::Timeout=60 purge -yq multipath-tools cryptsetup-initramfs
 	complete_command
 )
 
 # install latest ena driver
 function install_ena_driver() (
-	begin_command "Installing ENA driver"
+	begin_command "installing ENA driver"
 	git_clone --depth 1 --branch ena_linux_2.17.0 https://github.com/amzn/amzn-drivers.git amzn-drivers
 	cd amzn-drivers/kernel/linux/ena/
-	make
+	make ${MAKE_VERBOSITY}
 	# ena.ko OR ena.ko.zst
 	ENA_FILE=$(find /lib/modules/"$(uname -r)"/kernel/drivers/net/ethernet/amazon/ena/ -name 'ena.ko*' -print0 | xargs -0 basename | head -n1)
 	install -D -m 644 ena.ko /lib/modules/"$(uname -r)"/kernel/drivers/net/ethernet/amazon/ena/"${ENA_FILE}"
@@ -77,7 +92,7 @@ function install_ena_driver() (
 
 # cleanup the image before capture
 function cleanup_image() (
-	begin_command "Cleaning up image"
+	begin_command "cleaning up image"
 	apt-get -o DPkg::Lock::Timeout=60 autoremove -y
 	apt-get -o DPkg::Lock::Timeout=60 clean -y
 	rm -rf /var/lib/apt/lists/*

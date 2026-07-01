@@ -4,9 +4,9 @@
 ## docker build --tag knfsd-prod:latest --file .devcontainer/prod/Dockerfile .
 ## docker run --platform linux/amd64 --rm --name knfsd-prod --hostname knfsd-prod -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-prod
 
-FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
+FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-alpha.27"
+ARG VERSION="1.1.0-alpha.28"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -79,10 +79,8 @@ RUN mkdir -p /etc/docker \
 ## non-root user
 ARG USERNAME=ubuntu
 
-## silence sudo usage message, grant sudo rights
-RUN echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
-    && chmod 0440 /etc/sudoers.d/disable_admin_file \
-    && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
+## grant sudo rights
+RUN echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
     && echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/${USERNAME}/.local/bin\"" >> /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME} \
     && ln -sf /usr/bin/python3 /usr/bin/python

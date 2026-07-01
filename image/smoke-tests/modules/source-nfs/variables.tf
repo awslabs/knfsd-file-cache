@@ -56,7 +56,7 @@ variable "INSTANCE_TYPE" {
 }
 
 variable "AMI_ID" {
-  description = "(Optional) AMI ID for the source NFS server. If empty, the latest Ubuntu 24.04 amd64 AMI is resolved from SSM Parameter Store."
+  description = "(Optional) AMI ID for the source NFS server. If empty, the latest Ubuntu 26.04 amd64 AMI is resolved from SSM Parameter Store."
   type        = string
   nullable    = false
   default     = ""

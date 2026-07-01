@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.27"
+      "knfsd-file-cache/modules/dns_round_robin/1.1.0-alpha.28"
     ]
   }
 }

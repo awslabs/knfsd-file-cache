@@ -51,15 +51,16 @@ url=host=fsids.example.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=f
 
 ### Principle of Least Privilege
 
-The KNFSD File Cache IAM model is designed around least-privilege access with separation of duties across two operational phases:
+The KNFSD File Cache IAM model is designed around least-privilege access with separation of duties across two operational phases and an optional development/testing phase:
 
 | Phase                             | Policy File                 | Scope                                                                                                    |
 | --------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
 | AMI build (Packer)                | `docs/iam/packer.json`      | EC2, Spot fleet, SSM parameter lookup, IAM PassRole (scoped to Packer instance profile)                  |
 | Deployment (Terraform) — required | `docs/iam/tf-required.json` | EC2 launch templates, Auto Scaling, SSM parameters, CloudWatch, Route 53, IAM roles/policies             |
 | Deployment (Terraform) — optional | `docs/iam/tf-optional.json` | RDS, Secrets Manager, VPC endpoints, Network Load Balancer (attached only when feature flags are active) |
+| Testing (Smoke-Tests) - optional  | `docs/iam/testing.json`     | EC2 Instance Connect (SSH-over-SSM) to reach ephemeral test instances                                    |
 
-**Separation of duties:** The two phases can use a single combined IAM principal for simple setups, or be split across separate principals (one for AMI builds, one for deployments) for stronger isolation.
+**Separation of duties:** The two operational phases can use a single combined IAM principal for simple setups, or be split across separate principals (one for AMI builds, one for deployments) for stronger isolation.
 
 ### Feature-Gated Permissions
 
@@ -68,6 +69,13 @@ The `tf-optional.json` policy contains Sids that should only be attached when th
 - `KnfsdRds*` Sids — required only when `FSID_DATABASE_DEPLOY = true`
 - `KnfsdSecretsManager` — required when deploying the FSID database or using NetApp auto-detect with `NETAPP_SECRET != ""`
 - `KnfsdLoadBalancer` / `KnfsdElbServiceLinkedRole` — required only when `TRAFFIC_MODE = "loadbalancer"`
+
+The `testing.json` policy is optional and is only required to run the [smoke-tests](../image/smoke-tests/README.md) module:
+
+- `KnfsdTestingSsmChannels` — required to poll the SSM agent online status
+- `KnfsdTestingSsmStartSession` — required to open the SSH tunnel
+- `KnfsdTestingSsmManageSession` — required to terminate the SSH tunnel
+- `KnfsdTestingInstanceConnect` — required to push the short-lived ephemeral key via EC2 Instance Connect
 
 This approach ensures the deploying principal never holds more permissions than the selected feature set requires.
 

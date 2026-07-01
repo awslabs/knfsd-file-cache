@@ -15,7 +15,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/image/smoke-tests/modules/source-nfs/1.1.0-alpha.27"
+      "knfsd-file-cache/image/smoke-tests/modules/source-nfs/1.1.0-alpha.28"
     ]
   }
 }
@@ -36,7 +36,7 @@ data "aws_vpc" "selected" {
 
 data "aws_ssm_parameter" "ubuntu_ami" {
   count = var.AMI_ID == "" ? 1 : 0
-  name  = "/aws/service/canonical/ubuntu/server/24.04/stable/current/${var.ARCH}/hvm/ebs-gp3/ami-id"
+  name  = "/aws/service/canonical/ubuntu/server/26.04/stable/current/${var.ARCH}/hvm/ebs-gp3/ami-id"
 }
 
 locals {

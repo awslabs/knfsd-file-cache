@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.27"
+  version       = "1.1.0-alpha.28"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -61,15 +61,15 @@ locals {
 }
 
 # https://documentation.ubuntu.com/aws/en/latest/aws-how-to/instances/find-ubuntu-images/
-# aws ssm get-parameters --names /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+# aws ssm get-parameters --names /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id
 # --query 'Parameters[].Value' --output text
 data "amazon-parameterstore" "base-ami-amd64" {
-  name   = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
+  name   = "/aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
   region = var.REGION
 }
 
 data "amazon-parameterstore" "base-ami-arm64" {
-  name   = "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id"
+  name   = "/aws/service/canonical/ubuntu/server/26.04/stable/current/arm64/hvm/ebs-gp3/ami-id"
   region = var.REGION
 }
 
@@ -97,6 +97,8 @@ source "amazon-ebs" "knfsd-amd64" {
     "c7i.16xlarge",
     "m6i.16xlarge",
     "c8i.16xlarge",
+    "c8a.16xlarge",
+    "m8a.16xlarge",
     "m7i.16xlarge",
     "c7a.16xlarge",
     "m7a.16xlarge",
@@ -225,6 +227,8 @@ source "amazon-ebs" "knfsd-arm64" {
   # Build machine (use spot so we can provide a list of instance types to try and lower build cost)
   source_ami = data.amazon-parameterstore.base-ami-arm64.value
   spot_instance_types = [
+    "c9g.16xlarge",
+    "m9g.16xlarge",
     "c8gn.16xlarge",
     "c8g.16xlarge",
     "r8g.16xlarge",
@@ -430,10 +434,13 @@ build {
     timeout           = "5m"
   }
 
-  # Output the last build to a manifest file in the current directory.
-  # This can be useful for automated tooling, especially if packer generated
-  # the image name with a timestamp.
-  post-processor "manifest" {
-    output = "image.manifest.json"
+  error-cleanup-provisioner "shell-local" {
+    environment_vars = [
+      "REGION=${var.REGION}",
+      "INSTANCE_ID=${build.ID}",
+    ]
+    inline = [
+      "aws ec2 create-tags --region \"$REGION\" --resources \"$INSTANCE_ID\" --tags 'Key=knfsd-file-cache:status,Value=failed: build error' || true",
+    ]
   }
 }

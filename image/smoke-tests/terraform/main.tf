@@ -24,7 +24,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/image/smoke-tests/1.1.0-alpha.27"
+      "knfsd-file-cache/image/smoke-tests/1.1.0-alpha.28"
     ]
   }
 }

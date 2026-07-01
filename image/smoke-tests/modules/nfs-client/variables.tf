@@ -38,7 +38,7 @@ variable "PREFIX" {
 }
 
 variable "ARCH" {
-  description = "(Optional) Architecture (\"amd64\" or \"arm64\") used to resolve the Ubuntu 24.04 client AMI from SSM. Must match INSTANCE_TYPE family. Default: \"amd64\"."
+  description = "(Optional) Architecture (\"amd64\" or \"arm64\") used to resolve the Ubuntu 26.04 client AMI from SSM. Must match INSTANCE_TYPE family. Default: \"amd64\"."
   type        = string
   default     = "amd64"
   validation {
@@ -48,9 +48,9 @@ variable "ARCH" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) EC2 instance type for the NFS client. Must match ARCH. Default: \"t3.small\"."
+  description = "(Optional) EC2 instance type for the NFS client. Must match ARCH. Default: \"m6i.2xlarge\"."
   type        = string
-  default     = "t3.small"
+  default     = "m6i.2xlarge"
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."

@@ -242,23 +242,25 @@ func TestSmoke(t *testing.T) {
 		initialSize, err := fsCacheSize()
 		require.NoError(t, err)
 
-		name, err := createRandomFile("/tmp", "large.*")
+		scratch := scratchDir()
+		name, err := createRandomFile(scratch, "large.*")
 		require.NoError(t, err)
+		local := filepath.Join(scratch, name)
 		t.Cleanup(func() {
-			_ = os.Remove("/tmp/" + name)
+			_ = os.Remove(local)
 			removeTestFile(name)
 		})
 
 		// Seed large (1G) file for the cache test. Create the file locally so
 		// that it can be compared after deleting the source.
-		err = writeRandomData("/tmp/"+name, 1*GB)
+		err = writeRandomData(local, 1*GB)
 		require.NoError(t, err)
 
-		err = copyFile("/tmp/"+name, "/test/source/"+name)
+		err = copyFile(local, "/test/source/"+name)
 		require.NoError(t, err)
 
 		// Read the file through the proxy and ensure it matches.
-		assertFilesEqual(t, "/tmp/"+name, "/test/proxy/"+name)
+		assertFilesEqual(t, local, "/test/proxy/"+name)
 
 		// Read it a few more times to ensure it is fully cached
 		for range 10 {
@@ -274,7 +276,7 @@ func TestSmoke(t *testing.T) {
 		err = os.Remove("/test/source/" + name)
 		require.NoError(t, err)
 
-		assertFilesEqual(t, "/tmp/"+name, "/test/proxy/"+name)
+		assertFilesEqual(t, local, "/test/proxy/"+name)
 
 		cacheSize, err := fsCacheSize()
 		require.NoError(t, err)
@@ -343,7 +345,7 @@ func createTestDir(prefix string) (testDir, error) {
 func writeRandomData(path string, size uint64) error {
 	// Use dd as it's already solved the hard problems of setting cache flags
 	// and efficiently copying data.
-	_, err := exec.Command("dd",
+	out, err := exec.Command("dd",
 		"if=/dev/urandom",
 		"of="+path,
 		"bs=4M",
@@ -351,8 +353,11 @@ func writeRandomData(path string, size uint64) error {
 		"iflag=count_bytes",
 		"oflag=nocache",
 		"status=none",
-	).Output() // #nosec G204
-	return err
+	).CombinedOutput() // #nosec G204
+	if err != nil {
+		return fmt.Errorf("dd writing %s (%d bytes): %w: %s", path, size, err, out)
+	}
+	return nil
 }
 
 func assertFilesEqual(t *testing.T, expected, actual string) {
@@ -383,9 +388,20 @@ func fsCacheSize() (uint64, error) {
 	return u.BytesUsed, nil
 }
 
+func scratchDir() string {
+	const tmp = "/tmp"
+	if fi, err := os.Stat(tmp); err == nil && fi.IsDir() {
+		return tmp
+	}
+	return "."
+}
+
 func copyFile(src, dst string) error {
 	// It's easier to just fork out to cp than try to re-implement the logic.
 	cmd := exec.Command("cp", "--", src, dst)
-	_, err := cmd.Output()
-	return err
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("cp %s -> %s: %w: %s", src, dst, err, out)
+	}
+	return nil
 }

@@ -6,10 +6,10 @@
 set -eo pipefail
 
 ## set variables for build script only
-BUILDARCH=$([ "$(uname -i)" = "aarch64" ] && echo "arm64" || echo "amd64")
+BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.27"
+VERSION="1.1.0-alpha.28"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -102,10 +102,8 @@ echo "deb http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-## silence sudo usage message, grant sudo rights, allow read access to /proc/slabinfo (knfsd-metrics-agent go tests), symlink python3
-echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
-	&& rm -f /etc/sudoers.d/90-cloud-init-users \
-	&& chmod 0440 /etc/sudoers.d/disable_admin_file \
+## grant sudo rights, allow read access to /proc/slabinfo (knfsd-metrics-agent go tests), symlink python3
+echo rm -f /etc/sudoers.d/90-cloud-init-users \
 	&& echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
 	&& echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/local/go/bin:/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin\"" >> /etc/sudoers.d/${USERNAME} \
 	&& chmod 0440 /etc/sudoers.d/${USERNAME} \
@@ -125,7 +123,7 @@ echo "GITHUB_COM_TOKEN=" >> /etc/environment \
 	&& echo "TF_APPEND_USER_AGENT=AWSSOLUTION/SO9129/${VERSION}" >> /etc/environment
 
 ## install aws-cli
-curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -i).zip" -o /tmp/awscliv2.zip \
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscliv2.zip \
 	&& unzip -q -o /tmp/awscliv2.zip -d /tmp/aws-cli \
 	&& bash /tmp/aws-cli/aws/install \
 	&& rm -rf /tmp/awscliv2.zip /tmp/aws-cli
@@ -136,13 +134,13 @@ KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.36
+KNFSD_BOTO3_VERSION=1.43.38
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.2
+KNFSD_CHECKOV_VERSION=3.3.6
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-KNFSD_EDITORCONFIG_VERSION=3.7.0
+KNFSD_EDITORCONFIG_VERSION=3.8.0
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
@@ -172,11 +170,11 @@ KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.63.1
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.71.2
+KNFSD_TRIVY_VERSION=0.72.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.11.24
+KNFSD_UV_VERSION=0.11.26
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

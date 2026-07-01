@@ -34,6 +34,11 @@ image-debug:
 	@packer init -upgrade image/knfsd.pkr.hcl
 	@PACKER_LOG=1 PACKER_LOG_PATH=packer.log packer build -debug -var-file image/image.pkrvars.hcl image
 
+.PHONY: image-log
+image-log:
+	@packer init -upgrade image/knfsd.pkr.hcl
+	@PACKER_LOG=1 PACKER_LOG_PATH=packer.log packer build -var-file image/image.pkrvars.hcl image
+
 .PHONY: iamlive
 iamlive:
 	@: > iamlive.json

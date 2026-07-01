@@ -2,7 +2,7 @@
 
 This directory contains scripts for building an Amazon Web Services [AMI](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) for KNFSD.
 
-We start with the base AWS/Canonical Ubuntu 24.04 image, and use the scripts in this directory to build the AWS optimized KNFSD image.
+We start with the base AWS/Canonical Ubuntu 26.04 image, and use the scripts in this directory to build the AWS optimized KNFSD image.
 
 For details of the modifications that are made to the base image, see [resources/scripts](resources/scripts).
 
@@ -232,10 +232,10 @@ packer build -var-file image/image.pkrvars.hcl image
 
 ```bash
 amazon-ebs.knfsd: ---- SYSTEM INFO
-amazon-ebs.knfsd: Description:  Ubuntu 24.04.4 LTS
-amazon-ebs.knfsd: Release:      24.04
-amazon-ebs.knfsd: Codename:     noble
-amazon-ebs.knfsd: Kernel:       7.0.13-knfsd
+amazon-ebs.knfsd: Description:  Ubuntu 26.04 LTS
+amazon-ebs.knfsd: Release:      26.04
+amazon-ebs.knfsd: Codename:     resolute
+amazon-ebs.knfsd: Kernel:       7.1.2-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -252,7 +252,7 @@ Once you have built and verified the AMI for KNFSD, you can deploy the supportin
 
 ### Building in AWS GovCloud / China partitions
 
-The KNFSD proxy AMI can be built in AWS Commercial, GovCloud (`aws-us-gov`), and China (`aws-cn`) partitions. The base Canonical Ubuntu 24.04 image is resolved from the public `/aws/service/canonical/...` SSM parameters, which are published in all three partitions, so the Packer AMI lookup works without modification.
+The KNFSD proxy AMI can be built in AWS Commercial, GovCloud (`aws-us-gov`), and China (`aws-cn`) partitions. The base Canonical Ubuntu 26.04 image is resolved from the public `/aws/service/canonical/...` SSM parameters, which are published in all three partitions, so the Packer AMI lookup works without modification.
 
 The image build process does, however, download several packages from commercial AWS endpoints during provisioning (for example `awscli.amazonaws.com` and `amazoncloudwatch-agent.s3.amazonaws.com` in [resources/scripts/10_build.sh](resources/scripts/10_build.sh)). When building in China:
 
@@ -302,7 +302,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.27"
+VERSION="1.1.0-alpha.28"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -359,7 +359,7 @@ elif [ "$KNFSD_ARCH" = "arm64" ]; then
 fi
 
 export KNFSD_INSTANCE_ID=$(aws ec2 run-instances \
-  --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/${KNFSD_ARCH}/hvm/ebs-gp3/ami-id \
+  --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/26.04/stable/current/${KNFSD_ARCH}/hvm/ebs-gp3/ami-id \
   --instance-type $KNFSD_INSTANCE_TYPE \
   --key-name $KNFSD_KEYPAIR \
   --subnet-id $KNFSD_SUBNET \
@@ -462,10 +462,10 @@ A successful build will output something similar to the following:
 
 ```bash
 ---- SYSTEM INFO
-Description:  Ubuntu 24.04.4 LTS
-Release:      24.04
-Codename:     noble
-Kernel:       7.0.13-knfsd
+Description:  Ubuntu 26.04 LTS
+Release:      26.04
+Codename:     resolute
+Kernel:       7.1.2-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 
@@ -478,7 +478,7 @@ ami_id=$(aws ec2 create-image \
   --region $KNFSD_REGION \
   --instance-id $KNFSD_INSTANCE_ID \
   --name $KNFSD_AMI_NAME \
-  --description "NFS Caching Proxy Server, v$VERSION, Canonical, Ubuntu, 24.04 LTS, AMD64 Noble image built on $TIMESTAMP" \
+  --description "NFS Caching Proxy Server, v$VERSION, Canonical, Ubuntu, 26.04 LTS, AMD64 Resolute image built on $TIMESTAMP" \
   --block-device-mappings '[
     {"DeviceName":"/dev/sda1","Ebs":{"DeleteOnTermination":true,"Encrypted":true}},
     {"DeviceName":"/dev/sdb","NoDevice":""},

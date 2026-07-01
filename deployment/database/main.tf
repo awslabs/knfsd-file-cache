@@ -20,7 +20,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/database/1.1.0-alpha.27"
+      "knfsd-file-cache/database/1.1.0-alpha.28"
     ]
   }
 }

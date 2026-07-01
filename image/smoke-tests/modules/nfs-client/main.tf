@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/image/smoke-tests/modules/nfs-client/1.1.0-alpha.27"
+      "knfsd-file-cache/image/smoke-tests/modules/nfs-client/1.1.0-alpha.28"
     ]
   }
 }
@@ -32,7 +32,7 @@ data "aws_subnet" "selected" {
 }
 
 data "aws_ssm_parameter" "ubuntu_ami" {
-  name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/${var.ARCH}/hvm/ebs-gp3/ami-id"
+  name = "/aws/service/canonical/ubuntu/server/26.04/stable/current/${var.ARCH}/hvm/ebs-gp3/ami-id"
 }
 
 # Validate client AMI architecture matches INSTANCE_TYPE family.

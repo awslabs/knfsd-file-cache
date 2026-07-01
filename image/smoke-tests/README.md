@@ -25,14 +25,14 @@ Before a run you need:
 
 The smoke-test Terraform consumes the following inputs (defined in [`terraform/variables.tf`](terraform/variables.tf)):
 
-| Variable                      | Type   | Source                                                                                                                                                |
-|-------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `REGION`                      | string | (Required) The region in which the VPC/subnet live.                                                                                                   |
-| `SUBNET`                      | string | (Required) A subnet ID with outbound internet (NAT or public + IGW) so the SSM agent and `apt` work.                                                  |
-| `PROXY_AMI`                   | string | (Required) KNFSD proxy AMI ID under test, supplied directly.                                                                                          |
-| `ASSOCIATE_PUBLIC_IP_ADDRESS` | bool   | (Optional) Force a public IP on all instances (`null` = inherit subnet). Set `true` for a public-subnet run with no NAT; SGs still block all ingress. |
-| `ARCH`                        | string | (Optional) `amd64` (default) or `arm64`. Selects the Ubuntu 24.04 client AMI resolved from Canonical's SSM parameter.                                 |
-| `INSTANCE_TYPE`               | string | (Optional) EC2 instance type for the test client; defaults to `t3.small`. Must match `ARCH` (e.g. `t4g.small` for `arm64`).                           |
+| Variable                      | Type   | Source                                                                                                                                     | Required | Default       |
+|-------------------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------|----------|---------------|
+| `REGION`                      | string | The AWS region in which the VPC/subnet live.                                                                                               | True     |               |
+| `SUBNET`                      | string | A subnet ID with outbound internet (NAT or public + IGW) so the SSM agent and `apt` work.                                                  | True     |               |
+| `PROXY_AMI`                   | string | KNFSD proxy AMI ID under test, supplied directly.                                                                                          | True     |               |
+| `ASSOCIATE_PUBLIC_IP_ADDRESS` | bool   | Force a public IP on all instances (`null` = inherit subnet). Set `true` for a public-subnet run with no NAT; SGs still block all ingress. | False    | `null`        |
+| `ARCH`                        | string | Selects the Ubuntu 26.04 client AMI resolved from Canonical's SSM parameter. Must be: `amd64` or `arm64`.                                  | False    | `amd64`       |
+| `INSTANCE_TYPE`               | string | EC2 instance type for the test client; defaults to `m6i.2xlarge`. Must match `ARCH` (e.g. `m7g.2xlarge` for `arm64`).                      | False    | `m6i.2xlarge` |
 
 The Terraform self-creates VPC-CIDR-scoped source-NFS and client security groups (see [`terraform/network.tf`](terraform/network.tf)) opening only the required NFS ports between the instances and the proxy.
 
@@ -47,15 +47,16 @@ The driver and the underlying Terraform need the canonical IAM policies document
 
 ## Local development
 
-You can run the harness locally (or from the dev container) against any existing/default VPC. The only hard requirements are a `SUBNET` with outbound internet and a `PROXY_AMI` (see [Prerequisites](#prerequisites)).
+You can run the harness locally (or from the dev container) against any existing/default VPC. The only hard requirements are `REGION`, a valid `SUBNET` with outbound internet and a `PROXY_AMI` (see [Prerequisites](#prerequisites)).
 
 The local commands are:
 
 ```bash
 cd image/smoke-tests
 make test          # full apply + check + destroy lifecycle
+# or individual stages:
 make apply         # only run terraform apply
-make check         # only run validations against an existing apply
+make check         # only run smoke-tests
 make destroy       # only run terraform destroy
 make clean         # clean up local artefacts
 ```
@@ -69,7 +70,7 @@ Each invocation drives `go test` against the smoke-test Terraform in [`terraform
 * [Go 1.26](https://go.dev/) or higher.
 * [GNU Make](https://www.gnu.org/software/make/).
 * OpenSSH client (`ssh`, `scp`), the [AWS CLI](https://docs.aws.amazon.com/cli/), and the [`session-manager-plugin`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (all preinstalled in the dev container).
-* A KNFSD proxy AMI ID supplied directly via `PROXY_AMI`. The test client AMI is always resolved from SSM based on `ARCH`; see [`terraform/variables.tf`](terraform/variables.tf).
+* A KNFSD proxy AMI ID supplied directly via `PROXY_AMI`. The test source/client AMIs are always resolved from SSM based on `ARCH`; see [`terraform/variables.tf`](terraform/variables.tf).
 
 > WARNING: The Terraform state is stored on your **local** machine. Do not remove this state until you have run `make destroy` so that you can clean up the resources that were created.
 
@@ -83,7 +84,7 @@ SUBNET    = "subnet-xxxxxxxxxxxxxxxxx"
 PROXY_AMI = "ami-xxxxxxxxxxxxxxxxx"
 ```
 
-The `PREFIX` variable defaults to `knfsd-smoke`; the Go driver overrides it with a `knfsd-smoke-<random.UniqueID()>` value per run, so concurrent runs in the same account do not collide. The `knfsd` prefix is required: it places all created IAM, CloudFormation, and EventBridge resources under the `knfsd-*` ARN scope granted to the restricted IAM policy (`docs/iam/tf-required.json`). To target an `arm64` client, override both `ARCH = "arm64"` and `INSTANCE_TYPE` to a Graviton-family type (e.g. `t4g.small`); the Terraform pre-flight checks reject architecture mismatches between `ARCH` and `INSTANCE_TYPE`.
+The `PREFIX` variable defaults to `knfsd-smoke`; the Go driver overrides it with a `knfsd-smoke-<random.UniqueID()>` value per run, so concurrent runs in the same account do not collide. The `knfsd` prefix is required: it places all created IAM, CloudFormation, and EventBridge resources under the `knfsd-*` ARN scope granted to the restricted IAM policy (`docs/iam/tf-required.json`). To target an `arm64` client, override both `ARCH = "arm64"` and `INSTANCE_TYPE` to a Graviton-family type (e.g. `m7g.2xlarge`); the Terraform pre-flight checks reject architecture mismatches between `ARCH` and `INSTANCE_TYPE`.
 
 ### SSH connectivity
 
@@ -108,11 +109,12 @@ The `make apply` / `make check` / `make destroy` wrappers above set these for yo
 Typical iteration flow:
 
 ```bash
+cd image/smoke-tests
 make apply                # one-off: creates infra, persists .test-data/
 # ... edit a Go assertion
 make check                # re-runs only the check stage against the live infra
 # ... edit again
 make check
-make destroy              # tear down when finished
+make destroy              # tear down infra when finished
 make clean                # clean up local artefacts
 ```

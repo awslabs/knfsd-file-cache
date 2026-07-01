@@ -168,7 +168,7 @@ chmod 400 ${SSH_KEY_FILE}
 ```bash
 # Launch the client instance with user data
 CLIENT_INSTANCE_ID=$(aws ec2 run-instances \
-    --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+    --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
     --instance-type t3.micro \
     --key-name ${SSH_KEY_NAME} \
     --subnet-id ${PUBLIC_SUBNET} \

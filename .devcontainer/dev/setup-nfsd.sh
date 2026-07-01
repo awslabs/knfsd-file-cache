@@ -14,6 +14,8 @@ export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 
+ARCH=$(uname -m)
+
 apt-get -y -q update
 apt-get install -y rpcbind nfs-kernel-server
 
@@ -22,7 +24,7 @@ apt-get install -y -qq \
 	libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
 	build-essential libevent-dev libsqlite3-dev libblkid-dev \
 	libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
-	libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
+	libkeyutils-dev libdevmapper-dev libxml2-dev cdbs debhelper ubuntu-dev-tools \
 	gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
 	libreadline-dev
 
@@ -32,7 +34,7 @@ tar xvf nfs-utils-2.8.5.tar.gz
 cd /tmp/nfs-utils-2.8.5
 
 ./configure \
-	--build=x86_64-linux-gnu \
+	--build=${ARCH}-linux-gnu \
 	--prefix=/usr \
 	--includedir="\${prefix}"/include \
 	--mandir="\${prefix}"/share/man \
@@ -41,7 +43,7 @@ cd /tmp/nfs-utils-2.8.5
 	--localstatedir=/var \
 	--disable-option-checking \
 	--disable-silent-rules \
-	--libdir="\${prefix}"/lib/x86_64-linux-gnu \
+	--libdir="\${prefix}"/lib/${ARCH}-linux-gnu \
 	--runstatedir=/run \
 	--disable-maintainer-mode \
 	--disable-dependency-tracking \
@@ -49,13 +51,13 @@ cd /tmp/nfs-utils-2.8.5
 	--enable-libmount-mount \
 	--enable-junction \
 	--enable-svcgss \
-	--with-pluginpath=/usr/lib/x86_64-linux-gnu/libnfsidmap \
+	--with-pluginpath=/usr/lib/${ARCH}-linux-gnu/libnfsidmap \
 	--with-tcp-wrappers \
 	--with-systemd \
 	--disable-sbin-override
 
 make && make install
-chmod u+w,go+r /sbin/mount.nfs
+chmod u+w,go+r /usr/sbin/mount.nfs
 chown nobody:nogroup /var/lib/nfs
 
 ## add entry to /etc/exports file

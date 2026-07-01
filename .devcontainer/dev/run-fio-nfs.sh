@@ -63,7 +63,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-alpha.27"
+VERSION="1.1.0-alpha.28"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -73,7 +73,7 @@ SHELL_DEFAULT='\033[0m'
 
 # AMI settings (Ubuntu SSM parameters)
 PRODUCT="server"
-RELEASE="24.04"
+RELEASE="26.04"
 ARCH="amd64"
 ARCH_ALT="x86_64"
 VOL_TYPE="ebs-gp3"

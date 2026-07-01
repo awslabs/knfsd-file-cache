@@ -117,7 +117,7 @@ func executeRemote(ctx context.Context, t *testing.T, region, instanceID, keyPat
 	args := proxyArgs(region, keyPath, controlPath)
 	args = append(args,
 		fmt.Sprintf("%s@%s", sshUser, instanceID),
-		"sudo ./remote.test",
+		"sudo ./remote.test -test.v",
 	)
 	shell.RunCommandContext(t, ctx, &shell.Command{
 		Command: "ssh",

@@ -26,7 +26,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-alpha.27"
+VERSION="1.1.0-alpha.28"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -36,7 +36,7 @@ IDENTITY_FILE="~/.ssh/id_rsa"
 SSH_CONFIG_FILE=~/.ssh/config
 # ami-id settings
 PRODUCT="server" # server, server-minimal or pro-server
-RELEASE="24.04"
+RELEASE="26.04"
 ARCH=${BUILDARCH:-"amd64"} # amd64 or arm64
 VOL_TYPE="ebs-gp3"
 # ec2 settings

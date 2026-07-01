@@ -48,10 +48,8 @@ apt-get -y -q update && apt-get -y -q upgrade \
 echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && locale-gen \
 	&& update-locale LC_ALL=C.UTF-8 LANG=en_US.UTF-8
 
-## silence sudo usage message, grant sudo rights, symlink python3
-echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
-	&& rm -f /etc/sudoers.d/90-cloud-init-users \
-	&& chmod 0440 /etc/sudoers.d/disable_admin_file \
+## grant sudo rights, symlink python3
+echo rm -f /etc/sudoers.d/90-cloud-init-users \
 	&& echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
 	&& chmod 0440 /etc/sudoers.d/${USERNAME} \
 	&& ln -sf /usr/bin/python3 /usr/bin/python

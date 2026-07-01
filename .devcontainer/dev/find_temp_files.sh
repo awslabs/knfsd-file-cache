@@ -39,7 +39,6 @@ SEARCH_TARGETS=(
 	"*.tfstate.backup"
 	"*.tfstate.*.backup"
 	"packer.log"
-	"/image.manifest.json"
 	"/image/resources.tgz"
 	"db_setup.zip"
 	"static_ip.zip"

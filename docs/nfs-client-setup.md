@@ -8,7 +8,7 @@ NFS performance is heavily network-bound. It is highly recommended to install th
 
 ### Ubuntu
 
-Tested with Ubuntu 24.04 LTS.
+Tested with Ubuntu 26.04 LTS.
 
 ```bash
 #!/usr/bin/env bash

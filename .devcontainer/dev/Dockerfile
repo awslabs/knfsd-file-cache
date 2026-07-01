@@ -4,9 +4,9 @@
 ## docker build --tag knfsd-dev:latest --file .devcontainer/dev/Dockerfile .
 ## docker run --platform linux/amd64 --rm --name knfsd-dev --hostname knfsd-dev -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-dev
 
-FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:24.04
+FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-alpha.27"
+ARG VERSION="1.1.0-alpha.28"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -33,7 +33,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_PRIORITY=critical
 
 ## OS update, upgrade, install & cleanup apt pkgs
-## Ubuntu 24.04 onwards, unminimize is a package, install, then RUN
+## [unminimize] is a package, install, then RUN
 RUN apt-get -y -q update && apt-get -y -q upgrade \
     && apt-get -y -q install -o=Dpkg::Use-Pty=0 \
     apt-utils \
@@ -109,10 +109,8 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && ech
 ## non-root user
 ARG USERNAME=ubuntu
 
-## silence sudo usage message, grant sudo rights, symlink python3
-RUN echo "Defaults !admin_flag" >> /etc/sudoers.d/disable_admin_file \
-    && chmod 0440 /etc/sudoers.d/disable_admin_file \
-    && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
+## grant sudo rights, symlink python3
+RUN echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
     && echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/local/go/bin:/home/${USERNAME}/go/bin:/opt/venv/bin\"" >> /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME} \
     && ln -sf /usr/bin/python3 /usr/bin/python
@@ -146,15 +144,15 @@ ARG KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.36
+ARG KNFSD_BOTO3_VERSION=1.43.38
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.2
+ARG KNFSD_CHECKOV_VERSION=3.3.6
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.2
 # https://github.com/go-delve/delve/tags
 ARG KNFSD_DLV_VERSION=1.27.0
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.7.0
+ARG KNFSD_EDITORCONFIG_VERSION=3.8.0
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
@@ -188,11 +186,11 @@ ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.63.1
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.71.2
+ARG KNFSD_TRIVY_VERSION=0.72.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.11.24
+ARG KNFSD_UV_VERSION=0.11.26
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

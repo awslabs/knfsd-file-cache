@@ -1,5 +1,28 @@
 # KNFSD-File-Cache
 
+## v1.1.0-alpha.28
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
+
+> BREAKING CHANGES: Ensure `.devcontainer/prod` environment is rebuilt if used for production.
+
+* Packer: Updated to Ubuntu 26.04 LTS (Resolute Raccoon).
+* Packer: Updated to Linux kernel v7.1.2-knfsd.
+* Packer: Removed unused `image.manifest.json` and `image-name.sh` file from build process.
+* Packer: Added additional EC2 instance types to the AMI build process to increase build capacity and reduce build time.
+* Packer: `aws-cli` now installed via `snap`.
+* Packer: Added `knfsd-file-cache:status` AWS tag support to the AMI build instance to track the individual build steps.
+* Packer: Added `MAKE_VERBOSITY` environment variable to build scripts to reduce `make` compiler output to warnings/errors/summary.
+* Packer: Added `error-cleanup-provisioner` to `knfsd.pkr.hcl` to tag the build instance with `knfsd-file-cache:status=failed: build error` when the build process fails.
+* Packer: Disabled irrelevant Linux kernel build targets to reduce build time and snapshot size.
+* Smoke-tests: Updated to use `m6i.2xlarge` EC2 instance type for the test client.
+* Smoke-tests: Improved error handling and logging in the smoke-test driver.
+* Smoke-tests: Surface the Golang smoke-test results in the smoke-test driver output.
+* Enhanced [security considerations](docs/security-considerations.md) and [smoke-tests](image/smoke-tests/README.md) documentation with additional IAM policies and variable details.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.27
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

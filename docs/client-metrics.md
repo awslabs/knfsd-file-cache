@@ -140,7 +140,7 @@ For simplicity, this documentation provides an opinionated setup via an EC2 Secu
 
   ```bash
   export KNFSD_CLIENT_INSTANCE_ID=$(aws ec2 run-instances \
-    --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+    --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
     --instance-type $KNFSD_CLIENT_INSTANCE_TYPE \
     --key-name $KNFSD_CLIENT_KEYPAIR \
     --subnet-id $KNFSD_CLIENT_SUBNET \
@@ -254,7 +254,7 @@ You should see output similar to:
     Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
     2025-06-04T20:52:40.888+0100    info    service@v0.140.0/service.go:199 Setting up own telemetry...     {"resource": {}}
     2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.27", "NumCPU": 8}
+    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-alpha.28", "NumCPU": 8}
     2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
     2025-06-04T20:52:40.950+0100    info    service@v0.140.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```
