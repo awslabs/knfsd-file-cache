@@ -14,7 +14,18 @@ If you need to customize the image post build (e.g. installing custom metric age
 
 > NOTE: If your custom scripts need to access AWS resources, you must provide an IAM instance profile via the `IAM_INSTANCE_PROFILE` variable. This profile should have the necessary permissions for your scripts to execute successfully.
 
+> NOTE: To have the build instance report its progress via the `knfsd-file-cache:status` tag, set `TAG_BUILD_STATUS = true` and provide an `IAM_INSTANCE_PROFILE` whose role holds the `ec2:CreateTags` permission. See [Build status tagging](#build-status-tagging).
+
 Alternatively, if your build procedure is more complex, you can replace the customization step(s) with your own process.
+
+## Build status tagging
+
+During the build, the provisioning scripts can report their progress by setting the `knfsd-file-cache:status` tag on the build instance. This is disabled by default because it requires the build instance to be able to call the EC2 API.
+
+To enable it:
+
+1. Set `TAG_BUILD_STATUS = true` in your Packer variables file.
+2. Set `IAM_INSTANCE_PROFILE` to the name of an IAM instance profile that is attached to the build instance and whose role holds at least the `ec2:CreateTags` permission.
 
 ## Build Using Packer
 
@@ -57,7 +68,8 @@ Enter at least the following required variable (additional `SUBNET` variable is 
 * `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"packer-knfsd-proxy-{VERSION}-{ARCH}-{TIMESTAMP}"`.
 * `IMAGE_NAME` (string) - The unique name of the resulting image. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"knfsd-proxy-{VERSION}-{ARCH}"`.
 * `SKIP_CREATE_IMAGE` (bool) - Skip creating the image. Useful for setting to `true` during a build test stage. Default: `false`.
-* `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources. Default: `""`.
+* `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources, or if `TAG_BUILD_STATUS` is `true`. Default: `""`.
+* `TAG_BUILD_STATUS` (bool) - Whether to update the build instance status via the `knfsd-file-cache:status` tag. Requires `IAM_INSTANCE_PROFILE` to be set to an instance profile whose role holds the `ec2:CreateTags` permission. Default: `false`. See [Build status tagging](#build-status-tagging).
 * `CUSTOM_PRE_BUILD_SCRIPT` (string) - Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
 * `CUSTOM_POST_BUILD_SCRIPT` (string) - Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
 * `DISTRIBUTION_REGIONS` (list(string)) - Additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Default: `[]`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
@@ -235,7 +247,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 26.04 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.1.2-knfsd
+amazon-ebs.knfsd: Kernel:       7.1.3-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -302,7 +314,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-alpha.28"
+VERSION="1.1.0-alpha.29"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -465,7 +477,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 26.04 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.1.2-knfsd
+Kernel:       7.1.3-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

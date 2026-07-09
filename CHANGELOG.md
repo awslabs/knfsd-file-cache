@@ -1,6 +1,17 @@
 # KNFSD-File-Cache
 
-## v1.1.0-alpha.28
+## v1.1.0-alpha.29 (July 9, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Updated to Linux kernel v7.1.3-knfsd.
+* Packer: Updated to `amzn/amzn-drivers` ENA driver v2.17.2.
+* Packer: Added `TAG_BUILD_STATUS` variable (default `false`) to gate build-instance status tagging via the `knfsd-file-cache:status` AWS tag. When enabled, requires Packer variable `IAM_INSTANCE_PROFILE` to be set to an IAM role granting `ec2:CreateTags`.
+* Updated to Golang v1.26.5.
+* Updated to Terraform `aws` provider v6.53.0.
+* Minor Golang package updates.
+
+## v1.1.0-alpha.28 (July 1, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -23,7 +34,7 @@
 * Enhanced [security considerations](docs/security-considerations.md) and [smoke-tests](image/smoke-tests/README.md) documentation with additional IAM policies and variable details.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.27
+## v1.1.0-alpha.27 (June 27, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -68,7 +79,7 @@
 * Updated to Python v3.14.6.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.26
+## v1.1.0-alpha.26 (May 12, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -85,7 +96,7 @@
 * Updated to Python v3.14.5.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.25
+## v1.1.0-alpha.25 (May 7, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -113,7 +124,7 @@
 * Updated to Terraform `aws` provider v6.44.0.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.24
+## v1.1.0-alpha.24 (April 23, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -167,7 +178,7 @@
 * Updated to Python v3.14.4.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.23
+## v1.1.0-alpha.23 (March 13, 2026)
 
 > BREAKING CHANGES: `proxy-startup.sh` script is now installed into the AMI via Packer and only executed via EC2 user data on every boot.
 
@@ -189,7 +200,7 @@
 * Packer: Pinned `amzn/amzn-drivers` ENA driver to `ena_linux_2.16.1`.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.22
+## v1.1.0-alpha.22 (February 27, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -206,7 +217,7 @@
 * Enhanced `BATS` unit tests for `proxy-startup.sh` script to test all `sysctl` settings.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.21
+## v1.1.0-alpha.21 (February 23, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -247,7 +258,7 @@
 * Packer: compile/install `mdadm` from source into AMI to remove `md: async del_gendisk mode will be removed in future, please upgrade to mdadm-4.5+` warning from `dmesg` output.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.20
+## v1.1.0-alpha.20 (January 30, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -267,7 +278,7 @@
 * Updated to Terraform AWS provider v6.30.0.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.19
+## v1.1.0-alpha.19 (January 9, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -289,7 +300,7 @@
 * Added `provider_meta` to all Terraform AWS provider blocks with `USER_AGENT` string.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.18
+## v1.1.0-alpha.18 (December 12, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -304,7 +315,7 @@
 * Updated to Python v3.14.2.
 * Updated to Psycopg3 v3.3.1.
 
-## v1.1.0-alpha.17
+## v1.1.0-alpha.17 (December 2, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -323,7 +334,7 @@
 * Updated to Terraform AWS provider v6.23.0.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.16
+## v1.1.0-alpha.16 (November 21, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -349,7 +360,7 @@
 * Removed pinned OpenShift API Golang dependency in `knfsd-metrics-agent`.
 * Added parallelism (where feasible) to all Golang unit tests, reduced GitLab CI Golang jobs runtime by >50%.
 
-## v1.1.0-alpha.15
+## v1.1.0-alpha.15 (November 13, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -363,7 +374,7 @@
 * Updated to `nfs-utils` v2.8.4.
 * Minor Golang package updates.
 
-## v1.1.0-alpha.14
+## v1.1.0-alpha.14 (November 6, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -377,7 +388,7 @@
 * Enhanced `Makefile` to support `pre-commit autoupdate`.
 * Added AWS SSM agent to `remote-ssh` and `remote-docker` install scripts.
 
-## v1.1.0-alpha.13
+## v1.1.0-alpha.13 (November 3, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -388,7 +399,9 @@
 * Minor Golang package updates.
 * Improved documentation in various places, including [nfs-client-setup.md](docs/nfs-client-setup.md).
 
-## v1.1.0-alpha.12 (broken)
+## v1.1.0-alpha.12 (October 27, 2025)
+
+> BROKEN: Do NOT use this release.
 
 * Updated `metrics` documentation.
 * Added `docs/nfs-client-setup.md` documentation to explain recommended client setup for KNFSD.
@@ -400,7 +413,9 @@
 * Removed unused terminals in `.devcontainer` for improved performance.
 * Silenced false-positive in `semgrep` check.
 
-## v1.1.0-alpha.11 (broken)
+## v1.1.0-alpha.11 (October 24, 2025)
+
+> BROKEN: Do NOT use this release.
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -418,7 +433,7 @@
 * Packer: Purge `/etc/machine-id` file to ensure unique machine-id is generated during first-boot.
 * Added network throughput metric to CloudWatch `metrics` dashboard.
 
-## v1.1.0-alpha.10
+## v1.1.0-alpha.10 (October 9, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -439,7 +454,7 @@
 * Reduce TF variable: `ROOT_DISK_SIZE` from 100GB to 20GB for KNFSD instance boot volume (5x cost saving on EBS `gp3` used).
 * Added **WARNING** to `fanout` documentation: *Ensure the **fanout** EC2 `INSTANCE_TYPE` is at least 2x-8x more powerful than the **cluster** EC2 `INSTANCE_TYPE` (use a larger size).*
 
-## v1.1.0-alpha.9
+## v1.1.0-alpha.9 (September 14, 2025)
 
 * Updated to Terraform AWS provider v6.13.0.
 * Updated to Packer v1.14.2.
@@ -454,7 +469,7 @@
 * KNFSD specific NFS exports are now stored in `/etc/exports.d/knfsd.exports`, leaving default `/etc/exports` untouched.
 * Ensure `resources` directory is writable by all users in `../deployment/database/resources/docker-build.sh`.
 
-## v1.1.0-alpha.8
+## v1.1.0-alpha.8 (September 3, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -472,7 +487,7 @@
 * Exposed `FSID_MODE` as a variable to the `fsx-zfs` example.
 * Removed unused OTEL packages from `knfsd-metrics-agent` Golang module.
 
-## v1.1.0-alpha.7
+## v1.1.0-alpha.7 (September 2, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -484,7 +499,7 @@
 * Add Docker "buildx" CLI argument for cross-platform builds.
 * Enhance Docker image inspect command to support multi-platform images.
 
-## v1.1.0-alpha.6
+## v1.1.0-alpha.6 (July 22, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -497,7 +512,7 @@
 * Packer: updated Packer min version to v1.13.1.
 * Packer: updated `amazon-ebs` plugin min version to v1.3.9.
 
-## v1.1.0-alpha.5
+## v1.1.0-alpha.5 (July 18, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -507,7 +522,7 @@
 * Added debug logging to `knfsd-fsidd` to validate the local database cache is working as expected.
 * Added initial metrics changes to OTEL `*.yaml` config files.
 
-## v1.1.0-alpha.4
+## v1.1.0-alpha.4 (July 13, 2025)
 
 > BREAKING CHANGES: `var.ASSOCIATE_PUBLIC_IP_ADDRESS` is now `null` by default in `image.pkrvars.hcl`. See [Packer: Security Group Usage Scenarios](image/README.md#security-group-usage-scenarios) for more information.
 
@@ -518,7 +533,7 @@
 * Packer: added `var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` in `image.pkrvars.hcl` to allow access from a list of CIDR blocks during image build. Default: `[]`.
 * Packer: added `var.TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` in `image.pkrvars.hcl` to allow access from the public IP address of the machine running Packer during image build. Default: `true`.
 
-## v1.1.0-alpha.3
+## v1.1.0-alpha.3 (June, 2025)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
@@ -585,6 +600,6 @@
 * Packer: added `var.ASSOCIATE_PUBLIC_IP_ADDRESS` in `image.pkrvars.hcl` to force public IP address association during image build. Default: `true`.
 * Packer: added new CloudWatch EBS metrics to `amazon-cloudwatch-agent.json` to monitor EBS volume performance.
 
-## v1.1.0-alpha.2
+## v1.1.0-alpha.2 (May, 2025)
 
 * Initial alpha release of KNFSD-File-Cache

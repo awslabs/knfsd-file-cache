@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-alpha.28"
+  version       = "1.1.0-alpha.29"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -110,6 +110,7 @@ source "amazon-ebs" "knfsd-amd64" {
   spot_allocation_strategy = "price-capacity-optimized"
   spot_price               = "auto"
   iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
+
   run_tags = {
     "Name"                            = local.build_name_amd64
     "knfsd-file-cache:version"        = local.version
@@ -244,6 +245,7 @@ source "amazon-ebs" "knfsd-arm64" {
   spot_allocation_strategy = "price-capacity-optimized"
   spot_price               = "auto"
   iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
+
   run_tags = {
     "Name"                            = local.build_name_arm64
     "knfsd-file-cache:version"        = local.version
@@ -380,7 +382,10 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    execute_command = "chmod +x {{ .Path }}; sudo {{ .Vars }} {{ .Path }}"
+    environment_vars = [
+      "TAG_BUILD_STATUS=${var.TAG_BUILD_STATUS}",
+    ]
     inline = [
       "chmod +x /mnt/build/scripts/*.sh",
       "/mnt/build/scripts/10_build.sh 2>&1",
@@ -406,7 +411,10 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    execute_command = "chmod +x {{ .Path }}; sudo {{ .Vars }} {{ .Path }}"
+    environment_vars = [
+      "TAG_BUILD_STATUS=${var.TAG_BUILD_STATUS}",
+    ]
     inline = [
       "chmod +x /mnt/build/scripts/*.sh",
       "/mnt/build/scripts/20_post_build.sh 2>&1"
@@ -424,7 +432,10 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    execute_command = "chmod +x {{ .Path }}; sudo {{ .Vars }} {{ .Path }}"
+    environment_vars = [
+      "TAG_BUILD_STATUS=${var.TAG_BUILD_STATUS}",
+    ]
     inline = [
       "/mnt/build/scripts/30_finalize.sh 2>&1",
       "umount /mnt/build",

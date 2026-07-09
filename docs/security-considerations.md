@@ -77,6 +77,10 @@ The `testing.json` policy is optional and is only required to run the [smoke-tes
 - `KnfsdTestingSsmManageSession` — required to terminate the SSH tunnel
 - `KnfsdTestingInstanceConnect` — required to push the short-lived ephemeral key via EC2 Instance Connect
 
+The AMI build (Packer) can optionally tag the build instance with its progress via the `knfsd-file-cache:status` tag:
+
+- Enabled only when `TAG_BUILD_STATUS = true`, which requires an `IAM_INSTANCE_PROFILE` whose role grants `ec2:CreateTags`. When disabled (default), the build requires no runtime credentials on the build instance.
+
 This approach ensures the deploying principal never holds more permissions than the selected feature set requires.
 
 ### Condition-Based Scoping

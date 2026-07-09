@@ -14,9 +14,14 @@ SHELL_DEFAULT='\033[0m'
 REGION=$(cloud-init query region)
 INSTANCE_ID=$(cloud-init query instance_id)
 
+# whether to tag the build instance status (requires an IAM instance profile
+# with the "ec2:CreateTags" permission); defaults to false if unset
+TAG_BUILD_STATUS="${TAG_BUILD_STATUS:-false}"
+
 # update_status() updates the tag:"knfsd-file-cache:status" of the instance
 # @param (str) $1 message
 function update_status() {
+	[[ "${TAG_BUILD_STATUS}" == "true" ]] || return 0
 	aws ec2 create-tags \
 		--region "${REGION}" \
 		--resources "${INSTANCE_ID}" \

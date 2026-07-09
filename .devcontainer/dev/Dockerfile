@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-alpha.28"
+ARG VERSION="1.1.0-alpha.29"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -156,7 +156,7 @@ ARG KNFSD_EDITORCONFIG_VERSION=3.8.0
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.26.4
+ARG KNFSD_GOLANG_VERSION=1.26.5
 # https://pkg.go.dev/golang.org/x/tools/gopls
 ARG KNFSD_GOPLS_VERSION=0.22.0
 # https://github.com/securego/gosec/releases

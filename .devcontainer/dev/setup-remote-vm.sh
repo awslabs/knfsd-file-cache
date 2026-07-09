@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.28"
+VERSION="1.1.0-alpha.29"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -144,7 +144,7 @@ KNFSD_EDITORCONFIG_VERSION=3.8.0
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.26.4
+KNFSD_GOLANG_VERSION=1.26.5
 # https://github.com/securego/gosec/releases
 KNFSD_GOSEC_VERSION=2.27.1
 # https://github.com/python/mypy/tags

@@ -39,6 +39,12 @@ misconfigurations:
       - "image/smoke-tests/modules/source-nfs/main.tf"
       - "image/smoke-tests/terraform/network.tf"
 
+vulnerabilities:
+  - id: GO-2026-5932
+    paths:
+      - "image/resources/knfsd-metrics-agent/go.mod"
+      - "image/smoke-tests/go.mod"
+
 licenses:
   - id: Apache-2.0
   - id: BSD-2-Clause

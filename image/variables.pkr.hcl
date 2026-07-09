@@ -163,3 +163,9 @@ variable "CUSTOM_POST_BUILD_SCRIPT" {
   type        = string
   default     = ""
 }
+
+variable "TAG_BUILD_STATUS" {
+  description = "(Optional) Whether to update the build instance status via AWS tag \"knfsd-file-cache:status\". This requires \"IAM_INSTANCE_PROFILE\" to be set to an instance profile whose role holds the \"ec2:CreateTags\" IAM permission. Default: \"false\"."
+  type        = bool
+  default     = false
+}
