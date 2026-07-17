@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ## docker build --tag knfsd-dev:latest --file .devcontainer/dev/Dockerfile .
-## docker run --platform linux/amd64 --rm --name knfsd-dev --hostname knfsd-dev -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-dev
+## docker run --platform linux/arm64 --rm --name knfsd-dev --hostname knfsd-dev -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-dev
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-alpha.29"
+ARG VERSION="1.1.0-beta.1"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -144,11 +144,11 @@ ARG KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.38
+ARG KNFSD_BOTO3_VERSION=1.43.50
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.6
+ARG KNFSD_CHECKOV_VERSION=3.3.8
 # https://github.com/codespell-project/codespell/releases
-ARG KNFSD_CODESPELL_VERSION=2.4.2
+ARG KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/go-delve/delve/tags
 ARG KNFSD_DLV_VERSION=1.27.0
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
@@ -158,13 +158,13 @@ ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
 ARG KNFSD_GOLANG_VERSION=1.26.5
 # https://pkg.go.dev/golang.org/x/tools/gopls
-ARG KNFSD_GOPLS_VERSION=0.22.0
+ARG KNFSD_GOPLS_VERSION=0.23.0
 # https://github.com/securego/gosec/releases
-ARG KNFSD_GOSEC_VERSION=2.27.1
+ARG KNFSD_GOSEC_VERSION=2.28.0
 # https://github.com/iann0036/iamlive/releases
 ARG KNFSD_IAMLIVE_VERSION=1.1.28
 # https://github.com/python/mypy/tags
-ARG KNFSD_MYPY_VERSION=2.1.0
+ARG KNFSD_MYPY_VERSION=2.3.0
 # https://github.com/hashicorp/packer/releases
 ARG KNFSD_PACKER_VERSION=1.15.4
 # https://github.com/pre-commit/pre-commit/releases
@@ -174,7 +174,7 @@ ARG KNFSD_PSYCOPG_VERSION=3.3.4
 # https://github.com/pylint-dev/pylint/tags
 ARG KNFSD_PYLINT_VERSION=4.0.6
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.168.0
+ARG KNFSD_SEMGREP_VERSION=1.170.0
 # https://github.com/aws/session-manager-plugin/tags
 ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
@@ -184,13 +184,13 @@ ARG KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
-ARG KNFSD_TFLINT_VERSION=0.63.1
+ARG KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
 ARG KNFSD_TRIVY_VERSION=0.72.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.11.26
+ARG KNFSD_UV_VERSION=0.11.29
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

@@ -3,11 +3,11 @@
   "build": {
     "dockerfile": "Dockerfile",
     "options": [
-      "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+      "--platform=${localEnv:BUILDPLATFORM:linux/arm64}"
     ],
     "args": {
-      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/amd64}",
-      "BUILDARCH": "${localEnv:BUILDARCH:amd64}"
+      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/arm64}",
+      "BUILDARCH": "${localEnv:BUILDARCH:arm64}"
     }
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/knfsd-file-cache,type=bind",
@@ -59,7 +59,6 @@
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
-    "source=knfsd-dev-cursor-cache,target=/home/ubuntu/.cursor,type=volume",
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
@@ -85,6 +84,6 @@
     "--hostname=knfsd-dev",
     "--network=host",
     "--add-host=knfsd-dev:127.0.0.1",
-    "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+    "--platform=${localEnv:BUILDPLATFORM:linux/arm64}"
   ]
 }

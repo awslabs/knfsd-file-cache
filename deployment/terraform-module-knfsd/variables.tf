@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-alpha.29"
+  default     = "1.1.0-beta.1"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-alpha.29\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.1\"."
   }
 }
 
@@ -24,7 +24,7 @@ variable "SUBNET" {
 }
 
 variable "TRAFFIC_MODE" {
-  description = "(Required) The client traffic distribution mode used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either \"dns_round_robin\", \"loadbalancer\", or \"none\". The recommended option is \"dns_round_robin\". If using \"none\" you will need to provide your own solution to handle traffic distribution. No default."
+  description = "(Optional) The client traffic distribution mode used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either \"dns_round_robin\", \"loadbalancer\", or \"none\". The recommended option is \"dns_round_robin\". If using \"none\" you will need to provide your own solution to handle traffic distribution. Default: \"dns_round_robin\"."
   type        = string
   nullable    = false
   default     = "dns_round_robin"

@@ -9,13 +9,13 @@ packer {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = "~> 1.8.1"
+      version = "~> 1.8.2"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-alpha.29"
+  version       = "1.1.0-beta.1"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8

@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-alpha.29"
+VERSION="1.1.0-beta.1"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -134,11 +134,11 @@ KNFSD_BATS_CORE_VERSION=1.13.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.38
+KNFSD_BOTO3_VERSION=1.43.50
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.6
+KNFSD_CHECKOV_VERSION=3.3.8
 # https://github.com/codespell-project/codespell/releases
-KNFSD_CODESPELL_VERSION=2.4.2
+KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=3.8.0
 # https://github.com/golangci/golangci-lint/releases
@@ -146,9 +146,9 @@ KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
 KNFSD_GOLANG_VERSION=1.26.5
 # https://github.com/securego/gosec/releases
-KNFSD_GOSEC_VERSION=2.27.1
+KNFSD_GOSEC_VERSION=2.28.0
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=2.1.0
+KNFSD_MYPY_VERSION=2.3.0
 # https://github.com/hashicorp/packer/releases
 KNFSD_PACKER_VERSION=1.15.4
 # https://github.com/pre-commit/pre-commit/releases
@@ -158,7 +158,7 @@ KNFSD_PSYCOPG_VERSION=3.3.4
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.6
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.168.0
+KNFSD_SEMGREP_VERSION=1.170.0
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
@@ -168,13 +168,13 @@ KNFSD_SHFMT_VERSION=3.13.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
-KNFSD_TFLINT_VERSION=0.63.1
+KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
 KNFSD_TRIVY_VERSION=0.72.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.11.26
+KNFSD_UV_VERSION=0.11.29
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

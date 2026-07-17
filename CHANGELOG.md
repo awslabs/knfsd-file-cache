@@ -1,5 +1,21 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.1 (July 17, 2026)
+
+> BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
+
+> BREAKING CHANGES: Ensure `.devcontainer/prod` environment is rebuilt if used for production.
+
+* Fixed `tflint` inheritance issue in GitLab CI and `Makefile` configuration by setting `TFLINT_CONFIG_FILE` environment variable.
+* Fixed typo in `terraform-module-knfsd` `README.md` and `variables.tf`. `TRAFFIC_MODE` is no longer a required (now optional) Terraform variable.
+* Switched `devcontainer` default architecture from `amd64` to `arm64`. See [docs/developer.md](docs/developer.md) if you need to force `amd64` instead.
+* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the dev-container host architecture.
+* Added GitLab CI configuration for running `smoke-tests` CI jobs.
+* Added `TRIVY_DISABLE_VEX_NOTICE` environment variable to disable VEX notices from Trivy security scans.
+* Updated to Terraform `aws` provider v6.55.0.
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.2.
+* Minor Golang package updates.
+
 ## v1.1.0-alpha.29 (July 9, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

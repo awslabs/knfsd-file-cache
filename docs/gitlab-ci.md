@@ -141,13 +141,6 @@ The most compute and/or network intensive CI jobs are configured with a `2xlarge
 - **Reference**: [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)
 - **Failure Policy**: Blocking
 
-#### `hcl-validate-testing`
-
-- **Purpose**: Validates Packer template syntax and configuration for testing client image
-- **Tool**: Packer built-in validator
-- **Reference**: [Packer validate Command](https://developer.hashicorp.com/packer/docs/commands/validate)
-- **Failure Policy**: Blocking
-
 ### Terraform Stage
 
 #### `tf-format`
@@ -244,6 +237,16 @@ Largest Go project requiring 2xlarge runners for performance.
 
 Includes certificate generation for testing TLS functionality.
 
+#### `go-smoke-tests` (4 jobs)
+
+Builds the [Terratest](https://terratest.gruntwork.io/)-based smoke tests
+located in `image/smoke-tests/`:
+
+1. **populate-cache**: Downloads and caches Go modules
+2. **lint,format**: Code linting and formatting validation
+3. **vulnerability scan**: Security vulnerability assessment
+4. **build**: Compiles the `./cmd/remote` test binary (`go test -c`)
+
 **Common Go Job Features:**
 
 - **Linting**: [golangci-lint](https://golangci-lint.run/) with comprehensive rule set
@@ -262,7 +265,7 @@ Includes certificate generation for testing TLS functionality.
 - **Configuration**: Uses `.checkov.yaml` configuration file
 - **Failure Policy**: Warning
 
-#### `gosec` (5 jobs)
+#### `gosec` (6 jobs)
 
 - **Purpose**: Go source code security analysis
 - **Tool**: [Gosec](https://github.com/securego/gosec)

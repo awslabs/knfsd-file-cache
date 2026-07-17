@@ -197,8 +197,8 @@ tf-fmt:
 terraform: tf-lint
 tf-lint:
 	@echo "[tflint]"
-	@tflint --init
-	@tflint --recursive --config="$(ROOT_DIR)/.tflint.hcl" --format compact
+	@TFLINT_CONFIG_FILE="$(ROOT_DIR)/.tflint.hcl" tflint --init
+	@TFLINT_CONFIG_FILE="$(ROOT_DIR)/.tflint.hcl" tflint --recursive --format compact
 
 .PHONY: terraform-validate
 terraform: tf-val
@@ -236,7 +236,7 @@ scan-checkov checkov:
 scan: scan-trivy trivy
 scan-trivy trivy:
 	@echo "[trivy]"
-	@trivy fs --ignorefile $(ROOT_DIR)/.trivyignore.yaml --exit-code 1 \
+	@TRIVY_DISABLE_VEX_NOTICE="true" trivy fs --ignorefile $(ROOT_DIR)/.trivyignore.yaml --exit-code 1 \
 		--cache-dir "$(ROOT_DIR)/.trivycache" \
 		--tf-vars $(ROOT_DIR)/.trivy.tfvars \
 		--scanners secret,vuln,misconfig,license $(ROOT_DIR)

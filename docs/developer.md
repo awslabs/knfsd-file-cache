@@ -59,11 +59,11 @@ To allow rapid onboarding of developers to the integrated development environmen
 
 * All versions of software installed in the `Dockerfile` are pinned to match the identical version being used in the `.gitlab-ci.yml` file.
 
-* To override the default architecture (amd64/x86_64), set on your local OS the following 2 environment variables to the architecture you wish to build the devcontainer.
+* To override the default architecture (arm64/aarch64), set on your local OS the following 2 environment variables to the architecture you wish to build the devcontainer.
 
   ```bash
-  export BUILDPLATFORM=linux/arm64 # linux/amd64 (default) or linux/arm64
-  export BUILDARCH=arm64 # amd64 (default) or arm64
+  export BUILDPLATFORM=linux/amd64 # linux/arm64 (default) or linux/amd64
+  export BUILDARCH=amd64 # arm64 (default) or amd64
   ```
 
 * If you modify any of the `.devcontainer/dev/` files, you will need to `rebuild` the container. The `Dockerfile` has already been written to minimise the impact of rebuild times via Docker layers that are cached.
@@ -119,9 +119,6 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
 
     # Docker persistent volume: saves all terminal/shell history from container for future use
     "source=knfsd-dev-commandhistory,target=/home/ubuntu/.commandhistory,type=volume",
-
-    # Docker persistent volume: Cursor cache: $HOME/.cursor
-    "source=knfsd-dev-cursor-cache,target=/home/ubuntu/.cursor,type=volume",
 
     # Docker persistent volume: uv cache: $HOME/.cache/uv
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",

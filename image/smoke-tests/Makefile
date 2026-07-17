@@ -4,8 +4,15 @@
 
 ROOT_DIR ?= "../.."
 
-GO_FLAGS := $(GO_FLAGS) -count=1 -timeout=1h
+GO_FLAGS := $(GO_FLAGS) -v -count=1 -timeout=1h
 SINGLE_STAGE := SKIP_apply=true SKIP_check=true SKIP_destroy=true
+
+# Architecture of the remote NFS client the "remote.test" binary is copied to
+# and executed on. This is the Terraform "ARCH" variable (default "amd64"), NOT
+# the host/dev-container architecture, so "build-remote" cross-compiles the
+# binary to match the client. Override to match a non-default "ARCH", e.g.:
+#   make test TARGET_ARCH=arm64  (with ARCH="arm64" in terraform.tfvars)
+TARGET_ARCH ?= amd64
 
 .PHONY: default
 default:
@@ -31,9 +38,9 @@ goget goupdate:
 
 .PHONY: build-remote
 build-remote:
-	@go test -c ./cmd/remote
+	@GOOS=linux GOARCH=$(TARGET_ARCH) go test -c ./cmd/remote
 
-# Runs all the test stages (apply, test, destroy).
+# Runs all the test stages (apply, check, destroy).
 # This ensures (best effort) that infrastructure is destroyed even if the tests
 # fail. Running the stages individually runs the risk that on an error the
 # infrastructure is not destroyed.
@@ -45,7 +52,7 @@ test: build-remote
 apply: build-remote
 	@$(SINGLE_STAGE) SKIP_apply= go test $(GO_FLAGS)
 
-# Runs only the test stage without applying or destroy Terraform. Useful when
+# Runs only the check stage without applying or destroying Terraform. Useful when
 # developing tests locally.
 .PHONY: check
 check: build-remote

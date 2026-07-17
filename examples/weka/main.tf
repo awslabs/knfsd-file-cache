@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.53.0"
+      version = "~> 6.55.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/weka/1.1.0-alpha.29"
+      "knfsd-file-cache/examples/weka/1.1.0-beta.1"
     ]
   }
 }

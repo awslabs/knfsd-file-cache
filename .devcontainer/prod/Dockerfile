@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ## docker build --tag knfsd-prod:latest --file .devcontainer/prod/Dockerfile .
-## docker run --platform linux/amd64 --rm --name knfsd-prod --hostname knfsd-prod -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-prod
+## docker run --platform linux/arm64 --rm --name knfsd-prod --hostname knfsd-prod -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-prod
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-alpha.29"
+ARG VERSION="1.1.0-beta.1"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"

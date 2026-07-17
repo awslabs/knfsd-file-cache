@@ -10,7 +10,7 @@ For every run, the harness performs the following steps:
 4. Copies the compiled `remote.test` binary onto the client over `scp` and executes it via `sudo` over `ssh`, both tunnelled over SSM (see [SSH connectivity](#ssh-connectivity)).
 5. Tears every AWS resource down.
 
-The Golang compiled `remote.test` binary reads `source_host` / `proxy_host` from EC2 instance tags via IMDSv2 and exercises mounts through the proxy. The `remote.test` binary is compiled using the `build-remote` target via the `Makefile`.
+The Golang compiled `remote.test` binary reads `source_host` / `proxy_host` from EC2 instance tags via IMDSv2 and exercises mounts through the proxy. The `remote.test` binary is compiled using the `build-remote` target via the `Makefile`. Because the binary runs on the remote NFS client (not the machine driving the tests), `build-remote` cross-compiles it for `GOOS=linux GOARCH=$(TARGET_ARCH)`. `TARGET_ARCH` defaults to `amd64` to match the Terraform `ARCH` default and is independent of the dev-container host architecture; override it (e.g. `make test TARGET_ARCH=arm64`) to match a non-default client `ARCH`.
 
 The smoke-test Terraform in [`terraform/`](terraform/) wires three modules — [`modules/source-nfs`](modules/source-nfs), [`deployment/terraform-module-knfsd`](../../deployment/terraform-module-knfsd), and [`modules/nfs-client`](modules/nfs-client) — plus the self-created security groups in [`terraform/network.tf`](terraform/network.tf).
 
@@ -84,7 +84,7 @@ SUBNET    = "subnet-xxxxxxxxxxxxxxxxx"
 PROXY_AMI = "ami-xxxxxxxxxxxxxxxxx"
 ```
 
-The `PREFIX` variable defaults to `knfsd-smoke`; the Go driver overrides it with a `knfsd-smoke-<random.UniqueID()>` value per run, so concurrent runs in the same account do not collide. The `knfsd` prefix is required: it places all created IAM, CloudFormation, and EventBridge resources under the `knfsd-*` ARN scope granted to the restricted IAM policy (`docs/iam/tf-required.json`). To target an `arm64` client, override both `ARCH = "arm64"` and `INSTANCE_TYPE` to a Graviton-family type (e.g. `m7g.2xlarge`); the Terraform pre-flight checks reject architecture mismatches between `ARCH` and `INSTANCE_TYPE`.
+The `PREFIX` variable defaults to `knfsd-smoke`; the Go driver overrides it with a `knfsd-smoke-<random.UniqueID()>` value per run, so concurrent runs in the same account do not collide. The `knfsd` prefix is required: it places all created IAM, CloudFormation, and EventBridge resources under the `knfsd-*` ARN scope granted to the restricted IAM policy (`docs/iam/tf-required.json`). To target an `arm64` client, override `ARCH = "arm64"` and `INSTANCE_TYPE` to a Graviton-family type (e.g. `m7g.2xlarge`) in `terraform.tfvars`, and build the matching binary with `make test TARGET_ARCH=arm64`; the Terraform pre-flight checks reject architecture mismatches between `ARCH` and `INSTANCE_TYPE`.
 
 ### SSH connectivity
 

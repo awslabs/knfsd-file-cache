@@ -3,11 +3,11 @@
   "build": {
     "dockerfile": "Dockerfile",
     "options": [
-      "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+      "--platform=${localEnv:BUILDPLATFORM:linux/arm64}"
     ],
     "args": {
-      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/amd64}",
-      "BUILDARCH": "${localEnv:BUILDARCH:amd64}"
+      "BUILDPLATFORM": "${localEnv:BUILDPLATFORM:linux/arm64}",
+      "BUILDARCH": "${localEnv:BUILDARCH:arm64}"
     }
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/knfsd-file-cache,type=bind",
@@ -60,6 +60,6 @@
     "--hostname=knfsd-prod",
     "--network=host",
     "--add-host=knfsd-prod:127.0.0.1",
-    "--platform=${localEnv:BUILDPLATFORM:linux/amd64}"
+    "--platform=${localEnv:BUILDPLATFORM:linux/arm64}"
   ]
 }

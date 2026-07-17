@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.29"
+source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
 ```
 
 ## Prerequisites
@@ -42,7 +42,7 @@ provider "aws" {
 }
 
 module "knfsd" {
-  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-alpha.29"
+  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg"
@@ -79,7 +79,7 @@ When deploying KNFSD File Cache in private subnets without internet connectivity
 
 | Variable          | Description                                                                                                                                                                                                                                                                                                                                             | Required | Default                                                                      |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `TRAFFIC_MODE`    | The [client traffic distribution mode](docs/traffic-distribution.md) used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either `dns_round_robin`, `loadbalancer`, or `none`. The recommended option is `dns_round_robin`. If using `none` you will need to provide your own solution to handle traffic distribution. | True     | `dns_round_robin`                                                            |
+| `TRAFFIC_MODE`    | The [client traffic distribution mode](docs/traffic-distribution.md) used to distribute traffic between proxy instances in the KNFSD proxy cluster. Can be either `dns_round_robin`, `loadbalancer`, or `none`. The recommended option is `dns_round_robin`. If using `none` you will need to provide your own solution to handle traffic distribution. | False    | `dns_round_robin`                                                            |
 | `LOADBALANCER_IP` | The static private IPv4 address to use for the Network Load Balancer when `TRAFFIC_MODE = "loadbalancer"`. If not specified, a random IP address will be assigned from the VPC Subnet.                                                                                                                                                                  | False    | `null`                                                                       |
 | `DNS_NAME`        | The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster. Defaults to: `"{PROXY_BASENAME}.aws.internal."` or `"nlb.{PROXY_BASENAME}.aws.internal."` [Note: the trailing period is required].                                                                                                                                              | False    | `"{PROXY_BASENAME}.aws.internal."` or `"nlb.{PROXY_BASENAME}.aws.internal."` |
 | `ASG_EGRESS_CIDR` | The IPv4 CIDR block to use for the Auto Scaling Group (ASG) EGRESS rule for KNFSD proxy instances. Default: `0.0.0.0/0`.                                                                                                                                                                                                                                | False    | `0.0.0.0/0`                                                                  |
