@@ -1,5 +1,6 @@
 REGION                       = "us-east-1"
 SUBNET                       = "subnet-00000000000000000"
+SUBNETS                      = ["subnet-00000000000000000"]
 PROXY_AMI                    = "ami-00000000000000000"
 NAME                         = "trivy-scan"
 CLIENT_SECURITY_GROUP_ID     = "sg-00000000000000000"

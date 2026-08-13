@@ -4,7 +4,7 @@ Amazon [FSx for NetApp ONTAP](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/
 
 This advanced example provides a single KNFSD proxy connecting to a single-AZ FSx for NetApp ONTAP filesystem to act as the source filer. We enforce NFS v4.1 throughout the deployment, as the increase in filehandle size mandates the use of NFSv4.1.
 
-This example uses an external FSID database (RDS PostgreSQL) to ensure consistent file handle allocation, which is the recommended approach for production deployments.
+This example uses an external FSID database (Amazon DynamoDB) to ensure consistent file handle allocation, which is the recommended approach for production deployments.
 
 We use `dns_round_robin` traffic mode to best-effort load balance the NFS clients across the KNFSD proxies.
 
@@ -90,37 +90,35 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 This example creates Amazon FSx for NetApp ONTAP resources (`aws_fsx_ontap_file_system`, `aws_fsx_ontap_storage_virtual_machine`, `aws_fsx_ontap_volume`) and AWS Secrets Manager resources (`aws_secretsmanager_secret`, `aws_secretsmanager_secret_version`) that are not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `fsx:*`, `secretsmanager:*` (write actions), and `iam:CreateServiceLinkedRole` (for `fsx.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
 
+As an alternative, if the role does not yet exist in the AWS account, you can pre-create the service-linked role for `fsx.amazonaws.com` before running `terraform apply` as follows:
+
+```bash
+aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
+```
+
 ## Inputs
 
-* `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
-
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the FSx for NetApp ONTAP source filer and KNFSD File Cache. Example: `subnet-038e337f0ff4cd53f`. No default.
-
-* `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
-
-* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `knfsd`.
-
-* `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
-
-* `INSTANCE_TYPE` - (Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: `i3en.6xlarge`.
-
-* `KNFSD_NODES` - (Optional) The number of KNFSD instances to deploy as part of the cluster. Default: `1`.
+| Variable         | Description                                                                                                                                    | Required | Default        |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|----------|----------------|
+| `REGION`         | The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`.                                                            | True     | No default     |
+| `SUBNET`         | The single subnet ID to use for deployment of the FSx for NetApp ONTAP source filer and KNFSD File Cache. Example: `subnet-038e337f0ff4cd53f`. | True     | No default     |
+| `PROXY_AMI`      | The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script.              | True     | No default     |
+| `PROXY_BASENAME` | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a globally, unique basename to avoid conflicts.            | False    | `knfsd`        |
+| `KEY_NAME`       | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                           | False    | `""`           |
+| `INSTANCE_TYPE`  | The AWS EC2 instance type to use for the KNFSD cache.                                                                                          | False    | `i3en.6xlarge` |
+| `KNFSD_NODES`    | The number of KNFSD instances to deploy as part of the cluster.                                                                                | False    | `1`            |
 
 ## Outputs
 
-* `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
-
-* `autoscaling_group_security_group_id` - Security Group ID for the KNFSD proxy Auto Scaling Group.
-
-* `database_config` - Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
-
-* `database_iam_policy` - The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
-
-* `dns_name` - The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
-
-* `loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
-
-* `knfsd_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
+| Output                                | Description                                                                                                                                            |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `autoscaling_group_name`              | Name of the KNFSD proxy Auto Scaling Group.                                                                                                            |
+| `autoscaling_group_security_group_id` | Security Group ID for the KNFSD proxy Auto Scaling Group.                                                                                              |
+| `database_config`                     | Database configuration for the deployed DynamoDB FSID table. Only available when database is deployed by this module (when `FSID_MODE` is `external`). |
+| `database_iam_policy`                 | The ARN of the IAM policy for DynamoDB table access. Only available when database is deployed by this module (when `FSID_MODE` is `external`).         |
+| `dns_name`                            | The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).            |
+| `loadbalancer_ipaddress`              | The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                            |
+| `knfsd_security_group_id`             | Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).            |
 
 ## NetApp Auto-Detection Configuration
 

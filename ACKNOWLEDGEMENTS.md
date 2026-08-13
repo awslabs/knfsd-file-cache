@@ -24,15 +24,10 @@ We acknowledge the contributions of:
 
 ## REFERENCES
 
-Daire Byrne, DNEG. 2020. linux-nfs and linux-cachefs mailing list.
-Retrieved from https://lore.kernel.org/linux-nfs/20200917190931.GA6858@fieldses.org/T/
+Daire Byrne, DNEG. 2020. [linux-nfs and linux-cachefs mailing list](https://lore.kernel.org/linux-nfs/20200917190931.GA6858@fieldses.org/T/)
 
-GitHub, 2022. Google Cloud Platform knfsd project.
-Retrieved from https://github.com/GoogleCloudPlatform/knfsd-cache-utils
+GitHub, 2022. [Google Cloud Platform knfsd project](https://github.com/GoogleCloudPlatform/knfsd-cache-utils)
 
-Wētā FX, 2023. DIGIPRO'23 whitepaper, "How much cloud is too much cloud?: What we wish we knew before we started".
+Wētā FX, 2023. DIGIPRO'23 whitepaper, ["How much cloud is too much cloud?: What we wish we knew before we started"](https://dp2023.digiproconf.org/program/program-6/).<br>
 Andy Wright, Sam Bui, Justin Israel, Bill Ryder, Tristan McMahon, Angus Williams, Matt Cahill, Graeme Demmocks (Unity/Wētā Digital).
-Retrieved from:
-
-* https://dp2023.digiproconf.org/program/program-6/
-* https://dl.acm.org/doi/10.1145/3603521.3604299
+[ACM Digital Library article](https://dl.acm.org/doi/10.1145/3603521.3604299)

@@ -69,9 +69,9 @@ metrics:
       monotonic: true
       aggregation: cumulative
 
-  fsid.sql.query.count:
+  fsid.db.query.count:
     enabled: true
-    description: Number of SQL queries executed by the KNFSD FSID daemon.
+    description: Number of DynamoDB queries executed by the KNFSD FSID daemon.
     unit: '{queries}'
     attributes: ['query', 'result']
     sum:
@@ -79,9 +79,9 @@ metrics:
       monotonic: true
       aggregation: cumulative
 
-  fsid.sql.query.duration:
+  fsid.db.query.duration:
     enabled: true
-    description: Duration of SQL queries executed by the KNFSD FSID daemon.
+    description: Duration of DynamoDB queries executed by the KNFSD FSID daemon.
     unit: 'ms'
     attributes: ['query', 'result']
     sum:

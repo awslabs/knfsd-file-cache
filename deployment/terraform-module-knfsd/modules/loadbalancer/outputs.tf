@@ -14,7 +14,7 @@ output "ip_address" {
 
 output "lb_security_group_id" {
   description = "The ID of the KNFSD Network Load Balancer Security Group."
-  value       = aws_security_group.knfsd_lb_sg.id
+  value       = local.knfsd_lb_sg_id
 }
 
 output "lb_target_groups" {

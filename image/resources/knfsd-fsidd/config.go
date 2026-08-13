@@ -36,10 +36,15 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
-	URL         string `ini:"url"`
-	IAMAuth     bool   `ini:"iam-auth"`
-	TableName   string `ini:"table-name"`
-	CreateTable bool   `ini:"create-table"`
+	// TableName is the Amazon DynamoDB table storing the FSID mappings.
+	TableName string `ini:"table-name"`
+	// Region is the AWS region hosting the DynamoDB table. When empty the
+	// region is resolved from the environment, falling back to the EC2
+	// instance metadata service (IMDS).
+	Region string `ini:"region"`
+	// Endpoint overrides the DynamoDB service endpoint URL. Only intended
+	// for testing against DynamoDB Local (Docker container).
+	Endpoint string `ini:"endpoint"`
 }
 
 func (cfg *Config) Validate() error {
@@ -53,10 +58,7 @@ func (cfg *Config) Validate() error {
 }
 
 func (cfg *DatabaseConfig) Validate() error {
-	var err error
-	err = multierr.Append(err, required("database-url", cfg.URL))
-	err = multierr.Append(err, required("table-name", cfg.TableName))
-	return err
+	return required("table-name", cfg.TableName)
 }
 
 func readDefaultConfig(cfg *Config) error {
@@ -89,11 +91,11 @@ func parseConfig(cfg *Config, r io.Reader) error {
 func readEnv(cfg *Config) error {
 	var err error
 	envString(&cfg.SocketPath, "FSID_SOCKET")
-	envString(&cfg.Database.URL, "FSID_DATABASE_URL")
 	envString(&cfg.Database.TableName, "FSID_TABLE_NAME")
-	err = multierr.Append(err, envBool(&cfg.Database.IAMAuth, "FSID_IAM_AUTH"))
+	envString(&cfg.Database.Region, "FSID_REGION")
+	envString(&cfg.Database.Endpoint, "FSID_ENDPOINT")
 	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_DEBUG"))
-	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_CACHE"))
+	err = multierr.Append(err, envBool(&cfg.Cache, "FSID_CACHE"))
 	return err
 }
 

@@ -270,21 +270,10 @@
       "Resource": "arn:*:iam::aws:policy/*"
     },
     {
-      "Sid": "KnfsdAsgServiceLinkedRole",
-      "Effect": "Allow",
-      "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:*:iam::*:role/aws-service-role/autoscaling.amazonaws.com/*",
-      "Condition": {
-        "StringEquals": {
-          "iam:AWSServiceName": "autoscaling.amazonaws.com"
-        }
-      }
-    },
-    {
       "Sid": "KnfsdAsgSlrCheck",
       "Effect": "Allow",
-      "Action": "iam:GetRole",
-      "Resource": "arn:*:iam::*:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+      "Action": "iam:ListRoles",
+      "Resource": "*"
     }
   ]
 }

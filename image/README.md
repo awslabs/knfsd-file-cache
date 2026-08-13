@@ -1,4 +1,4 @@
-# Instructions
+# KNFSD AMI Build
 
 This directory contains scripts for building an Amazon Web Services [AMI](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) for KNFSD.
 
@@ -31,7 +31,7 @@ To enable it:
 
 The easiest way to build the AMI is using Packer.
 
-Download Packer 1.15.4 or newer from <https://packer.io/downloads>.
+Download Packer 1.16.0 or newer from <https://packer.io/downloads>.
 
 ### Clone the KNFSD repository
 
@@ -54,28 +54,42 @@ Enter at least the following required variable (additional `SUBNET` variable is 
 
 > NOTE: The AWS region set via `aws configure` or `AWS_DEFAULT_REGION` or `AWS_REGION` environment variable is ignored by Packer.
 
-* `REGION` (string) - The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. No default.
+| Name     | Description                                                                                               | Type   | Required | Default    |
+|----------|-----------------------------------------------------------------------------------------------------------|--------|----------|------------|
+| `REGION` | The name of the AWS region, such as `"us-east-1"`, in which to launch the EC2 instance to create the AMI. | string | True     | No default |
 
 #### Optional
 
-* `SUBNET` (string) - The subnet in which to launch the EC2 instance to create the AMI. This is required if using a non-default VPC. Example: `"subnet-0f90440e0e47728b8"`. Default: `""`.
-* `ASSOCIATE_PUBLIC_IP_ADDRESS` (bool) - If using a non-default VPC, whether to forcefully associate a public IP address with the EC2 instance. Default: `null`.
-* `SECURITY_GROUP_ID` (string) - The ID of an existing, single security group to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `""`.
-* `SECURITY_GROUP_IDS` (list(string)) - A list of security group IDs to use instead of creating a temporary one. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`. Default: `[]`.
-* `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` (list(string)) - A list of CIDR blocks to allow access from when creating a temporary security group. When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP`. Example: `["10.0.0.0/8", "172.16.0.0/12"]`. Default: `[]`.
-* `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` (bool) - Whether to allow access from the public IP address of the machine running Packer when creating a temporary security group. Only used when `SECURITY_GROUP_ID`, `SECURITY_GROUP_IDS`, and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` are not specified. Default: `true`.
-* `ARCH` (list(string)) - List of architectures to build. Valid values: `["amd64"]`, `["arm64"]`, or `["amd64", "arm64"]`. Default: `["amd64", "arm64"]` (builds both architectures in parallel).
-* `BUILD_NAME` (string) - The name applied to all resources during the image build phase. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"packer-knfsd-proxy-{VERSION}-{ARCH}-{TIMESTAMP}"`.
-* `IMAGE_NAME` (string) - The unique name of the resulting image. Architecture suffix (`_amd64` or `_arm64`) is automatically appended. Default: `"knfsd-proxy-{VERSION}-{ARCH}"`.
-* `SKIP_CREATE_IMAGE` (bool) - Skip creating the image. Useful for setting to `true` during a build test stage. Default: `false`.
-* `IAM_INSTANCE_PROFILE` (string) - The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources, or if `TAG_BUILD_STATUS` is `true`. Default: `""`.
-* `TAG_BUILD_STATUS` (bool) - Whether to update the build instance status via the `knfsd-file-cache:status` tag. Requires `IAM_INSTANCE_PROFILE` to be set to an instance profile whose role holds the `ec2:CreateTags` permission. Default: `false`. See [Build status tagging](#build-status-tagging).
-* `CUSTOM_PRE_BUILD_SCRIPT` (string) - Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
-* `CUSTOM_POST_BUILD_SCRIPT` (string) - Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`. Default: `""`.
-* `DISTRIBUTION_REGIONS` (list(string)) - Additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Default: `[]`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
-* `AMI_ENCRYPTED` (bool) - Whether the resulting AMI is encrypted. When `true` (default) the AMI is encrypted with `KMS_KEY_ID` (or the region's default `aws/ebs` key when `KMS_KEY_ID` is empty). When `false` the AMI is unencrypted. The AWS account-level "EBS encryption by default" setting (when enabled) overrides this to `true`. Default: `true`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
-* `KMS_KEY_ID` (string) - Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt the AMI in the AWS build region. Empty uses the AWS region's default `aws/ebs` key when `AMI_ENCRYPTED = true`. Default: `""`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
-* `REGION_KMS_KEY_IDS` (map(string)) - Map of AWS region to customer-managed KMS key identifier used when distributing the AMI via `DISTRIBUTION_REGIONS`. Use when each destination region has a distinct CMK. Empty string in the map means use that AWS region's default `aws/ebs` key. When this map is empty, `KMS_KEY_ID` is reused for every region in `DISTRIBUTION_REGIONS` (suitable for multi-region KMS keys or AWS-managed `aws/ebs` defaults). Default: `{}`. See [AMI Encryption and Cross-Region Distribution](#ami-encryption-and-cross-region-distribution).
+| Name                                        | Description                                                                                                                                                                                                                                                                            | Type         | Required | Default                                             |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|----------|-----------------------------------------------------|
+| `SUBNET`                                    | The subnet in which to launch the EC2 instance to create the AMI. This is required if using a non-default VPC. Example: `"subnet-0f90440e0e47728b8"`.                                                                                                                                  | string       | True     | `""`                                                |
+| `ASSOCIATE_PUBLIC_IP_ADDRESS`               | If using a non-default VPC, whether to forcefully associate a public IP address with the EC2 instance.                                                                                                                                                                                 | bool         | False    | `null`                                              |
+| `SECURITY_GROUP_ID`                         | The ID of an existing, single security group to use instead of creating a temporary one.<br><br>When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`.                                                                     | string       | False    | `""`                                                |
+| `SECURITY_GROUP_IDS`                        | A list of security group IDs to use instead of creating a temporary one.<br><br>When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`.                                                                                     | list(string) | False    | `[]`                                                |
+| `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS`     | A list of CIDR blocks to allow access from when creating a temporary security group.<br><br>When specified, overrides `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP`. Example: `["10.0.0.0/8", "172.16.0.0/12"]`.                                                                         | list(string) | False    | `[]`                                                |
+| `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` | Whether to allow access from the public IP address of the machine running Packer when creating a temp security group.<br><br>Used when `SECURITY_GROUP_ID`, `SECURITY_GROUP_IDS`, and `TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS` are not specified. \*                                    | bool         | False    | `true`                                              |
+| `SSH_INTERFACE`                             | The network interface Packer uses to connect to the build instance. One of `"public_ip"`, `"private_ip"`, `"public_dns"`, `"private_dns"`, `"ipv6"`, or `"session_manager"`.<br><br>Empty uses the Packer default (public IP address if available, otherwise private IP address). \*\* | string       | False    | `""`                                                |
+| `SESSION_MANAGER_PORT`                      | The local port on the machine running Packer to use as the local end of the AWS SSM tunnel.<br><br>Only used when `SSH_INTERFACE = "session_manager"`. Zero lets Packer choose an available port between 8000 and 9000.                                                                | number       | False    | `0`                                                 |
+| `ARCH`                                      | List of architectures to build. Valid values: `["amd64"]`, `["arm64"]`, or `["amd64", "arm64"]`.                                                                                                                                                                                       | list(string) | False    | `["amd64", "arm64"]`                                |
+| `BUILD_NAME`                                | The name applied to all resources during the image build phase. Architecture suffix (`_amd64` or `_arm64`) is automatically appended.                                                                                                                                                  | string       | False    | `"packer-knfsd-proxy-{VERSION}-{ARCH}-{TIMESTAMP}"` |
+| `IMAGE_NAME`                                | The unique name of the resulting image. Architecture suffix (`_amd64` or `_arm64`) is automatically appended.                                                                                                                                                                          | string       | False    | `"knfsd-proxy-{VERSION}-{ARCH}"`                    |
+| `SKIP_CREATE_IMAGE`                         | Skip creating the image. Useful for setting to `true` during a build test stage.                                                                                                                                                                                                       | bool         | False    | `false`                                             |
+| `IAM_INSTANCE_PROFILE`                      | The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources, or if `TAG_BUILD_STATUS` is `true`.                                                                                                                 | string       | False    | `""`                                                |
+| `TAG_BUILD_STATUS`                          | Whether to update the build instance status via the `knfsd-file-cache:status` tag.<br><br>Requires `IAM_INSTANCE_PROFILE` to be set to an instance profile whose role holds the `ec2:CreateTags` permission.                                                                           | bool         | False    | `false`                                             |
+| `CUSTOM_PRE_BUILD_SCRIPT`                   | Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                            | string       | False    | `""`                                                |
+| `CUSTOM_POST_BUILD_SCRIPT`                  | Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                        | string       | False    | `""`                                                |
+| `DISTRIBUTION_REGIONS`                      | A list of additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Example: `["us-east-2", "us-west-2"]`.                                                                                                                               | list(string) | False    | `[]`                                                |
+| `AMI_ENCRYPTED`                             | Whether the resulting AMI is encrypted. When `true` the AMI is encrypted with `KMS_KEY_ID` (or the region's default `aws/ebs` key when `KMS_KEY_ID` is empty). \*\*\*                                                                                                                  | bool         | False    | `true`                                              |
+| `KMS_KEY_ID`                                | Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt the AMI in the AWS build region.<br><br>Empty uses the AWS region's default `aws/ebs` key when `AMI_ENCRYPTED = true`.                                                                      | string       | False    | `""`                                                |
+| `REGION_KMS_KEY_IDS`                        | Map of AWS region to customer-managed KMS key identifier used when distributing the AMI via `DISTRIBUTION_REGIONS`.<br><br>Use when each destination region has a distinct CMK. Empty string in the map means use that AWS region's default `aws/ebs` key. \*\*\*\*                    | map(string)  | False    | `{}`                                                |
+
+\* Ignored when `SSH_INTERFACE = "session_manager"`.
+
+\*\* Set to `"session_manager"` to tunnel SSH over AWS SSM, which requires `IAM_INSTANCE_PROFILE`. See [AWS SSM Session Manager](#aws-ssm-session-manager).
+
+\*\*\* When `false` the AMI is unencrypted. The AWS account-level "EBS encryption by default" setting (when enabled) overrides this to `true`.
+
+\*\*\*\* When this map is empty, `KMS_KEY_ID` is reused for every region in `DISTRIBUTION_REGION` (suitable for multi-region KMS keys or AWS-managed `aws/ebs` defaults).
 
 #### Example: `image.pkrvars.hcl`
 
@@ -113,6 +127,14 @@ Default output format []: json
 ### IAM Permissions
 
 Ensure [AWS credentials](https://developer.hashicorp.com/packer/integrations/hashicorp/amazon#authentication) are available to Packer. The minimum IAM permissions for the Packer AMI build (and the rest of the project) are documented at [docs/iam.md](../docs/iam.md). The standalone, Packer-only IAM policy file is at [docs/iam/packer.json](../docs/iam/packer.json) and can be attached directly to the principal that runs `packer build`.
+
+### Service-Linked Role
+
+The build runs on EC2 Spot instances, which require the `AWSServiceRoleForEC2Spot` service-linked role for `spot.amazonaws.com`. The `iam:CreateServiceLinkedRole` permission in [docs/iam/packer.json](../docs/iam/packer.json) allows Packer to create this role automatically on first use. As an alternative, if the role does not yet exist in the AWS account and the build principal is denied `iam:CreateServiceLinkedRole` (for example under a centrally-managed IAM policy), an administrator can pre-create the service-linked role for `spot.amazonaws.com` before running `packer build` as follows:
+
+```bash
+aws iam create-service-linked-role --aws-service-name spot.amazonaws.com
+```
 
 ### AWS Service Quotas
 
@@ -162,6 +184,55 @@ Several other security group variables are available to configure the Packer bui
 
 Alternatively, you can provision an EC2 instance within your VPC in your AWS account, `git clone` the project repository, and run the Packer build script. This bypasses the need to run anything from on-premises.
 
+### AWS SSM Session Manager
+
+Instead of connecting over inbound SSH, Packer can tunnel its SSH session through [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html). This allows the AMI to be built in a private subnet with **no inbound SSH, no public IP address, and no bastion host**, which suits locked-down landing zones and aligns the build with the keyless, IAM-authenticated posture the deployed KNFSD proxy already uses.
+
+To enable it, set both of the following in your `image.pkrvars.hcl` file:
+
+```hcl
+REGION               = "us-east-1"
+SUBNET               = "subnet-0f90440e0e47728b8"
+SSH_INTERFACE        = "session_manager"
+IAM_INSTANCE_PROFILE = "knfsd-packer-build"
+```
+
+`IAM_INSTANCE_PROFILE` is **mandatory** for this mode. Packer fails immediately without it:
+
+```text
+no iam_instance_profile defined; session_manager connectivity requires a valid
+instance profile with AmazonSSMManagedInstanceCore permissions.
+```
+
+The instance profile must be pre-created by an administrator. The minimum permissions policy is [docs/iam/packer-instance-profile.json](../docs/iam/packer-instance-profile.json), and the trust policy plus the `aws iam` commands to create all three resources are documented at [Packer build instance profile](../docs/iam.md#packer-build-instance-profile).
+
+#### Requirements
+
+* **`session-manager-plugin`** must be installed on the machine running Packer and be on its `PATH`, as Packer invokes it as a subprocess to open the tunnel. See [Installing the Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html). It is preinstalled in both the `.devcontainer/dev` and `.devcontainer/prod` configurations.
+* **AWS SSM reachability** from the build subnet. If the subnet has no route to the internet, the `ssm`, `ssmmessages`, and `ec2messages` interface VPC endpoints are required; all three are provided by the [vpc-endpoints](../deployment/vpc-endpoints/README.md) module.
+
+#### Egress is still required
+
+> IMPORTANT: Session Manager removes the **inbound** connectivity requirement only. The build itself still downloads packages and sources from the internet, including `cdn.kernel.org` (Linux kernel and `nfs-utils`), `github.com`, `dl.google.com` (Go), `proxy.golang.org`, `launchpad.net`, `amazoncloudwatch-agent.s3.amazonaws.com`, the Ubuntu package archive, and the snap store.
+
+The build subnet therefore still needs egress via a NAT gateway, a proxy, or an equivalent path. A subnet with no egress at all cannot complete the build, regardless of the connection method. Note that `checkip.amazonaws.com` is **not** contacted in this mode, as no temporary security group ingress rule is created.
+
+#### Behaviour notes
+
+* A temporary security group is still created (unless you supply `SECURITY_GROUP_ID` or `SECURITY_GROUP_IDS`), but **no ingress rule is ever authorized**, as all SSH traffic arrives through the SSM tunnel. Supply your own security group only if your environment mandates a specific egress policy.
+* A temporary EC2 key pair is still created and used to authenticate the SSH session running inside the tunnel.
+
+#### Expected SSM messages
+
+A successful `session_manager` build logs the following error messages. They are **cosmetic** and do not affect the resulting AMI:
+
+```text
+==> amazon-ebs.knfsd-<arm/amd>64: SessionId: <id> : document process failed unexpectedly: ipc messaging received timeout signal , check [ssm-document-worker]/[ssm-session-worker] log for crash reason
+==> amazon-ebs.knfsd-<arm/amd>64: Error terminating SSM Session "<id>", this does not affect the built AMI. Please terminate the session manually: ... ValidationException: Session is not in a valid state
+```
+
+These messages are caused by the build instance restarting. The AWS SSM agent currently does not survive a restart. It tears down the port forwarding session, the `session-manager-plugin` reports the loss, and Packer's follow-up `ssm:TerminateSession` call is rejected because the session is already terminating. Packer then opens a replacement session and continues.
+
 ### Security Group Usage Scenarios
 
 The following scenarios demonstrate different networking and security configurations for building the AMI via Packer.
@@ -174,6 +245,8 @@ The precedence order (highest to lowest) is:
 4. `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` - default fallback behavior
 
 The `ASSOCIATE_PUBLIC_IP_ADDRESS` setting is independent of the security group configuration and controls whether the EC2 instance gets a public IP address assigned when using a non-default VPC.
+
+When `SSH_INTERFACE = "session_manager"`, the temporary security group is still created but no ingress rule is authorized, and `TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP` is ignored. See [AWS SSM Session Manager](#aws-ssm-session-manager).
 
 #### 1. Default VPC with Public IP (Default Behaviour)
 
@@ -232,6 +305,21 @@ TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS = ["192.168.1.0/24"]
 # SECURITY_GROUP_IDS = [] (default)
 ```
 
+#### 7. Private Subnet with No Inbound Access (AWS SSM Session Manager)
+
+```bash
+# No inbound SSH, no public IP, no bastion. Requires a pre-created
+# instance profile. See the "AWS SSM Session Manager" section above.
+SSH_INTERFACE        = "session_manager"
+IAM_INSTANCE_PROFILE = "knfsd-packer-build"
+# A temporary security group is still created, but no ingress rule is added.
+# TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP is ignored in this mode, so
+# "https://checkip.amazonaws.com" is never contacted.
+# ASSOCIATE_PUBLIC_IP_ADDRESS = null (default)
+# SECURITY_GROUP_ID = "" (default)
+# SECURITY_GROUP_IDS = [] (default)
+```
+
 ### Run Packer Build
 
 ```bash
@@ -247,7 +335,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 26.04 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.1.3-knfsd
+amazon-ebs.knfsd: Kernel:       7.1.8-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -268,7 +356,7 @@ The KNFSD proxy AMI can be built in AWS Commercial, GovCloud (`aws-us-gov`), and
 
 The image build process does, however, download several packages from commercial AWS endpoints during provisioning (for example `awscli.amazonaws.com` and `amazoncloudwatch-agent.s3.amazonaws.com` in [resources/scripts/10_build.sh](resources/scripts/10_build.sh)). When building in China:
 
-* Run the build from a China-based pipeline (CodeBuild or an EC2 build host in a `cn-*` region) that has network egress to the appropriate China mirrors, or pre-stage the packages.
+* Run the build from a China-based pipeline (EC2 build host in a `cn-*` region) that has network egress to the appropriate China mirrors, or pre-stage the packages.
 * `checkip.amazonaws.com` (used only as a developer convenience to discover the build host's public IP) is a commercial-only endpoint and is not required for the build itself.
 
 ### Run Smoke Tests
@@ -314,7 +402,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-beta.1"
+VERSION="1.1.0-beta.2"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -477,7 +565,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 26.04 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.1.3-knfsd
+Kernel:       7.1.8-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

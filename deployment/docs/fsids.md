@@ -59,7 +59,7 @@ The `FSID_MODE` variable controls how FSID numbers are allocated to exports. The
 * `local` - FSID numbers are automatically allocated to exports by the standard NFS `fsidd` service.
 * `external` - FSID numbers are automatically allocated to exports by the `knfsd-fsidd` service.
 
-The main difference between the standard NFS `fsidd` service and the `knfsd-fsidd` service is that the standard `fsidd` service uses a local sqlite database, while the `knfsd-fsidd` service uses an Amazon RDS PostgreSQL instance.
+The main difference between the standard NFS `fsidd` service and the `knfsd-fsidd` service is that the standard `fsidd` service uses a local sqlite database, while the `knfsd-fsidd` service uses an Amazon DynamoDB table.
 
 ### Static
 
@@ -79,58 +79,45 @@ Even with a single instance, there's still a risk if the instance is replaced du
 
 ### External
 
-Each export is automatically allocated an FSID number by the `mountd` service using the `knfsd-fsidd` service. This uses an Amazon RDS PostgreSQL instance to store the mappings between FSID and export path. This ensures that all the instances in cluster use the same FSID for each export path.
+Each export is automatically allocated an FSID number by the `mountd` service using the `knfsd-fsidd` service. This uses an Amazon DynamoDB table to store the mappings between FSID and export path. This ensures that all the instances in a cluster use the same FSID for each export path.
 
 This is the recommended and default deployment option for all knfsd proxy configurations as its the easiest to configure and ensures the consistency of FSIDs across the cluster.
 
-> NOTE: The knfsd proxy instance(s) will need to be able to access the Amazon RDS PostgreSQL instance.
+> NOTE: The knfsd proxy instance(s) accesses the DynamoDB table using the regional DynamoDB HTTPS API using the IAM instance profile for authentication. No VPC or subnet connectivity to a database host is required. However, if the proxy subnets have no internet access, add a (free) DynamoDB Gateway VPC endpoint; see [VPC Endpoints](vpc-endpoints.md).
 
 ### Using the Database Terraform module
 
-The Database Terraform module in [deployment/database](../database/README.md) can be used to create an Amazon RDS PostgreSQL instance suitable for use by a knfsd proxy cluster. This is the same module that the KNFSD Terraform module uses internally.
+The Database Terraform module in [deployment/database](../database/README.md) can be used to create an Amazon DynamoDB table suitable for use by a knfsd proxy cluster. This is the same module that the KNFSD Terraform module uses internally. The table schema and FSID allocation logic are documented in the [database module README](../database/README.md).
 
 ```terraform
-# Create a RDS PostgreSQL database instance for use by KNFSD proxy cluster(s)
+# Create a DynamoDB FSID table for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
-  SUBNET = "subnet-038e337f0ff4cd53f"
+  source = "github.com/awslabs/knfsd-file-cache//deployment/database?ref=v1.1.0-beta.2"
 }
 
-output "db_address" {
-  value = module.fsid_database.address
+output "table_name" {
+  value = module.fsid_database.table_name
 }
 
-output "db_port" {
-  value = module.fsid_database.port
-}
-
-output "db_user" {
-  value = module.fsid_database.db_user
-}
-
-output "db_name" {
-  value = module.fsid_database.db_name
+output "region" {
+  value = module.fsid_database.region
 }
 
 output "db_iam_policy" {
   value = module.fsid_database.db_iam_policy
 }
-
-output "master_username" {
-  value = module.fsid_database.username
-}
 ```
 
-### Amazon RDS PostgreSQL configuration
+### Amazon DynamoDB configuration
 
-The FSID service is not resource intensive, and does not require much storage. As such the minimum database instance type of `db.t4g.micro` should be sufficient for most configurations.
+The FSID service is not resource intensive, and does not require much storage. The DynamoDB table is created with on-demand capacity (`PAY_PER_REQUEST`), so there is no instance to size and you only pay per request; for this workload the cost is negligible.
 
-By default, the RDS database is deployed with IAM authentication enabled and deletion protection disabled.
+By default, the table is deployed with server-side encryption (AWS managed key), point-in-time recovery, and deletion protection enabled.
 
 ### IAM roles
 
-The standard FSID configuration uses the IAM instance profile (e.g. `knfsd-instance-role`) assigned to the knfsd proxy instance to authenticate the PostgreSQL database user (e.g. `fsidd`) with the RDS database using IAM.
+The standard FSID configuration uses the IAM instance profile (e.g. `knfsd-instance-role`) assigned to the knfsd proxy instance to authenticate with DynamoDB. The `database` module creates a least-privilege IAM policy granting only the item-level actions the daemon uses (`dynamodb:ConditionCheckItem`, `DescribeTable`, `GetItem`, `PutItem`, `UpdateItem`) scoped to the FSID table only, and the `terraform-module-knfsd` module attaches it to the instance role.
 
 The IAM instance role is automatically created by the `terraform-module-knfsd` module in `iam.tf`.
 
@@ -146,25 +133,23 @@ The configuration supports the following options:
 
 * `debug` (Optional) - Enabled writing verbose debug output to `stderr`. Default `false`.
 
-* `cache` (Optional) - Enables caching FSID mappings to avoid querying FSID database. Setting this to false can result in excessive SQL queries and slow performance and is only intended for debugging. Default `true`.
+* `cache` (Optional) - Enables caching FSID mappings to avoid querying FSID database. Setting this to false can result in excessive database queries and slow performance and is only intended for debugging. Default `true`.
 
 ---
 
 The `[database]` section supports:
 
-* `url` (Required) - A [`pgxpool` URL](https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool#ParseConfig). The `host`, `port`, `user`, and `dbname` options must be set. Authentication will be handled by the AWS GO v2 SDK.
+* `table-name` (Required) - The name of the DynamoDB table storing the FSID mappings for the proxy cluster. Table names only need to be unique per AWS account and region; the Terraform `database` module generates a unique name automatically.
 
-* `iam-auth` (Optional) - Set to `true` to enable automatic IAM authentication. Using automatic IAM authentication is recommended. The knfsd proxy instance will use the IAM instance profile to authenticate with RDS PostgreSQL database. If set to `false` the database user will need to authenticate with the database using the additional `password=` parameter in the `url=` option. Default `true`.
+* `region` (Optional) - The AWS region hosting the DynamoDB table. Because DynamoDB is a regional HTTPS API, `(region, table-name)` fully identifies the table. If absent, the daemon falls back to the instance's own region (via IMDSv2). The Terraform-rendered configuration always sets it explicitly.
 
-* `table-name` (Required) - The name of table to store the FSID mappings for the proxy cluster. It is recommended that each proxy cluster has its own unique table name. Default `fsids`.
-
-* `create-table` (Optional) - When `true` the `knfsd-fsidd` service will try to create its own table on start up. If set to `false` the table must already exist. See [knfsd-fsidd/schema.sql](../../image/resources/knfsd-fsidd/schema.sql). Default `true`.
+* `endpoint` (Optional) - Override the DynamoDB endpoint URL. Only intended for testing against `DynamoDB Local` container. Default empty (use the standard regional endpoint).
 
 ---
 
 The `[metrics]` section supports:
 
-* `enabled` (Optional) - Set to `true` to report metrics such as the number of requests, SQL operations, etc. Default `true`.
+* `enabled` (Optional) - Set to `true` to report metrics such as the number of requests, database operations, etc. Default `true`.
 
 * `endpoint` (Optional) - The endpoint to report metrics using the OTLP format. The endpoint must support GRPC. Default `unix:///run/knfsd-metrics.sock`.
 
@@ -178,10 +163,8 @@ The `[metrics]` section supports:
 socket=/run/knfsd-fsidd.sock
 
 [database]
-url=host=fsids.jazg4zscprls.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=fsids
-iam-auth=true
-table-name=fsids
-create-table=true
+table-name=knfsd-fsids-a1b2c3d4
+region=eu-west-2
 
 [metrics]
 enabled=true
@@ -196,48 +179,35 @@ interval=1m
 
 ### Custom Database Configuration
 
-By default, when `FSID_MODE="external"` the deployment Terraform configuration will create an Amazon RDS PostgreSQL instance for the proxy cluster. This is the simplest, and recommended option. `FSID_DATABASE_CONFIG` and `FSID_DATABASE_IAM_POLICY` are automatically generated for you.
+By default, when `FSID_MODE="external"` the deployment Terraform configuration will create an Amazon DynamoDB table for the proxy cluster. This is the simplest, and recommended option. `FSID_DATABASE_CONFIG` and `FSID_DATABASE_IAM_POLICY` are automatically generated for you.
 
-However, if you want to create your own database, such as to use a single Amazon RDS PostgreSQL database for multiple knfsd proxy clusters you can set `FSID_DATABASE_DEPLOY=false`. You will need to provide the database configuration and IAM policy via setting the `FSID_DATABASE_CONFIG` (JSON object) and `FSID_DATABASE_IAM_POLICY` (ARN) variables for each additional knfsd proxy cluster deployed. See the [Fanout](fanout.md) example for more details.
+However, if you want to create your own table, such as to use a single Amazon DynamoDB table for multiple knfsd proxy clusters, you can set `FSID_DATABASE_DEPLOY=false`. You will need to provide the database configuration and IAM policy via setting the `FSID_DATABASE_CONFIG` (object) and `FSID_DATABASE_IAM_POLICY` (ARN) variables for each additional knfsd proxy cluster deployed. See the [Fanout](fanout.md) example for more details.
 
-The `FSID_DATABASE_CONFIG` JSON object supports the following custom options:
+`FSID_DATABASE_IAM_POLICY` can also be set while leaving `FSID_DATABASE_DEPLOY=true`. In that case the DynamoDB table is still deployed, but the deployment skips creating the DynamoDB access IAM policy and attaches the policy you provide instead. This is intended for deployment roles that are denied `iam:CreatePolicy`. See [IAM Permissions](../../docs/iam.md) for details.
 
-* `db_address` (Required) - The address of the PostgreSQL instance.
-* `db_port` (Required) - The port of the PostgreSQL instance.
-* `db_user` (Required) - The user to authenticate with the PostgreSQL instance.
-* `db_name` (Required) - The name of the database to use for the FSID mappings.
+The `FSID_DATABASE_CONFIG` object supports the following custom options:
+
+* `table_name` (Required) - The name of the DynamoDB table storing the FSID mappings.
+* `region` (Required) - The AWS region hosting the DynamoDB table.
 * `enable_metrics` (Required) - Whether to enable metrics for the FSID database.
 
 ```json
+// replace values with the outputs of your own database deployment
 FSID_DATABASE_CONFIG = {
-  db_address     = "fsids.jazg4zscprls.eu-west-2.rds.amazonaws.com"
-  db_port        = 5432
-  db_user        = "fsidd"
-  db_name        = "fsids"
+  table_name     = "knfsd-fsids-a1b2c3d4"
+  region         = "eu-west-2"
   enable_metrics = true
 }
-// replace ${} variables with the appropriate values
-FSID_DATABASE_IAM_POLICY = "arn:*:rds-db:${local.region}:${local.account_id}:dbuser:${aws_db_instance.fsids.id}/${local.db_user}"
+FSID_DATABASE_IAM_POLICY = "arn:aws:iam::123456789012:policy/knfsd-fsids-a1b2c3d4-dynamodb-auth-policy"
 ```
 
-Before deploying the knfsd proxy cluster, create a suitable Amazon RDS PostgreSQL database (the `knfsd-fsidd` service only supports PostgreSQL).
+Before deploying the knfsd proxy cluster, create a suitable Amazon DynamoDB table (single string partition key `id`; see the [database module README](../database/README.md) for the full schema) and an IAM policy granting the item-level actions listed under [IAM roles](#iam-roles) on that table.
+
+#### Reuse boundaries
+
+* **Same account, any VPC**: supported. DynamoDB is a regional HTTPS API; `(region, table-name)` plus SigV4 credentials from the instance role fully identify the table, no network routing to a database host is needed.
+* **Cross-account**: not supported. `FSID_DATABASE_IAM_POLICY` is an IAM policy ARN which can only be attached to instance roles within the same account.
 
 ### Database Security
 
-SSL/TLS v1.3 is enabled and enforced by default on all connections to the FSIDS PostgreSQL database. Optionally, you can enforce [verification](https://www.postgresql.org/docs/current/libpq-ssl.html) of the server certificate is issued by a trusted CA and that the requested server hostname matches that in the certificate, by setting the additional `sslmode` and `sslrootcert` parameters in the DSN connection string `url=` in the `[database]` section of the [knfsd-fsidd.conf.tftpl](../terraform-module-knfsd/resources/knfsd-fsidd.conf.tftpl) file. PostgreSQL also supports other [parameter key words](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-PARAMKEYWORDS) that can be configured.
-
-AWS provides a certificate bundle for each region that can be used to verify the server certificate. The following commands download the root certificate CA bundle for ALL regions within a certain AWS partition ([Commercial, GovCloud](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html#UsingWithRDS.SSL.CertificatesDownload), or [China](https://docs.amazonaws.cn/en_us/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html#UsingWithRDS.SSL.CertificatesDownload)) and save it as `aws-rds-<partition>.pem`. Alternatively, you can download the certificate bundle for a specific region.
-
-```bash
-# Use the appropriate curl command for the required AWS partition
-curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o aws-rds-commercial.pem
-curl -fsSL https://truststore.pki.us-gov-west-1.rds.amazonaws.com/global/global-bundle.pem -o aws-rds-govcloud.pem
-curl -fsSL https://rds-truststore.s3.cn-north-1.amazonaws.com.cn/global/global-bundle.pem -o aws-rds-china.pem
-```
-
-The following example configuration uses the `aws-rds-commercial.pem` certificate bundle for the `eu-west-2` region. Ensure you provide a valid file path to the certificate bundle in the `sslrootcert` parameter.
-
-```ini
-[database]
-url=host=fsids.jazg4zscprls.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=fsids sslmode=verify-full sslrootcert=/path/to/aws-rds-commercial.pem
-```
+All connections to DynamoDB use HTTPS (TLS) with SigV4 request signing via the AWS SDK; there are no database passwords or connection strings to manage. Data at rest is encrypted with the AWS managed key (`aws/dynamodb`). Access is controlled entirely through IAM: only principals with the item-level actions on the table ARN (such as the knfsd instance role via `FSID_DATABASE_IAM_POLICY`) can read or write the FSID mappings.

@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.55.0"
+      version = "~> 6.59.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/loadbalancer/1.1.0-beta.1"
+      "knfsd-file-cache/modules/loadbalancer/1.1.0-beta.2"
     ]
   }
 }
@@ -49,6 +49,8 @@ locals {
   tags     = { "knfsd-file-cache:version" = var.VERSION }
   vpc_id   = data.aws_vpc.selected.id
   dns_name = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.aws.internal."))
+  # use the pre-existing security group when provided, otherwise the one created by this module
+  knfsd_lb_sg_id = var.EXISTING_SECURITY_GROUP_ID != "" ? var.EXISTING_SECURITY_GROUP_ID : aws_security_group.knfsd_lb_sg[0].id
   port_cidr_rules = {
     for item in flatten([
       for port_key, port_value in var.NFS_PORTS : [
@@ -70,7 +72,7 @@ resource "aws_lb" "knfsd_lb" {
   load_balancer_type = "network"
   internal           = true
   ip_address_type    = "ipv4"
-  security_groups    = [aws_security_group.knfsd_lb_sg.id]
+  security_groups    = [local.knfsd_lb_sg_id]
   subnet_mapping {
     subnet_id            = var.SUBNET
     private_ipv4_address = var.LOADBALANCER_IP
@@ -78,19 +80,20 @@ resource "aws_lb" "knfsd_lb" {
   tags = local.tags
 }
 
-# lb security group
+# lb security group (skipped when EXISTING_SECURITY_GROUP_ID is set)
 # https://wiki.debian.org/SecuringNFS
 resource "aws_security_group" "knfsd_lb_sg" {
+  count       = var.EXISTING_SECURITY_GROUP_ID == "" ? 1 : 0
   name        = "${var.PROXY_BASENAME}-lb-sg"
   description = "knfsd security group for Network Load Balancer"
   vpc_id      = local.vpc_id
   tags        = merge(local.tags, { Name = "${var.PROXY_BASENAME}-lb-sg" })
 }
 
-# lb sg ingress rule: TCP
+# lb sg ingress rule: TCP (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_ingress_rule" "knfsd_lb_ingress_tcp" {
-  for_each          = local.port_cidr_rules
-  security_group_id = aws_security_group.knfsd_lb_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" ? local.port_cidr_rules : {}
+  security_group_id = local.knfsd_lb_sg_id
   description       = "Allow inbound TCP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "tcp"
   from_port         = each.value.port
@@ -99,10 +102,10 @@ resource "aws_vpc_security_group_ingress_rule" "knfsd_lb_ingress_tcp" {
   tags              = merge(local.tags, { Name = "tcp-${each.value.port}-${each.value.name}" })
 }
 
-# lb sg ingress rule: UDP
+# lb sg ingress rule: UDP (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_ingress_rule" "knfsd_lb_ingress_udp" {
-  for_each          = local.port_cidr_rules
-  security_group_id = aws_security_group.knfsd_lb_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" ? local.port_cidr_rules : {}
+  security_group_id = local.knfsd_lb_sg_id
   description       = "Allow inbound UDP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "udp"
   from_port         = each.value.port
@@ -111,10 +114,10 @@ resource "aws_vpc_security_group_ingress_rule" "knfsd_lb_ingress_udp" {
   tags              = merge(local.tags, { Name = "udp-${each.value.port}-${each.value.name}" })
 }
 
-# lb sg egress rule
+# lb sg egress rule (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_egress_rule" "knfsd_lb_egress" {
-  for_each          = { for idx, cidr in var.VPC_CIDR : tostring(idx) => cidr }
-  security_group_id = aws_security_group.knfsd_lb_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" ? { for idx, cidr in var.VPC_CIDR : tostring(idx) => cidr } : {}
+  security_group_id = local.knfsd_lb_sg_id
   description       = "Allow all outbound traffic to KNFSD proxy security group"
   ip_protocol       = "-1" # all protocols
   cidr_ipv4         = each.value

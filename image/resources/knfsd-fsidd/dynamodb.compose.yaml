@@ -1,0 +1,32 @@
+# Start DynamoDB Local using docker compose so that we can wait until the container is healthy.
+# -inMemory keeps everything in RAM (fast, fully isolated per run, no volume to clean up).
+# -sharedDb uses a single database regardless of the credentials and region supplied by the tests.
+# -delayTransientStatuses causes DDB to introduce delays for certain operations to simulate eventual consistency.
+name: db-dynamodb
+services:
+  dynamodb:
+    image: public.ecr.aws/aws-dynamodb-local/aws-dynamodb-local:3.3.0
+    platform: linux/amd64
+    command:
+      - "-jar"
+      - "DynamoDBLocal.jar"
+      - "-inMemory"
+      - "-sharedDb"
+      - "-delayTransientStatuses"
+    healthcheck:
+      # DynamoDB Local answers every unauthenticated request with an HTTP
+      # error status; any HTTP response at all proves the endpoint is up, so
+      # curl is used without --fail.
+      test: "curl -s -o /dev/null http://127.0.0.1:8000/"
+      interval: 5s
+      timeout: 15s
+      retries: 6
+      start_period: 5m
+    ports:
+      - target: 8000
+        host_ip: 127.0.0.1
+        published: ${DYNAMODB_PORT:-0}
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

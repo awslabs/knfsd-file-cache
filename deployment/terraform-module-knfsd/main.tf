@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.55.0"
+      version = "~> 6.59.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -20,7 +20,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.1"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.2"
     ]
   }
 }
@@ -65,18 +65,14 @@ locals {
   fsid_database_config = (
     # this module deployed an external fsid database, so generate our own config
     local.deploy_fsid_database ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", {
-      db_address     = module.fsid_database[0].db_address,
-      db_port        = module.fsid_database[0].db_port,
-      db_user        = module.fsid_database[0].db_user,
-      db_name        = module.fsid_database[0].db_name,
+      table_name     = module.fsid_database[0].table_name,
+      region         = module.fsid_database[0].region,
       enable_metrics = var.ENABLE_METRICS,
     }) :
     # if custom config is provided (JSON object), generate the custom config
     length(var.FSID_DATABASE_CONFIG) > 0 ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", {
-      db_address     = lookup(var.FSID_DATABASE_CONFIG, "db_address", ""),
-      db_port        = lookup(var.FSID_DATABASE_CONFIG, "db_port", 5432),
-      db_user        = lookup(var.FSID_DATABASE_CONFIG, "db_user", "fsidd"),
-      db_name        = lookup(var.FSID_DATABASE_CONFIG, "db_name", "fsids"),
+      table_name     = lookup(var.FSID_DATABASE_CONFIG, "table_name", ""),
+      region         = lookup(var.FSID_DATABASE_CONFIG, "region", local.region),
       enable_metrics = lookup(var.FSID_DATABASE_CONFIG, "enable_metrics", true),
     }) :
     "" # default: empty string, skipped when FSID_MODE="static"|"local"
@@ -84,15 +80,11 @@ locals {
 }
 
 module "fsid_database" {
-  source                    = "../database"
-  count                     = local.deploy_fsid_database ? 1 : 0
-  SUBNET                    = var.SUBNET
-  FSID_DB_SUBNET_GROUP_NAME = var.FSID_DB_SUBNET_GROUP_NAME
-  FSID_DB_SUBNET_IDS        = var.FSID_DB_SUBNET_IDS
-  NAME                      = local.name
-  DELETION_PROTECTION       = false
-  ASSUME_ROLE_ARN           = var.ASSUME_ROLE_ARN
-  VPC_CIDR                  = local.vpc_cidr
+  source                   = "../database"
+  count                    = local.deploy_fsid_database ? 1 : 0
+  NAME                     = local.name
+  DELETION_PROTECTION      = false
+  FSID_DATABASE_IAM_POLICY = var.FSID_DATABASE_IAM_POLICY
 }
 
 # this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution

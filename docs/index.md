@@ -10,6 +10,7 @@
 
 ## Step 2: Deploy (Terraform)
 
+* [VPC Endpoints](../deployment/docs/vpc-endpoints.md)
 * [Main Module](../deployment/README.md)
 * [Database](../deployment/database/README.md)
 * [DNS Round Robin](../deployment/terraform-module-knfsd/modules/dns_round_robin/README.md)
@@ -33,7 +34,9 @@
 * [KNFSD Metrics Agent (OpenTelemetry)](../image/resources/knfsd-metrics-agent/README.md)
   * [Connections](../image/resources/knfsd-metrics-agent/internal/connections/documentation.md)
   * [Exports](../image/resources/knfsd-metrics-agent/internal/exports/documentation.md)
+  * [FSCache](../image/resources/knfsd-metrics-agent/internal/fscache/documentation.md)
   * [Mounts](../image/resources/knfsd-metrics-agent/internal/mounts/documentation.md)
+  * [NFSD](../image/resources/knfsd-metrics-agent/internal/nfsd/documentation.md)
   * [Oldest File](../image/resources/knfsd-metrics-agent/internal/oldestfile/documentation.md)
   * [Slab](../image/resources/knfsd-metrics-agent/internal/slab/documentation.md)
 * [NetApp](../deployment/docs/netapp.md)
@@ -56,6 +59,8 @@
 
 ## Examples
 
+* [Overview](../examples/README.md)
+* [Basic NFS Example](../examples/basic/README.md)
 * [FSx for NetApp ONTAP](../examples/fsx-netapp/README.md)
 * [FSx for OpenZFS](../examples/fsx-zfs/README.md)
 * [FSx for OpenZFS Fanout (DNS Round Robin)](../examples/fsx-zfs-fanout-dns-rr/README.md)
@@ -82,16 +87,15 @@
 * [NFS Client](../image/smoke-tests/modules/nfs-client/README.md)
 * [Source NFS Server](../image/smoke-tests/modules/source-nfs/README.md)
 
+## Resources
+
+See [Resources](../docs/resources.md) for AWS articles, official guidance, and upstream Linux NFS documentation.
+
 ## Project Reference
 
 * [LICENSE](../LICENSE)
 * [THIRD-PARTY-LICENSES](../THIRD-PARTY-LICENSES)
-* [ACKNOWLEDGEMENTS](../ACKNOWLEDGEMENTS)
+* [ACKNOWLEDGEMENTS](../ACKNOWLEDGEMENTS.md)
 * [Code of Conduct](CODE_OF_CONDUCT.md)
 * [Contributing](CONTRIBUTING.md)
 * [Security](SECURITY.md)
-
-## External Documentation
-
-* [Reexporting NFS filesystems](https://www.kernel.org/doc/html/latest/filesystems/nfs/reexport.html)
-* [NFS wiki](https://linux-nfs.org/wiki/index.php/NFS_re-export)

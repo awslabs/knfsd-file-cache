@@ -9,7 +9,7 @@ output "autoscaling_group_name" {
 
 output "autoscaling_group_security_group_id" {
   description = "Security Group ID for the KNFSD proxy Auto Scaling Group."
-  value       = aws_security_group.knfsd_asg_sg.id
+  value       = local.knfsd_sg_id
 }
 
 output "cluster_ready" {
@@ -19,18 +19,16 @@ output "cluster_ready" {
 }
 
 output "database_config" {
-  description = "Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module."
+  description = "Database configuration for the deployed DynamoDB FSID table. Only available when database is deployed by this module."
   value = local.deploy_fsid_database ? {
-    db_address     = module.fsid_database[0].db_address
-    db_port        = module.fsid_database[0].db_port
-    db_user        = module.fsid_database[0].db_user
-    db_name        = module.fsid_database[0].db_name
+    table_name     = module.fsid_database[0].table_name
+    region         = module.fsid_database[0].region
     enable_metrics = var.ENABLE_METRICS
   } : {}
 }
 
 output "database_iam_policy" {
-  description = "The ARN of the IAM policy for rds-db:connect database access. Only available when database is deployed by this module."
+  description = "The ARN of the IAM policy for DynamoDB table access. Only available when database is deployed by this module."
   value       = local.deploy_fsid_database ? module.fsid_database[0].db_iam_policy : null
 }
 
@@ -44,8 +42,13 @@ output "dns_name" {
 }
 
 output "iam_role_name" {
-  description = "Name of the IAM role attached to the KNFSD proxy instances."
-  value       = aws_iam_role.knfsd_instance_role.name
+  description = "Name of the IAM role attached to the KNFSD proxy instances. Null when EXISTING_INSTANCE_PROFILE_NAME is provided (the module does not create or manage the role in that case)."
+  value       = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? aws_iam_role.knfsd_instance_role[0].name : null
+}
+
+output "instance_profile_name" {
+  description = "Name of the IAM instance profile attached to the KNFSD proxy instances. Returns the module-created profile name, or the user-provided EXISTING_INSTANCE_PROFILE_NAME when set."
+  value       = local.knfsd_instance_profile_name
 }
 
 output "loadbalancer_ipaddress" {
@@ -57,7 +60,7 @@ output "knfsd_security_group_id" {
   description = "Security Group ID for the NFS clients to connect to the KNFSD proxy instances."
   value = (
     var.TRAFFIC_MODE == "loadbalancer" ? one(module.loadbalancer[*].lb_security_group_id) :
-    var.TRAFFIC_MODE == "dns_round_robin" ? aws_security_group.knfsd_asg_sg.id :
+    var.TRAFFIC_MODE == "dns_round_robin" ? local.knfsd_sg_id :
     null
   )
 }

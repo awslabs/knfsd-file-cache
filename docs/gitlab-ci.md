@@ -10,7 +10,7 @@ This pipeline is designed to run on a self-hosted GitLab deployment. It should b
 
 ## Pipeline Overview
 
-The GitLab CI pipeline is structured into 8(+1 scheduled) distinct stages that execute sequentially, with jobs within each stage running in parallel where possible:
+The GitLab CI pipeline is structured into 9(+1 scheduled) distinct stages that execute sequentially, with jobs within each stage running in parallel where possible:
 
 1. **dependencies** - Dependency management and automated updates (scheduled)
 2. **config** - Editorconfig, spell-check, and formatting
@@ -21,6 +21,7 @@ The GitLab CI pipeline is structured into 8(+1 scheduled) distinct stages that e
 7. **test** - Integration testing
 8. **build** - Go application lint, test, cross-platform build, and vulnerability scanning
 9. **security** - Security scanning and vulnerability assessment
+10. **docs** - Build and publish the documentation site to GitLab Pages
 
 ## Configuration
 
@@ -227,7 +228,7 @@ Similar structure to filter-exports but without vulnerability scanning step.
 
 #### `go-knfsd-fsidd` (5 jobs)
 
-Includes database integration testing with PostgreSQL service.
+Includes database integration testing with a `DynamoDB Local` service container.
 
 #### `go-knfsd-metrics-agent` (4 jobs)
 
@@ -289,6 +290,25 @@ located in `image/smoke-tests/`:
 - **Configuration**: Uses `.trivyignore.yaml` for exclusions, `.trivy.tfvars` for Terraform variables
 - **Cache**: Maintains vulnerability database cache
 - **Failure Policy**: Warning
+
+### Docs Stage
+
+#### `pages`
+
+- **Purpose**: Builds the [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) documentation site (AWS Cloudscape-aligned) and publishes it to [GitLab Pages](https://docs.gitlab.com/user/project/pages/)
+- **Tool**: [MkDocs](https://www.mkdocs.org/) with the `mkdocs-material` and `mkdocs-same-dir` plugins
+- **Build**: `mkdocs build --strict --site-dir site` from the repository root; the output is published from, and stored as an artifact in, the `site` directory
+- **Failure Policy**: Blocking (a broken build or link fails the job under `--strict`)
+
+The site and repository metadata are **auto-resolved** from GitLab [predefined variables](https://docs.gitlab.com/ci/variables/predefined_variables/) at build time, so **no manual `Settings > CI/CD > Variables` entries are required** for the docs (unlike `RENOVATE_TOKEN` above):
+
+| MkDocs env var     | GitLab predefined variable | Purpose                                    |
+|--------------------|----------------------------|--------------------------------------------|
+| `MKDOCS_SITE_URL`  | `CI_PAGES_URL`             | Canonical site URL (the GitLab Pages URL)  |
+| `MKDOCS_REPO_URL`  | `CI_PROJECT_URL`           | Repository link shown in the site header   |
+| `MKDOCS_REPO_NAME` | `CI_PROJECT_PATH`          | Repository name shown in the site header   |
+
+The committed `mkdocs.yml` contains **no hard-coded URLs**; these variables supply them at runtime, so the same configuration also works unchanged for a local build/serve and for GitHub Pages. Pages access follows the project's visibility (Public / Internal / Private), configured once in the project's `Settings > General > Visibility` and `Settings > Pages`, and is not set by the CI job.
 
 ## Cache Strategy
 
@@ -409,4 +429,4 @@ image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.26.5
 - **Dependency Management**: Job dependencies ensure proper execution order
 - **Multi-stage Validation**: Multiple validation layers catch different types of issues
 
-This CI/CD pipeline ensures code quality, security, and reliability while maintaining developer productivity through optimized caching and parallel execution strategies.
+This CI pipeline ensures code quality, security, and reliability while maintaining developer productivity through optimized caching and parallel execution strategies.

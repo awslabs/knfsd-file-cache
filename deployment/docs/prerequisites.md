@@ -4,17 +4,17 @@ Before deploying KNFSD to Amazon Web Services, there are a number of prerequisit
 
 We assume [bash](https://www.gnu.org/software/bash/) and [jq](https://stedolan.github.io/jq/download/) are installed by default on most Linux and macOS systems. Windows machines should be checked.
 
-## Minimum Requirements
+## Requirements
 
 - [Git](https://git-scm.com/downloads)
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://www.terraform.io/downloads.html)
-- [Docker](https://docs.docker.com/get-docker/) (only required to deploy the RDS database module or if running the `.devcontainer` configuration)
-- [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (only required if running the `smoke-tests` module)
+- [Docker](https://docs.docker.com/get-docker/) (only required if running the `.devcontainer` configuration)
+- [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (only required if building the AMI with `SSH_INTERFACE = "session_manager"`, or if running the `smoke-tests` module)
 
 ### Git
 
-Git is required to clone the [KNFSD-File-Cache](https://github.com/awslabs/knfsd-file-cache) GitHub repository. If you are deploying the DB module from Windows, you should ensure that you have `git-bash` installed (which by default is included with [Git for Windows](https://gitforwindows.org/)).
+Git is required to clone the [KNFSD-File-Cache](https://github.com/awslabs/knfsd-file-cache) GitHub repository. If you are deploying from Windows, you should ensure that you have `git-bash` installed (which by default is included with [Git for Windows](https://gitforwindows.org/)).
 
 ### AWS CLI
 
@@ -23,10 +23,6 @@ You should ensure that you have [AWS CLI](https://docs.aws.amazon.com/cli/latest
 ### Terraform
 
 You should ensure that you have [Terraform](https://www.terraform.io/downloads.html) v1.2.9 or newer installed.
-
-### Docker
-
-Docker engine is required to deploy the Amazon RDS `database` module.
 
 ### Docker Desktop (Optional)
 
@@ -40,7 +36,16 @@ For KNFSD developers, you can use either VS Code or Cursor to run a `.devcontain
 
 ### AWS SSM Session Manager Plugin (Optional)
 
-You should ensure that you have the [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed if you wish to run the `smoke-tests` module. This is already installed in both the `.devcontainer/dev` and `.devcontainer/prod` configurations.
+You should ensure that you have the [AWS SSM Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed if either of the following applies:
+
+- You build the KNFSD AMI with the Packer variable `SSH_INTERFACE = "session_manager"`, which tunnels the Packer build connection over AWS Systems Manager instead of inbound SSH. See [AWS SSM Session Manager](../../image/README.md#aws-ssm-session-manager).
+- You wish to run the `smoke-tests` module.
+
+This is already installed in both the `.devcontainer/prod` and `.devcontainer/dev` configurations. [Installation instructions](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) are available for Windows, macOS, and Linux. Packer and the test harness both invoke the plugin as a subprocess, so it must be on your `PATH`. Verify with:
+
+```bash
+session-manager-plugin --version
+```
 
 ## AWS Service Quotas
 
@@ -56,11 +61,9 @@ Before you can deploy KNFSD in your Amazon Web Services account, you first need 
 
 ## External FSID database
 
-If using the recommended `FSID_MODE="external"`, the knfsd proxy instances will need to be able to access the external FSID database, which by default is deployed into the same subnet as the KNFSD proxy instances. However, it is also possible to deploy the FSID database into a different subnet, or even a different VPC.
+If using the recommended `FSID_MODE="external"`, the knfsd proxy instances need to be able to reach the Amazon DynamoDB regional API endpoint. DynamoDB is a fully managed HTTPS API: there is no database host, subnet, or security group to configure, and access is controlled entirely through IAM.
 
-By default, `ENABLE_PUBLIC_IP` is set to `false`, so the Amazon RDS PostgreSQL instance will be deployed with a private IP address.
-
-When the DB instance is publicly accessible (`ENABLE_PUBLIC_IP=true`) and you connect from outside of the DB instance's Virtual Private Cloud (VPC), its Domain Name System (DNS) endpoint resolves to the public IP address. When you connect from within the same VPC as the DB instance, the endpoint resolves to the private IP address. Access to the DB instance is ultimately controlled by the EC2 security group it uses. Public access isn't permitted if the security group assigned to the DB instance doesn't permit it. When the DB instance isn't publicly accessible, it is an internal DB instance with a DNS name that resolves to a private IP address.
+If the proxy subnets have internet connectivity (directly or via a NAT gateway), no additional setup is needed. For private subnets without internet access, add an Amazon DynamoDB Gateway VPC endpoint; see [VPC Endpoints](vpc-endpoints.md).
 
 ## Security Groups
 
@@ -68,7 +71,6 @@ The Terraform module(s) will automatically create a Security Group (firewall) fo
 
 - Auto Scaling Group
 - Network Load Balancer (if `TRAFFIC_MODE = "loadbalancer"`)
-- RDS DB instance (if `FSID_MODE = "external"` and `FSID_DATABASE_DEPLOY = true`)
 - Lambda function
 
 However, it **will not** create any other security groups. You should make sure that you implement security groups (and any NACLs) to allow:
@@ -96,11 +98,26 @@ When deploying KNFSD File Cache in a private subnet without any internet connect
 
 See [IAM Permissions](../../docs/iam.md) for detailed information on the IAM permissions required for the KNFSD File Cache solution.
 
+### Packer
+
+The Packer AMI build does not create IAM resources, so it requires an IAM instance profile to be pre-created and referenced by name via the Packer `IAM_INSTANCE_PROFILE` variable. This is only required when building over AWS SSM Session Manager (`SSH_INTERFACE = "session_manager"`) or when enabling EC2 build status tagging (`TAG_BUILD_STATUS = true`). See [Packer build instance profile](../../docs/iam.md#packer-build-instance-profile) for the permissions policy, the trust policy, and the commands to create it.
+
+### Terraform
+
 The Terraform module(s) will automatically create an IAM instance profile, role(s) and least-privilege policies for all resources within this solution to operate correctly. Please review the following Terraform files to understand the permissions that are created:
 
 - [terraform-module-knfsd/iam.tf](../terraform-module-knfsd/iam.tf)
 - [database/main.tf](../database/main.tf)
 - [modules/dns_round_robin/lambda.tf](../terraform-module-knfsd/modules/dns_round_robin/lambda.tf)
+
+Some organizations centrally manage networking and IAM, and deny the deploying principal the ability to create security groups or IAM resources. KNFSD supports this: pre-create the resource yourself and set the matching Terraform variable, and the module skips creating it. Each variable lets you *drop* create-permissions rather than add new ones:
+
+- `EXISTING_SECURITY_GROUP_ID` (root and `vpc-endpoints` modules)
+- `EXISTING_INSTANCE_PROFILE_NAME`
+- `EXISTING_LAMBDA_ROLE_ARN` (`dns_round_robin` module)
+- `FSID_DATABASE_IAM_POLICY` (root and `database` modules)
+
+See [Deploying under restrictive IAM](../../docs/iam.md#deploying-under-restrictive-iam-centrally-managed-networking-and-iam) for what each variable lets you omit from the IAM policies.
 
 ## AWS Services
 
@@ -110,7 +127,7 @@ For reference, the following AWS services are used in this solution (and should 
 - [Amazon Elastic Block Store](https://aws.amazon.com/ebs/)
 - [Amazon EC2 Auto Scaling](https://aws.amazon.com/autoscaling/)
 - [AWS Systems Manager](https://aws.amazon.com/systems-manager/)
-- [Amazon RDS for PostgreSQL](https://aws.amazon.com/rds/postgresql/)
+- [Amazon DynamoDB](https://aws.amazon.com/dynamodb/)
 - [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/)
 - [Amazon Virtual Private Cloud](https://aws.amazon.com/vpc/)
 - [AWS Identity and Access Management](https://aws.amazon.com/iam/)

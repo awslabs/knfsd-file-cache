@@ -30,8 +30,8 @@ var (
 	operationCount    = counter("fsid.operation.count", dimensionless)
 	operationDuration = duration("fsid.operation.duration", milliseconds)
 
-	sqlQueryCount    = counter("fsid.sql.query.count", dimensionless)
-	sqlQueryDuration = duration("fsid.sql.query.duration", milliseconds)
+	dbQueryCount    = counter("fsid.db.query.count", dimensionless)
+	dbQueryDuration = duration("fsid.db.query.duration", milliseconds)
 )
 
 func Request(ctx context.Context, command, result string, retries int64, duration time.Duration) {
@@ -54,13 +54,13 @@ func Operation(ctx context.Context, command, result string, retry int64, duratio
 	operationDuration.Record(ctx, ms(duration), metric.WithAttributes(attrs...))
 }
 
-func SQLOperation(ctx context.Context, query, result string, duration time.Duration) {
+func DBOperation(ctx context.Context, query, result string, duration time.Duration) {
 	attrs := []attribute.KeyValue{
 		attribute.String("query", query),
 		attribute.String("result", result),
 	}
-	sqlQueryCount.Add(ctx, 1, metric.WithAttributes(attrs...))
-	sqlQueryDuration.Record(ctx, ms(duration), metric.WithAttributes(attrs...))
+	dbQueryCount.Add(ctx, 1, metric.WithAttributes(attrs...))
+	dbQueryDuration.Record(ctx, ms(duration), metric.WithAttributes(attrs...))
 }
 
 func counter(name string, opts ...metric.Int64CounterOption) metric.Int64Counter {

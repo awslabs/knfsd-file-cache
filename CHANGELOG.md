@@ -1,5 +1,60 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.2 (August 13, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer: `v1.1.0-beta.2` or later AMI is required for the new DynamoDB FSID database.
+
+> BREAKING CHANGES: The external FSID database (`FSID_MODE="external"`) is now an Amazon DynamoDB table instead of an Amazon RDS for PostgreSQL instance.
+
+> BREAKING CHANGES: The CloudWatch `metrics` dashboard `v15` is only compatible with `v1.1.0-beta.2` and later.
+
+> EXPERIMENTAL: SSM Session Manager support for Packer is experimental and subject to change. Using the default `SSH_INTERFACE = ""` is recommended for production deployments.
+
+* Packer: Updated to Linux kernel v7.1.8-knfsd.
+* Added `mkdocs` documentation site to the project: [https://awslabs.github.io/knfsd-file-cache](https://awslabs.github.io/knfsd-file-cache).
+* Migrated to Amazon DynamoDB from Amazon RDS for PostgreSQL. This is a breaking change. Highlights:
+  * Reduction in Terraform, Packer, Lambda, and `local-exec` provisioner complexity, operational overhead, and operating cost.
+  * Increased availability and durability. DynamoDB is a distributed, highly-available, regional, managed NoSQL database.
+  * Faster Terraform `apply` and `destroy` times.
+* The `db-setup` Lambda function, Docker deployment prerequisite, and `local-exec` Terraform provisioner have been removed.
+* Multiple Terraform variables in the `database` and `terraform-module-knfsd` modules have been removed.
+* The `FSID_DATABASE_CONFIG` object shape changed to `{table_name, region, enable_metrics}` and the `database_config` output changed accordingly.
+* The `knfsd-fsidd` `[database]` configuration keys changed to `table-name`/`region` (`url`, `iam-auth`, and `create-table` removed).
+* The `fsid.sql.query.*` metrics were renamed to `fsid.db.query.*` and the CloudWatch `metrics` dashboard's RDS section was replaced with a DynamoDB section.
+* `DynamoDB Local` Docker container is now used for the FSID database in the `smoke-tests` local `./image/smoke-tests/test.sh` harness and GitLab CI instead of PostgreSQL.
+* Updated KNFSD Monitoring Dashboard to `v15`.
+* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the dev-container host architecture.
+* Added an optional [VPC Endpoints](deployment/docs/vpc-endpoints.md) Terraform module ([deployment/vpc-endpoints](deployment/vpc-endpoints/README.md)) for deploying the AWS PrivateLink interface endpoints and DynamoDB gateway endpoint required to run KNFSD in a private subnet without internet connectivity.
+* Added `EXISTING_SECURITY_GROUP_ID` and `EXISTING_INSTANCE_PROFILE_NAME` variables to the `terraform-module-knfsd` module (both default `""`). When set, the module skips creating the ASG security group (and all ingress/egress rules) and/or the IAM role, instance profile, and associated policies, using the pre-created resources instead. This supports deployment under restrictive IAM roles that deny `ec2:CreateSecurityGroup` and/or `iam:CreateRole`/`iam:CreatePolicy`. A single `EXISTING_SECURITY_GROUP_ID` serves both the ASG and the Network Load Balancer in `loadbalancer` mode.
+* Added `EXISTING_LAMBDA_ROLE_ARN` variable to the `dns_round_robin` module (default `""`) to reuse a pre-created IAM role for the `static_ip` Lambda function instead of creating one.
+* Added `EXISTING_SECURITY_GROUP_ID` variable to the `vpc-endpoints` module (default `""`). When set, the module skips creating the interface-endpoint security group and its ingress/egress rules, attaching the provided security group instead. This supports deployment under restrictive IAM roles that deny `ec2:CreateSecurityGroup`.
+* Extended `FSID_DATABASE_IAM_POLICY` so it can also be set while `FSID_DATABASE_DEPLOY=true`. The DynamoDB table is still deployed, but the `database` module skips creating the DynamoDB access `aws_iam_policy` and the provided policy is attached to the KNFSD instance role instead. This supports deployment under restrictive IAM roles that deny `iam:CreatePolicy` while still provisioning the table.
+* Added an `instance_profile_name` output to the `terraform-module-knfsd` module that always returns the instance profile name (created or user-provided). `iam_role_name` now returns `null` (omitted from `terraform output`) when `EXISTING_INSTANCE_PROFILE_NAME` is set.
+* Changed the Auto Scaling and Elastic Load Balancing service-linked role handling to a read-only `iam:ListRoles` pre-flight check that fails early during `terraform plan` with a clear message and CLI remedy if a required role is missing, replacing the previous `local-exec` provisioner that shelled out to `aws iam create-service-linked-role`. The `AWSServiceRoleForAutoScaling` role is always required; `AWSServiceRoleForElasticLoadBalancing` is required only in `loadbalancer` TRAFFIC_MODE.
+* Removed `iam:CreateServiceLinkedRole` from the required/optional Terraform IAM policies ([docs/iam/tf-required.json](docs/iam/tf-required.json), [docs/iam/tf-optional.json](docs/iam/tf-optional.json)), replacing it with `iam:ListRoles` for the read-only pre-flight checks.
+* Documented the manual `aws iam create-service-linked-role` step (for `spot.amazonaws.com`, `fsx.amazonaws.com`, `autoscaling.amazonaws.com`, and `elasticloadbalancing.amazonaws.com`) across the Packer [image/README.md](image/README.md), the `examples/*` READMEs, [docs/iam.md](docs/iam.md), and [docs/security-considerations.md](docs/security-considerations.md) for accounts using centrally-managed IAM.
+* Added a self-contained [docs/iam/vpc-endpoints.json](docs/iam/vpc-endpoints.json) IAM policy for the standalone `vpc-endpoints` module (VPC endpoints, security group, networking lookups, and its CloudFormation metrics stack), removing the stale `KnfsdVpcEndpoints` Sid from [docs/iam/tf-optional.json](docs/iam/tf-optional.json).
+* Reconciled [docs/iam.md](docs/iam.md): removed the stale `KnfsdAsgServiceLinkedRole` row (superseded by the `iam:ListRoles` pre-flight check), documented the new `vpc-endpoints.json` policy, and added a "Deploying under restrictive IAM" section mapping each `EXISTING_*` variable to the create-permissions it lets you drop.
+* Packer: Added optional AWS SSM Session Manager support to the Packer AMI build via a new `SSH_INTERFACE` variable (default `""`, unchanged SSH behaviour). Setting `SSH_INTERFACE = "session_manager"` tunnels the build connection over AWS Systems Manager, allowing the AMI to be built in a private subnet with no inbound SSH, no public IP address, and no bastion host. This mode requires `IAM_INSTANCE_PROFILE` to be set and the AWS `session-manager-plugin` to be installed locally. When enabled, the temporary security group is created without any ingress rule and `https://checkip.amazonaws.com` is no longer contacted ([#37](https://github.com/awslabs/knfsd-file-cache/issues/37)).
+* Packer: Added the `KnfsdPackerSsmChannels`, `KnfsdPackerSsmStartSession`, and `KnfsdPackerSsmManageSession` Sids to [docs/iam/packer.json](docs/iam/packer.json) so a single policy covers both Packer connection methods, plus a new standalone [docs/iam/packer-instance-profile.json](docs/iam/packer-instance-profile.json) least-privilege policy for the Packer build instance's own IAM role (AWS SSM agent registration, and `ec2:CreateTags` for `TAG_BUILD_STATUS`). [docs/iam.md](docs/iam.md) documents which Sids can be dropped when standardizing on one connection method, along with the trust policy and `aws iam` commands to pre-create the instance profile under restrictive IAM environments.
+* Packer: Split the `reboot` that follows `10_build.sh` into its own provisioner so the main build provisioner no longer sets `expect_disconnect`, and removed `expect_disconnect` from the `30_finalize.sh` provisioner. A connection lost during the build or finalize step (for example an EC2 Spot reclaim) now fails the build immediately instead of being treated as a completed provisioner, which could previously truncate the build silently.
+* Packer: Fixed the documented security group precedence so that setting both `SECURITY_GROUP_ID` and `SECURITY_GROUP_IDS` now honours `SECURITY_GROUP_ID` as documented, instead of failing with "Only one of security_group_id or security_group_ids can be specified".
+* Remote-SSH: Added optional AWS SSM Session Manager support to the developer cloud development environment via a new `KNFSD_REMOTE_SSH_TUNNEL` environment variable (default `eice`, unchanged behaviour). Setting `KNFSD_REMOTE_SSH_TUNNEL=ssm` tunnels the SSH connection for `.devcontainer/dev/remote.sh` over AWS Systems Manager using the `AWS-StartSSHSession` document.
+* Remote-SSH: Added the same optional AWS SSM Session Manager support to `.devcontainer/dev/run-fio-nfs.sh` via a new `--tunnel <eice|ssm>` option on the `run` command (default `eice`, unchanged behaviour).
+* Remote-SSH: Added a new standalone [docs/iam/remote-ssh.json](docs/iam/remote-ssh.json) least-privilege policy for the developer identity running `remote.sh` or `run-fio-nfs.sh`, plus [docs/iam/remote-ssh-instance-profile.json](docs/iam/remote-ssh-instance-profile.json) for the development instance's own IAM role (AWS SSM agent registration, and `ec2:CreateTags` for the readiness tag).
+* Scoped the KNFSD instance role's `ssm:GetParametersByPath` IAM policy to the deployment's own parameter hierarchy (`/knfsd/<cluster-name>` and `/knfsd/<cluster-name>/*`) instead of the account-wide `/knfsd/*`, and added the path-level ARN that `GetParametersByPath` authorizes against ([#41](https://github.com/awslabs/knfsd-file-cache/issues/41)).
+* Made `knfsd-file-cache:status` tagging in `proxy-startup.sh` best-effort so an unreachable EC2 API no longer aborts proxy startup. The first failed `ec2:CreateTags` call disables tagging for the remainder of that boot, logs the remedy, and startup continues. Also hardened the critical SSM Parameter Store load to fail fast with an actionable message instead of aborting on a raw connection timeout, and to reject a successful call that returns zero parameters ([#39](https://github.com/awslabs/knfsd-file-cache/issues/39)).
+* Removed unnecessary fs-cache mount options from `proxy-startup.sh`.
+* Added a new `basic` NFS example to the `examples/` directory to demonstrate the minimal KNFSD deployment. See [examples/basic/README.md](examples/basic/README.md) for details.
+* Added shell tooling to update pinned version dependencies in the project: `update-pinned-versions.sh` and `update-github-action-shas.sh`.
+* Enhanced `.devcontainer/dev/query-regions-for-ec2-instance-type.sh` with a `usage()` message (printed for no arguments or `-h`/`--help`), a new `-r`/`--region` flag to query the AZs of a single AWS region, and an end-of-run summary table of the AZ and region totals, listing every region queried and its AZs grouped by full, partial, or no availability.
+* Updated `BATS` to v1.14.0.
+* Updated to Packer v1.16.0.
+* Updated to Terraform `aws` provider v6.59.0.
+* Updated to Python v3.14.7.
+* Updated GitHub CodeQL actions.
+* Minor Golang package updates.
+
 ## v1.1.0-beta.1 (July 17, 2026)
 
 > BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
@@ -180,7 +235,7 @@
 * Added `modernize` linter to `golangci-lint` configuration.
 * Fixed `modernize` linter warnings in multiple golang projects.
 * Added missing `${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}` variable to GitLab CI configuration for PostgreSQL image in `go-knfsd-fsidd 4/5` job.
-* Packer: Updated minimum required IAM permissions for Packer build process in [README.md](/image/README.md#iam-permissions) documentation.
+* Packer: Updated minimum required IAM permissions for Packer build process in [README.md](image/README.md#iam-permissions) documentation.
 * Packer: Removed redundant `apt-get install` call for `make` and `gcc` in `20_post_build.sh` script.
 * Packer: Added `retry` and `retry-delay` to all `curl` commands in `10_build.sh` and `20_post_build.sh` scripts.
 * Packer: Wrapped all `git clone` commands in `10_build.sh` and `20_post_build.sh` with a `git_clone` function to add retry logic.
@@ -553,7 +608,7 @@
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Added `var.ASSUME_ROLE_ARN` to allow for role assumption in CI/CD pipelines for `local-exec` provisioners.
+* Added `var.ASSUME_ROLE_ARN` to allow for role assumption for Terraform `local-exec` provisioners.
 * Enabled Auto-Scaling (scale-up only) for the `loadbalancer` module.
 * Enabled OpenTelemetry metrics for the KNFSD proxy.
 * Amazon CloudWatch metrics & logs are grouped by `knfsd/` prefix.

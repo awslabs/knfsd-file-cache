@@ -41,4 +41,4 @@ if [[ $CI == "devcontainer" ]]; then
 fi
 
 docker run --platform linux/amd64 --name bats-proxy-startup-tests --interactive --tty --rm \
-	--mount type=bind,source="${path}",target=/code,readonly "${BATS_IMAGE}" "${1-tests}"
+	--mount type=bind,source="${path}",target=/code,readonly "${BATS_IMAGE}" --pretty "${1-tests}"

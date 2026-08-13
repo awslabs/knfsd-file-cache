@@ -8,7 +8,7 @@ Amazon [FSx for OpenZFS](https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/wha
 
 A single fanout KNFSD proxy connects to a single-AZ (non-HA) FSx for OpenZFS filesystem, acting as the source filer. A second deployment of the KNFSD module is used to create a cluster of 3 x KNFSD proxies that connect to the fanout proxy via a simple, weighted DNS round-robin. The 2nd tier KNFSD proxies are fronted by another DNS round-robin, which is the target for the NFS clients (not provisioned by this example) via the Terraform output `cluster_dns_name`. The entire deployment uses NFS v3 for performance as the filehandle size is within the 64 byte limit for NFS v3.
 
-A single RDS PostgreSQL database is used to store the FSID database for the fanout proxy. This database is then reused for the cluster proxy. This improves efficiency (reduces number of resources to be managed), increase in speed of deployment, lowers operating cost, and ensures all the KNFSD proxy instances in the cluster allocate the same FSID to each export.
+A single Amazon DynamoDB table is used to store the FSID database for the fanout proxy. This table is then reused for the cluster proxy. This improves efficiency (reduces number of resources to be managed), increase in speed of deployment, lowers operating cost, and ensures all the KNFSD proxy instances in the cluster allocate the same FSID to each export.
 
 > WARNING: Lines marked with a `# comment` in the `main.tf` file are critical configuration to the deployment. Please review this file for additional details.
 
@@ -28,23 +28,28 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 This example creates an Amazon FSx for OpenZFS file system (`aws_fsx_openzfs_file_system`) that is not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `fsx:*` and `iam:CreateServiceLinkedRole` (for `fsx.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json) (when applicable). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
 
+As an alternative, if the role does not yet exist in the AWS account, you can pre-create the service-linked role for `fsx.amazonaws.com` before running `terraform apply` as follows:
+
+```bash
+aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
+```
+
 ## Inputs
 
-* `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
-
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the FSx for OpenZFS source filer and KNFSD File Caches. Example: `subnet-038e337f0ff4cd53f`. No default.
-
-* `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
-
-* `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
-
-* `INSTANCE_TYPE` - (Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: `i3en.12xlarge`.
+| Variable        | Description                                                                                                                                | Required | Default         |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|----------|-----------------|
+| `REGION`        | The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`.                                                        | True     | No default      |
+| `SUBNET`        | The single subnet ID to use for deployment of the FSx for OpenZFS source filer and KNFSD File Caches. Example: `subnet-038e337f0ff4cd53f`. | True     | No default      |
+| `PROXY_AMI`     | The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script.          | True     | No default      |
+| `KEY_NAME`      | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                       | False    | `""`            |
+| `INSTANCE_TYPE` | The AWS EC2 instance type to use for the KNFSD cache.                                                                                      | False    | `i3en.12xlarge` |
 
 ## Outputs
 
-* `cluster_dns_name` - The DNS name of the cluster proxy. This is the target for the NFS clients (not provisioned by this example).
-
-* `fanout_dns_name` - The DNS name of the fanout proxy.
+| Output             | Description                                                                                                  |
+|--------------------|--------------------------------------------------------------------------------------------------------------|
+| `cluster_dns_name` | The DNS name of the cluster proxy. This is the target for the NFS clients (not provisioned by this example). |
+| `fanout_dns_name`  | The DNS name of the fanout proxy.                                                                            |
 
 ## Additional Notes
 

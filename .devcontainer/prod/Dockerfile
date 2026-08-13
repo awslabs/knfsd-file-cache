@@ -3,10 +3,11 @@
 
 ## docker build --tag knfsd-prod:latest --file .devcontainer/prod/Dockerfile .
 ## docker run --platform linux/arm64 --rm --name knfsd-prod --hostname knfsd-prod -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-prod
+## docker run --platform linux/arm64 --rm --name knfsd-prod --hostname knfsd-prod -it -v /var/run/docker.sock:/var/run/docker.sock knfsd-prod
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-beta.1"
+ARG VERSION="1.1.0-beta.2"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache production container image"
@@ -109,7 +110,7 @@ RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 
 ## build version args
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.4
+ARG KNFSD_PACKER_VERSION=1.16.0
 # https://github.com/aws/session-manager-plugin/tags
 ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://github.com/hashicorp/terraform/releases

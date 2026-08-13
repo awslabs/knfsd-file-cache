@@ -50,7 +50,6 @@ resource "aws_autoscaling_group" "knfsd_asg" {
   depends_on = [
     null_resource.fsid_db,
     null_resource.dns_rr,
-    null_resource.autoscaling_slr,
     aws_ssm_parameter.settings,
   ]
   name                      = local.asg_name

@@ -1,0 +1,210 @@
+/* =============================================================================
+ * Cloudscape Design Tokens → Material for MkDocs CSS Variables
+ * =============================================================================
+ * Source: @cloudscape-design/design-tokens
+ * Reference: https://cloudscape.design/foundation/visual-foundation/design-tokens/
+ *
+ * This maps Cloudscape's semantic colour tokens to Material's CSS custom
+ * properties. Update values here if Cloudscape publishes new token values.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * LIGHT MODE (Cloudscape "Visual Refresh" light)
+ * --------------------------------------------------------------------------- */
+[data-md-color-scheme="cloudscape-light"] {
+  /* Ensure native form controls, scrollbars and the search field render with a
+     light UA appearance (Material only sets this for its built-in schemes). */
+  color-scheme: light;
+
+  /* === Brand / Primary === */
+  --md-primary-fg-color:          #0972d3;  /* colorBackgroundButtonPrimaryDefault */
+  --md-primary-fg-color--light:   #4da6ff;  /* lighter interactive hover state */
+  --md-primary-fg-color--dark:    #033160;  /* colorTextHeadingDefault (deep navy) */
+  --md-primary-bg-color:          #ffffff;
+  --md-primary-bg-color--light:   #f2f8fd;  /* colorBackgroundLayoutMain tint */
+
+  /* === Accent (AWS Orange — used sparingly) === */
+  --md-accent-fg-color:           #ec7211;  /* colorBackgroundNotificationWarning / AWS Orange */
+  --md-accent-fg-color--transparent: rgba(236, 114, 17, 0.1);
+  --md-accent-bg-color:           #ffffff;
+  --md-accent-bg-color--light:    #fef6ed;
+
+  /* === Default text & backgrounds === */
+  --md-default-fg-color:          #000716;  /* colorTextBodyDefault */
+  --md-default-fg-color--light:   #414d5c;  /* colorTextBodySecondary */
+  --md-default-fg-color--lighter: #5f6b7a;  /* colorTextFormSecondary */
+  --md-default-fg-color--lightest:#8c9bab;  /* colorTextInputPlaceholder */
+  --md-typeset-table-color:       #b6bec9;  /* colorBorderDividerDefault (visible) */
+  --md-typeset-table-stripe:      #f4f4f4;  /* colorBackgroundLayoutMain (zebra) */
+  --md-default-bg-color:          #ffffff;  /* colorBackgroundContainerContent */
+  --md-default-bg-color--light:   #f4f4f4;  /* colorBackgroundLayoutMain */
+  --md-default-bg-color--lighter: #fafafa;
+  --md-default-bg-color--lightest:#ffffff;
+
+  /* === Code blocks === */
+  --md-code-fg-color:             #000716;
+  --md-code-bg-color:             #f4f4f4;  /* colorBackgroundContainerContent alt */
+
+  /* === Footer === */
+  --md-footer-fg-color:           #ffffff;
+  --md-footer-fg-color--light:    #d1d5db;
+  --md-footer-fg-color--lighter:  #9ba7b6;
+  --md-footer-bg-color:           #232f3e;  /* AWS Squid Ink */
+  --md-footer-bg-color--dark:     #161e2d;
+
+  /* === Admonitions / callouts === */
+  --md-admonition-fg-color:       var(--md-default-fg-color);
+  --md-admonition-bg-color:       var(--md-default-bg-color);
+
+  /* === Typeset body & link colour === */
+  --md-typeset-color:             #000716;  /* body copy — near-black in light mode */
+  --md-typeset-a-color:           #0972d3;  /* colorTextLinkDefault */
+
+  /* === Shadow (Cloudscape uses subtle elevation) === */
+  --md-shadow-z1: 0 1px 2px 0 rgba(0, 7, 22, 0.12);
+  --md-shadow-z2: 0 2px 4px 0 rgba(0, 7, 22, 0.12);
+  --md-shadow-z3: 0 4px 8px 0 rgba(0, 7, 22, 0.12);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * DARK MODE (Cloudscape "Visual Refresh" dark)
+ * --------------------------------------------------------------------------- */
+[data-md-color-scheme="cloudscape-dark"] {
+  /* Render native form controls, scrollbars and the search field dark (Material
+     only applies this to its built-in "slate" scheme, not custom scheme names). */
+  color-scheme: dark;
+
+  /* === Brand / Primary === */
+  --md-primary-fg-color:          #539fe5;  /* colorTextLinkDefault (dark) */
+  --md-primary-fg-color--light:   #89bdee;
+  --md-primary-fg-color--dark:    #539fe5;
+  --md-primary-bg-color:          #0f1b2d;  /* colorBackgroundLayoutMain (dark) */
+  --md-primary-bg-color--light:   #192534;
+
+  /* === Accent === */
+  --md-accent-fg-color:           #eb9d69;  /* softened AWS orange for dark bg */
+  --md-accent-fg-color--transparent: rgba(235, 157, 105, 0.12);
+  --md-accent-bg-color:           #0f1b2d;
+  --md-accent-bg-color--light:    #1a2332;
+
+  /* === Default text & backgrounds === */
+  --md-default-fg-color:          #ffffff;  /* body text — pure white (mirrors black in light) */
+  --md-default-fg-color--light:   #ffffff;  /* primary body copy (.md-typeset uses this) */
+  --md-default-fg-color--lighter: #aab4c0;  /* muted / secondary text */
+  --md-default-fg-color--lightest:#7d8998;  /* faint borders / disabled */
+  --md-typeset-table-color:       #566573;  /* colorBorderDividerDefault dark (visible) */
+  --md-typeset-table-stripe:      #1a2838;  /* subtle lift over bg (zebra) */
+  --md-default-bg-color:          #0f1b2d;  /* colorBackgroundLayoutMain (dark) */
+  --md-default-bg-color--light:   #192534;  /* colorBackgroundContainerContent (dark) */
+  --md-default-bg-color--lighter: #1a2838;
+  --md-default-bg-color--lightest:#232f3e;
+
+  /* === Code blocks === */
+  --md-code-fg-color:             #ffffff;
+  --md-code-bg-color:             #1a2838;
+
+  /* === Footer === */
+  --md-footer-fg-color:           #d1d5db;
+  --md-footer-fg-color--light:    #9ba7b6;
+  --md-footer-fg-color--lighter:  #7d8998;
+  --md-footer-bg-color:           #04111f;
+  --md-footer-bg-color--dark:     #020a12;
+
+  /* === Typeset body & link colour === */
+  --md-typeset-color:             #ffffff;  /* body copy — white in dark mode */
+  --md-typeset-a-color:           #539fe5;
+
+  /* === Shadow === */
+  --md-shadow-z1: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --md-shadow-z2: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --md-shadow-z3: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ---------------------------------------------------------------------------
+ * DARK MODE — syntax highlighting (Pygments) palette
+ *
+ * Material only ships a dark Pygments palette for its built-in "slate" scheme.
+ * Because this project uses a custom scheme name, code tokens keep their
+ * light-mode colours and low-contrast ones (comments, keywords) disappear on
+ * the dark code background. Re-map the token classes to legible, Cloudscape-
+ * aligned colours. Scoped to the dark scheme so light mode is untouched.
+ * --------------------------------------------------------------------------- */
+[data-md-color-scheme="cloudscape-dark"] .highlight .c,
+[data-md-color-scheme="cloudscape-dark"] .highlight .ch,
+[data-md-color-scheme="cloudscape-dark"] .highlight .cm,
+[data-md-color-scheme="cloudscape-dark"] .highlight .cp,
+[data-md-color-scheme="cloudscape-dark"] .highlight .cpf,
+[data-md-color-scheme="cloudscape-dark"] .highlight .c1,
+[data-md-color-scheme="cloudscape-dark"] .highlight .cs {
+  color: #8b98a9;
+  font-style: italic;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .k,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kc,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kd,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kn,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kp,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kr,
+[data-md-color-scheme="cloudscape-dark"] .highlight .kt {
+  color: #d7a3ff;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .s,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sa,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sb,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sc,
+[data-md-color-scheme="cloudscape-dark"] .highlight .dl,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sd,
+[data-md-color-scheme="cloudscape-dark"] .highlight .s2,
+[data-md-color-scheme="cloudscape-dark"] .highlight .se,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sh,
+[data-md-color-scheme="cloudscape-dark"] .highlight .si,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sx,
+[data-md-color-scheme="cloudscape-dark"] .highlight .sr,
+[data-md-color-scheme="cloudscape-dark"] .highlight .s1,
+[data-md-color-scheme="cloudscape-dark"] .highlight .ss {
+  color: #8fd694;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .m,
+[data-md-color-scheme="cloudscape-dark"] .highlight .mb,
+[data-md-color-scheme="cloudscape-dark"] .highlight .mf,
+[data-md-color-scheme="cloudscape-dark"] .highlight .mh,
+[data-md-color-scheme="cloudscape-dark"] .highlight .mi,
+[data-md-color-scheme="cloudscape-dark"] .highlight .mo,
+[data-md-color-scheme="cloudscape-dark"] .highlight .il {
+  color: #f0a35e;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .nf,
+[data-md-color-scheme="cloudscape-dark"] .highlight .fm,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nc,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nn,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nd,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nb,
+[data-md-color-scheme="cloudscape-dark"] .highlight .bp {
+  color: #6cb6ff;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .n,
+[data-md-color-scheme="cloudscape-dark"] .highlight .na,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nv,
+[data-md-color-scheme="cloudscape-dark"] .highlight .vc,
+[data-md-color-scheme="cloudscape-dark"] .highlight .vg,
+[data-md-color-scheme="cloudscape-dark"] .highlight .vi,
+[data-md-color-scheme="cloudscape-dark"] .highlight .no,
+[data-md-color-scheme="cloudscape-dark"] .highlight .nt {
+  color: #e3e7ec;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .o,
+[data-md-color-scheme="cloudscape-dark"] .highlight .ow,
+[data-md-color-scheme="cloudscape-dark"] .highlight .p {
+  color: #c6cdd6;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .highlight .err {
+  color: #ff8a8a;
+}

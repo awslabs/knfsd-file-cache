@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.55.0"
+      version = "~> 6.59.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-beta.1"
+      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-beta.2"
     ]
   }
 }
@@ -167,21 +167,19 @@ data "aws_ec2_instance_type_offerings" "instance_offered" {
 }
 
 module "knfsd_fanout" {
-  source                    = "../../deployment/terraform-module-knfsd"
-  SUBNET                    = var.SUBNET
-  TRAFFIC_MODE              = "dns_round_robin"
-  KEY_NAME                  = var.KEY_NAME
-  PROXY_AMI                 = var.PROXY_AMI
-  INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
-  INSTANCE_TYPE             = var.INSTANCE_TYPE                                       # Use a higher CPU and Memory machine type to increase fanout performance
-  KNFSD_NODES               = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
-  EXPORT_MAP                = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
-  PROXY_BASENAME            = "knfsd-fanout"                                          # Give this proxy a unique base name
-  NFS_MOUNT_VERSION         = "3"                                                     # Mount source filer as NFSv3
-  DISABLED_NFS_VERSIONS     = "4.0,4.1,4.2"                                           # Allow NFS v3 only as we use 'showmount' in the next cluster for export discovery
-  ENABLE_STATUS_CHECK       = true                                                    # Enable status check to hold the deployment until all EC2 instances are status:ready
-  FSID_DB_SUBNET_GROUP_NAME = "default"                                               # Use the default database subnet group (non-default VPCs may require a custom DB subnet group)
-  FSID_DB_SUBNET_IDS        = null                                                    # alternative to FSID_DB_SUBNET_GROUP_NAME: provide 2+ subnet IDs in different AZs to let the module create the DB subnet group
+  source                = "../../deployment/terraform-module-knfsd"
+  SUBNET                = var.SUBNET
+  TRAFFIC_MODE          = "dns_round_robin"
+  KEY_NAME              = var.KEY_NAME
+  PROXY_AMI             = var.PROXY_AMI
+  INSTANCE_TAGS         = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
+  INSTANCE_TYPE         = var.INSTANCE_TYPE                                       # Use a higher CPU and Memory machine type to increase fanout performance
+  KNFSD_NODES           = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
+  EXPORT_MAP            = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
+  PROXY_BASENAME        = "knfsd-fanout"                                          # Give this proxy a unique base name
+  NFS_MOUNT_VERSION     = "3"                                                     # Mount source filer as NFSv3
+  DISABLED_NFS_VERSIONS = "4.0,4.1,4.2"                                           # Allow NFS v3 only as we use 'showmount' in the next cluster for export discovery
+  ENABLE_STATUS_CHECK   = true                                                    # Enable status check to hold the deployment until all EC2 instances are status:ready
   depends_on = [
     data.aws_ami.proxy_exists, # Ensure proxy AMI exists
     data.aws_ami.proxy_arch,   # Ensure proxy AMI architecture matches instance type
@@ -195,9 +193,9 @@ module "knfsd_cluster" {
   KEY_NAME                 = var.KEY_NAME
   PROXY_AMI                = var.PROXY_AMI
   INSTANCE_TAGS            = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
-  FSID_DATABASE_DEPLOY     = false                                   # Reuse the database from the fanout module
+  FSID_DATABASE_DEPLOY     = false                                   # Reuse the FSID table from the fanout module
   FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config     # Database configuration from the fanout module
-  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy # ARN of the IAM policy for rds-db:connect database access from the fanout module
+  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy # ARN of the IAM policy for DynamoDB table access from the fanout module
   INSTANCE_TYPE            = "i3en.6xlarge"                          # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
   KNFSD_NODES              = 3                                       # Deploy >1 knfsd node for the performant based, temporary proxy nodes
   EXPORT_HOST_AUTO_DETECT  = module.knfsd_fanout.dns_name            # Detect exports from the fanout node via "showmount -e <FANOUT_NODE_DNS_NAME>"

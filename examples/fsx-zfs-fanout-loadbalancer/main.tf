@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.55.0"
+      version = "~> 6.59.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs-fanout-loadbalancer/1.1.0-beta.1"
+      "knfsd-file-cache/examples/fsx-zfs-fanout-loadbalancer/1.1.0-beta.2"
     ]
   }
 }
@@ -193,9 +193,9 @@ module "knfsd_cluster" {
   KEY_NAME                 = var.KEY_NAME
   PROXY_AMI                = var.PROXY_AMI
   INSTANCE_TAGS            = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-loadbalancer" }
-  FSID_DATABASE_DEPLOY     = false                                                     # Reuse the database from the fanout module
+  FSID_DATABASE_DEPLOY     = false                                                     # Reuse the FSID table from the fanout module
   FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config                       # Database configuration from the fanout module
-  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy                   # ARN of the IAM policy for rds-db:connect database access from the fanout module
+  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy                   # ARN of the IAM policy for DynamoDB table access from the fanout module
   INSTANCE_TYPE            = "i3en.6xlarge"                                            # Use a smaller CPU and memory machine type as we have multiple nodes in the cluster
   KNFSD_NODES              = 3                                                         # Deploy >1 knfsd node for the performant based, temporary proxy nodes
   EXPORT_MAP               = "${module.knfsd_fanout.loadbalancer_ipaddress};/fsx;/fsx" # Re-export the export from the fanout proxy

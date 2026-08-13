@@ -40,6 +40,15 @@
         "ec2-instance-connect:SendSSHPublicKey"
       ],
       "Resource": "arn:*:ec2:*:*:instance/*"
+    },
+    {
+      "Sid": "KnfsdTestingDynamoDB",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
+      ],
+      "Resource": "arn:*:dynamodb:*:*:table/knfsd-*"
     }
   ]
 }

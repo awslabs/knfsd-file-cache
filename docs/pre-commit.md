@@ -200,7 +200,8 @@ These hooks use the project's Makefile targets:
 - **check-merge-conflict** - Detects merge conflict markers
 - **check-shebang-scripts-are-executable** - Ensures scripts with shebangs are executable
 - **check-vcs-permalinks** - Validates VCS permalink formats
-- **check-yaml** - Validates YAML syntax
+- **check-yaml** - Validates YAML syntax (excludes `mkdocs.yml`)
+- **check-yaml-unsafe** - Validates `mkdocs.yml` syntax only, allowing the MkDocs `!ENV` custom tag
 - **detect-aws-credentials** - Prevents committing AWS credentials
 - **detect-private-key** - Prevents committing private keys
 - **mixed-line-ending** - Enforces consistent line endings (LF)

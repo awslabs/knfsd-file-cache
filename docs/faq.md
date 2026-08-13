@@ -14,22 +14,11 @@ The AMI must be in the same AWS Region as the KNFSD proxy instances.
 │    9: data "aws_ami" "proxy" {
 ```
 
-## Error: The DB instance and EC2 security group are in different VPCs
+## The knfsd-fsidd service cannot reach DynamoDB
 
-```hcl
-│ Error: creating RDS DB Instance (knfsd-fsids): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 150419e9-cbb0-4dc9-856e-4b8db915dd51, api error InvalidParameterCombination: The DB instance and EC2 security group are in different VPCs. The DB instance is in vpc-56786e19f2a7c041e and the EC2 security group is in vpc-1234ebfdfc54626ad
-│
-│   with module.knfsd.module.fsid_database[0].aws_db_instance.fsids,
-│   on ../database/main.tf line 64, in resource "aws_db_instance" "fsids":
-│   64: resource "aws_db_instance" "fsids" {
-```
+When using the default `FSID_MODE="external"`, the `knfsd-fsidd` service on each proxy instance connects to the Amazon DynamoDB regional API endpoint over HTTPS. If the proxy is deployed in a private subnet without internet connectivity, the service will fail to verify the FSID table on start-up (look for `DescribeTable` timeouts in the `knfsd-fsidd` journal).
 
-If you are using a **non-default** VPC for the database, you have two options:
-
-* Pre-create a DB subnet group in RDS (containing at least 2 subnets, each in a different availability zone, including the subnet defined in `var.SUBNET`) and then specify its name via `FSID_DB_SUBNET_GROUP_NAME`.
-* Provide a list of 2+ subnet IDs (in different availability zones, including `var.SUBNET`) via `FSID_DB_SUBNET_IDS` and let the module create the `aws_db_subnet_group` for you.
-
-The two variables are mutually exclusive. The single AZ deployment of the DB instance will still target the availability zone of the provided subnet via `var.SUBNET`. Please make sure to review the [FSID Database Options](../deployment/README.md#fsid-database-options) for the full table of scenarios and validation rules.
+Add an Amazon DynamoDB Gateway VPC endpoint to the subnet's route table; see [VPC Endpoints](../deployment/docs/vpc-endpoints.md).
 
 ## Error creating resource: already exists
 

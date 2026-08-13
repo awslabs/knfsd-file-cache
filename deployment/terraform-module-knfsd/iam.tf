@@ -15,15 +15,21 @@ locals {
   netapp_region  = var.NETAPP_SECRET_REGION != "" ? var.NETAPP_SECRET_REGION : local.region
 }
 
-# IAM instance profile for KNFSD proxy instances
+# IAM instance profile for KNFSD proxy instances (skipped when EXISTING_INSTANCE_PROFILE_NAME is set)
 resource "aws_iam_instance_profile" "knfsd_instance_profile" {
-  name = "${local.name}-instance-profile"
-  role = aws_iam_role.knfsd_instance_role.name
-  tags = local.tags
+  count = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  name  = "${local.name}-instance-profile"
+  role  = aws_iam_role.knfsd_instance_role[0].name
+  tags  = local.tags
 }
 
-# IAM role for KNFSD proxy instances
+locals {
+  knfsd_instance_profile_name = var.EXISTING_INSTANCE_PROFILE_NAME != "" ? var.EXISTING_INSTANCE_PROFILE_NAME : aws_iam_instance_profile.knfsd_instance_profile[0].name
+}
+
+# IAM role for KNFSD proxy instances (skipped when EXISTING_INSTANCE_PROFILE_NAME is set)
 resource "aws_iam_role" "knfsd_instance_role" {
+  count       = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
   name        = "${local.name}-instance-role"
   description = "IAM role for KNFSD proxy instances"
   assume_role_policy = jsonencode({
@@ -51,6 +57,7 @@ data "aws_iam_policy_document" "ec2_instance_tags_policy_document" {
 
 # IAM policy for EC2 instance "status" tagging & OTEL resource detection
 resource "aws_iam_policy" "ec2_instance_tags_policy" {
+  count  = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
   name   = "${local.name}-ec2-instance-tags-policy"
   policy = data.aws_iam_policy_document.ec2_instance_tags_policy_document.json
   tags   = local.tags
@@ -58,8 +65,9 @@ resource "aws_iam_policy" "ec2_instance_tags_policy" {
 
 # IAM role policy attachment for EC2 instance "status" tagging & OTEL resource detection
 resource "aws_iam_role_policy_attachment" "ec2_instance_tags_policy_attachment" {
-  role       = aws_iam_role.knfsd_instance_role.name
-  policy_arn = aws_iam_policy.ec2_instance_tags_policy.arn
+  count      = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
+  policy_arn = aws_iam_policy.ec2_instance_tags_policy[0].arn
 }
 
 # IAM policy document for autoscaling access for metrics via CW Agent to CloudWatch
@@ -73,6 +81,7 @@ data "aws_iam_policy_document" "autoscaling_policy_document" {
 
 # IAM policy for autoscaling access for metrics via CW Agent to CloudWatch
 resource "aws_iam_policy" "autoscaling_policy" {
+  count  = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
   name   = "${local.name}-autoscaling-policy"
   policy = data.aws_iam_policy_document.autoscaling_policy_document.json
   tags   = local.tags
@@ -80,21 +89,26 @@ resource "aws_iam_policy" "autoscaling_policy" {
 
 # IAM role policy attachment for autoscaling access for metrics via CW Agent to CloudWatch
 resource "aws_iam_role_policy_attachment" "autoscaling_policy_attachment" {
-  role       = aws_iam_role.knfsd_instance_role.name
-  policy_arn = aws_iam_policy.autoscaling_policy.arn
+  count      = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
+  policy_arn = aws_iam_policy.autoscaling_policy[0].arn
 }
 
 # IAM policy document for SSM Parameter Store access
 data "aws_iam_policy_document" "ssm_parameter_store_policy_document" {
   statement {
-    effect    = "Allow"
-    actions   = ["ssm:GetParametersByPath"]
-    resources = ["arn:${local.partition}:ssm:${local.region}:${local.account_id}:parameter/knfsd/*"]
+    effect  = "Allow"
+    actions = ["ssm:GetParametersByPath"]
+    resources = [
+      "arn:${local.partition}:ssm:${local.region}:${local.account_id}:parameter/knfsd/${local.name}",
+      "arn:${local.partition}:ssm:${local.region}:${local.account_id}:parameter/knfsd/${local.name}/*"
+    ]
   }
 }
 
 # IAM policy for SSM Parameter Store access
 resource "aws_iam_policy" "ssm_parameter_store_policy" {
+  count  = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
   name   = "${local.name}-ssm-parameter-store-policy"
   policy = data.aws_iam_policy_document.ssm_parameter_store_policy_document.json
   tags   = local.tags
@@ -102,36 +116,39 @@ resource "aws_iam_policy" "ssm_parameter_store_policy" {
 
 # IAM role policy attachment for SSM Parameter Store access
 resource "aws_iam_role_policy_attachment" "ssm_parameter_store_policy_attachment" {
-  role       = aws_iam_role.knfsd_instance_role.name
-  policy_arn = aws_iam_policy.ssm_parameter_store_policy.arn
+  count      = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
+  policy_arn = aws_iam_policy.ssm_parameter_store_policy[0].arn
 }
 
 # IAM role policy attachment for CloudWatch
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_cloudwatch_policy" {
-  role       = aws_iam_role.knfsd_instance_role.name
+  count      = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
   policy_arn = "arn:${local.partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # IAM role policy attachment for Amazon SSM
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_ssm_policy" {
-  role       = aws_iam_role.knfsd_instance_role.name
+  count      = var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
   policy_arn = "arn:${local.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # new DATABASE deployment
-# add IAM rds-db:connect policy only if database == external & deployed
-resource "aws_iam_role_policy_attachment" "knfsd_instance_role_rds_policy" {
-  count      = local.deploy_fsid_database ? 1 : 0
-  role       = aws_iam_role.knfsd_instance_role.name
+# add IAM DynamoDB table access policy only if database == external & deployed
+resource "aws_iam_role_policy_attachment" "knfsd_instance_role_db_policy" {
+  count      = local.deploy_fsid_database && var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
   policy_arn = module.fsid_database[0].db_iam_policy
 }
 
 # external/reuse DATABASE deployment
-# add custom IAM rds-db:connect policy for db access if database == external & not deployed
+# add custom IAM DynamoDB table access policy if database == external & not deployed
 # for both user-provided custom policy ARN and fanout deployments with module output
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_external_db_policy" {
-  count      = local.custom_fsid_database ? 1 : 0
-  role       = aws_iam_role.knfsd_instance_role.name
+  count      = local.custom_fsid_database && var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
   policy_arn = var.FSID_DATABASE_IAM_POLICY
 }
 
@@ -147,7 +164,7 @@ data "aws_iam_policy_document" "netapp_exports_policy_document" {
 
 # IAM policy for netapp-exports secret access
 resource "aws_iam_policy" "knfsd_instance_role_netapp_exports_policy" {
-  count  = local.netapp_enabled ? 1 : 0
+  count  = local.netapp_enabled && var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
   name   = "${local.name}-netapp-exports-policy"
   policy = data.aws_iam_policy_document.netapp_exports_policy_document[0].json
   tags   = local.tags
@@ -156,29 +173,45 @@ resource "aws_iam_policy" "knfsd_instance_role_netapp_exports_policy" {
 # IAM role policy attachment for netapp-exports secret access
 # if var.ENABLE_NETAPP_AUTO_DETECT == true & var.NETAPP_SECRET != ""
 resource "aws_iam_role_policy_attachment" "knfsd_instance_role_netapp_exports_policy" {
-  count      = local.netapp_enabled ? 1 : 0
-  role       = aws_iam_role.knfsd_instance_role.name
+  count      = local.netapp_enabled && var.EXISTING_INSTANCE_PROFILE_NAME == "" ? 1 : 0
+  role       = aws_iam_role.knfsd_instance_role[0].name
   policy_arn = aws_iam_policy.knfsd_instance_role_netapp_exports_policy[0].arn
 }
 
-# ensure Auto Scaling service-linked role exists (TRAFFIC_MODE="loadbalancer")
-resource "null_resource" "autoscaling_slr" {
+# Ensure the required service-linked roles exist. The AWSServiceRoleForAutoScaling
+# SLR is always needed because the module always deploys an EC2 Auto Scaling group,
+# while AWSServiceRoleForElasticLoadBalancing is only needed in "loadbalancer" mode.
+# These SLRs are typically missing in a new AWS account that has never used EC2 ASG
+# or Elastic Load Balancing. Deploy roles that lack iam:CreateServiceLinkedRole
+# cannot create these SLRs, so this module never attempts creation; it only verifies
+# presence and fails early with a clear remedy via AWS CLI.
+data "aws_iam_roles" "autoscaling_slr" {
+  name_regex  = "^AWSServiceRoleForAutoScaling$"
+  path_prefix = "/aws-service-role/autoscaling.amazonaws.com/"
+}
+
+resource "null_resource" "autoscaling_slr_check" {
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_roles.autoscaling_slr.names) > 0
+      error_message = "This module requires the AWSServiceRoleForAutoScaling service-linked role, which is missing in this AWS account. Create it once with: aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com"
+    }
+  }
+}
+
+data "aws_iam_roles" "elb_slr" {
+  count       = var.TRAFFIC_MODE == "loadbalancer" ? 1 : 0
+  name_regex  = "^AWSServiceRoleForElasticLoadBalancing$"
+  path_prefix = "/aws-service-role/elasticloadbalancing.amazonaws.com/"
+}
+
+resource "null_resource" "elb_slr_check" {
   count = var.TRAFFIC_MODE == "loadbalancer" ? 1 : 0
 
-  provisioner "local-exec" {
-    when        = create
-    working_dir = path.module
-    interpreter = local.is_windows ? ["git-bash", "-c"] : ["/bin/bash", "-c"]
-    command     = <<-EOF
-      set -e
-      if aws iam get-role --role-name AWSServiceRoleForAutoScaling 2> /dev/null > /dev/null; then
-        echo "Auto Scaling service-linked role already exists"
-      else
-        echo "Creating Auto Scaling service-linked role..."
-        aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com
-        echo "Waiting 10s for IAM propagation..."
-        sleep 10
-      fi
-    EOF
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_roles.elb_slr[0].names) > 0
+      error_message = "TRAFFIC_MODE=\"loadbalancer\" requires the AWSServiceRoleForElasticLoadBalancing service-linked role, which is missing in this AWS account. Create it once with: aws iam create-service-linked-role --aws-service-name elasticloadbalancing.amazonaws.com"
+    }
   }
 }

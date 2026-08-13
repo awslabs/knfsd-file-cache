@@ -6,7 +6,6 @@ exclude-severities:
   - LOW
   - INFO
 exclude-queries:
-  - 8d7f7b8c-6c7c-40f8-baa6-62006c6c7b56 # (AWS) RDS Without Logging - https://docs.kics.io/latest/queries/terraform-queries/aws/8d7f7b8c-6c7c-40f8-baa6-62006c6c7b56/ (false-positive)
   - 7dbba512-e244-42dc-98bb-422339827967 # (AWS) CloudWatch Logging Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/7dbba512-e244-42dc-98bb-422339827967/ (false-positive)
   - 0afbcfe9-d341-4b92-a64c-7e6de0543879 # (AWS) CloudWatch Log Group Without KMS - https://docs.kics.io/latest/queries/terraform-queries/aws/0afbcfe9-d341-4b92-a64c-7e6de0543879 (not required)
   - afecd1f1-6378-4f7e-bb3b-60c35801fdd4 # (AWS) ALB Deletion Protection Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/afecd1f1-6378-4f7e-bb3b-60c35801fdd4 (not required)
@@ -15,6 +14,7 @@ exclude-queries:
   - a88baa34-e2ad-44ea-ad6f-8cac87bc7c71 # (Common) Passwords And Secrets - https://docs.kics.io/latest/queries/common-queries/a88baa34-e2ad-44ea-ad6f-8cac87bc7c71 (false-positive)
   - fd54f200-402c-4333-a5a4-36ef6709af2f # (Docker) Missing User Instruction - https://docs.kics.io/latest/queries/dockerfile-queries/fd54f200-402c-4333-a5a4-36ef6709af2f (false-positive, dev/test only)
   - 965a08d7-ef86-4f14-8792-4a3b2098937e # (Docker) Apt Get Install Pin Version Not Defined - https://docs.kics.io/latest/queries/dockerfile-queries/965a08d7-ef86-4f14-8792-4a3b2098937e (false-positive, dev/test required)
+  - d3499f6d-1651-41bb-a9a7-de925fea487b # (Docker) Unpinned Package Version in Apk Add - https://docs.kics.io/latest/queries/dockerfile-queries/d3499f6d-1651-41bb-a9a7-de925fea487b/ (false-positive, dev/test required)
   - 8ada6e80-0ade-439e-b176-0b28f6bce35a # (Docker) Run Using Sudo - https://docs.kics.io/latest/queries/dockerfile-queries/8ada6e80-0ade-439e-b176-0b28f6bce35a (false-positive, dev/test required)
   - 8e94dced-9bcc-4203-8eb7-7e41202b2505 # (AWS) Auto Scaling Group With No Associated ELB - https://docs.kics.io/latest/queries/terraform-queries/aws/8e94dced-9bcc-4203-8eb7-7e41202b2505 (not required, dns-round-robin uses no LB)
   - 2f01fb2d-828a-499d-b98e-b83747305052 # (AWS) AWS CloudFormation Stack should have a stack policy in order to protect stack resources from update actions (false-positive, not applicable)
@@ -22,7 +22,3 @@ exclude-queries:
   - b72d0026-f649-4c91-a9ea-15d8f681ac09 # (AWS) Stack Notifications Disabled  - https://docs.kics.io/latest/queries/terraform-queries/aws/b72d0026-f649-4c91-a9ea-15d8f681ac09/ (false-positive, not applicable)
   - ba2ed23b-52d3-45ca-be25-f6c358d45abd # (AWS) IAM policy allows for data exfiltration - https://docs.kics.io/latest/queries/terraform-queries/aws/ba2ed23b-52d3-45ca-be25-f6c358d45abd/ (false-positive, not applicable)
   - 3e34db4f-0ad9-4290-bfd0-4a9ee884acaf # (AWS) ELBv2 LB Access Log Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/3e34db4f-0ad9-4290-bfd0-4a9ee884acaf/ (not required)
-  - fd632aaf-b8a1-424d-a4d1-0de22fd3247a # (AWS) VPC Without Network Firewall - https://docs.kics.io/latest/queries/terraform-queries/aws/fd632aaf-b8a1-424d-a4d1-0de22fd3247a/ (not required - codebuild/testing)
-  - f83121ea-03da-434f-9277-9cd247ab3047 # (AWS) VPC FlowLogs Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/f83121ea-03da-434f-9277-9cd247ab3047/ (not required - codebuild/testing)
-  - d3499f6d-1651-41bb-a9a7-de925fea487b # (AWS) Unpinned Package Version in Apk Add - https://docs.kics.io/latest/queries/dockerfile-queries/d3499f6d-1651-41bb-a9a7-de925fea487b/ (false-positive - codebuild/testing)
-  - f861041c-8c9f-4156-acfc-5e6e524f5884 # (AWS) S3 Bucket Logging Disabled - https://docs.kics.io/latest/queries/terraform-queries/aws/f861041c-8c9f-4156-acfc-5e6e524f5884/ (false-positive - codebuild/testing)

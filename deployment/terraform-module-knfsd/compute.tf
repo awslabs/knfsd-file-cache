@@ -60,7 +60,7 @@ resource "aws_launch_template" "knfsd_launch_template" {
 
   # enable ENA-SRD only if the instance type supports it
   network_interfaces {
-    security_groups             = [aws_security_group.knfsd_asg_sg.id]
+    security_groups             = [local.knfsd_sg_id]
     associate_public_ip_address = var.ASSOCIATE_PUBLIC_IP_ADDRESS
     dynamic "ena_srd_specification" {
       for_each = data.aws_ec2_instance_type.selected.ena_srd_supported ? [1] : []
@@ -103,8 +103,7 @@ resource "aws_launch_template" "knfsd_launch_template" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name"                    = local.name,
-      "knfsd-file-cache:status" = "starting"
+      "Name" = local.name
     }
   }
 
@@ -117,7 +116,7 @@ resource "aws_launch_template" "knfsd_launch_template" {
   }
 
   iam_instance_profile {
-    name = aws_iam_instance_profile.knfsd_instance_profile.name
+    name = local.knfsd_instance_profile_name
   }
 
   metadata_options {

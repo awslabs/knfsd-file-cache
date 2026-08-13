@@ -176,12 +176,12 @@
           "inputType": "select",
           "pattern": "DB_FILTER",
           "id": "db_filter",
-          "label": "RDS DB Instance Identifier",
+          "label": "DynamoDB Table Name",
           "defaultValue": "__FIRST",
           "visible": true,
           "inputPopulationType": "search",
-          "search": "AWS/RDS",
-          "populateFrom": "DBInstanceIdentifier"
+          "search": "AWS/DynamoDB",
+          "populateFrom": "TableName"
       },
       {
           "type": "pattern",
@@ -2694,7 +2694,7 @@
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## FSID Performance\n\nThe following graphs show FSID SQL performance stats.",
+              "markdown": "## FSID Performance\n\nThe following graphs show FSID daemon performance stats.",
               "background": "transparent"
           }
       },
@@ -2771,17 +2771,17 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_fsid", "id": "e1" } ],
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: allocate_fsid", "id": "e2" } ],
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_fsid", "id": "e4" } ],
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
-                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "ok: get_fsid", "id": "e1" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "ok: allocate_fsid", "id": "e2" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "not_found: get_fsid", "id": "e4" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
+                  [ { "expression": "SUM(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/count\" ', 'Sum'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "SQL Query Count",
+              "title": "DB Query Count",
               "period": 60,
               "stat": "Sum",
               "yAxis": {
@@ -2800,17 +2800,17 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_fsid", "id": "e1" } ],
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: allocate_fsid", "id": "e2" } ],
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_fsid", "id": "e4" } ],
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
-                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/sql/query/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "ok: get_fsid", "id": "e1" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "ok: allocate_fsid", "id": "e2" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"ok\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "ok: get_path", "id": "e3" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "not_found: get_fsid", "id": "e4" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"allocate_fsid\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "not_found: allocate_fsid", "id": "e5" } ],
+                  [ { "expression": "AVG(SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,query,result} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" query=\"get_path\" result=\"not_found\" MetricName=\"knfsd/fsid/db/query/duration\" ', 'Average'))", "label": "not_found: get_path", "id": "e6" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "SQL Query Duration",
+              "title": "DB Query Duration",
               "period": 60,
               "stat": "Average",
               "yAxis": {
@@ -2916,7 +2916,7 @@
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## RDS Database Performance\n\nThe following graphs show RDS PostgreSQL performance stats.",
+              "markdown": "## FSID DynamoDB Performance\n\nThe following graphs show Amazon DynamoDB performance stats for the FSID table.",
               "background": "transparent"
           }
       },
@@ -2928,19 +2928,20 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "DBLoad", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "DBLoadNonCPU", ".", "." ],
-                  [ ".", "DBLoadCPU", ".", "." ]
+                  [ "AWS/DynamoDB", "SuccessfulRequestLatency", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "GetItem" } ],
+                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "PutItem" } ],
+                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "UpdateItem" } ],
+                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "TransactWriteItems" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Average",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB Load",
+              "title": "DB Request Latency",
               "yAxis": {
                   "left": {
-                      "label": "Active Sessions",
+                      "label": "Time/ms",
                       "showUnits": false
                   }
               }
@@ -2954,14 +2955,23 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", "DB_FILTER" ]
+                  [ "AWS/DynamoDB", "ThrottledRequests", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "GetItem" } ],
+                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "PutItem" } ],
+                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "UpdateItem" } ],
+                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "TransactWriteItems" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
+              "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB Connections"
+              "title": "DB Throttled Requests",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
@@ -2972,20 +2982,24 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "IamDbAuthConnectionRequests", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "IamDbAuthConnectionSuccess", ".", "." ],
-                  [ ".", "IamDbAuthConnectionFailure", ".", "." ],
-                  [ ".", "IamDbAuthConnectionFailureThrottling", ".", "." ],
-                  [ ".", "IamDbAuthConnectionFailureServerError", ".", "." ],
-                  [ ".", "IamDbAuthConnectionFailureInvalidToken", ".", "." ],
-                  [ ".", "IamDbAuthConnectionFailureInsufficientPermissions", ".", "." ]
+                  [ "AWS/DynamoDB", "SystemErrors", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "SystemErrors: GetItem" } ],
+                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "SystemErrors: PutItem" } ],
+                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "SystemErrors: UpdateItem" } ],
+                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "SystemErrors: TransactWriteItems" } ],
+                  [ "AWS/DynamoDB", "UserErrors", { "label": "UserErrors (all tables)" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB IAM Auth"
+              "title": "DB System & User Errors",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
@@ -2996,20 +3010,18 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "DB_FILTER" ]
+                  [ "AWS/DynamoDB", "ConditionalCheckFailedRequests", "TableName", "DB_FILTER", { "label": "ConditionalCheckFailedRequests" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
+              "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB CPU Utilization",
+              "title": "DB Conditional Check Failed",
               "yAxis": {
                   "left": {
-                      "min": 0,
-                      "max": 100,
-                      "showUnits": false,
-                      "label": "Percent %"
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
@@ -3022,39 +3034,18 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUCreditBalance", "DBInstanceIdentifier", "DB_FILTER" ]
+                  [ "AWS/DynamoDB", "TransactionConflict", "TableName", "DB_FILTER", { "label": "TransactionConflict" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
-              "period": 300,
+              "stat": "Sum",
+              "period": 60,
               "region": "${region_filter}",
-              "title": "DB EC2 CPU Credits (Credit Balance)",
-              "annotations": {
-                  "horizontal": [
-                      {
-                          "label": "Max (db.t4g.micro: 100%)",
-                          "value": 288,
-                          "color": "#2ca02c"
-                      },
-                      {
-                          "label": "Low Credit Warning (20%)",
-                          "value": 58,
-                          "color": "#ffa500"
-                      },
-                      {
-                          "label": "Critical Credit Level (10%)",
-                          "value": 29,
-                          "color": "#cb0000",
-                          "fill": "below"
-                      }
-                  ]
-              },
+              "title": "DB Transaction Conflicts",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Credits (vCPU-minutes)",
-                      "max": 300
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
@@ -3067,34 +3058,18 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUCreditUsage", "DBInstanceIdentifier", "DB_FILTER" ]
+                  [ "AWS/DynamoDB", "ReadThrottleEvents", "TableName", "DB_FILTER", { "label": "ReadThrottleEvents" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
-              "period": 300,
+              "stat": "Sum",
+              "period": 60,
               "region": "${region_filter}",
-              "title": "DB EC2 CPU Credit Usage (Spend Rate)",
-              "annotations": {
-                  "horizontal": [
-                      {
-                          "label": "Baseline Earn Rate (db.t4g.micro: 1.0/5min)",
-                          "value": 1,
-                          "color": "#2ca02c"
-                      },
-                      {
-                          "label": "High Burst Warning (5x baseline)",
-                          "value": 5,
-                          "color": "#ffa500",
-                          "fill": "above"
-                      }
-                  ]
-              },
+              "title": "DB Read Throttle Events",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Credits (vCPU-minutes)",
-                      "max": 5.25
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
@@ -3107,35 +3082,18 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "CPUSurplusCreditBalance", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "CPUSurplusCreditsCharged", ".", "." ]
+                  [ "AWS/DynamoDB", "WriteThrottleEvents", "TableName", "DB_FILTER", { "label": "WriteThrottleEvents" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
-              "period": 300,
+              "stat": "Sum",
+              "period": 60,
               "region": "${region_filter}",
-              "title": "DB EC2 CPU Unlimited Credits",
-              "annotations": {
-                  "horizontal": [
-                      {
-                          "label": "Charge Threshold (db.t4g.micro: 100%)",
-                          "value": 288,
-                          "color": "#cb0000",
-                          "fill": "above"
-                      },
-                      {
-                          "label": "Unlimited Credit Warning (25%)",
-                          "value": 72,
-                          "color": "#ffa500"
-                      }
-                  ]
-              },
+              "title": "DB Write Throttle Events",
               "yAxis": {
                   "left": {
-                      "showUnits": false,
-                      "label": "Credits (vCPU-minutes)",
-                      "max": 300
+                      "label": "Count",
+                      "showUnits": false
                   }
               }
           }
@@ -3148,15 +3106,20 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "WriteIOPS", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "ReadIOPS", ".", "." ]
+                  [ "AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", "DB_FILTER", { "label": "ConsumedReadCapacityUnits" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
+              "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB IOPS"
+              "title": "DB Consumed Read Capacity",
+              "yAxis": {
+                  "left": {
+                      "label": "RCU",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
@@ -3167,15 +3130,20 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "NetworkTransmitThroughput", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "NetworkReceiveThroughput", ".", "." ]
+                  [ "AWS/DynamoDB", "ConsumedWriteCapacityUnits", "TableName", "DB_FILTER", { "label": "ConsumedWriteCapacityUnits" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
-              "stat": "Average",
+              "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB Network Throughput"
+              "title": "DB Consumed Write Capacity",
+              "yAxis": {
+                  "left": {
+                      "label": "WCU",
+                      "showUnits": false
+                  }
+              }
           }
       },
       {
@@ -3186,15 +3154,25 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/RDS", "FreeableMemory", "DBInstanceIdentifier", "DB_FILTER" ],
-                  [ ".", "SwapUsage", ".", "." ]
+                  [ "AWS/DynamoDB", "ItemCount", "TableName", "DB_FILTER", { "label": "ItemCount" } ],
+                  [ "AWS/DynamoDB", "TableSizeBytes", "TableName", "DB_FILTER", { "label": "TableSizeBytes", "yAxis": "right" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Average",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB Memory"
+              "title": "DB Item Count & Table Size",
+              "yAxis": {
+                  "left": {
+                      "label": "Items",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "Bytes",
+                      "showUnits": false
+                  }
+              }
           }
       }
   ]

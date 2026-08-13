@@ -19,7 +19,6 @@ import (
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/internal/metrics"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/log"
 	"github.com/coreos/go-systemd/v22/daemon"
-	"github.com/jackc/pgx/v5"
 	"github.com/spf13/pflag"
 )
 
@@ -41,10 +40,10 @@ func main() {
 	// setup flags before reading the config files, otherwise the pflag package
 	// will overwrite the config with the default values
 	f.StringVar(&cfg.SocketPath, "socket", defaultSocketPath, "The unix socket to listen on for incoming FSID requests from 'mountd'. This *must* match the value configured in '/etc/nfs.conf'")
-	f.StringVar(&cfg.Database.URL, "database-url", "", "A pgxpool URL. The 'host', 'port', 'user', and 'dbname' options must be set. Authentication will be handled by the AWS GO v2 SDK")
-	f.BoolVar(&cfg.Database.IAMAuth, "iam-auth", true, "Set to 'true' to enable automatic IAM authentication. The knfsd proxy instance will use the IAM instance profile to authenticate with RDS PostgreSQL database")
-	f.StringVar(&cfg.Database.TableName, "table-name", "", "The name of table to store the FSID mappings for the proxy cluster. It is recommended that each proxy cluster has its own unique table name")
-	f.BoolVar(&cfg.Cache, "cache", true, "Enables caching FSID mappings to avoid querying FSID database. Setting this to false can result in excessive SQL queries and slow performance and is only intended for debugging")
+	f.StringVar(&cfg.Database.TableName, "table-name", "", "The name of the Amazon DynamoDB table storing the FSID mappings for the proxy cluster. Authentication is handled by the AWS GO v2 SDK using the IAM instance profile")
+	f.StringVar(&cfg.Database.Region, "region", "", "The AWS region hosting the DynamoDB table. When empty the region is resolved from the environment, falling back to the EC2 instance metadata service (IMDSv2)")
+	f.StringVar(&cfg.Database.Endpoint, "endpoint", "", "Overrides the DynamoDB service endpoint URL. Only intended for testing against DynamoDB Local")
+	f.BoolVar(&cfg.Cache, "cache", true, "Enables caching FSID mappings to avoid querying FSID database. Setting this to false can result in excessive DynamoDB queries and slow performance and is only intended for debugging")
 	f.BoolVar(&cfg.Debug, "debug", false, "Enabled writing verbose debug output to 'stderr'")
 	f.BoolVarP(&showVersion, "version", "v", false, "Show version and exit")
 	f.SortFlags = false
@@ -113,22 +112,21 @@ func run(ctx context.Context, cfg *Config) error {
 		}
 	}()
 
-	db, err := connect(ctx, cfg.Database)
+	client, err := connect(ctx, cfg.Database)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
 	source := FSIDSource{
-		db:        db,
+		client:    client,
 		tableName: cfg.Database.TableName,
 	}
 
-	if cfg.Database.CreateTable {
-		err = source.CreateTable(ctx)
-		if err != nil {
-			return err
-		}
+	// The table itself is provisioned by Terraform (deployment/database);
+	// verify it is reachable before accepting requests from mountd.
+	err = source.CheckTable(ctx)
+	if err != nil {
+		return err
 	}
 
 	var f FSIDProvider
@@ -156,11 +154,11 @@ func run(ctx context.Context, cfg *Config) error {
 			var err error
 			rec := rec.StartOperation()
 			fsid, err = f.GetFSID(ctx, path)
-			rec.End(ctx, SQLMetricResult(err))
+			rec.End(ctx, DBMetricResult(err))
 			return err
 		})
 
-		rec.End(ctx, SQLMetricResult(err))
+		rec.End(ctx, DBMetricResult(err))
 
 		switch {
 		case err == nil:
@@ -184,19 +182,20 @@ func run(ctx context.Context, cfg *Config) error {
 			var err error
 			rec := rec.StartOperation()
 			fsid, err = f.GetFSID(ctx, path)
-			if errors.Is(err, pgx.ErrNoRows) {
+			if IsNotFound(err) {
 				// FSID not found for path, so try and allocate one.
-				// This might fail with a 23505 unique_violation if the path has
-				// already been allocated an FSID by different process. withRetry
-				// will then retry this whole block and will find the FSID
+				// This might fail with ErrConflict if the path has already
+				// been allocated an FSID by a different process (the
+				// conditional write on the PATH# item fails). withRetry will
+				// then retry this whole block and will find the FSID
 				// allocated by the other process.
 				fsid, err = f.AllocateFSID(ctx, path)
 			}
-			rec.End(ctx, SQLMetricResult(err))
+			rec.End(ctx, DBMetricResult(err))
 			return err
 		})
 
-		rec.End(ctx, SQLMetricResult(err))
+		rec.End(ctx, DBMetricResult(err))
 		return strconv.FormatInt(int64(fsid), 10), err
 	})
 
@@ -217,11 +216,11 @@ func run(ctx context.Context, cfg *Config) error {
 			var err error
 			rec := rec.StartOperation()
 			path, err = f.GetPath(ctx, int32(fsid)) // #nosec G115
-			rec.End(ctx, SQLMetricResult(err))
+			rec.End(ctx, DBMetricResult(err))
 			return err
 		})
 
-		rec.End(ctx, SQLMetricResult(err))
+		rec.End(ctx, DBMetricResult(err))
 		return path, err
 	})
 

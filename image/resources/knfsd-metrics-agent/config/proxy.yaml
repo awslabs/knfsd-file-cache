@@ -48,11 +48,11 @@ exporters:
         metric_name_selectors:
           - "^knfsd/fsid/request/.+"
 
-      # fsid sql query metrics
+      # fsid database query metrics
       - dimensions:
           - [AutoScalingGroupName, InstanceId, query, result]
         metric_name_selectors:
-          - "^knfsd/fsid/sql/query/.+"
+          - "^knfsd/fsid/db/query/.+"
 
 service:
   pipelines:

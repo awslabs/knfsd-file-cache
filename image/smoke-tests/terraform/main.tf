@@ -19,12 +19,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.55.0"
+      version = "~> 6.59.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/image/smoke-tests/1.1.0-beta.1"
+      "knfsd-file-cache/image/smoke-tests/1.1.0-beta.2"
     ]
   }
 }
@@ -61,7 +61,7 @@ module "proxy" {
   PROXY_AMI                   = var.PROXY_AMI
   KNFSD_NODES                 = 1
   EXPORT_MAP                  = "${module.source_nfs.private_ip};/files;/files"
-  FSID_MODE                   = "static"
+  FSID_MODE                   = var.FSID_MODE
   ENABLE_STATUS_CHECK         = true
   ASSOCIATE_PUBLIC_IP_ADDRESS = var.ASSOCIATE_PUBLIC_IP_ADDRESS
 }

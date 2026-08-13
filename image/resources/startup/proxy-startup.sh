@@ -16,16 +16,26 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 EXPORTS_FILE="/etc/exports.d/knfsd.exports"
+STATUS_TAGS="enabled"
 REGION=$(cloud-init query region)
 INSTANCE_ID=$(cloud-init query instance_id)
 
 # update_status() updates the tag:"knfsd-file-cache:status" of the instance
 # @param (str) $1 message
 function update_status() {
-	aws ec2 create-tags \
+	[[ ${STATUS_TAGS} == "enabled" ]] || return 0
+	if ! aws ec2 create-tags \
 		--region "${REGION}" \
 		--resources "${INSTANCE_ID}" \
-		--tags "Key=knfsd-file-cache:status,Value=$1"
+		--tags "Key=knfsd-file-cache:status,Value=$1" \
+		--cli-connect-timeout 5 \
+		--cli-read-timeout 10 2> /dev/null; then
+		STATUS_TAGS="disabled"
+		echo "WARNING: unable to set tag \"knfsd-file-cache:status\", disabling status tagging for this boot" >&2
+		echo "WARNING: check the EC2 API is reachable (add a \"com.amazonaws.${REGION}.ec2\" interface VPC endpoint, a NAT gateway, or a public IP) and that the instance role grants \"ec2:CreateTags\"" >&2
+		echo "WARNING: startup continues and NFS caching is unaffected, but Terraform \"ENABLE_STATUS_CHECK\" and the AWS Console status column will not work" >&2
+	fi
+	return 0
 }
 
 # format the terminal for a command output
@@ -52,15 +62,15 @@ function load_parameters() {
 	echo "Loading parameters from ${PARAM_PATH}"
 
 	local PARAMS_JSON
-	PARAMS_JSON=$(aws ssm get-parameters-by-path \
+	if ! PARAMS_JSON=$(aws ssm get-parameters-by-path \
 		--region "${REGION}" \
 		--path "${PARAM_PATH}" \
 		--recursive \
-		--with-decryption)
-
-	# check if parameters were retrieved successfully
-	if [[ -z ${PARAMS_JSON} ]]; then
-		echo "ERROR: Failed to retrieve parameters from ${PARAM_PATH}" >&2
+		--with-decryption \
+		--cli-connect-timeout 5 \
+		--cli-read-timeout 30); then
+		echo "ERROR: failed to read parameters from SSM Parameter Store path ${PARAM_PATH}" >&2
+		echo "ERROR: check the SSM API is reachable (add a \"com.amazonaws.${REGION}.ssm\" interface VPC endpoint, a NAT gateway, or a public IP) and that the instance role grants \"ssm:GetParametersByPath\" for \"${PARAM_PATH}\"" >&2
 		exit 1
 	fi
 
@@ -75,6 +85,12 @@ function load_parameters() {
 		fi
 		PARAMETERS[${param_name}]=${value}
 	done
+
+	if [[ ${#PARAMETERS[@]} -eq 0 ]]; then
+		echo "ERROR: no parameters found under ${PARAM_PATH}" >&2
+		echo "ERROR: check \"CLUSTER_NAME\" matches the deployed cluster and the instance role grants \"ssm:GetParametersByPath\" for that path" >&2
+		exit 1
+	fi
 
 	echo "Successfully loaded ${#PARAMETERS[@]} parameters"
 
@@ -717,13 +733,10 @@ function create_fs_cache() {
 		echo "Mounting ${dev} to FS-Cache directory (${mount_point})..."
 		# noatime      		do not update access time on read (reduces write load)
 		# lazytime     		only update times (atime, mtime, ctime) on the in-memory version of the file inode (reduces write load)
-		# logbufs=8    		number of in-memory log buffers (more = better throughput)
 		# logbsize=256k		size of each log buffer
-		# allocsize=64k 	preferred preallocation size for new writes (default 0)
-		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
 		# noquota      		disable quota accounting on this mount
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount -o noatime,lazytime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${dev} "${mount_point}"
+		mount -o noatime,lazytime,logbsize=256k,noquota ${dev} "${mount_point}"
 		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" ""
@@ -769,13 +782,10 @@ function create_fs_cache() {
 		echo "Mounting ${raid_dev} to FS-Cache directory (${mount_point})..."
 		# noatime      		do not update access time on read (reduces write load)
 		# lazytime     		only update times (atime, mtime, ctime) on the in-memory version of the file inode (reduces write load)
-		# logbufs=8    		number of in-memory log buffers (more = better throughput)
 		# logbsize=256k		size of each log buffer
-		# allocsize=64k 	preferred preallocation size for new writes (default 0)
-		# inode64      		allow inode numbers above 32 bits (needed for large filesystems)
 		# noquota      		disable quota accounting on this mount
 		# nosemgrep: unquoted-variable-expansion-in-command
-		mount -o noatime,lazytime,logbufs=8,logbsize=256k,allocsize=64k,inode64,noquota ${raid_dev} "${mount_point}"
+		mount -o noatime,lazytime,logbsize=256k,noquota ${raid_dev} "${mount_point}"
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" "${raid_dev}"
@@ -1008,8 +1018,10 @@ function start_metrics() {
 		# pre-create the CloudWatch log group used by knfsd-metrics-agent to
 		# avoid OperationAbortedException when multiple scrapers concurrently
 		# call CreateLogGroup on first boot. Values must match 'config/common.yaml'
-		aws logs create-log-group --log-group-name "/knfsd/metrics" 2> /dev/null || true
-		aws logs put-retention-policy --log-group-name "/knfsd/metrics" --retention-in-days 30 2> /dev/null || true
+		aws logs create-log-group --log-group-name "/knfsd/metrics" \
+			--cli-connect-timeout 5 --cli-read-timeout 10 2> /dev/null || true
+		aws logs put-retention-policy --log-group-name "/knfsd/metrics" --retention-in-days 30 \
+			--cli-connect-timeout 5 --cli-read-timeout 10 2> /dev/null || true
 
 		# first-boot, CW agent converts *.json to *.toml file, so need to check for json file existence
 		if [[ -f /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json ]]; then
@@ -1100,7 +1112,7 @@ function cleanup() {
 		# reset color to default
 		echo -e "${SHELL_DEFAULT}" >&2
 
-		update_status "error: failed to start proxy" 2> /dev/null
+		update_status "error: failed to start proxy" 2> /dev/null || true
 	fi
 
 	if [[ -n ${WORKDIR} ]] && [[ -d ${WORKDIR} ]]; then

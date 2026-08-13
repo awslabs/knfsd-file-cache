@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-beta.1"
+ARG VERSION="1.1.0-beta.2"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -98,14 +98,6 @@ RUN apt-get -y -q update && apt-get -y -q install \
 RUN mkdir -p /etc/docker \
     && jq -n '{"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "5"}}' >> /etc/docker/daemon.json
 
-## install latest postgressql-client
-RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
-    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg \
-    && apt-get -y -q update \
-    && apt-get -y -q install postgresql-client \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 ## non-root user
 ARG USERNAME=ubuntu
 
@@ -140,19 +132,19 @@ RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "aarch64" || echo "x86_64") \
 
 ## build version args
 # https://github.com/bats-core/bats-core/releases
-ARG KNFSD_BATS_CORE_VERSION=1.13.0
+ARG KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.50
+ARG KNFSD_BOTO3_VERSION=1.43.70
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.8
+ARG KNFSD_CHECKOV_VERSION=3.3.10
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/go-delve/delve/tags
-ARG KNFSD_DLV_VERSION=1.27.0
+ARG KNFSD_DLV_VERSION=1.27.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.8.0
+ARG KNFSD_EDITORCONFIG_VERSION=3.11.1
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
@@ -163,18 +155,22 @@ ARG KNFSD_GOPLS_VERSION=0.23.0
 ARG KNFSD_GOSEC_VERSION=2.28.0
 # https://github.com/iann0036/iamlive/releases
 ARG KNFSD_IAMLIVE_VERSION=1.1.28
+# https://github.com/squidfunk/mkdocs-material/releases
+ARG KNFSD_MKDOCS_MATERIAL_VERSION=9.7.7
+# https://github.com/mkdocs/mkdocs/releases
+ARG KNFSD_MKDOCS_VERSION=1.6.1
+# https://github.com/oprypin/mkdocs-same-dir/tags
+ARG KNFSD_MKDOCS_SAME_DIR_VERSION=0.1.5
 # https://github.com/python/mypy/tags
 ARG KNFSD_MYPY_VERSION=2.3.0
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.15.4
+ARG KNFSD_PACKER_VERSION=1.16.0
 # https://github.com/pre-commit/pre-commit/releases
-ARG KNFSD_PRECOMMIT_VERSION=4.6.0
-# https://pypi.org/project/psycopg/
-ARG KNFSD_PSYCOPG_VERSION=3.3.4
+ARG KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
-ARG KNFSD_PYLINT_VERSION=4.0.6
+ARG KNFSD_PYLINT_VERSION=4.0.7
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.170.0
+ARG KNFSD_SEMGREP_VERSION=1.172.0
 # https://github.com/aws/session-manager-plugin/tags
 ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
@@ -186,11 +182,11 @@ ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.72.0
+ARG KNFSD_TRIVY_VERSION=0.73.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.11.29
+ARG KNFSD_UV_VERSION=0.12.3
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -311,15 +307,17 @@ RUN --mount=type=cache,target=/home/${USERNAME}/.cache/uv,uid=1000,gid=1000 \
     && uv tool install -q "codespell==${KNFSD_CODESPELL_VERSION}" \
     && uv tool install -q "pre-commit==${KNFSD_PRECOMMIT_VERSION}" \
     && uv tool install -q "shellcheck-py==${KNFSD_SHELLCHECK_PY_VERSION}" \
-    && uv tool install -q "semgrep==${KNFSD_SEMGREP_VERSION}"
+    && uv tool install -q "semgrep==${KNFSD_SEMGREP_VERSION}" \
+    && uv tool install -q "mkdocs==${KNFSD_MKDOCS_VERSION}" \
+        --with "mkdocs-material==${KNFSD_MKDOCS_MATERIAL_VERSION}" \
+        --with "mkdocs-same-dir==${KNFSD_MKDOCS_SAME_DIR_VERSION}"
 
 ## check versions available: see 'uv pip index versions PACKAGE'
 RUN --mount=type=cache,target=/home/${USERNAME}/.cache/uv,uid=1000,gid=1000 \
     uv pip install -q \
     "boto3==${KNFSD_BOTO3_VERSION}" \
     "mypy==${KNFSD_MYPY_VERSION}" \
-    "pylint==${KNFSD_PYLINT_VERSION}" \
-    "psycopg==${KNFSD_PSYCOPG_VERSION}"
+    "pylint==${KNFSD_PYLINT_VERSION}"
 
 ## set timezone/date to local location
 RUN sudo tzupdate 2> /dev/null

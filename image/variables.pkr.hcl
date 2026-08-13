@@ -116,6 +116,29 @@ variable "TEMPORARY_SECURITY_GROUP_SOURCE_PUBLIC_IP" {
   default     = true
 }
 
+variable "SSH_INTERFACE" {
+  description = "(Optional) The network interface Packer uses to connect to the build instance. One of \"public_ip\", \"private_ip\", \"public_dns\", \"private_dns\", \"ipv6\", or \"session_manager\". Empty uses the Packer default (public IP address if available, otherwise the private IP address). Set to \"session_manager\" to tunnel SSH over AWS Systems Manager Session Manager, which requires no inbound SSH, no public IP, and no bastion; \"session_manager\" also requires \"IAM_INSTANCE_PROFILE\" to be set and the AWS \"session-manager-plugin\" to be installed on the machine running Packer. Default: \"\"."
+  type        = string
+  default     = ""
+  validation {
+    condition = contains(
+      ["", "public_ip", "private_ip", "public_dns", "private_dns", "ipv6", "session_manager"],
+      var.SSH_INTERFACE
+    )
+    error_message = "SSH_INTERFACE must be empty or one of \"public_ip\", \"private_ip\", \"public_dns\", \"private_dns\", \"ipv6\", \"session_manager\"."
+  }
+}
+
+variable "SESSION_MANAGER_PORT" {
+  description = "(Optional) The local port on the machine running Packer to use as the local end of the AWS SSM Session Manager tunnel. Only used when \"SSH_INTERFACE = \"session_manager\"\". Zero lets Packer choose an available port between 8000 and 9000. Set this if the machine running Packer restricts which local ports may be bound. Default: \"0\"."
+  type        = number
+  default     = 0
+  validation {
+    condition     = var.SESSION_MANAGER_PORT == 0 || (var.SESSION_MANAGER_PORT >= 1024 && var.SESSION_MANAGER_PORT <= 65535)
+    error_message = "SESSION_MANAGER_PORT must be 0 or a non-privileged port between 1024 and 65535."
+  }
+}
+
 variable "ARCH" {
   description = "(Optional) List of architectures to build. Valid values: [\"amd64\"], [\"arm64\"], or [\"amd64\", \"arm64\"]. Default: [\"amd64\", \"arm64\"]."
   type        = list(string)

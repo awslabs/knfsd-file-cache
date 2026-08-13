@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.1"
+  default     = "1.1.0-beta.2"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.1\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.2\"."
   }
 }
 
@@ -651,7 +651,7 @@ variable "FSID_MODE" {
 }
 
 variable "FSID_DATABASE_DEPLOY" {
-  description = "(Optional) Set to \"false\" to prevent automatically creating an Amazon RDS PostgreSQL instance when \"FSID_MODE\" is set to \"external\". Default: \"true\"."
+  description = "(Optional) Set to \"false\" to prevent automatically creating an Amazon DynamoDB table when \"FSID_MODE\" is set to \"external\". Default: \"true\"."
   type        = bool
   nullable    = false
   default     = true
@@ -666,46 +666,17 @@ variable "FSID_DATABASE_CONFIG" {
     condition = (
       length(var.FSID_DATABASE_CONFIG) == 0 ||
       (
-        contains(keys(var.FSID_DATABASE_CONFIG), "db_address") &&
-        contains(keys(var.FSID_DATABASE_CONFIG), "db_port") &&
-        contains(keys(var.FSID_DATABASE_CONFIG), "db_user") &&
-        contains(keys(var.FSID_DATABASE_CONFIG), "db_name") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "table_name") &&
+        contains(keys(var.FSID_DATABASE_CONFIG), "region") &&
         contains(keys(var.FSID_DATABASE_CONFIG), "enable_metrics")
       )
     )
-    error_message = "When FSID_DATABASE_CONFIG is provided, all fields (db_address, db_port, db_user, db_name, enable_metrics) must be specified."
-  }
-}
-
-variable "FSID_DB_SUBNET_GROUP_NAME" {
-  description = "(Optional) The name of the Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC. Default: \"null\"."
-  type        = string
-  nullable    = true
-  default     = null
-}
-
-variable "FSID_DB_SUBNET_IDS" {
-  description = "(Optional) List of 2+ subnet IDs in different availability zones used to automatically create an aws_db_subnet_group. Must include the subnet referenced by var.SUBNET. Mutually exclusive with FSID_DB_SUBNET_GROUP_NAME. Default: \"null\"."
-  type        = list(string)
-  nullable    = true
-  default     = null
-
-  validation {
-    condition = (
-      var.FSID_DB_SUBNET_IDS == null
-      ? true
-      : (
-        length(var.FSID_DB_SUBNET_IDS) >= 2 &&
-        length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
-        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", s))])
-      )
-    )
-    error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
+    error_message = "When FSID_DATABASE_CONFIG is provided, all fields (table_name, region, enable_metrics) must be specified."
   }
 }
 
 variable "FSID_DATABASE_IAM_POLICY" {
-  description = "(Optional) Allows overriding the default FSID database IAM policy when \"FSID_MODE\" is set to \"external\" with custom IAM policy ARN. Default: \"\"."
+  description = "(Optional) Allows overriding the default FSID database IAM policy (DynamoDB table access) when \"FSID_MODE\" is set to \"external\" with custom IAM policy ARN. Applies to both cases: when reusing an existing external table (\"FSID_DATABASE_DEPLOY=false\"), and when this module deploys the table (\"FSID_DATABASE_DEPLOY=true\"), where it skips creating the \"aws_iam_policy\" and attaches the provided policy instead (required when the deploying role lacks iam:CreatePolicy). Default: \"\"."
   type        = string
   nullable    = false
   default     = ""
@@ -744,7 +715,7 @@ variable "KNFSD_AUTOSCALING_MAX_INSTANCES" {
 }
 
 variable "ASSUME_ROLE_ARN" {
-  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:*:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
+  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:*:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
   type        = string
   nullable    = true
   default     = null
@@ -753,5 +724,38 @@ variable "ASSUME_ROLE_ARN" {
       var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
     )
     error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/DeploymentRole\"."
+  }
+}
+
+variable "EXISTING_SECURITY_GROUP_ID" {
+  description = "(Optional) ID of a pre-existing security group to use for the KNFSD proxy Auto Scaling Group (and Network Load Balancer when TRAFFIC_MODE=\"loadbalancer\") instead of creating one. When set, the module skips creating the security group and all of its ingress/egress rules; you are responsible for configuring the required NFS ingress and egress rules on the provided security group. Required when the deploying role lacks ec2:CreateSecurityGroup. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition     = var.EXISTING_SECURITY_GROUP_ID == "" || can(regex("^sg-[0-9a-f]{8,17}$", var.EXISTING_SECURITY_GROUP_ID))
+    error_message = "When provided, EXISTING_SECURITY_GROUP_ID must be a valid AWS security group ID format. Example: \"sg-038e337f0ff4cd53f\"."
+  }
+}
+
+variable "EXISTING_INSTANCE_PROFILE_NAME" {
+  description = "(Optional) Name of a pre-existing IAM instance profile to use for the KNFSD proxy instances instead of creating one. When set, the module skips creating the IAM role, instance profile, and all associated policies/attachments; the provided profile must already grant the permissions the KNFSD proxy requires. Required when the deploying role lacks iam:CreateRole/iam:CreatePolicy. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition     = var.EXISTING_INSTANCE_PROFILE_NAME == "" || can(regex("^[\\w+=,.@-]{1,128}$", var.EXISTING_INSTANCE_PROFILE_NAME))
+    error_message = "When provided, EXISTING_INSTANCE_PROFILE_NAME must be a valid IAM instance profile name (1-128 characters: alphanumeric and _+=,.@- )."
+  }
+}
+
+variable "EXISTING_LAMBDA_ROLE_ARN" {
+  description = "(Optional) ARN of a pre-existing IAM role to use for the DNS round-robin \"static_ip\" Lambda function (TRAFFIC_MODE=\"dns_round_robin\") instead of creating one. When set, the module skips creating the Lambda IAM role and its policy; the provided role must already grant the permissions the static_ip Lambda requires. Required when the deploying role lacks iam:CreateRole/iam:CreatePolicy. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition     = var.EXISTING_LAMBDA_ROLE_ARN == "" || can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_/-]+$", var.EXISTING_LAMBDA_ROLE_ARN))
+    error_message = "When provided, EXISTING_LAMBDA_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/StaticIpLambdaRole\"."
   }
 }

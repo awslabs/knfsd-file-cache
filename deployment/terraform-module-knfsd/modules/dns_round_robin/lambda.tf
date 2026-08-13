@@ -49,7 +49,7 @@ resource "aws_lambda_function" "static_ip" {
   depends_on    = [data.archive_file.static_ip_zip, aws_cloudwatch_log_group.lambda_static_ip]
   function_name = "${var.PROXY_BASENAME}-static-ip"
   description   = "Lambda Python function to manage secondary ENI on instances in an EC2 ASG"
-  role          = aws_iam_role.lambda_static_ip.arn
+  role          = local.lambda_static_ip_role_arn
   handler       = "static_ip.lambda_handler"
   architectures = ["arm64"]
   runtime       = "python3.14"
@@ -77,8 +77,9 @@ resource "aws_lambda_function" "static_ip" {
   tags                           = local.tags
 }
 
-# IAM role for the Lambda function
+# IAM role for the Lambda function (skipped when EXISTING_LAMBDA_ROLE_ARN is set)
 resource "aws_iam_role" "lambda_static_ip" {
+  count       = var.EXISTING_LAMBDA_ROLE_ARN == "" ? 1 : 0
   name        = "${var.PROXY_BASENAME}-static-ip-role"
   description = "IAM role for the Lambda static_ip function"
   assume_role_policy = jsonencode({
@@ -95,8 +96,14 @@ resource "aws_iam_role" "lambda_static_ip" {
   tags                  = local.tags
 }
 
-# custom IAM policy for Lambda statc_ip function
+locals {
+  # use the pre-existing Lambda role when provided, otherwise the one created by this module
+  lambda_static_ip_role_arn = var.EXISTING_LAMBDA_ROLE_ARN != "" ? var.EXISTING_LAMBDA_ROLE_ARN : aws_iam_role.lambda_static_ip[0].arn
+}
+
+# custom IAM policy for Lambda statc_ip function (skipped when EXISTING_LAMBDA_ROLE_ARN is set)
 resource "aws_iam_policy" "lambda_static_ip" {
+  count       = var.EXISTING_LAMBDA_ROLE_ARN == "" ? 1 : 0
   name        = "${var.PROXY_BASENAME}-lambda-static-ip-policy"
   description = "Policy for Lambda to manage persistent secondary ENI on instances in an EC2 ASG"
   tags        = local.tags
@@ -168,10 +175,11 @@ resource "aws_iam_policy" "lambda_static_ip" {
   })
 }
 
-# attach custom IAM policy to "lambda_static_ip" role
+# attach custom IAM policy to "lambda_static_ip" role (skipped when EXISTING_LAMBDA_ROLE_ARN is set)
 resource "aws_iam_role_policy_attachment" "lambda_static_ip" {
-  role       = aws_iam_role.lambda_static_ip.name
-  policy_arn = aws_iam_policy.lambda_static_ip.arn
+  count      = var.EXISTING_LAMBDA_ROLE_ARN == "" ? 1 : 0
+  role       = aws_iam_role.lambda_static_ip[0].name
+  policy_arn = aws_iam_policy.lambda_static_ip[0].arn
 }
 
 # LAUNCHING: EventBridge Rule for launching instances

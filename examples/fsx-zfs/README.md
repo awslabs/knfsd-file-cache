@@ -10,7 +10,7 @@ Although NOT used in this example, more detailed information on the `AUTO_EXPORT
 
 * `/fsx` - 1TB (root volume)
 
-This example uses an `"external"` FSID database (RDS PostgreSQL) to ensure consistent file handle allocation, which is the recommended approach for production deployments.
+This example uses an `"external"` FSID database (Amazon DynamoDB) to ensure consistent file handle allocation, which is the recommended approach for production deployments.
 
 We use `dns_round_robin` traffic mode to best-effort load balance the NFS clients across the KNFSD proxies.
 
@@ -53,47 +53,40 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 
 This example creates an Amazon FSx for OpenZFS file system (`aws_fsx_openzfs_file_system`) that is not covered by the project-wide IAM policies under [docs/iam/](../../docs/iam/). The additional `fsx:*` and `iam:CreateServiceLinkedRole` (for `fsx.amazonaws.com`) permissions required to deploy this example are provided in [iam.json](iam.json) and should be attached to the same principal that runs `terraform apply` for this example, alongside [docs/iam/tf-required.json](../../docs/iam/tf-required.json) and [docs/iam/tf-optional.json](../../docs/iam/tf-optional.json) (when applicable). See [docs/iam.md](../../docs/iam.md) for the full IAM reference.
 
+As an alternative, if the role does not yet exist in the AWS account, you can pre-create the service-linked role for `fsx.amazonaws.com` before running `terraform apply` as follows:
+
+```bash
+aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
+```
+
 ## Inputs
 
-* `REGION` - (Required) The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`. No default.
-
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the FSx for OpenZFS source filer and KNFSD File Caches. Example: `subnet-038e337f0ff4cd53f`. No default.
-
-* `PROXY_AMI` - (Required) The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script. No default.
-
-* `PROXY_BASENAME` - (Optional) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). Default: `knfsd`.
-
-* `TRAFFIC_MODE` - (Optional) The traffic distribution mode to use for the KNFSD proxy cluster. The options are `dns_round_robin`, `loadbalancer`, or `none`. Default: `dns_round_robin`.
-
-* `KEY_NAME` - (Optional) The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM. Default: `""`.
-
-* `INSTANCE_TYPE` - (Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: `i3en.6xlarge`.
-
-* `KNFSD_NODES` - (Optional) The number of KNFSD instances to deploy as part of the cluster. Default: `1`.
-
-* `NUM_NFS_THREADS` - (Optional) The number of NFS threads to use for KNFSD. Default: `128`.
-
-* `FSID_MODE` - (Optional) How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. Default: `external`.
-
-* `FSX_STORAGE_CAPACITY` - (Optional) The storage capacity of the FSx for OpenZFS source filer in GiB. Default: `1024`.
-
-* `FSX_THROUGHPUT_CAPACITY` - (Optional) The throughput capacity of the FSx for OpenZFS source filer in MB/s. Default: `512`.
+| Variable                  | Description                                                                                                                                | Required | Default           |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|----------|-------------------|
+| `REGION`                  | The AWS region to use for deployment of the KNFSD File Cache. Example: `us-east-1`.                                                        | True     | No default        |
+| `SUBNET`                  | The single subnet ID to use for deployment of the FSx for OpenZFS source filer and KNFSD File Caches. Example: `subnet-038e337f0ff4cd53f`. | True     | No default        |
+| `PROXY_AMI`               | The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script.          | True     | No default        |
+| `PROXY_BASENAME`          | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a globally, unique basename to avoid conflicts.        | False    | `knfsd`           |
+| `TRAFFIC_MODE`            | The traffic distribution mode to use for the KNFSD proxy cluster. The options are `dns_round_robin`, `loadbalancer`, or `none`.            | False    | `dns_round_robin` |
+| `KEY_NAME`                | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                       | False    | `""`              |
+| `INSTANCE_TYPE`           | The AWS EC2 instance type to use for the KNFSD cache.                                                                                      | False    | `i3en.6xlarge`    |
+| `KNFSD_NODES`             | The number of KNFSD instances to deploy as part of the cluster.                                                                            | False    | `1`               |
+| `NUM_NFS_THREADS`         | The number of NFS threads to use for KNFSD.                                                                                                | False    | `128`             |
+| `FSID_MODE`               | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`.                            | False    | `external`        |
+| `FSX_STORAGE_CAPACITY`    | The storage capacity of the FSx for OpenZFS source filer in GiB.                                                                           | False    | `1024`            |
+| `FSX_THROUGHPUT_CAPACITY` | The throughput capacity of the FSx for OpenZFS source filer in MB/s.                                                                       | False    | `512`             |
 
 ## Outputs
 
-* `autoscaling_group_name` - Name of the KNFSD proxy Auto Scaling Group.
-
-* `autoscaling_group_security_group_id` - Security Group ID for the KNFSD proxy Auto Scaling Group.
-
-* `database_config` - Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
-
-* `database_iam_policy` - The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module (when `FSID_MODE` is `external`).
-
-* `dns_name` - The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
-
-* `loadbalancer_ipaddress` - The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).
-
-* `knfsd_security_group_id` - Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).
+| Output                                | Description                                                                                                                                            |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `autoscaling_group_name`              | Name of the KNFSD proxy Auto Scaling Group.                                                                                                            |
+| `autoscaling_group_security_group_id` | Security Group ID for the KNFSD proxy Auto Scaling Group.                                                                                              |
+| `database_config`                     | Database configuration for the deployed DynamoDB FSID table. Only available when database is deployed by this module (when `FSID_MODE` is `external`). |
+| `database_iam_policy`                 | The ARN of the IAM policy for DynamoDB table access. Only available when database is deployed by this module (when `FSID_MODE` is `external`).         |
+| `dns_name`                            | The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).            |
+| `loadbalancer_ipaddress`              | The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                            |
+| `knfsd_security_group_id`             | Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).            |
 
 ## Additional Notes
 

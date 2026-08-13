@@ -2,9 +2,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# This provides a convenient way to quickly run all the tests locally.
-# When running in CI/CD (eg. AWS Code Build or GitLab) these steps should be separated out
-# so they can run in parallel, and to log the output from each step independently.
+# This Makefile provides a convenient way to quickly run all the tests locally.
 
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
@@ -70,6 +68,16 @@ pre-commit precommit pc:
 pre-commit-update precommit-update pc-update autoupdate:
 	@pre-commit autoupdate
 
+.PHONY: docs
+docs:
+	@echo "[mkdocs]"
+	@NO_MKDOCS_2_WARNING=true \
+		DISABLE_MKDOCS_2_WARNING=true \
+		MKDOCS_SITE_URL="$${MKDOCS_SITE_URL:-http://127.0.0.1:8000/}" \
+		MKDOCS_REPO_URL="$${MKDOCS_REPO_URL:-https://github.com/awslabs/knfsd-file-cache}" \
+		MKDOCS_REPO_NAME="$${MKDOCS_REPO_NAME:-awslabs/knfsd-file-cache}" \
+		mkdocs serve
+
 .PHONY: clean delete del
 clean delete del:
 	@cd $(ROOT_DIR)/.devcontainer/dev && ./find_temp_files.sh -d
@@ -118,17 +126,17 @@ black:
 mypy:
 	@echo "[mypy]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/opt/venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty .; \
+		/opt/venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^site/' .; \
 	else \
-		mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty .; \
+		mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^site/' .; \
 	fi
 
 pylint:
 	@echo "[pylint]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/opt/venv/bin/python -m pylint --output-format=colorized --score=n .; \
+		/opt/venv/bin/python -m pylint --output-format=colorized --score=n --ignore-paths='^site/.*' .; \
 	else \
-		pylint --output-format=colorized --score=n .; \
+		pylint --output-format=colorized --score=n --ignore-paths='^site/.*' .; \
 	fi
 
 define IAM_SIZE_PY

@@ -1,10 +1,8 @@
 socket=/run/knfsd-fsidd.sock
 
 [database]
-url=host=${db_address} port=${db_port} user=${db_user} dbname=${db_name}
-iam-auth=true
-table-name=fsids
-create-table=true
+table-name=${table_name}
+region=${region}
 
 [metrics]
 enabled=${enable_metrics}

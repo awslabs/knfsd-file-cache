@@ -17,7 +17,7 @@ body:
       label: KNFSD File Cache (KNFSD) version
       description: |
         Which version of KNFSD File Cache (KNFSD) are you using? You can find release versions [here](https://github.com/awslabs/knfsd-file-cache/releases).
-      placeholder: v1.1.0-beta.1
+      placeholder: v1.1.0-beta.2
     validations:
       required: true
   - type: input

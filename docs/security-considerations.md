@@ -28,18 +28,13 @@ EBS volumes attached to KNFSD proxy instances (including NVMe instance store use
 
 This allows customers to align their AMI encryption posture with organizational requirements around regional data sovereignty, key custody, and blast-radius containment.
 
-**FSID database encryption:** When `FSID_MODE="external"`, the Amazon RDS PostgreSQL instance storing filesystem identifier mappings uses RDS encryption at rest (AWS-managed key by default). The RDS master user secret is stored in AWS Secrets Manager and encrypted with the AWS-managed `aws/secretsmanager` key. Customers may specify a customer-managed key for the RDS instance via standard RDS configuration.
+**FSID database encryption:** When `FSID_MODE="external"`, the Amazon DynamoDB table storing filesystem identifier mappings uses server-side encryption at rest with the AWS-managed `aws/dynamodb` key by default, with point-in-time recovery enabled. There are no database credentials to store; access is authorized entirely through IAM.
 
 **Secrets Manager:** Sensitive credentials (such as the NetApp `fsxadmin` password in the FSx for NetApp ONTAP integration) are stored in AWS Secrets Manager rather than in Terraform state or environment variables. The solution accesses secrets at runtime via IAM role-based authentication, avoiding static credential storage on disk.
 
 ### Encryption in Transit
 
-**FSID database connections (TLS 1.3):** All connections from KNFSD proxy instances to the Amazon RDS PostgreSQL FSID database enforce SSL/TLS v1.3 by default. For additional assurance, operators can enable `sslmode=verify-full` with the AWS RDS root CA certificate bundle to validate that the server certificate is issued by a trusted CA and matches the requested hostname. AWS provides per-region and global certificate bundles:
-
-```ini
-[database]
-url=host=fsids.example.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=fsids sslmode=verify-full sslrootcert=/path/to/aws-rds-commercial.pem
-```
+**FSID database connections (HTTPS/SigV4):** All connections from KNFSD proxy instances to the Amazon DynamoDB FSID table use the regional DynamoDB HTTPS API (TLS) with AWS SigV4 request signing via the AWS SDK. There are no connection strings, database passwords, or server certificates to manage; the AWS SDK validates the service endpoint certificate against the standard AWS trust chain.
 
 **NFS traffic:** NFS v3 and NFS v4 protocols transmit data over TCP/UDP without native encryption. KNFSD File Cache relies on network-level isolation (see Section 3) to protect NFS traffic in transit. For deployments requiring encrypted NFS traffic between on-premises source filers and AWS, customers should use AWS Site-to-Site VPN (IPSec) or AWS Direct Connect with MACsec encryption to protect the WAN segment.
 
@@ -53,12 +48,13 @@ url=host=fsids.example.eu-west-2.rds.amazonaws.com port=5432 user=fsidd dbname=f
 
 The KNFSD File Cache IAM model is designed around least-privilege access with separation of duties across two operational phases and an optional development/testing phase:
 
-| Phase                             | Policy File                 | Scope                                                                                                    |
-| --------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| AMI build (Packer)                | `docs/iam/packer.json`      | EC2, Spot fleet, SSM parameter lookup, IAM PassRole (scoped to Packer instance profile)                  |
-| Deployment (Terraform) — required | `docs/iam/tf-required.json` | EC2 launch templates, Auto Scaling, SSM parameters, CloudWatch, Route 53, IAM roles/policies             |
-| Deployment (Terraform) — optional | `docs/iam/tf-optional.json` | RDS, Secrets Manager, VPC endpoints, Network Load Balancer (attached only when feature flags are active) |
-| Testing (Smoke-Tests) - optional  | `docs/iam/testing.json`     | EC2 Instance Connect (SSH-over-SSM) to reach ephemeral test instances                                    |
+| Phase                                 | Policy File                             | Scope                                                                                                           |
+| ------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| AMI build (Packer) - required         | `docs/iam/packer.json`                  | EC2, Spot fleet, SSM parameter lookup, SSM Session Mgr tunnel, IAM PassRole (scoped to Packer instance profile) |
+| AMI build (build instance) - optional | `docs/iam/packer-instance-profile.json` | Attached to the build instance's own role; SSM Session Manager agent registration and optional `ec2:CreateTags` |
+| Deployment (Terraform) — required     | `docs/iam/tf-required.json`             | EC2 launch templates, Auto Scaling, SSM parameters, CloudWatch, Route 53, IAM roles/policies                    |
+| Deployment (Terraform) — optional     | `docs/iam/tf-optional.json`             | DynamoDB, Secrets Manager, VPC endpoints, Network Load Balancer (attached only when feature flags are active)   |
+| Testing (Smoke-Tests) - optional      | `docs/iam/testing.json`                 | EC2 Instance Connect (SSH-over-SSM) to reach ephemeral test instances                                           |
 
 **Separation of duties:** The two operational phases can use a single combined IAM principal for simple setups, or be split across separate principals (one for AMI builds, one for deployments) for stronger isolation.
 
@@ -66,8 +62,8 @@ The KNFSD File Cache IAM model is designed around least-privilege access with se
 
 The `tf-optional.json` policy contains Sids that should only be attached when their gating Terraform variable is enabled:
 
-- `KnfsdRds*` Sids — required only when `FSID_DATABASE_DEPLOY = true`
-- `KnfsdSecretsManager` — required when deploying the FSID database or using NetApp auto-detect with `NETAPP_SECRET != ""`
+- `KnfsdDynamoDB` — required only when `FSID_DATABASE_DEPLOY = true` (also grants the data-plane reads used by the smoke-test assertions)
+- `KnfsdSecretsManager` — required when using NetApp auto-detect with `NETAPP_SECRET != ""`
 - `KnfsdLoadBalancer` / `KnfsdElbServiceLinkedRole` — required only when `TRAFFIC_MODE = "loadbalancer"`
 
 The `testing.json` policy is optional and is only required to run the [smoke-tests](../image/smoke-tests/README.md) module:
@@ -80,6 +76,10 @@ The `testing.json` policy is optional and is only required to run the [smoke-tes
 The AMI build (Packer) can optionally tag the build instance with its progress via the `knfsd-file-cache:status` tag:
 
 - Enabled only when `TAG_BUILD_STATUS = true`, which requires an `IAM_INSTANCE_PROFILE` whose role grants `ec2:CreateTags`. When disabled (default), the build requires no runtime credentials on the build instance.
+
+The AMI build can also connect to the build instance over AWS Systems Manager Session Manager instead of inbound SSH:
+
+- Enabled only when `SSH_INTERFACE = "session_manager"`, which requires an `IAM_INSTANCE_PROFILE` and the three `KnfsdPackerSessionManager*` Sids in `packer.json`. This removes the need for inbound port 22, a public IP address, and a bastion host: Packer creates a temporary security group but authorizes no ingress rule, and the tunnel is IAM-authenticated and auditable via AWS SSM session history. When the default SSH interface is used instead, those three Sids can be dropped. See [IAM Permissions](iam.md#packer-connection-method).
 
 This approach ensures the deploying principal never holds more permissions than the selected feature set requires.
 
@@ -109,12 +109,21 @@ Several Sids scope `Resource` ARNs to the `knfsd-*` prefix (CloudFormation, Lamb
 
 KNFSD proxy EC2 instances run with a dedicated instance profile (`knfsd-instance-role`) that grants:
 
-- SSM Parameter Store read access under `/knfsd/*` for runtime configuration
+- SSM Parameter Store read access under `/knfsd/<cluster-name>` for runtime configuration
 - CloudWatch Logs and Metrics write access for monitoring
 - EC2 tag read access for instance metadata
-- RDS IAM authentication (when using external FSID database) — the instance role authenticates the `fsidd` PostgreSQL user without static database passwords
+- DynamoDB item-level access (when using external FSID database)
 - Secrets Manager read access (when NetApp integration is enabled)
 - KMS decrypt (when using encrypted EBS volumes)
+
+**Bring-your-own IAM (restrictive environments):** Where the deploying role is denied `iam:CreateRole`/`iam:CreatePolicy`, set `EXISTING_INSTANCE_PROFILE_NAME` to a pre-created instance profile (and, in `dns_round_robin` mode, `EXISTING_LAMBDA_ROLE_ARN` for the `static_ip` Lambda). The module then creates no IAM roles or policies and uses the provided profile/role instead; ensuring the profile grants the permissions listed above becomes the customer's responsibility.
+
+**Service-Linked Roles:** The Terraform module always requires `AWSServiceRoleForAutoScaling` (Auto Scaling group, used in every `TRAFFIC_MODE`) and additionally requires `AWSServiceRoleForElasticLoadBalancing` (Network Load Balancer) when `TRAFFIC_MODE = "loadbalancer"`. The module performs a read-only `iam:ListRoles` pre-flight check and fails early if a required role is absent, so an administrator can pre-create them manually once with:
+
+```bash
+aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com
+aws iam create-service-linked-role --aws-service-name elasticloadbalancing.amazonaws.com
+```
 
 ### Client-Side IAM (ENA Express)
 
@@ -151,15 +160,13 @@ All NFS daemon ports are statically assigned (configured in `nfs-kernel-server`)
 
 **Proxy-to-source security group:** Controls egress from KNFSD proxy instances to upstream NFS source filers. The specific ports depend on the source NFS server configuration.
 
-**Database security group** (only when `FSID_DATABASE_DEPLOY = true`): Restricts inbound PostgreSQL (port 5432) access to the VPC CIDR block, protecting the RDS FSID database from unauthorized network access.
-
-**Lambda db-setup security group** (only when `FSID_DATABASE_DEPLOY = true`): Scoped to the Lambda function that initializes the FSID database schema. Allows self-referencing inbound traffic and VPC-scoped egress only, ensuring the Lambda function can reach the RDS instance and Secrets Manager VPC endpoint without broader network access.
-
 **Load balancer security group** (only when `TRAFFIC_MODE = "loadbalancer"`): Controls inbound NFS traffic (TCP/UDP on all static NFS ports) to the Network Load Balancer from the VPC CIDR, with egress restricted to the VPC. Mirrors the client-to-proxy port set but scoped to the NLB.
 
 **VPC endpoint security group:** Restricts inbound HTTPS (port 443) traffic to the VPC CIDR block, ensuring only VPC-internal resources can reach AWS service endpoints.
 
 Source specification supports both VPC CIDR block ranges and security group ID references. Security group ID references are preferred for tighter isolation when the proxy security group ID is known (available via the Terraform output `knfsd_security_group_id`).
+
+**Bring-your-own security group (restrictive environments):** Where the deploying role is denied `ec2:CreateSecurityGroup` (e.g. networking is managed centrally), set `EXISTING_SECURITY_GROUP_ID` to a pre-created security group. The module then creates no security group or ingress/egress rules and uses the provided group in the launch template; in `loadbalancer` mode the same group is reused for the Network Load Balancer. Configuring the required NFS ingress/egress rules on that group becomes the customer's responsibility.
 
 ### VPC Endpoints (AWS PrivateLink)
 
@@ -190,6 +197,8 @@ For operation in fully private subnets (no IGW or NAT), KNFSD File Cache require
 
 The IAM principal creating cross-region endpoints requires the `vpce:AllowMultiRegion` permission-only action. Organization-level SCPs must also allow this action.
 
+When using the default `FSID_MODE = "external"`, an Amazon DynamoDB **Gateway** endpoint is additionally required so the `knfsd-fsidd` daemon can reach the FSID table; see [VPC Endpoints](../deployment/docs/vpc-endpoints.md).
+
 ### WAN Connectivity (On-Premises to AWS)
 
 For hybrid deployments where the source NFS filer resides on-premises, the solution supports:
@@ -216,7 +225,7 @@ KNFSD File Cache provides comprehensive observability through Amazon CloudWatch:
 - Cache memory footprint (NFS inode and dentry caches)
 - EBS/NVMe disk I/O (IOPS, throughput, queue length, limit breaches)
 - EC2 host health (CPU, memory, network, ENA-X/SRD)
-- FSID daemon and RDS performance (operations, queries, DB load, credits)
+- FSID daemon and DynamoDB performance (operations, queries, request latency, throttling, conflicts)
 
 **CloudWatch Dashboards:** A versioned monitoring dashboard provides pre-built visualizations with ASG-level and instance-level drill-down, supporting pattern-variable linking for correlated analysis across Auto Scaling Group names, instance IDs, source and output NFS filer names.
 
@@ -228,7 +237,7 @@ KNFSD proxy instances integrate with AWS Systems Manager for:
 
 - **Session Manager** — secure shell access without SSH keys or bastion hosts; all sessions are logged
 - **Run Command** — ad-hoc operational tasks across the fleet
-- **Parameter Store** — runtime configuration under the `/knfsd/*` namespace; no secrets stored in user data or launch templates
+- **Parameter Store** — runtime configuration under the `/knfsd/<cluster-name>` namespace; no secrets stored in user data or launch templates
 
 ### Audit and Access Logging
 
@@ -255,7 +264,7 @@ KNFSD File Cache operates under the standard [AWS Shared Responsibility Model](h
 - Physical security of data centers
 - Hardware and hypervisor isolation
 - Network infrastructure security of the AWS global backbone
-- Availability and security of managed services (RDS, KMS, Secrets Manager, CloudWatch)
+- Availability and security of managed services (DynamoDB, KMS, Secrets Manager, CloudWatch)
 
 **The customer is responsible for:**
 
@@ -280,7 +289,7 @@ Customers should establish a cadence for AMI rebuilds aligned with their organiz
 
 ### Regulatory Compliance
 
-The underlying AWS services used by KNFSD File Cache (EC2, RDS, KMS, CloudWatch, Secrets Manager, Systems Manager) are in scope for major compliance programs including:
+The underlying AWS services used by KNFSD File Cache (EC2, DynamoDB, KMS, CloudWatch, Secrets Manager, Systems Manager) are in scope for major compliance programs including:
 
 - SOC 1/2/3
 - ISO 27001, 27017, 27018
@@ -293,10 +302,9 @@ However, compliance of the overall deployment depends on customer-side controls 
 1. Enable CloudTrail with log file validation for tamper-evident audit trails
 2. Enable VPC Flow Logs for network-level audit
 3. Use customer-managed KMS keys for AMI/EBS encryption to maintain key-custody
-4. Enforce `sslmode=verify-full` on FSID database connections
-5. Restrict IAM policies to the minimum required feature set
-6. Scope security group source addresses to specific CIDR blocks rather than broad ranges
-7. Deploy in private subnets with VPC endpoints (no internet path for data or control plane)
+4. Restrict IAM policies to the minimum required feature set
+5. Scope security group source addresses to specific CIDR blocks rather than broad ranges
+6. Deploy in private subnets with VPC endpoints (no internet path for data or control plane)
 
 ### Vulnerability Reporting
 

@@ -98,6 +98,14 @@ func TestSmoke(t *testing.T) {
 
 		copyRemote(ctx, t, region, instanceID, keyPath, controlPath)
 		executeRemote(ctx, t, region, instanceID, keyPath, controlPath)
+
+		// Validate the DynamoDB FSID table only if FSID_MODE is "external".
+		t.Run("fsid table", func(t *testing.T) {
+			if mode := outputs.FSIDMode(t); mode != "external" {
+				t.Skipf("FSID_MODE=%q, no FSID table deployed", mode)
+			}
+			checkFSIDTable(ctx, t, region, outputs.FSIDTableName(t))
+		})
 	})
 }
 
@@ -129,6 +137,14 @@ type Outputs map[string]any
 
 func (o Outputs) ClientInstanceID(t *testing.T) string {
 	return o.GetString(t, "client_instance_id")
+}
+
+func (o Outputs) FSIDMode(t *testing.T) string {
+	return o.GetString(t, "fsid_mode")
+}
+
+func (o Outputs) FSIDTableName(t *testing.T) string {
+	return o.GetString(t, "fsid_table_name")
 }
 
 func (o Outputs) Region(t *testing.T) string {

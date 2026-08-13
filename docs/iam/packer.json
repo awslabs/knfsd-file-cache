@@ -72,6 +72,32 @@
       "Resource": "arn:*:ssm:*::parameter/aws/service/canonical/*"
     },
     {
+      "Sid": "KnfsdPackerSsmChannels",
+      "Effect": "Allow",
+      "Action": [
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdPackerSsmStartSession",
+      "Effect": "Allow",
+      "Action": "ssm:StartSession",
+      "Resource": [
+        "arn:*:ec2:*:*:instance/*",
+        "arn:*:ssm:*:*:document/AWS-StartPortForwardingSession"
+      ]
+    },
+    {
+      "Sid": "KnfsdPackerSsmManageSession",
+      "Effect": "Allow",
+      "Action": "ssm:TerminateSession",
+      "Resource": "arn:*:ssm:*:*:session/*"
+    },
+    {
       "Sid": "KnfsdKms",
       "Effect": "Allow",
       "Action": [

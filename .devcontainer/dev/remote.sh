@@ -16,8 +16,20 @@
 ## ./remote.sh delete|del|terminate
 
 ## PRIVATE SUBNET:
-## If the EC2 instance is in a private subnet (no public IP), set the EICE env var:
+## The EC2 instance is reached via a tunnel, so no inbound SSH (TCP:22) rule is required.
+## Select the tunnel type with the KNFSD_REMOTE_SSH_TUNNEL env var:
+##   export KNFSD_REMOTE_SSH_TUNNEL=eice # EC2 Instance Connect Endpoint (default)
+##   export KNFSD_REMOTE_SSH_TUNNEL=ssm # AWS SSM Session Manager
+##
+## EICE: optionally pin the endpoint (otherwise inferred from the instance's VPC):
 ##   export KNFSD_REMOTE_SSH_EICE_ID=<eice-id>
+## AWS docs: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html
+##
+## SSM: requires the "session-manager-plugin" installed locally (and on the local OS
+## running VS Code, as ~/.ssh/config is shared), the EC2 IAM instance profile to allow
+## the AWS SSM agent actions, and AWS SSM reachability (NAT or the ssm, ssmmessages and
+## ec2messages interface VPC endpoints).
+## AWS docs: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 
 set -eo pipefail
 
@@ -26,7 +38,7 @@ SHELL_RED='\033[0;31m'
 SHELL_GREEN='\033[0;32m'
 SHELL_DEFAULT='\033[0m'
 
-VERSION="1.1.0-beta.1"
+VERSION="1.1.0-beta.2"
 
 REMOTE_HOST="knfsd-dev-ec2" # ensure unique name in AWS account
 KNFSD_GIT_REPO=/knfsd-file-cache
@@ -34,6 +46,8 @@ USERNAME="ubuntu"
 # ssh settings
 IDENTITY_FILE="~/.ssh/id_rsa"
 SSH_CONFIG_FILE=~/.ssh/config
+# tunnel used to reach the instance: eice (default) or ssm
+TUNNEL="${KNFSD_REMOTE_SSH_TUNNEL:-eice}"
 # ami-id settings
 PRODUCT="server" # server, server-minimal or pro-server
 RELEASE="26.04"
@@ -44,6 +58,10 @@ USER_DATA_SCRIPT="setup-remote-vm.sh" # run as EC2 VM
 INSTANCE_TYPE="c6i.2xlarge" # c5n.2xlarge (amd64), c6in.2xlarge (amd64) or c6gn.2xlarge (arm64)
 # use smaller instance size to save cost when heavy go downloading/compiling not required
 VOLUME_SIZE=30
+# max seconds to wait for the instance to become ready (AWS SSM agent/user-data script)
+WAIT_TIMEOUT="${KNFSD_REMOTE_SSH_WAIT_TIMEOUT:-600}"
+# EC2 tag set by the user-data scripts to advertise readiness
+STATUS_TAG_KEY="knfsd-file-cache:status"
 
 function usage() {
 	cat >&2 << EOT
@@ -66,8 +84,12 @@ Commands:
 			KNFSD_REMOTE_SSH_SG_ID
 				The ID of the EC2 security group
 		Optional ENV VARs:
+			KNFSD_REMOTE_SSH_TUNNEL
+				Tunnel: eice (default) or ssm (AWS SSM Session Manager)
 			KNFSD_REMOTE_SSH_EICE_ID
-				EC2 Instance Connect Endpoint ID
+				EC2 Instance Connect Endpoint ID (eice tunnel only)
+			KNFSD_REMOTE_SSH_WAIT_TIMEOUT
+				Max seconds to wait for the instance to become ready (default: 600)
 		[<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
 		[<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
 		[<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
@@ -99,12 +121,41 @@ function require() {
 	fi
 }
 
+# validate-tunnel checks KNFSD_REMOTE_SSH_TUNNEL is a supported value.
+function validate-tunnel() {
+	if [[ ${TUNNEL} != "eice" && ${TUNNEL} != "ssm" ]]; then
+		echo >&2 -e "${SHELL_RED}ERROR: KNFSD_REMOTE_SSH_TUNNEL must be 'eice' or 'ssm' (got: ${TUNNEL})${SHELL_DEFAULT}"
+		return 1
+	fi
+	if [[ ${TUNNEL} == "ssm" ]] && ! command -v session-manager-plugin > /dev/null 2>&1; then
+		echo >&2 -e "${SHELL_RED}ERROR: 'session-manager-plugin' not found in PATH${SHELL_DEFAULT}"
+		return 1
+	fi
+	return 0
+}
+
 function initialize() {
 	local error=0
 	require KNFSD_REMOTE_SSH_KEYPAIR || error=1
 	require KNFSD_REMOTE_SSH_SUBNET || error=1
 	require KNFSD_REMOTE_SSH_SG_ID || error=1
+	validate-tunnel || error=1
 	return "${error}"
+}
+
+# get-region resolves the AWS region, printing it to stdout.
+# The ProxyCommand is written to ~/.ssh/config, which is shared with the local OS
+# running VS Code, so the region must be pinned explicitly rather than inherited.
+function get-region() {
+	local region="${AWS_REGION:-${AWS_DEFAULT_REGION:-}}"
+	if [[ -z ${region} ]]; then
+		region=$(aws configure get region) || region=""
+	fi
+	if [[ -z ${region} ]]; then
+		echo >&2 -e "${SHELL_RED}ERROR: unable to determine AWS region${SHELL_DEFAULT}"
+		return 1
+	fi
+	echo "${region}"
 }
 
 function get-instance-id() {
@@ -112,6 +163,55 @@ function get-instance-id() {
 		--filters "Name=tag:Name,Values=${REMOTE_HOST}" \
 		--output text \
 		--query 'Reservations[].Instances[].[InstanceId]')
+}
+
+# wait-for-ssm-online polls AWS SSM until the instance's agent reports PingStatus
+# "Online" (registered and reachable). Unlike EICE, an SSM tunnel cannot be opened
+# until the agent has registered, which lags the "running" state.
+function wait-for-ssm-online() {
+	local deadline=$((SECONDS + WAIT_TIMEOUT))
+	local ping_status=""
+	echo "INFO: ${REMOTE_HOST}: waiting for AWS SSM agent to report Online..."
+	while ((SECONDS < deadline)); do
+		ping_status=$(aws ssm describe-instance-information \
+			--filters "Key=InstanceIds,Values=${INSTANCE_ID}" \
+			--query 'InstanceInformationList[0].PingStatus' \
+			--output text 2> /dev/null) || ping_status=""
+		if [[ ${ping_status} == "Online" ]]; then
+			echo -e "INFO: ${REMOTE_HOST}: AWS SSM agent ${SHELL_GREEN}Online${SHELL_DEFAULT}"
+			return 0
+		fi
+		sleep 5
+	done
+	echo >&2 -e "${SHELL_RED}ERROR: timed out after ${WAIT_TIMEOUT}s waiting for AWS SSM agent to report Online${SHELL_DEFAULT}"
+	return 1
+}
+
+# wait-for-ready-tag polls the "knfsd-file-cache:status" tag set by the user-data
+# script, returning once it reports "ready" and failing fast on an "error" status.
+function wait-for-ready-tag() {
+	local deadline=$((SECONDS + WAIT_TIMEOUT))
+	local status=""
+	echo "INFO: ${REMOTE_HOST}: waiting for user-data script to complete..."
+	while ((SECONDS < deadline)); do
+		status=$(aws ec2 describe-tags \
+			--filters "Name=resource-id,Values=${INSTANCE_ID}" "Name=key,Values=${STATUS_TAG_KEY}" \
+			--query 'Tags[0].Value' \
+			--output text 2> /dev/null) || status=""
+		case "${status}" in
+			ready)
+				echo -e "INFO: ${REMOTE_HOST}: ${SHELL_GREEN}ready${SHELL_DEFAULT}"
+				return 0
+				;;
+			error*)
+				echo >&2 -e "${SHELL_RED}ERROR: ${REMOTE_HOST} reported a failure status: ${status}${SHELL_DEFAULT}"
+				return 1
+				;;
+		esac
+		sleep 5
+	done
+	echo >&2 -e "${SHELL_RED}ERROR: timed out after ${WAIT_TIMEOUT}s waiting for ${STATUS_TAG_KEY}=ready (last status: ${status:-none})${SHELL_DEFAULT}"
+	return 1
 }
 
 function create-instance() {
@@ -255,19 +355,30 @@ function create-instance() {
 		--block-device-mappings '[{"DeviceName":"'"$root_device_name"'","Ebs":{"VolumeSize":'"$VOLUME_SIZE"',"VolumeType":"gp3","Encrypted":true}}]' \
 		--user-data file://"${USER_DATA_SCRIPT}" \
 		--metadata-options "HttpEndpoint=enabled,HttpTokens=required,HttpPutResponseHopLimit=2,InstanceMetadataTags=enabled" \
-		--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${REMOTE_HOST}},{Key=knfsd-file-cache:version,Value=${VERSION}}]" \
+		--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${REMOTE_HOST}},{Key=knfsd-file-cache:version,Value=${VERSION}},{Key=knfsd-file-cache:status,Value=starting}]" \
 		--query 'Instances[0].InstanceId' \
 		--output text)
 
 	# "docker" override msg
 	local msg="EC2 VM"
 	if [ "$image_type" == "docker" ]; then msg="EC2 DOCKER HOST"; fi
-	echo "INFO: ${REMOTE_HOST}: ${INSTANCE_ID} created as: ${msg}"
+	echo -e "INFO: ${REMOTE_HOST}: ${SHELL_GREEN}${INSTANCE_ID}${SHELL_DEFAULT} created as: ${SHELL_GREEN}${msg}${SHELL_DEFAULT}"
 
 	add-ssh-config
+
+	# wait for the instance to finish provisioning before handing back to the user
+	if [[ ${TUNNEL} == "ssm" ]]; then
+		wait-for-ssm-online
+	fi
+	wait-for-ready-tag
 }
 
 function start-instance() {
+	# check tunnel type is valid
+	if ! validate-tunnel; then
+		exit 1
+	fi
+
 	get-instance-id
 	if [[ -z ${INSTANCE_ID} ]]; then
 		echo -e "${SHELL_RED}ERROR: ec2 instance with Name=${REMOTE_HOST} not found${SHELL_DEFAULT}"
@@ -287,19 +398,41 @@ function start-instance() {
 	aws ec2 start-instances --instance-ids "${INSTANCE_ID}" > /dev/null
 	echo -e "INFO: ${REMOTE_HOST}: ${SHELL_GREEN}started${SHELL_DEFAULT}"
 	add-ssh-config
+
+	# the user-data script only runs on first boot, so only the AWS SSM agent
+	# registration needs waiting on here
+	if [[ ${TUNNEL} == "ssm" ]]; then
+		wait-for-ssm-online
+	fi
 }
 
 function add-ssh-config() {
+	# build the ProxyCommand for the selected tunnel type
+	local proxy_cmd
+	if [[ ${TUNNEL} == "ssm" ]]; then
+		local region
+		region=$(get-region) || exit 1
+		# %h resolves to the instance-id (HostName) and %p to the port (22)
+		proxy_cmd="aws ssm start-session --target %h"
+		proxy_cmd="${proxy_cmd} --document-name AWS-StartSSHSession"
+		proxy_cmd="${proxy_cmd} --parameters 'portNumber=%p'"
+		proxy_cmd="${proxy_cmd} --region ${region}"
+		if [[ -n ${AWS_PROFILE:-} ]]; then
+			proxy_cmd="${proxy_cmd} --profile ${AWS_PROFILE}"
+		fi
+	else
+		proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
+		if [[ -n ${KNFSD_REMOTE_SSH_EICE_ID:-} ]]; then
+			proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${KNFSD_REMOTE_SSH_EICE_ID}"
+		fi
+	fi
+
 	# backup ~/.ssh/config file to config.bak
 	cp ${SSH_CONFIG_FILE} ${SSH_CONFIG_FILE}.bak
 	# remove any "Host ${REMOTE_HOST}" entries in ${SSH_CONFIG_FILE}
 	sed -i -e 's/^Host/\n&/' ${SSH_CONFIG_FILE}
 	sed -i -e '/^Host '"${REMOTE_HOST}"'$/,/^$/d;/^$/d' ${SSH_CONFIG_FILE}
 	# echo in new lines to bottom of ${SSH_CONFIG_FILE}
-	local proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
-	if [[ -n "${KNFSD_REMOTE_SSH_EICE_ID:-}" ]]; then
-		proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${KNFSD_REMOTE_SSH_EICE_ID}"
-	fi
 	cat << EOT >> ${SSH_CONFIG_FILE}
 Host ${REMOTE_HOST}
 	User ${USERNAME}
@@ -308,17 +441,20 @@ Host ${REMOTE_HOST}
 	StrictHostKeyChecking no
 	ForwardAgent yes
 	IdentitiesOnly yes
+	ConnectTimeout 30
+	ServerAliveInterval 30
+	ServerAliveCountMax 5
 	ProxyCommand bash -c "${proxy_cmd}"
 EOT
 	echo "INFO: ssh config file: ${SSH_CONFIG_FILE}"
-	echo "INFO: ssh config added: ${REMOTE_HOST}"
+	echo -e "INFO: ssh config added: ${SHELL_GREEN}${REMOTE_HOST}${SHELL_DEFAULT} (tunnel: ${SHELL_GREEN}${TUNNEL}${SHELL_DEFAULT})"
 }
 
 function delete-ssh-config() {
 	sed -i -e 's/^Host/\n&/' ${SSH_CONFIG_FILE}
 	sed -i -e '/^Host '"${REMOTE_HOST}"'$/,/^$/d;/^$/d' ${SSH_CONFIG_FILE}
 	echo "INFO: ssh config file: ${SSH_CONFIG_FILE}"
-	echo "INFO: ssh config deleted: ${REMOTE_HOST}"
+	echo -e "INFO: ssh config deleted: ${SHELL_RED}${REMOTE_HOST}${SHELL_DEFAULT}"
 }
 
 function modify-instance() {
@@ -369,7 +505,7 @@ function modify-instance() {
 function sync-repo() {
 	# check for min 2 or max 3 arguments
 	if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-		echo -e "${SHELL_RED}ERROR: usage: sync <push|pull> [<test>]$(SHELL_DEFAULT)"
+		echo -e "${SHELL_RED}ERROR: usage: sync <push|pull> [<test>]${SHELL_DEFAULT}"
 		exit 1
 	fi
 
@@ -466,9 +602,10 @@ function delete-instance() {
 		exit 1
 	fi
 
-	aws ec2 delete-tags --resources "${INSTANCE_ID}" --tags Key=Name > /dev/null
+	aws ec2 delete-tags --resources "${INSTANCE_ID}" \
+		--tags "Key=Name" "Key=knfsd-file-cache:status" "Key=knfsd-file-cache:version" > /dev/null
 	aws ec2 terminate-instances --instance-ids "${INSTANCE_ID}" > /dev/null
-	echo "INFO: ${REMOTE_HOST}: ${INSTANCE_ID} deleted"
+	echo -e "INFO: ${REMOTE_HOST}: ${SHELL_RED}${INSTANCE_ID}${SHELL_DEFAULT} deleted"
 	delete-ssh-config
 }
 

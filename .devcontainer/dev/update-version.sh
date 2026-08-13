@@ -53,4 +53,11 @@ find . -type f -not -path "*/\.git/*" -print0 \
 		sed -i -r "s#VERSION=\"$OLD_VERSION\"#VERSION=\"$NEW_VERSION\"#g" "$f"
 	done
 
+# update the version placeholder in the GitHub issue templates
+# these use a "v" prefix to match the release tag names
+for f in .github/ISSUE_TEMPLATE/*.yml; do
+	[[ -f $f ]] || continue
+	sed -i -r "s#(placeholder:\s*)v?$OLD_VERSION\$#\1v$NEW_VERSION#g" "$f"
+done
+
 echo "Updated version from $OLD_VERSION to $NEW_VERSION"

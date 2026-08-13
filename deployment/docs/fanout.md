@@ -33,7 +33,7 @@ While this architecture can provide performance benefits for certain use-cases, 
 
 ## Example Deployment of Fanout Architecture
 
-The KNFSD Terraform module is defined twice to achieve the fanout deployment. The below code block shows an example deployment of the fanout architecture. We deploy a single RDS PostgreSQL database for the `knfsd_fanout` module, and then reuse this database for the `knfsd_cluster` module.
+The KNFSD Terraform module is defined twice to achieve the fanout deployment. The below code block shows an example deployment of the fanout architecture. We deploy a single DynamoDB FSID table for the `knfsd_fanout` module, and then reuse this table for the `knfsd_cluster` module.
 
 We ensure that the `knfsd_cluster` module is deployed after the `knfsd_fanout` module via the `depends_on` and `ENABLE_STATUS_CHECK` parameters.
 
@@ -44,7 +44,7 @@ The [fsx-zfs-fanout-loadbalancer](../../examples/fsx-zfs-fanout-loadbalancer/REA
 
 ```terraform
 module "knfsd_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
+  source                = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
@@ -59,13 +59,13 @@ module "knfsd_fanout" {
 }
 
 module "knfsd_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
+  source                   = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI
-  FSID_DATABASE_DEPLOY     = false                                                                       # Reuse the database from the fanout module
+  FSID_DATABASE_DEPLOY     = false                                                                       # Reuse the FSID table from the fanout module
   FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config                                         # database configuration from the fanout module
-  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy                                     # ARN of the IAM policy for rds-db:connect database access from the fanout module
+  FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy                                     # ARN of the IAM policy for DynamoDB table access from the fanout module
   INSTANCE_TYPE            = "i3en.6xlarge"                                                              # Use a smaller CPU and memory machine type as we have multiple proxies in the cluster
   KNFSD_NODES              = 3                                                                           # Deploy 3 knfsd proxies for the performant based, temporary cache nodes
   EXPORT_MAP               = "${module.knfsd_fanout.loadbalancer_ipaddress};/remoteexport;/remoteexport" # Re-export the export from the fanout proxy

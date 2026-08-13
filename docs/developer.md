@@ -50,7 +50,7 @@ To allow rapid onboarding of developers to the integrated development environmen
   * `Dockerfile`: ~multiple GB
   * `Ubuntu`: ~98MB
   * `Bats`: ~105MB
-  * `Postgres`: ~261MB
+  * `DynamoDB Local`: ~500MB
   * `knfsd-go-build-cache` volume: ~multiple GB
   * `knfsd-go-pkg-cache` volume: ~multiple GB
   * `vscode` volume: ~266MB
@@ -132,6 +132,9 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
 
     # Docker bind mount: pass user's ~/.aws creds/config through to container user's ~/.aws
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
+
+    # Docker bind mount: pass user's ~/.cursor directory through to container user's ~/.cursor directory
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.cursor,target=/home/ubuntu/.cursor,type=bind"
 ```
 
 ### Devcontainer: Terminals
@@ -240,10 +243,11 @@ Bind mounts are not possible over SSH, so we localize the source-code (`git clon
 
 ## Additional Prerequisites
 
-1. AWS account with applicable IAM permissions.
+1. AWS account with applicable IAM permissions. See [IAM Permissions](iam.md) for the [`remote-ssh.json`](iam/remote-ssh.json) and [`remote-ssh-instance-profile.json`](iam/remote-ssh-instance-profile.json) policies.
 2. A supported [OpenSSH compatible SSH client](https://code.visualstudio.com/docs/remote/troubleshooting#_installing-a-supported-ssh-client) must be installed (macOS is pre-installed).
-3. [Remote - SSH Extension](vscode:extension/ms-vscode-remote.remote-ssh) v0.112.0 or newer (alternatively, the [Remote Development](vscode:extension/ms-vscode-remote.vscode-remote-extensionpack) extension pack v0.25.0 includes Dev Containers & Remote - SSH).
-4. In VS Code, press `F1` or `Shift+Cmd+P` to access the `Command Palette` and type: >`Preferences: Open User Settings (JSON)` and add the following to your local VS Code user `settings.json` file:
+3. (Optional) The AWS [`session-manager-plugin`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed on your local host OS, required only when using `KNFSD_REMOTE_SSH_TUNNEL=ssm`. It is preinstalled inside the devcontainer, but your local OS `ssh` binary executes the `ProxyCommand` when VS Code Remote-SSH connects.
+4. [Remote - SSH Extension](vscode:extension/ms-vscode-remote.remote-ssh) v0.112.0 or newer (alternatively, the [Remote Development](vscode:extension/ms-vscode-remote.vscode-remote-extensionpack) extension pack v0.25.0 includes Dev Containers & Remote - SSH).
+5. In VS Code, press `F1` or `Shift+Cmd+P` to access the `Command Palette` and type: >`Preferences: Open User Settings (JSON)` and add the following to your local VS Code user `settings.json` file:
 
   ```json
   {
@@ -269,16 +273,35 @@ Bind mounts are not possible over SSH, so we localize the source-code (`git clon
 
 ### Remote-SSH: Considerations
 
-It is beyond the scope of this documentation to describe all possible SSH setups that can work here and are compliant to your security policies. For further reading, please consult the AWS public docs on how you can [connect to your Linux instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html). This documentation provides an opinionated SSH setup via provisioning an [Amazon EC2 Instance Connect (EIC) Endpoint](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html) (free), which means:
+It is beyond the scope of this documentation to describe all possible SSH setups that can work here and are compliant to your security policies. For further reading, please consult the AWS public docs on how you can [connect to your Linux instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html). This documentation provides two opinionated SSH setups, selected via the `KNFSD_REMOTE_SSH_TUNNEL` environment variable, both of which tunnel SSH inside an identity-aware channel so that **no inbound SSH (TCP:22) security group rule and no public IP address are required**:
+
+| `KNFSD_REMOTE_SSH_TUNNEL` | Type                                                                                                                                       | Infrastructure to pre-create                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `eice` (default)          | [EC2 Instance Connect (EIC) Endpoint](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html) | An EIC Endpoint in your VPC                             |
+| `ssm`                     | [AWS SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html)                               | None; the `session-manager-plugin` is installed locally |
+
+Both options mean:
 
 * Connect securely to your EC2 instance in a **private** subnet, with no public IP address.
-* No IGW/NAT Gateway required in your VPC (although if you wish to download installable components which is part of the devcontainer build process, you should provision a IGW/NAT or use an offline solution for your needs).
-* No agent required, simply use the OpenSSH `ProxyCommand` within your existing local SSH configuration.
+* No IGW/NAT Gateway strictly required for connectivity (although the devcontainer build process downloads installable components, so you should provision a IGW/NAT, VPC endpoints, or use an offline solution for your needs).
 * Security posture is raised via using SSH within a secure, identity-aware TCP tunnel with your AWS IAM credentials.
 * All authentication and authorization is evaluated before traffic reaches your VPC.
 * This routable traffic solution can work over public internet, VPN or DX to suit all customer needs.
+
+The `eice` tunnel additionally means:
+
+* No agent required, simply use the OpenSSH `ProxyCommand` within your existing local SSH configuration.
 * The EIC endpoint has a maximum tunnel duration of 1 hour per SSH session. Simply re-connect to host to continue (UI state is restored).
 * [Further considerations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html#ec2-instance-connect-endpoint-prerequisites) and EIC [Quotas](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/eice-quotas.html).
+
+The `ssm` tunnel additionally means:
+
+* No VPC infrastructure to create, delete, or pay cross-AZ data transfer on.
+* The AWS SSM agent must be running on the instance, and the instance's IAM instance profile must grant it permission to register (see [IAM Permissions](iam.md#remote-ssh-development-instance-profile)). The Ubuntu AMI ships the agent as a snap, and the user-data scripts refresh it at launch.
+* The `session-manager-plugin` must be installed on the machine that runs `ssh`. See [Remote-SSH: AWS SSM Session Manager](#remote-ssh-aws-ssm-session-manager).
+* AWS SSM reachability is required from the instance subnet: either a NAT Gateway, or the `ssm`, `ssmmessages`, and `ec2messages` interface VPC endpoints (all three are provided by the [vpc-endpoints](../deployment/vpc-endpoints/README.md) module).
+* Sessions are subject to an idle timeout (Session Manager preferences, default 20 mins) and a maximum session duration (60 mins). The generated SSH config sets `ServerAliveInterval` to keep an active session from idling out.
+* [Session Manager Quotas](https://docs.aws.amazon.com/general/latest/gr/ssm.html#limits_ssm).
 
 ### Remote-SSH: EC2 Instance Connect (EIC) Endpoint
 
@@ -306,6 +329,41 @@ This [blog post](https://aws.amazon.com/blogs/compute/secure-connectivity-from-p
   aws ec2-instance-connect ssh --instance-id <instance-id> --connection-type eice
   ```
 
+### Remote-SSH: AWS SSM Session Manager
+
+![Remote-SSH on AWS architecture illustrating VS Code on local OS connecting to a private subnet based EC2 instance via SSH, tunnelled through AWS Systems Manager Session Manager](images/aws-remote-ssh-ssm-arch.png)
+
+As an alternative to the EIC Endpoint, setting `KNFSD_REMOTE_SSH_TUNNEL=ssm` tunnels the SSH connection over [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) using the [`AWS-StartSSHSession`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html) document. There is no VPC endpoint resource to create, delete, or pay cross-AZ data transfer on. AWS SSM only transports the TCP stream, so `sshd` on the instance still performs normal public-key authentication with your `KNFSD_REMOTE_SSH_KEYPAIR` key.
+
+Here is a summary of the steps:
+
+* Create/access your AWS account and choose which AWS region you are going to use.
+* Create/import a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). We assume a 2048-bit SSH-2 RSA key is used.
+* Install the [`session-manager-plugin`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) on the machine that runs `ssh`. It is preinstalled in the `.devcontainer/dev` and `.devcontainer/prod` configurations, but **also install it on your local host OS**: `~/.ssh/config` is bind mounted into the devcontainer, so the `ProxyCommand` is executed by your local OS `ssh` binary when VS Code Remote-SSH connects.
+
+  ```bash
+  session-manager-plugin --version
+  ```
+
+* Create the IAM role and instance profile for the development instance and attach [`docs/iam/remote-ssh-instance-profile.json`](iam/remote-ssh-instance-profile.json), then reference it by name via `KNFSD_REMOTE_SSH_IAM_PROFILE_NAME`. Without the AWS SSM agent permissions the tunnel cannot connect. See [Remote-SSH development instance profile](iam.md#remote-ssh-development-instance-profile) for the exact `aws iam` commands.
+* Attach [`docs/iam/remote-ssh.json`](iam/remote-ssh.json) to your own IAM identity, which grants `ssm:StartSession` on the `AWS-StartSSHSession` document plus the EC2 actions the wrapper script needs.
+* Ensure the instance subnet can reach AWS SSM: either a [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html#public-nat-internet-access), or the `ssm`, `ssmmessages`, and `ec2messages` interface VPC endpoints (all three are provided by the [vpc-endpoints](../deployment/vpc-endpoints/README.md) module). The `vm` and `docker` setup scripts also download packages from the internet, so a NAT/IGW is required for the initial build regardless.
+* The [Security Group](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html) for the EC2 instance needs **no inbound rule at all**; only outbound HTTPS (TCP:443) to reach AWS SSM.
+* Export the tunnel selection, then create the instance with the `remote.sh` wrapper script described in the next section.
+
+  ```bash
+  export KNFSD_REMOTE_SSH_TUNNEL=ssm
+  ```
+
+* Confirm the AWS SSM agent has registered and an interactive session works correctly via [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html).
+
+  ```bash
+  aws ssm describe-instance-information \
+    --filters "Key=InstanceIds,Values=<instance-id>" \
+    --query 'InstanceInformationList[0].PingStatus'
+  aws ssm start-session --target <instance-id>
+  ```
+
 ### Remote-SSH: Remote Wrapper Script
 
 To ensure a reliable workflow of provision, start, SSH config, stop, and terminate EC2 instance host, as well as various convenience functions, a shell script has been created in `.devcontainer/dev/remote.sh`.
@@ -319,15 +377,27 @@ To ensure a reliable workflow of provision, start, SSH config, stop, and termina
   export KNFSD_REMOTE_SSH_SG_ID=<security-group-id> # "id" of the security group to be used for the EC2 instance
   ```
 
-Optionally, you can set the EC2 Instance Connect Endpoint ID (if not set, this is automatically inferred from the VPC that the instance is running in):
+Optionally, you can select the tunnel type used to reach the instance (default: `eice`):
+
+  ```bash
+  export KNFSD_REMOTE_SSH_TUNNEL=ssm # "eice" (default) or "ssm" (AWS SSM Session Manager)
+  ```
+
+For the `eice` tunnel only, you can set the EC2 Instance Connect Endpoint ID (if not set, this is automatically inferred from the VPC that the instance is running in):
 
   ```bash
   export KNFSD_REMOTE_SSH_EICE_ID=<eice-id> # "id" of the EC2 Instance Connect Endpoint
   ```
 
-Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|help|--help`.
+Optionally, you can change how long the script waits for a newly created instance to finish provisioning (the user-data script typically takes 3-4 minutes):
 
   ```bash
+  export KNFSD_REMOTE_SSH_WAIT_TIMEOUT=600 # seconds [default: 600]
+  ```
+
+Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|help|--help`.
+
+  ```text
   Ensure AWS credentials/region are configured.
 
   Commands:
@@ -347,8 +417,12 @@ Usage of the shell script can be viewed via: `.devcontainer/dev/remote.sh -h|hel
           KNFSD_REMOTE_SSH_SG_ID
             The ID of the EC2 security group
         Optional ENV VARs:
+          KNFSD_REMOTE_SSH_TUNNEL
+            Tunnel: eice (default) or ssm (AWS SSM Session Manager)
           KNFSD_REMOTE_SSH_EICE_ID
-            EC2 Instance Connect Endpoint ID (if not set, this is automatically inferred from the VPC that the instance is running in)
+            EC2 Instance Connect Endpoint ID (eice tunnel only)
+          KNFSD_REMOTE_SSH_WAIT_TIMEOUT
+            Max seconds to wait for the instance to become ready (default: 600)
         [<vm|docker>] vm (default) or docker (devcontainer) on EC2 host [optional]
         [<amd64|arm64>] amd64 (default) or arm64 on EC2 host [optional]
         [<ami-id>] AMI ID [optional] or query AWS SSM parameter for "Ubuntu $RELEASE $ARCH $VOL_TYPE" AMI ID (default)
@@ -396,15 +470,24 @@ The first 3 steps can be skipped if you already have a running devcontainer loca
   export KNFSD_REMOTE_SSH_SG_ID=<security-group-id>
   ```
 
-* *Local*: Execute `./remote.sh new vm` will provision a new EC2 instance (default: c6in.2xlarge, amd64, 30GB EBS root) and automatically configure your local SSH config (`~/.ssh/config`) file. The EC2 host will be configured via the `setup-remote-vm.sh` user-data script at launch.
+* *Local*: (optional) To use AWS SSM Session Manager instead of the default EC2 Instance Connect Endpoint tunnel:
+
+  ```bash
+  export KNFSD_REMOTE_SSH_TUNNEL=ssm
+  ```
+
+* *Local*: Execute `./remote.sh new vm` will provision a new EC2 instance (default: c6in.2xlarge, amd64, 30GB EBS root) and automatically configure your local SSH config (`~/.ssh/config`) file. The EC2 host will be configured via the `setup-remote-vm.sh` user-data script at launch. The script then waits for the instance to finish provisioning, which typically takes 3-4 mins (depending on the specific EC2 instance type used).
 
   ```bash
   INFO: knfsd-dev-ec2: i-1234567890abcdef0 created as: EC2 VM
   INFO: ssh config file: /home/ubuntu/.ssh/config
-  INFO: ssh config added: knfsd-dev-ec2
+  INFO: ssh config added: knfsd-dev-ec2 (tunnel: eice)
+  INFO: knfsd-dev-ec2: waiting for user-data script to complete...
+  INFO: knfsd-dev-ec2: ready
   ```
 
-* *Local*: Wait until the EC2 instance is displaying a [status check](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html) of **3/3 checks passed** in the EC2 Console. Typically, the `setup-remote-vm.sh` script takes 3-4 mins to execute (depending on the specific EC2 instance type used). Inspect the "Launch time" property in EC2 Console to monitor time since launch.
+  > NOTE: The wrapper script polls the `knfsd-file-cache:status` EC2 tag that the user-data script sets. If provisioning fails, the tag reports an `error:` status and the script exits immediately. The timeout defaults to 600 seconds and is configurable via `KNFSD_REMOTE_SSH_WAIT_TIMEOUT`.
+
 * *Local*: Press `F1` or `Shift+Cmd+P` to access the `Command Palette` and start typing: >`Remote-SSH: Open SSH Configuration File...` -> select your SSH config file, such as: `~/.ssh/config`. In VS Code you can manually verify the newly create `Host knfsd-dev-ec2` entry that should look similar to below:
 
   ```bash
@@ -415,7 +498,16 @@ The first 3 steps can be skipped if you already have a running devcontainer loca
     StrictHostKeyChecking no
     ForwardAgent yes
     IdentitiesOnly yes
+    ConnectTimeout 30
+    ServerAliveInterval 30
+    ServerAliveCountMax 5
     ProxyCommand bash -c "aws ec2-instance-connect open-tunnel --instance-id %h"
+  ```
+
+  With `KNFSD_REMOTE_SSH_TUNNEL=ssm`, only the `ProxyCommand` line differs. The AWS region is pinned explicitly because `~/.ssh/config` is shared with your local host OS, which will not inherit the devcontainer environment (`--profile` is appended when `AWS_PROFILE` is set):
+
+  ```bash
+    ProxyCommand bash -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p' --region eu-west-2"
   ```
 
 * *Local*: Press `F1` or `Shift+Cmd+P` to access the `Command Palette` and start typing: >`Remote-SSH: Connect to Host...`. Alternatively, click on GREEN status-bar in bottom left-hand corner of VS Code and select: `Connect to Host...` in the drop-down list.
@@ -458,7 +550,7 @@ Once *Initial Setup* is completed above, general usage of your cloud development
 
 * *Local*: Execute `./remote.sh up` or `./remote.sh down` to start or stop your host.
 * *Local*: Execute `./remote.sh sync <push|pull>` to rsync *PUSH* (to Remote-SSH host) or rsync *PULL* (from Remote-SSH host) any source-code changes (as .git remains on your local machine only for source control). The (optional) `<test>` argument allows you to list what dirs/files will be synced as a dry-run (no action).
-* The EC2 IC Endpoint has a [maximum tunnel duration](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html#ec2-instance-connect-endpoint-prerequisites) for an established TCP connection of 1 hour (3,600 seconds) by default. Upon disconnection in your *Remote-SSH* window, simply click on the GREEN status-bar once and select: `Reopen Folder in SSH`. Additionally if using devcontainer, then select: `Reopen in Container`. All your currently opened files and UI state in VS Code will be reinstated.
+* The EC2 IC Endpoint has a [maximum tunnel duration](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html#ec2-instance-connect-endpoint-prerequisites) for an established TCP connection of 1 hour (3,600 seconds) by default. With the `ssm` tunnel, sessions are instead subject to the Session Manager idle timeout (default 20 mins) and maximum session duration (60 mins). In both cases, upon disconnection in your *Remote-SSH* window, simply click on the GREEN status-bar once and select: `Reopen Folder in SSH`. Additionally if using devcontainer, then select: `Reopen in Container`. All your currently opened files and UI state in VS Code will be reinstated.
 
 ### Remote-SSH: Cleanup
 
@@ -470,7 +562,7 @@ Once *Initial Setup* is completed above, general usage of your cloud development
   INFO: ssh config deleted: knfsd-dev-ec2
   ```
 
-* *Local*: EIC Endpoint can be deleted when no longer required. See [AWS documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/delete-ec2-instance-connect-endpoint.html).
+* *Local*: EIC Endpoint can be deleted when no longer required. See [AWS documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/delete-ec2-instance-connect-endpoint.html). There is nothing to clean up when using the `ssm` tunnel, as no endpoint resource is created.
 
 ### Remote-SSH: Troubleshooting
 
@@ -507,3 +599,12 @@ Once *Initial Setup* is completed above, general usage of your cloud development
   ```bash
   ./remote.sh new <vm|docker> <amd64|arm64> <ami-id> # optional
   ```
+
+* When using `KNFSD_REMOTE_SSH_TUNNEL=ssm`, a `TargetNotConnected` error means the AWS SSM agent has not registered. Confirm the instance's IAM instance profile grants the agent permissions ([`remote-ssh-instance-profile.json`](iam/remote-ssh-instance-profile.json)), that the subnet can reach AWS SSM, and check the agent's ping status.
+
+  ```bash
+  aws ssm describe-instance-information --filters "Key=InstanceIds,Values=<instance-id>"
+  ```
+
+* If `ssh` reports that `session-manager-plugin` cannot be found, the plugin is missing from the machine executing the `ProxyCommand`. Remember this is your **local host OS** when connecting via VS Code Remote-SSH, not the devcontainer.
+* If the `ssm` tunnel fails with a region or credentials error, verify the `--region` value written into the `ProxyCommand` in `~/.ssh/config` matches the region the instance runs in, and that your local OS has valid AWS credentials (the devcontainer bind mounts `~/.aws`, so both normally share the same profile).

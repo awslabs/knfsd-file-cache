@@ -17,18 +17,23 @@ locals {
   }
 }
 
-# launch template security group
+# launch template security group (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_security_group" "knfsd_asg_sg" {
+  count       = var.EXISTING_SECURITY_GROUP_ID == "" ? 1 : 0
   name        = "${local.name}-asg-sg"
   description = "knfsd security group for knfsd instances in the ASG"
   vpc_id      = local.vpc_id
   tags        = merge(local.tags, { Name = "${local.name}-asg-sg" })
 }
 
-# asg sg ingress rule: TCP
+locals {
+  knfsd_sg_id = var.EXISTING_SECURITY_GROUP_ID != "" ? var.EXISTING_SECURITY_GROUP_ID : aws_security_group.knfsd_asg_sg[0].id
+}
+
+# asg sg ingress rule: TCP (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_tcp" {
-  for_each          = local.port_cidr_rules
-  security_group_id = aws_security_group.knfsd_asg_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" ? local.port_cidr_rules : {}
+  security_group_id = local.knfsd_sg_id
   description       = "Allow inbound TCP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "tcp"
   from_port         = each.value.port
@@ -37,10 +42,10 @@ resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_tcp" {
   tags              = merge(local.tags, { Name = "tcp-${each.value.port}-${each.value.name}" })
 }
 
-# asg sg ingress rule: UDP
+# asg sg ingress rule: UDP (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_udp" {
-  for_each          = local.port_cidr_rules
-  security_group_id = aws_security_group.knfsd_asg_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" ? local.port_cidr_rules : {}
+  security_group_id = local.knfsd_sg_id
   description       = "Allow inbound UDP traffic for port: ${each.value.port} - ${each.value.name}"
   ip_protocol       = "udp"
   from_port         = each.value.port
@@ -49,10 +54,10 @@ resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_udp" {
   tags              = merge(local.tags, { Name = "udp-${each.value.port}-${each.value.name}" })
 }
 
-# asg sg ingress rule: knfsd-agent
+# asg sg ingress rule: knfsd-agent (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_knfsd_agent" {
-  for_each          = var.ENABLE_KNFSD_AGENT ? { for idx, cidr in local.vpc_cidr : tostring(idx) => cidr } : {}
-  security_group_id = aws_security_group.knfsd_asg_sg.id
+  for_each          = var.EXISTING_SECURITY_GROUP_ID == "" && var.ENABLE_KNFSD_AGENT ? { for idx, cidr in local.vpc_cidr : tostring(idx) => cidr } : {}
+  security_group_id = local.knfsd_sg_id
   description       = "Allow inbound HTTP/80 traffic for knfsd-agent"
   ip_protocol       = "tcp"
   from_port         = 80
@@ -61,9 +66,10 @@ resource "aws_vpc_security_group_ingress_rule" "knfsd_asg_ingress_knfsd_agent" {
   tags              = merge(local.tags, { Name = "tcp-80-knfsd-agent" })
 }
 
-# asg sg egress rule
+# asg sg egress rule (skipped when EXISTING_SECURITY_GROUP_ID is set)
 resource "aws_vpc_security_group_egress_rule" "knfsd_asg_egress" {
-  security_group_id = aws_security_group.knfsd_asg_sg.id
+  count             = var.EXISTING_SECURITY_GROUP_ID == "" ? 1 : 0
+  security_group_id = local.knfsd_sg_id
   description       = "Allow all outbound traffic"
   ip_protocol       = "-1"
   cidr_ipv4         = var.ASG_EGRESS_CIDR

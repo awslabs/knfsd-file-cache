@@ -106,11 +106,12 @@ aws logs get-log-events --log-group-name /knfsd/logs/aws/cloud-init-output --log
 
 ## Common Startup Issues
 
-There are three main reasons:
+There are four main reasons:
 
 1. Invalid configuration (startup failed)
 2. Security Group/NACL/Firewall blocking access (startup failed, network connectivity issue)
 3. Startup takes longer than 10 minutes (startup never finishes)
+4. AWS service endpoint unreachable (startup failed, or status reporting degraded)
 
 ### Invalid configuration
 
@@ -143,3 +144,34 @@ Normally 10 minutes is long enough for the KNFSD proxy to start. However if you 
 In this case the best option is to split up the exports across multiple separate KNFSD proxy clusters to reduce the number of exports per KNFSD proxy cluster.
 
 If the startup time cannot be reduced below 10 minutes, then measure how long a KNFSD proxy instance takes to start and configure `HEALTHCHECK_INITIAL_DELAY_SECONDS` to increase the initial grace period when starting the cluster.
+
+### The status tag is missing or stuck at "starting"
+
+If the `knfsd-file-cache:status` tag never leaves `starting`, the proxy instance most likely cannot reach the EC2 API to tag itself. Look for this warning in the `cloud-init` output:
+
+```text
+WARNING: unable to set tag "knfsd-file-cache:status", disabling status tagging for this boot
+```
+
+Status tagging is best-effort, so startup continues and NFS caching is unaffected. Because the tag is no longer updated, use the log based checks above instead:
+
+* On the instance, `tail -f /var/log/cloud-init-output.log` and look for `INFO: Reached Proxy Startup Exit. Happy caching!` or `ERROR: Failed to start proxy`.
+* Off the instance, use the [AWS Console Output](#aws-console-output) or [CloudWatch Logs](#cloudwatch-logs) sections above.
+
+See [Known Issues](known-issues.md) for the full impact, including on `ENABLE_STATUS_CHECK`, and the remedy.
+
+### Parameters cannot be read from SSM Parameter Store
+
+The proxy reads its entire configuration from SSM Parameter Store, so startup exits immediately if the parameters cannot be read:
+
+```text
+ERROR: failed to read parameters from SSM Parameter Store path /knfsd/knfsd-a1b2c3d4
+```
+
+or
+
+```text
+ERROR: no parameters found under /knfsd/knfsd-a1b2c3d4
+```
+
+The first indicates the SSM API could not be reached or access was denied. The second indicates the call succeeded but the path holds no parameters. Both messages are followed by a line naming the checks to perform. See [Known Issues](known-issues.md) for details.

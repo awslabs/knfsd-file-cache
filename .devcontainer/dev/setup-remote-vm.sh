@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.1"
+VERSION="1.1.0-beta.2"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -94,14 +94,6 @@ apt-get -y -q update && apt-get -y -q install \
 mkdir -p /etc/docker \
 	&& jq -n '{"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "5"}}' >> /etc/docker/daemon.json
 
-## install latest postgressql-client
-echo "deb http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
-	&& curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg \
-	&& apt-get -y -q update \
-	&& apt-get -y -q install postgresql-client \
-	&& apt-get clean \
-	&& rm -rf /var/lib/apt/lists/*
-
 ## grant sudo rights, allow read access to /proc/slabinfo (knfsd-metrics-agent go tests), symlink python3
 echo rm -f /etc/sudoers.d/90-cloud-init-users \
 	&& echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL >> /etc/sudoers.d/${USERNAME} \
@@ -123,24 +115,47 @@ echo "GITHUB_COM_TOKEN=" >> /etc/environment \
 	&& echo "TF_APPEND_USER_AGENT=AWSSOLUTION/SO9129/${VERSION}" >> /etc/environment
 
 ## install aws-cli
-curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscliv2.zip \
-	&& unzip -q -o /tmp/awscliv2.zip -d /tmp/aws-cli \
-	&& bash /tmp/aws-cli/aws/install \
-	&& rm -rf /tmp/awscliv2.zip /tmp/aws-cli
+snap install aws-cli --classic
+
+## instance identity for self-tagging the "knfsd-file-cache:status" tag
+REGION="$(cloud-init query region)"
+INSTANCE_ID="$(cloud-init query instance_id)"
+
+## update_status() sets the tag:"knfsd-file-cache:status" on this instance.
+## @param (str) $1 status value (e.g. "ready", "error: ...")
+update_status() {
+	aws ec2 create-tags \
+		--region "${REGION}" \
+		--resources "${INSTANCE_ID}" \
+		--tags "Key=knfsd-file-cache:status,Value=$1" 2> /dev/null || true
+}
+
+## On any unexpected exit before completion, record an error status so
+## "remote.sh" fails fast instead of waiting for the full timeout.
+startup_complete=no
+on_exit() {
+	local rc=$?
+	if [[ $startup_complete != "yes" && $rc -ne 0 ]]; then
+		update_status "error: setup-remote-vm failed (exit ${rc})"
+	fi
+}
+trap on_exit EXIT
+
+update_status "installing"
 
 ## build version args
 # https://github.com/bats-core/bats-core/releases
-KNFSD_BATS_CORE_VERSION=1.13.0
+KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.50
+KNFSD_BOTO3_VERSION=1.43.70
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.8
+KNFSD_CHECKOV_VERSION=3.3.10
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-KNFSD_EDITORCONFIG_VERSION=3.8.0
+KNFSD_EDITORCONFIG_VERSION=3.11.1
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.12.2
 # https://go.dev/dl/
@@ -150,15 +165,13 @@ KNFSD_GOSEC_VERSION=2.28.0
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=2.3.0
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.15.4
+KNFSD_PACKER_VERSION=1.16.0
 # https://github.com/pre-commit/pre-commit/releases
-KNFSD_PRECOMMIT_VERSION=4.6.0
-# https://pypi.org/project/psycopg/
-KNFSD_PSYCOPG_VERSION=3.3.4
+KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
-KNFSD_PYLINT_VERSION=4.0.6
+KNFSD_PYLINT_VERSION=4.0.7
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.170.0
+KNFSD_SEMGREP_VERSION=1.172.0
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
@@ -170,11 +183,11 @@ KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.72.0
+KNFSD_TRIVY_VERSION=0.73.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.11.29
+KNFSD_UV_VERSION=0.12.3
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -281,8 +294,7 @@ uv tool install -q "tzupdate==${KNFSD_TZUPDATE_VERSION}" \
 uv pip install -q --python ~/.venv/bin/python \
 	"boto3==${KNFSD_BOTO3_VERSION}" \
 	"mypy==${KNFSD_MYPY_VERSION}" \
-	"pylint==${KNFSD_PYLINT_VERSION}" \
-	"psycopg==${KNFSD_PSYCOPG_VERSION}"
+	"pylint==${KNFSD_PYLINT_VERSION}"
 
 ## create empty ~/.aws directory
 mkdir -p ~/.aws
@@ -300,3 +312,7 @@ chown ${USERNAME}:${USERNAME} /var/run/docker.sock
 
 ## change ownership of everything in /home/${USERNAME}
 chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+
+## advertise readiness to "remote.sh"
+startup_complete=yes
+update_status "ready"

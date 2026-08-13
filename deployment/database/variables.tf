@@ -6,67 +6,22 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.1"
+  default     = "1.1.0-beta.2"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.1\"."
-  }
-}
-
-variable "SUBNET" {
-  description = "(Required) The subnet ID to use for deployment of the Amazon RDS DB instance. Example: \"subnet-038e337f0ff4cd53f\". No default."
-  type        = string
-  nullable    = false
-
-  validation {
-    condition     = can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", var.SUBNET))
-    error_message = "SUBNET must be a valid AWS subnet ID format. Example: \"subnet-038e337f0ff4cd53f\"."
-  }
-}
-
-variable "VPC_CIDR" {
-  description = "(Optional) List of CIDR blocks to allow in security group rules. If empty, the primary VPC CIDR block is used. For secondary VPC CIDRs or cross-VPC access, you must explicitly provide the full list. Default: []."
-  type        = list(string)
-  nullable    = false
-  default     = []
-}
-
-variable "FSID_DB_SUBNET_GROUP_NAME" {
-  description = "(Optional) The name of the Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC. Default: \"null\"."
-  type        = string
-  nullable    = true
-  default     = null
-}
-
-variable "FSID_DB_SUBNET_IDS" {
-  description = "(Optional) List of 2+ subnet IDs in different availability zones used to automatically create an aws_db_subnet_group. Must include the subnet referenced by var.SUBNET. Mutually exclusive with FSID_DB_SUBNET_GROUP_NAME. Default: \"null\"."
-  type        = list(string)
-  nullable    = true
-  default     = null
-
-  validation {
-    condition = (
-      var.FSID_DB_SUBNET_IDS == null
-      ? true
-      : (
-        length(var.FSID_DB_SUBNET_IDS) >= 2 &&
-        length(var.FSID_DB_SUBNET_IDS) == length(distinct(var.FSID_DB_SUBNET_IDS)) &&
-        alltrue([for s in var.FSID_DB_SUBNET_IDS : can(regex("^subnet-[0-9a-f]{8}([0-9a-f]{9})?$", s))])
-      )
-    )
-    error_message = "FSID_DB_SUBNET_IDS must be a list of at least 2 unique, valid subnet IDs. Example: [\"subnet-038e337f0ff4cd53f\", \"subnet-0a1b2c3d4e5f67890\"]."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.2\"."
   }
 }
 
 variable "NAME_PREFIX" {
-  description = "(Optional) Prefix to use when generating a RDS DB instance name. The name will be suffixed with a hyphen and 8 random letters/digits. Default: \"knfsd-fsids\"."
+  description = "(Optional) Prefix to use when generating a random DynamoDB table name (used when \"NAME\" is left blank). The prefix will be suffixed with a hyphen and 8 random letters/digits. Default: \"knfsd-fsids\"."
   type        = string
   nullable    = false
   default     = "knfsd-fsids"
 }
 
 variable "NAME" {
-  description = "(Optional) The name of the RDS DB instance. If the name is left blank a random name will be generated based on \"NAME_PREFIX\". The name must be unique across all DB instances owned by your AWS account in the current AWS Region. Default: \"\"."
+  description = "(Optional) The base name of the DynamoDB table. The table will be named \"<NAME>-fsids\". If the name is left blank a random table name will be generated based on \"NAME_PREFIX\". The table name must be unique within your AWS account in the current AWS Region. Default: \"\"."
   type        = string
   default     = ""
 
@@ -78,49 +33,20 @@ variable "NAME" {
   }
 }
 
-variable "INSTANCE_CLASS" {
-  description = "(Optional) The EC2 instance type to use. Must be a supported RDS PostgreSQL instance class. Default: \"db.t4g.micro\"."
-  type        = string
-  nullable    = false
-  default     = "db.t4g.micro"
-
-  validation {
-    condition     = can(regex("^db\\.", var.INSTANCE_CLASS))
-    error_message = "INSTANCE_CLASS must start with \"db.\". For example: \"db.t4g.micro\"."
-  }
-}
-
 variable "DELETION_PROTECTION" {
-  description = "(Optional) Whether or not to allow Terraform to destroy the instance. Unless this field is set to false in Terraform state, a \"terraform destroy\" or \"terraform apply\" command that deletes the instance will fail. Default: \"true\"."
+  description = "(Optional) Whether or not to allow Terraform to destroy the DynamoDB table. Unless this field is set to false in Terraform state, a \"terraform destroy\" or \"terraform apply\" command that deletes the table will fail. Default: \"true\"."
   type        = bool
   nullable    = false
   default     = true
 }
 
-variable "ENABLE_PUBLIC_IP" {
-  description = "(Optional) Whether to deploy the database with a public IP address. When the DB instance is publicly accessible and you connect from outside of the DB instance's Virtual Private Cloud (VPC), its Domain Name System (DNS) endpoint resolves to the public IP address. When you connect from within the same VPC as the DB instance, the endpoint resolves to the private IP address. Access to the DB instance is ultimately controlled by the EC2 security group it uses. Public access isn't permitted if the security group assigned to the DB instance doesn't permit it. When the DB instance isn't publicly accessible, it is an internal DB instance with a DNS name that resolves to a private IP address. Default: \"false\"."
-  type        = bool
-  nullable    = false
-  default     = false
-}
-
-variable "MASTER_USERNAME" {
-  description = "(Optional) The master username for the database. Password is stored in AWS Secrets Manager. Default: \"postgres\"."
+variable "FSID_DATABASE_IAM_POLICY" {
+  description = "(Optional) ARN of a custom IAM policy granting DynamoDB item-level access to the FSID table. When set, the module still deploys the DynamoDB table but skips creating the \"aws_iam_policy\", using the provided policy ARN instead (required when the deploying role lacks iam:CreatePolicy). Default: \"\"."
   type        = string
   nullable    = false
-  default     = "postgres"
-}
-
-variable "ASSUME_ROLE_ARN" {
-  description = "(Optional) The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: \"arn:*:iam::123456789012:role/DeploymentRole\". Default: \"null\"."
-  type        = string
-  nullable    = true
-  default     = null
-
+  default     = ""
   validation {
-    condition = var.ASSUME_ROLE_ARN == null || (
-      var.ASSUME_ROLE_ARN != "" && can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.ASSUME_ROLE_ARN))
-    )
-    error_message = "When provided, ASSUME_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/DeploymentRole\"."
+    condition     = var.FSID_DATABASE_IAM_POLICY == "" || can(regex("^arn:aws[a-z-]*:iam::([0-9]{12}|aws):policy/.+$", var.FSID_DATABASE_IAM_POLICY))
+    error_message = "When provided, FSID_DATABASE_IAM_POLICY must be a valid IAM policy ARN."
   }
 }

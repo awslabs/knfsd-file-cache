@@ -1,4 +1,4 @@
-# gen-overrides
+# Generator for Metrics Agent Overrides
 
 Generate a list of overrides to enable/disable individual metrics.
 

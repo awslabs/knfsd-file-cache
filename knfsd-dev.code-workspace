@@ -46,7 +46,7 @@
     },
     "gopls": {
       "build.buildFlags": [
-        "-tags=test.sql"
+        "-tags=test.dynamodb"
       ]
     },
     "terminal.integrated.hideOnStartup": "always",

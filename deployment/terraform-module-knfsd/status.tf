@@ -12,8 +12,8 @@ resource "null_resource" "status_check" {
 
   # This provisioner will automatically assume the role specified in var.ASSUME_ROLE_ARN
   # if provided, otherwise it will use the existing AWS credentials from the environment.
-  # This is useful for CI/CD pipelines where you need to assume a specific role for
-  # AWS CLI commands while Terraform uses a different role via the AWS provider.
+  # This is useful where you need to assume a specific role for AWS CLI commands while
+  # Terraform uses a different role via the AWS provider.
   provisioner "local-exec" {
     when        = create
     working_dir = path.module

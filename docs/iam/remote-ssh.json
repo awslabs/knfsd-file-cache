@@ -1,0 +1,107 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "KnfsdRemoteSshEc2",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeImages",
+        "ec2:DescribeInstanceStatus",
+        "ec2:DescribeInstanceTypeOfferings",
+        "ec2:DescribeInstances",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeTags",
+        "ec2:DescribeVpcs",
+        "ec2:ModifyInstanceAttribute",
+        "ec2:RunInstances",
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:TerminateInstances"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdRemoteSshEc2Tags",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateTags",
+        "ec2:DeleteTags"
+      ],
+      "Resource": [
+        "arn:*:ec2:*:*:instance/*",
+        "arn:*:ec2:*:*:volume/*"
+      ]
+    },
+    {
+      "Sid": "KnfsdRemoteSshIamPassRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetInstanceProfile",
+        "iam:PassRole"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "KnfsdRemoteSshSsmPublicParameters",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:*:ssm:*::parameter/aws/service/canonical/*"
+    },
+    {
+      "Sid": "KnfsdRemoteSshSsmChannels",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeInstanceInformation",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KnfsdRemoteSshSsmStartSession",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:StartSession"
+      ],
+      "Resource": [
+        "arn:*:ec2:*:*:instance/*",
+        "arn:*:ssm:*:*:document/AWS-StartSSHSession"
+      ]
+    },
+    {
+      "Sid": "KnfsdRemoteSshSsmManageSession",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:ResumeSession",
+        "ssm:TerminateSession"
+      ],
+      "Resource": "arn:*:ssm:*:*:session/*"
+    },
+    {
+      "Sid": "KnfsdRemoteSshInstanceConnect",
+      "Effect": "Allow",
+      "Action": [
+        "ec2-instance-connect:OpenTunnel",
+        "ec2-instance-connect:SendSSHPublicKey"
+      ],
+      "Resource": [
+        "arn:*:ec2:*:*:instance-connect-endpoint/*",
+        "arn:*:ec2:*:*:instance/*"
+      ]
+    },
+    {
+      "Sid": "KnfsdRemoteSshInstanceConnectDescribe",
+      "Effect": "Allow",
+      "Action": "ec2:DescribeInstanceConnectEndpoints",
+      "Resource": "*"
+    }
+  ]
+}

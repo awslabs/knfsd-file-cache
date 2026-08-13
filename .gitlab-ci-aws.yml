@@ -4,10 +4,13 @@ include:
 
 # default settings for all jobs unless overridden
 default:
-  retry: # Automatically retry on any system blips
-    max: 1
+  retry:
+    max: 2
     when:
+      - api_failure
       - runner_system_failure
+      - scheduler_failure
+      - stuck_or_timeout_failure
   interruptible: false
   tags:
     - arch:amd64
@@ -23,6 +26,8 @@ stages:
   - test
   - build
   - security
+  - docs
+  - deploy
 
 variables:
   TERM: ansi
@@ -33,27 +38,29 @@ variables:
   CACHE_COMPRESSION_LEVEL: "fastest"
   KNFSD_ALPINE_VERSION: 3.24.1 # https://hub.docker.com/_/alpine/tags
   KNFSD_BLACK_VERSION: 26.5.1 # https://github.com/psf/black/releases
-  KNFSD_BOTO3_VERSION: 1.43.50 # https://github.com/boto/boto3/tags
-  KNFSD_CHECKOV_VERSION: 3.3.8 # https://hub.docker.com/r/bridgecrew/checkov/tags
+  KNFSD_BOTO3_VERSION: 1.43.70 # https://github.com/boto/boto3/tags
+  KNFSD_CHECKOV_VERSION: 3.3.10 # https://hub.docker.com/r/bridgecrew/checkov/tags
   KNFSD_CODESPELL_VERSION: 2.4.3 # https://github.com/codespell-project/codespell/releases
-  KNFSD_EDITORCONFIG_VERSION: 3.8.0 # https://github.com/editorconfig-checker/editorconfig-checker/releases
+  KNFSD_DYNAMODB_VERSION: 3.3.1 # https://gallery.ecr.aws/aws-dynamodb-local/aws-dynamodb-local
+  KNFSD_EDITORCONFIG_VERSION: 3.11.1 # https://github.com/editorconfig-checker/editorconfig-checker/releases
   KNFSD_GOLANGCI_LINT_VERSION: 2.12.2 # https://github.com/golangci/golangci-lint/releases
   KNFSD_GOLANG_VERSION: 1.26.5 # https://go.dev/dl/
   KNFSD_GOSEC_VERSION: 2.28.0 # https://github.com/securego/gosec/releases
   KNFSD_GOVULNCHECK_VERSION: 1.6.0 # https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
   KNFSD_KANIKO_VERSION: 1.24.0 # https://github.com/GoogleContainerTools/kaniko/releases
-  KNFSD_KICS_VERSION: 2.1.20 # https://github.com/Checkmarx/kics/releases
+  KNFSD_KICS_VERSION: 2.1.20 # https://hub.docker.com/r/checkmarx/kics/tags
+  KNFSD_MKDOCS_MATERIAL_VERSION: 9.7.7 # https://github.com/squidfunk/mkdocs-material/releases
+  KNFSD_MKDOCS_SAME_DIR_VERSION: 0.1.5 # https://github.com/oprypin/mkdocs-same-dir/tags
+  KNFSD_MKDOCS_VERSION: 1.6.1 # https://github.com/mkdocs/mkdocs/releases
   KNFSD_MYPY_VERSION: 2.3.0 # https://github.com/python/mypy/tags
-  KNFSD_PACKER_VERSION: 1.15.4 # https://github.com/hashicorp/packer/releases
-  KNFSD_POSTGRES_VERSION: 18.4-alpine3.23 # https://hub.docker.com/_/postgres
-  KNFSD_PSYCOPG_VERSION: 3.3.4 # https://pypi.org/project/psycopg/
-  KNFSD_PYLINT_VERSION: 4.0.6 # https://github.com/pylint-dev/pylint/tags
-  KNFSD_PYTHON_VERSION: 3.14.6 # https://hub.docker.com/_/python/tags
+  KNFSD_PACKER_VERSION: 1.16.0 # https://github.com/hashicorp/packer/releases
+  KNFSD_PYLINT_VERSION: 4.0.7 # https://github.com/pylint-dev/pylint/tags
+  KNFSD_PYTHON_VERSION: 3.14.7 # https://hub.docker.com/_/python/tags
   KNFSD_SHELLCHECK_VERSION: 0.11.0 # https://github.com/koalaman/shellcheck/releases
   KNFSD_SHFMT_VERSION: 3.13.1 # https://github.com/mvdan/sh/releases
   KNFSD_TERRAFORM_VERSION: 1.2.9 # https://github.com/hashicorp/terraform/releases
   KNFSD_TFLINT_VERSION: 0.64.0 # https://github.com/terraform-linters/tflint/releases
-  KNFSD_TRIVY_VERSION: 0.72.0 # https://github.com/aquasecurity/trivy/releases
+  KNFSD_TRIVY_VERSION: 0.73.0 # https://github.com/aquasecurity/trivy/releases
 
 .renovate-config: &renovate-config
   environment: renovate
@@ -336,6 +343,7 @@ tf-validate:
       - deployment/terraform-module-knfsd/.terraform.lock.hcl
       - deployment/terraform-module-knfsd/modules/dns_round_robin/.terraform.lock.hcl
       - deployment/terraform-module-knfsd/modules/loadbalancer/.terraform.lock.hcl
+      - examples/basic/.terraform.lock.hcl
       - examples/fsx-netapp/.terraform.lock.hcl
       - examples/fsx-zfs/.terraform.lock.hcl
       - examples/fsx-zfs-fanout-dns-rr/.terraform.lock.hcl
@@ -396,7 +404,7 @@ py-mypy: # python mypy type checker
     - mkdir -p ".mypy_cache"
     - apk update
     - apk --no-cache add util-linux
-    - pip3 install --break-system-packages mypy==${KNFSD_MYPY_VERSION} boto3==${KNFSD_BOTO3_VERSION} psycopg==${KNFSD_PSYCOPG_VERSION}
+    - pip3 install --break-system-packages mypy==${KNFSD_MYPY_VERSION} boto3==${KNFSD_BOTO3_VERSION}
     - mypy --version
   script:
     # Use `script` to emulate `tty` for colored output in GitLab CI
@@ -414,7 +422,7 @@ py-pylint: # python pylint linter
   before_script:
     - apk update
     - apk --no-cache add util-linux
-    - pip3 install --break-system-packages pylint==${KNFSD_PYLINT_VERSION} boto3==${KNFSD_BOTO3_VERSION} psycopg==${KNFSD_PSYCOPG_VERSION}
+    - pip3 install --break-system-packages pylint==${KNFSD_PYLINT_VERSION} boto3==${KNFSD_BOTO3_VERSION}
     - pylint --version
   script:
     # Use `script` to emulate `tty` for colored output in GitLab CI
@@ -448,9 +456,11 @@ bats-deploy-test:
   image:
     name: ${CI_REGISTRY_IMAGE}/bats-deploy:${CI_COMMIT_REF_SLUG}
     entrypoint: [""]
+  variables:
+    TERM: xterm
   script:
     - cd "${CI_PROJECT_DIR}/image/resources/startup/" || exit 1
-    - bats --formatter pretty --recursive ${1-tests}
+    - bats --formatter pretty --recursive tests
   allow_failure: false
   <<: *default-config
 
@@ -630,7 +640,7 @@ go-knfsd-fsidd 3/5: # https://go.dev/blog/vuln
     - go install golang.org/x/vuln/cmd/govulncheck@v${KNFSD_GOVULNCHECK_VERSION}
     - govulncheck -test -show verbose ./...
 
-go-knfsd-fsidd 4/5: # test,vet,race,cover,postgres_race
+go-knfsd-fsidd 4/5: # test,vet,race,cover,dynamodb_race
   extends: .go-config
   cache:
     - key: kf-mod-${CI_COMMIT_REF_SLUG}
@@ -641,19 +651,18 @@ go-knfsd-fsidd 4/5: # test,vet,race,cover,postgres_race
   image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
   needs: ["go-knfsd-fsidd 1/5"]
   variables:
-    POSTGRES_HOST: db-postgres
-    POSTGRES_PORT: 5432
-    POSTGRES_USER: fsidd
-    POSTGRES_PASSWORD: fsid-test
-    POSTGRES_DB: fsids
-    TEST_DATABASE_URL: "host=${POSTGRES_HOST} port=${POSTGRES_PORT} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} database=${POSTGRES_DB}"
+    AWS_ACCESS_KEY_ID: fsid
+    AWS_SECRET_ACCESS_KEY: fsid
+    AWS_REGION: us-east-1
+    TEST_DYNAMODB_ENDPOINT: "http://db-dynamodb:8000"
   services:
-    - name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/postgres:${KNFSD_POSTGRES_VERSION}
-      alias: db-postgres
+    - name: public.ecr.aws/aws-dynamodb-local/aws-dynamodb-local:${KNFSD_DYNAMODB_VERSION}
+      alias: db-dynamodb
+      command: ["-jar", "DynamoDBLocal.jar", "-inMemory", "-sharedDb", "-delayTransientStatuses"]
   script:
     - cd "${CI_PROJECT_DIR}/image/resources/knfsd-fsidd/" || exit 1
-    - go test -tags=test.sql -race -cover -vet=all -v ./... || exit 1
-    - go test -tags=test.sql -run TestAllocateFSID/Race -count=50 || exit 1
+    - go test -tags=test.dynamodb -race -cover -vet=all -v ./... || exit 1
+    - go test -tags=test.dynamodb -run TestAllocateFSID/Race -count=50 || exit 1
 
 go-knfsd-fsidd 5/5: # build
   extends: .go-config
@@ -998,4 +1007,29 @@ trivy:
   tags:
     - arch:amd64
     - size:2xlarge
+  <<: *default-config
+
+pages:
+  stage: docs
+  needs: []
+  image:
+    name: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:${KNFSD_PYTHON_VERSION}-alpine
+    entrypoint: [""]
+  variables:
+    MKDOCS_SITE_URL: ${CI_PAGES_URL}
+    MKDOCS_REPO_URL: ${CI_PROJECT_URL}
+    MKDOCS_REPO_NAME: ${CI_PROJECT_PATH}
+    NO_MKDOCS_2_WARNING: "true"
+    DISABLE_MKDOCS_2_WARNING: "true"
+  before_script:
+    - pip3 install --break-system-packages mkdocs==${KNFSD_MKDOCS_VERSION} mkdocs-material==${KNFSD_MKDOCS_MATERIAL_VERSION} mkdocs-same-dir==${KNFSD_MKDOCS_SAME_DIR_VERSION}
+    - mkdocs --version
+  script:
+    - mkdocs build --strict --site-dir site
+  pages:
+    publish: site
+  artifacts:
+    paths:
+      - site
+  allow_failure: false
   <<: *default-config

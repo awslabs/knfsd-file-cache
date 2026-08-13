@@ -4,7 +4,7 @@
 
 packer {
   # https://github.com/hashicorp/packer/releases
-  required_version = ">= 1.15.4"
+  required_version = ">= 1.16.0"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-beta.1"
+  version       = "1.1.0-beta.2"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -47,6 +47,9 @@ locals {
     "knfsd-proxy-${local.version}-arm64" :
     "${var.IMAGE_NAME}-arm64"
   )
+
+  # Whether Packer tunnels SSH over AWS SSM
+  use_ssm = var.SSH_INTERFACE == "session_manager"
 
   custom_pre_build_script = (
     var.CUSTOM_PRE_BUILD_SCRIPT != "" ?
@@ -127,18 +130,29 @@ source "amazon-ebs" "knfsd-amd64" {
   # 2. security_group_ids
   # 3. temporary_security_group_source_cidrs
   # 4. temporary_security_group_source_public_ip
+  #
+  # When "SSH_INTERFACE = "session_manager"", Packer still creates a temporary
+  # security group but never authorizes any ingress rule, as all SSH traffic is
+  # tunnelled over AWS SSM. Supply a security group only if your environment
+  # requires a specific egress policy.
 
   # Use existing, single security group ID (highest priority - default: "")
   security_group_id = var.SECURITY_GROUP_ID != "" ? var.SECURITY_GROUP_ID : null
 
   # Use existing security group IDs (second priority - default: [])
-  security_group_ids = length(var.SECURITY_GROUP_IDS) > 0 ? var.SECURITY_GROUP_IDS : null
+  security_group_ids = (
+    var.SECURITY_GROUP_ID == "" &&
+    length(var.SECURITY_GROUP_IDS) > 0
+  ) ? var.SECURITY_GROUP_IDS : null
 
   # Use custom CIDR blocks for temporary security group (third priority - default: [])
   temporary_security_group_source_cidrs = length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) > 0 ? var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS : null
 
   # Use public IP /32 for temporary security group (lowest priority - default: true)
+  # Skipped entirely for AWS SSM, which needs no ingress: Packer would otherwise
+  # call "https://checkip.amazonaws.com" and halt the build if unreachable.
   temporary_security_group_source_public_ip = (
+    !local.use_ssm &&
     var.SECURITY_GROUP_ID == "" &&
     length(var.SECURITY_GROUP_IDS) == 0 &&
     length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) == 0
@@ -211,6 +225,13 @@ source "amazon-ebs" "knfsd-amd64" {
   # Communicator
   communicator = "ssh"
   ssh_username = "ubuntu"
+
+  # Connection interface. Empty uses the Packer default (public IP address if
+  # available, otherwise the private IP address). "session_manager" tunnels SSH
+  # over AWS SSM and requires "IAM_INSTANCE_PROFILE" to be set.
+  ssh_interface = var.SSH_INTERFACE != "" ? var.SSH_INTERFACE : null
+
+  session_manager_port = var.SESSION_MANAGER_PORT != 0 ? var.SESSION_MANAGER_PORT : null
 }
 
 source "amazon-ebs" "knfsd-arm64" {
@@ -262,18 +283,29 @@ source "amazon-ebs" "knfsd-arm64" {
   # 2. security_group_ids
   # 3. temporary_security_group_source_cidrs
   # 4. temporary_security_group_source_public_ip
+  #
+  # When "SSH_INTERFACE = "session_manager"", Packer still creates a temporary
+  # security group but never authorizes any ingress rule, as all SSH traffic is
+  # tunnelled over AWS SSM. Supply a security group only if your environment
+  # requires a specific egress policy.
 
   # Use existing, single security group ID (highest priority - default: "")
   security_group_id = var.SECURITY_GROUP_ID != "" ? var.SECURITY_GROUP_ID : null
 
   # Use existing security group IDs (second priority - default: [])
-  security_group_ids = length(var.SECURITY_GROUP_IDS) > 0 ? var.SECURITY_GROUP_IDS : null
+  security_group_ids = (
+    var.SECURITY_GROUP_ID == "" &&
+    length(var.SECURITY_GROUP_IDS) > 0
+  ) ? var.SECURITY_GROUP_IDS : null
 
   # Use custom CIDR blocks for temporary security group (third priority - default: [])
   temporary_security_group_source_cidrs = length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) > 0 ? var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS : null
 
   # Use public IP /32 for temporary security group (lowest priority - default: true)
+  # Skipped entirely for AWS SSM, which needs no ingress: Packer would otherwise
+  # call "https://checkip.amazonaws.com" and halt the build if unreachable.
   temporary_security_group_source_public_ip = (
+    !local.use_ssm &&
     var.SECURITY_GROUP_ID == "" &&
     length(var.SECURITY_GROUP_IDS) == 0 &&
     length(var.TEMPORARY_SECURITY_GROUP_SOURCE_CIDRS) == 0
@@ -346,6 +378,13 @@ source "amazon-ebs" "knfsd-arm64" {
   # Communicator
   communicator = "ssh"
   ssh_username = "ubuntu"
+
+  # Connection interface. Empty uses the Packer default (public IP address if
+  # available, otherwise the private IP address). "session_manager" tunnels SSH
+  # over AWS SSM and requires "IAM_INSTANCE_PROFILE" to be set.
+  ssh_interface = var.SSH_INTERFACE != "" ? var.SSH_INTERFACE : null
+
+  session_manager_port = var.SESSION_MANAGER_PORT != 0 ? var.SESSION_MANAGER_PORT : null
 }
 
 build {
@@ -388,12 +427,16 @@ build {
     ]
     inline = [
       "chmod +x /mnt/build/scripts/*.sh",
-      "/mnt/build/scripts/10_build.sh 2>&1",
-      "reboot"
+      "/mnt/build/scripts/10_build.sh 2>&1"
     ]
+    timeout = "1h"
+  }
+
+  provisioner "shell" {
+    execute_command   = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline            = ["reboot"]
     expect_disconnect = true
     pause_after       = "30s"
-    timeout           = "1h"
   }
 
   provisioner "shell" {
@@ -402,6 +445,7 @@ build {
       "mount -t tmpfs -o size=${local.build_fs_size}G tmpfs /mnt/build",
       "chown ubuntu:ubuntu /mnt/build"
     ]
+    start_retry_timeout = "10m"
   }
 
   provisioner "file" {
@@ -441,8 +485,7 @@ build {
       "umount /mnt/build",
       "rm -rf /mnt/build"
     ]
-    expect_disconnect = true
-    timeout           = "5m"
+    timeout = "5m"
   }
 
   error-cleanup-provisioner "shell-local" {

@@ -11,7 +11,13 @@ These test plans document empirical testing of the KNFSD proxy cluster behavior 
 
 ## Available Tests
 
-* [Directory Listing](directory-listing.md) - Difference in caching of directory listings between proxy and source
-* [Recovery: Source](recovery-source.md) - Client behavior when the source NFS server is unavailable
-* [Recovery: Proxy](recovery-proxy.md) - Client behavior when the proxy cluster is unavailable
-* [Recovery: Load Balancer](recovery-load-balancer.md) - Client behavior when the Network Load Balancer is unavailable
+<!-- grid-cards:start -->
+* [Directory Listing](directory-listing.md)<br> <!-- icon: material-folder-search-outline -->
+  Difference in caching of directory listings between proxy and source
+* [Recovery: Source](recovery-source.md)<br> <!-- icon: material-server-network-off -->
+  Client behavior when the source NFS server is unavailable
+* [Recovery: Proxy](recovery-proxy.md)<br> <!-- icon: material-cloud-off-outline -->
+  Client behavior when the proxy cluster is unavailable
+* [Recovery: Load Balancer](recovery-load-balancer.md)<br> <!-- icon: material-scale-balance -->
+  Client behavior when the Network Load Balancer is unavailable
+<!-- grid-cards:end -->

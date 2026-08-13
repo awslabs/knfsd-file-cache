@@ -3,7 +3,6 @@ misconfigurations:
   - id: DS-0002
     paths:
       - "image/resources/startup/tests/Dockerfile"
-      - "deployment/database/resources/Dockerfile"
   - id: DS-0010
     paths:
       - ".devcontainer/dev/Dockerfile"
@@ -14,9 +13,8 @@ misconfigurations:
       - ".devcontainer/prod/Dockerfile"
   - id: AWS-0017
     paths:
-      - "deployment/database/main.tf"
       - "deployment/terraform-module-knfsd/modules/dns_round_robin/lambda.tf"
-  - id: AWS-0078
+  - id: AWS-0025
     paths:
       - "deployment/database/main.tf"
   - id: AWS-0098
@@ -26,11 +24,9 @@ misconfigurations:
     paths:
       - "deployment/terraform-module-knfsd/vpc.tf"
       - "image/smoke-tests/terraform/network.tf"
-  - id: AWS-0177
-    paths:
-      - "deployment/database/main.tf"
   - id: AWS-0344
     paths:
+      - "examples/basic/main.tf"
       - "examples/fsx-netapp/main.tf"
       - "examples/fsx-zfs/main.tf"
       - "examples/fsx-zfs-fanout-dns-rr/main.tf"

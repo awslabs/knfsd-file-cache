@@ -254,7 +254,7 @@ You should see output similar to:
     Started knfsd-metrics-agent.service - Knfsd Metrics Agent.
     2025-06-04T20:52:40.888+0100    info    service@v0.140.0/service.go:199 Setting up own telemetry...     {"resource": {}}
     2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:244 Skipped telemetry setup.        {"resource": {}}
-    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-beta.1", "NumCPU": 8}
+    2025-06-04T20:52:40.906+0100    info    service@v0.140.0/service.go:266 Starting knfsd-metrics-agent... {"resource": {}, "Version": "1.1.0-beta.2", "NumCPU": 8}
     2025-06-04T20:52:40.906+0100    info    extensions/extensions.go:41     Starting extensions...  {"resource": {}}
     2025-06-04T20:52:40.950+0100    info    service@v0.140.0/service.go:289 Everything is ready. Begin running and processing data. {"resource": {}}
   ```

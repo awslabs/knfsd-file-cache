@@ -13,18 +13,20 @@ To use DNS round-robin the KNFSD proxy cluster must be configured with:
 
 ## Inputs
 
-* `SUBNET` - (Required) The single subnet ID to use for deployment of the KNFSD solution. Example: "subnet-038e337f0ff4cd53f". No default.
-
-* `PROXY_BASENAME` - (Required) Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). No default.
-
-* `DNS_NAME` - (Optional) The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. Defaults to: `knfsd.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required]. Default: "".
+| Variable                   | Description                                                                                                                                                                                                      | Required | Default    |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------------|
+| `SUBNET`                   | The single subnet ID to use for deployment of the KNFSD solution. Example: "subnet-038e337f0ff4cd53f".                                                                                                           | True     | No default |
+| `PROXY_BASENAME`           | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). | True     | No default |
+| `DNS_NAME`                 | The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. Defaults to: `knfsd.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required].                                           | False    | `""`       |
+| `EXISTING_LAMBDA_ROLE_ARN` | ARN of a pre-existing IAM role to use for the static_ip Lambda function instead of creating one. When set, the module skips creating the Lambda IAM role and its policy.                                         | False    | `""`       |
 
 ## Outputs
 
-* `dns_name` - The DNS name that was created for the KNFSD proxy cluster.
+| Variable                     | Description                                                                |
+|------------------------------|----------------------------------------------------------------------------|
+| `dns_name`                   | The DNS name that was created for the KNFSD proxy cluster. \*              |
+| `lambda_static_ip_resources` | [*internal*] Resources for the Lambda `static_ip` function dependency. \** |
 
-    > NOTE: `dns_name` is useful if you're creating other resources in the same Terraform configuration that depend on the DNS entry to create a dependency between the DNS entry and the other resources.
+\* `dns_name` is useful if you're creating other resources in the same Terraform configuration that depend on the DNS entry to create a dependency between the DNS entry and the other resources.
 
-* `lambda_static_ip_resources` - [internal] Resources for the Lambda 'static_ip' function dependency.
-
-    > NOTE: The `lambda_static_ip_resources` output is used to ensure that the Lambda 'static_ip' function is destroyed after the ASG is deleted.
+\*\* `lambda_static_ip_resources` output is used to ensure that the Lambda `static_ip` function is destroyed after the ASG is deleted.

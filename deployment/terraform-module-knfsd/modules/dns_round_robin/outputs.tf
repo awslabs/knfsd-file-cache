@@ -14,9 +14,9 @@ output "lambda_static_ip_resources" {
   value = {
     lambda_function                   = aws_lambda_function.static_ip.arn
     lambda_log_group                  = aws_cloudwatch_log_group.lambda_static_ip.arn
-    lambda_iam_role                   = aws_iam_role.lambda_static_ip.arn
-    lambda_iam_policy                 = aws_iam_policy.lambda_static_ip.arn
-    lambda_iam_role_policy_attachment = aws_iam_role_policy_attachment.lambda_static_ip.id
+    lambda_iam_role                   = one(aws_iam_role.lambda_static_ip[*].arn)
+    lambda_iam_policy                 = one(aws_iam_policy.lambda_static_ip[*].arn)
+    lambda_iam_role_policy_attachment = one(aws_iam_role_policy_attachment.lambda_static_ip[*].id)
     cw_event_rule_launching           = aws_cloudwatch_event_rule.instance_launching.arn
     cw_event_rule_terminated          = aws_cloudwatch_event_rule.instance_terminated.arn
     cw_target_launching               = aws_cloudwatch_event_target.instance_launching_target.arn

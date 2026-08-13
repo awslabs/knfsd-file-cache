@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache/deployment/metrics?ref=v1.1.0-beta.1"
+  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.2"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -52,13 +52,13 @@ terraform apply
 
 ## Filtering
 
-The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `RDS DB Instance Identifier`, `Source NFS Filer`, and `Output NFS Filer` name pattern.
+The dashboard supports filtering by `Auto Scaling Group Name`, `Instance ID`, `DynamoDB Table Name`, `Source NFS Filer`, and `Output NFS Filer` name pattern.
 
 ### Filtering Strategy
 
 * **ASG_FILTER**: Auto Scaling Group Name
 * **INSTANCE_FILTER**: Instance-level granularity available in applicable CloudWatch widgets
-* **RDS_FILTER**: RDS DB Instance Identifier (if used)
+* **DB_FILTER**: DynamoDB Table Name of the FSID table (if used)
 * **SOURCE_FILTER**: Source NFS Filer
 * **OUTPUT_FILTER**: Output NFS Filer (if different from source)
 
@@ -272,42 +272,32 @@ See [Kernel NFS Server Statistics](https://www.kernel.org/doc/html/latest/filesy
 | `knfsd/fsid/request/count`      | Number of requests received by FSID daemon                                  | Sum     | Count        | 60s    |
 | `knfsd/fsid/request/duration`   | Total duration of requests including all retries                            | Average | Milliseconds | 60s    |
 | `knfsd/fsid/request/retries`    | Number of times each request was retried                                    | Sum     | Count        | 60s    |
-| `knfsd/fsid/sql/query/count`    | Number of SQL queries executed by FSID daemon                               | Sum     | Count        | 60s    |
-| `knfsd/fsid/sql/query/duration` | Duration of SQL queries executed by FSID daemon                             | Average | Milliseconds | 60s    |
+| `knfsd/fsid/db/query/count`     | Number of database queries executed by FSID daemon                          | Sum     | Count        | 60s    |
+| `knfsd/fsid/db/query/duration`  | Duration of database queries executed by FSID daemon                        | Average | Milliseconds | 60s    |
 
 ### AWS Service Metrics
 
 AWS-native service metrics from Amazon CloudWatch.
 
-| Metric Name                                                 | Description                                          | Stat    | Unit                   | Period |
-| ----------------------------------------------------------- | ---------------------------------------------------- | ------- | ---------------------- | ------ |
-| `AWS/EC2.CPUUtilization`                                    | EC2 instance CPU utilization                         | Average | Percent                | 60s    |
-| `AWS/EC2.NetworkIn`                                         | Network bytes received on all network interfaces     | Sum     | Bytes                  | 60s    |
-| `AWS/EC2.NetworkOut`                                        | Network bytes sent on all network interfaces         | Sum     | Bytes                  | 60s    |
-| `AWS/AutoScaling.GroupDesiredCapacity`                      | Desired capacity of Auto Scaling Group               | Average | Count                  | 60s    |
-| `AWS/AutoScaling.GroupInServiceInstances`                   | Number of instances in service in Auto Scaling Group | Maximum | Count                  | 60s    |
-| `AWS/RDS.DBLoad`                                            | Average number of active sessions                    | Average | Count                  | 60s    |
-| `AWS/RDS.DBLoadNonCPU`                                      | Number of active sessions not waiting on CPU         | Average | Count                  | 60s    |
-| `AWS/RDS.DBLoadCPU`                                         | Number of active sessions waiting on CPU             | Average | Count                  | 60s    |
-| `AWS/RDS.DatabaseConnections`                               | Number of database connections                       | Average | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionRequests`                       | IAM database authentication connection requests      | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionSuccess`                        | Successful IAM database authentications              | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionFailure`                        | Failed IAM database authentications                  | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionFailureThrottling`              | IAM auth failures due to throttling                  | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionFailureServerError`             | IAM auth failures due to server errors               | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionFailureInvalidToken`            | IAM auth failures due to invalid tokens              | Sum     | Count                  | 60s    |
-| `AWS/RDS.IamDbAuthConnectionFailureInsufficientPermissions` | IAM auth failures due to insufficient permissions    | Sum     | Count                  | 60s    |
-| `AWS/RDS.CPUUtilization`                                    | RDS instance CPU utilization                         | Average | Percent                | 60s    |
-| `AWS/RDS.CPUCreditBalance`                                  | Accrued CPU credits available for bursting           | Average | Credits (vCPU-minutes) | 300s   |
-| `AWS/RDS.CPUCreditUsage`                                    | CPU credits spent per measurement period             | Average | Credits (vCPU-minutes) | 300s   |
-| `AWS/RDS.CPUSurplusCreditBalance`                           | Surplus CPU credits spent (unlimited mode)           | Average | Credits (vCPU-minutes) | 300s   |
-| `AWS/RDS.CPUSurplusCreditsCharged`                          | Surplus CPU credits incurring charges                | Average | Credits (vCPU-minutes) | 300s   |
-| `AWS/RDS.WriteIOPS`                                         | Write IOPS                                           | Average | Count/Second           | 60s    |
-| `AWS/RDS.ReadIOPS`                                          | Read IOPS                                            | Average | Count/Second           | 60s    |
-| `AWS/RDS.NetworkTransmitThroughput`                         | Network bytes sent                                   | Average | Bytes/Second           | 60s    |
-| `AWS/RDS.NetworkReceiveThroughput`                          | Network bytes received                               | Average | Bytes/Second           | 60s    |
-| `AWS/RDS.FreeableMemory`                                    | Available RAM                                        | Average | Bytes                  | 60s    |
-| `AWS/RDS.SwapUsage`                                         | Swap space used                                      | Average | Bytes                  | 60s    |
+| Metric Name                                   | Description                                          | Stat    | Unit         | Period |
+| --------------------------------------------- | ---------------------------------------------------- | ------- | ------------ | ------ |
+| `AWS/EC2.CPUUtilization`                      | EC2 instance CPU utilization                         | Average | Percent      | 60s    |
+| `AWS/EC2.NetworkIn`                           | Network bytes received on all network interfaces     | Sum     | Bytes        | 60s    |
+| `AWS/EC2.NetworkOut`                          | Network bytes sent on all network interfaces         | Sum     | Bytes        | 60s    |
+| `AWS/AutoScaling.GroupDesiredCapacity`        | Desired capacity of Auto Scaling Group               | Average | Count        | 60s    |
+| `AWS/AutoScaling.GroupInServiceInstances`     | Number of instances in service in Auto Scaling Group | Maximum | Count        | 60s    |
+| `AWS/DynamoDB.SuccessfulRequestLatency`       | Latency of successful requests, per operation        | Average | Milliseconds | 60s    |
+| `AWS/DynamoDB.ThrottledRequests`              | Requests that exceeded throughput limits             | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.SystemErrors`                   | Requests that failed with an HTTP 500 (server error) | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.UserErrors`                     | Requests that failed with an HTTP 400 (client error) | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConditionalCheckFailedRequests` | Failed conditional writes (FSID allocation races)    | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.TransactionConflict`            | Rejected item-level requests due to transactions     | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ReadThrottleEvents`             | Read events that exceeded throughput limits          | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.WriteThrottleEvents`            | Write events that exceeded throughput limits         | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConsumedReadCapacityUnits`      | Read capacity units consumed                         | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConsumedWriteCapacityUnits`     | Write capacity units consumed                        | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ItemCount`                      | Number of items in the FSID table                    | Average | Count        | 60s    |
+| `AWS/DynamoDB.TableSizeBytes`                 | Size of the FSID table                               | Average | Bytes        | 60s    |
 
 ## Dashboard Layout
 
@@ -485,37 +475,31 @@ KNFSD FSID daemon performance metrics for filesystem ID management.
 | ------------------ | ------------------------------- | ----------------------------------------------- | ------- | ------ | ------- |
 | Operation Count    | `knfsd/fsid/operation/count`    | Number of FSID operations by command and result | Sum     | 60s    | Count   |
 | Operation Duration | `knfsd/fsid/operation/duration` | Duration of FSID operations                     | Average | 60s    | Time/ms |
-| SQL Query Count    | `knfsd/fsid/sql/query/count`    | Number of SQL queries executed                  | Sum     | 60s    | Count   |
-| SQL Query Duration | `knfsd/fsid/sql/query/duration` | Duration of SQL queries                         | Average | 60s    | Time/ms |
+| DB Query Count     | `knfsd/fsid/db/query/count`     | Number of database queries executed             | Sum     | 60s    | Count   |
+| DB Query Duration  | `knfsd/fsid/db/query/duration`  | Duration of database queries                    | Average | 60s    | Time/ms |
 | Request Count      | `knfsd/fsid/request/count`      | Number of requests received                     | Sum     | 60s    | Count   |
 | Request Duration   | `knfsd/fsid/request/duration`   | Total duration of requests including retries    | Average | 60s    | Time/ms |
 | Request Retries    | `knfsd/fsid/request/retries`    | Number of request retries                       | Sum     | 60s    | Count   |
 
-**Commands:** `get_fsidnum`, `get_or_create_fsidnum`, `get_path`
-**SQL Queries:** `get_fsid`, `allocate_fsid`, `get_path`
-**Results:** `ok`, `not_found`, `retry`
+**Commands:** `get_fsidnum`, `get_or_create_fsidnum`, `get_path`<br>
+**DB Queries:** `get_fsid`, `allocate_fsid`, `get_path`<br>
+**Results:** `ok`, `not_found`, `retry`<br>
 
-### RDS Database Performance
+### FSID DynamoDB Performance
 
-PostgreSQL RDS performance metrics for the FSID database.
+Amazon DynamoDB performance metrics for the FSID table.
 
-| Widget                               | Metrics                                                         | Description                                | Stat    | Period | Label                  |
-| ------------------------------------ | --------------------------------------------------------------- | ------------------------------------------ | ------- | ------ | ---------------------- |
-| DB Load                              | `AWS/RDS.DBLoad`, `DBLoadCPU`, `DBLoadNonCPU`                   | Database active sessions                   | Average | 60s    | Active Sessions        |
-| DB Connections                       | `AWS/RDS.DatabaseConnections`                                   | Number of database connections             | Average | 60s    | Count                  |
-| DB IAM Auth                          | `AWS/RDS.IamDbAuth*`                                            | IAM authentication requests and results    | Sum     | 60s    | Count                  |
-| DB CPU Utilization                   | `AWS/RDS.CPUUtilization`                                        | RDS instance CPU utilization               | Average | 60s    | Percent %              |
-| DB EC2 CPU Credits (Credit Balance)  | `AWS/RDS.CPUCreditBalance`                                      | Accrued CPU credits available for bursting | Average | 300s   | Credits (vCPU-minutes) |
-| DB EC2 CPU Credit Usage (Spend Rate) | `AWS/RDS.CPUCreditUsage`                                        | CPU credits spent per measurement period   | Average | 300s   | Credits (vCPU-minutes) |
-| DB EC2 CPU Unlimited Credits         | `AWS/RDS.CPUSurplusCreditBalance`, `CPUSurplusCreditsCharged`   | Surplus CPU credits for unlimited mode     | Average | 300s   | Credits (vCPU-minutes) |
-| DB IOPS                              | `AWS/RDS.ReadIOPS`, `WriteIOPS`                                 | Read and write IOPS                        | Average | 60s    | Count/Second           |
-| DB Network Throughput                | `AWS/RDS.NetworkTransmitThroughput`, `NetworkReceiveThroughput` | Network throughput                         | Average | 60s    | Bytes/Second           |
-| DB Memory                            | `AWS/RDS.FreeableMemory`, `SwapUsage`                           | Available memory and swap usage            | Average | 60s    | Bytes                  |
+| Widget                      | Metrics                                       | Description                                               | Stat    | Period | Label   |
+| --------------------------- | --------------------------------------------- | --------------------------------------------------------- | ------- | ------ | ------- |
+| DB Request Latency          | `AWS/DynamoDB.SuccessfulRequestLatency`       | Latency of successful requests, per operation             | Average | 60s    | Time/ms |
+| DB Throttled Requests       | `AWS/DynamoDB.ThrottledRequests`              | Requests that exceeded throughput limits, per operation   | Sum     | 60s    | Count   |
+| DB System & User Errors     | `AWS/DynamoDB.SystemErrors`, `UserErrors`     | Server (HTTP 500) and client (HTTP 400) request failures  | Sum     | 60s    | Count   |
+| DB Conditional Check Failed | `AWS/DynamoDB.ConditionalCheckFailedRequests` | Failed conditional writes (FSID allocation races)         | Sum     | 60s    | Count   |
+| DB Transaction Conflicts    | `AWS/DynamoDB.TransactionConflict`            | Rejected item-level requests due to transaction conflicts | Sum     | 60s    | Count   |
+| DB Read Throttle Events     | `AWS/DynamoDB.ReadThrottleEvents`             | Read events that exceeded throughput limits               | Sum     | 60s    | Count   |
+| DB Write Throttle Events    | `AWS/DynamoDB.WriteThrottleEvents`            | Write events that exceeded throughput limits              | Sum     | 60s    | Count   |
+| DB Consumed Read Capacity   | `AWS/DynamoDB.ConsumedReadCapacityUnits`      | Read capacity units consumed                              | Sum     | 60s    | Count   |
+| DB Consumed Write Capacity  | `AWS/DynamoDB.ConsumedWriteCapacityUnits`     | Write capacity units consumed                             | Sum     | 60s    | Count   |
+| DB Item Count & Table Size  | `AWS/DynamoDB.ItemCount`, `TableSizeBytes`    | Number of items and size of the FSID table                | Average | 60s    | Count   |
 
-**Thresholds (`db.t4g.micro`):**
-
-* CPU Credit Balance: 288 (max), 58 (20% warning), 29 (10% critical - fill below)
-* CPU Credit Usage: 1.0/5min (baseline earn rate), 5.0 (5x baseline burst warning - fill above)
-* Surplus Credits: 72 (25% warning), 288 (charge threshold - fill above)
-
-> **Note:** Thresholds are configured for `db.t4g.micro` instance type which earns 12 credits/hour (1.0 per 5-minute period) with a maximum accrual of 288 credits (24-hour earn limit). CPU credit metrics are only available at 5-minute frequency. In unlimited mode, surplus credits exceeding 288 will incur additional charges. See [AWS T4g Instance Types](https://aws.amazon.com/ec2/instance-types/t4/) and [Burstable Performance Instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) for details.
+> **Note:** The FSID table uses on-demand capacity (`PAY_PER_REQUEST`), so there is no provisioned throughput to size. Throttle and capacity metrics are included to spot unexpected hot-partition or burst behaviour; for the FSID workload consumed capacity is normally near zero. Operation-level dimensions cover `GetItem`, `PutItem`, `UpdateItem`, and `TransactWriteItems` (the operations used by the `knfsd-fsidd` daemon).

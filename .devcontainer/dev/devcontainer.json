@@ -21,6 +21,7 @@
     "KNFSD_REMOTE_SSH_KEYPAIR": "${localEnv:KNFSD_REMOTE_SSH_KEYPAIR}",
     "KNFSD_REMOTE_SSH_SUBNET": "${localEnv:KNFSD_REMOTE_SSH_SUBNET}",
     "KNFSD_REMOTE_SSH_SG_ID": "${localEnv:KNFSD_REMOTE_SSH_SG_ID}",
+    "KNFSD_REMOTE_SSH_TUNNEL": "${localEnv:KNFSD_REMOTE_SSH_TUNNEL}",
     "KNFSD_REMOTE_SSH_EICE_ID": "${localEnv:KNFSD_REMOTE_SSH_EICE_ID}"
   },
   "customizations": {
@@ -62,7 +63,8 @@
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.cursor,target=/home/ubuntu/.cursor,type=bind"
   ],
   "postCreateCommand": {
     "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",

@@ -3,6 +3,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+set -eo pipefail
+
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
 
@@ -19,6 +21,35 @@ snap stop amazon-ssm-agent
 snap switch --channel=candidate amazon-ssm-agent
 snap refresh amazon-ssm-agent
 snap start amazon-ssm-agent
+
+## install aws-cli
+snap install aws-cli --classic
+
+## instance identity for self-tagging the "knfsd-file-cache:status" tag
+REGION="$(cloud-init query region)"
+INSTANCE_ID="$(cloud-init query instance_id)"
+
+## update_status() sets the tag:"knfsd-file-cache:status" on this instance.
+## @param (str) $1 status value (e.g. "ready", "error: ...")
+update_status() {
+	aws ec2 create-tags \
+		--region "${REGION}" \
+		--resources "${INSTANCE_ID}" \
+		--tags "Key=knfsd-file-cache:status,Value=$1" 2> /dev/null || true
+}
+
+## On any unexpected exit before completion, record an error status so
+## "remote.sh" fails fast instead of waiting for the full timeout.
+startup_complete=no
+on_exit() {
+	local rc=$?
+	if [[ $startup_complete != "yes" && $rc -ne 0 ]]; then
+		update_status "error: setup-remote-docker failed (exit ${rc})"
+	fi
+}
+trap on_exit EXIT
+
+update_status "installing"
 
 ## setup docker apt repo
 install -m 0755 -d /etc/apt/keyrings \
@@ -74,3 +105,7 @@ mkdir -p /knfsd-file-cache && chown ${USERNAME}:${USERNAME} /knfsd-file-cache
 
 ## create empty ~/.aws directory
 mkdir -p /home/${USERNAME}/.aws && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.aws
+
+## advertise readiness to "remote.sh"
+startup_complete=yes
+update_status "ready"

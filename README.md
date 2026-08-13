@@ -1,5 +1,24 @@
 # KNFSD File Cache
 
+<div align="center">
+  <a href="./LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/awslabs/knfsd-file-cache?style=for-the-badge">
+  </a>
+  <a href="https://github.com/awslabs/knfsd-file-cache/releases">
+    <img alt="Latest Release" src="https://img.shields.io/github/v/release/awslabs/knfsd-file-cache?include_prereleases&sort=semver&style=for-the-badge">
+  </a>
+  <a href="https://github.com/awslabs/knfsd-file-cache/actions/workflows/codeql.yml">
+    <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/awslabs/knfsd-file-cache/codeql.yml?branch=main&label=codeql&style=for-the-badge">
+  </a>
+</div>
+
+<div align="center">
+  <img alt="Packer" src="https://img.shields.io/badge/Packer-1.16-02A8EF?style=for-the-badge&logo=packer&logoColor=white">
+  <img alt="Terraform" src="https://img.shields.io/badge/Terraform-1.2-7B42BC?style=for-the-badge&logo=terraform&logoColor=white">
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.26-00ADD8?style=for-the-badge&logo=go&logoColor=white">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white">
+</div>
+
 https://github.com/user-attachments/assets/d54a5992-bd9a-4ded-be06-3d10111a57c1
 
 Please log issues/feature requests in [GitHub](https://github.com/awslabs/knfsd-file-cache/issues). Contact: [knfsd-file-cache@amazon.com](mailto:knfsd-file-cache@amazon.com)
@@ -27,14 +46,38 @@ The NFS caching solution is collectively referred to as `KNFSD` in this reposito
 
 The [docs](./docs/index.md) directory provides comprehensive documentation for the solution.
 
-## Building and Deploying
-
-This repository is broken down into two key sections:
-
-1. [Build KNFSD](image/)
-2. [Deploy KNFSD](deployment/)
-
-You should start with the [Packer build](image/). Once built, you can use this Amazon Machine Image (AMI) and the [Terraform module](deployment/) to deploy and operate a KNFSD cluster on AWS.
+<!-- grid-cards:start -->
+* **Build &amp; Deploy**<br> <!-- icon: material-rocket-launch-outline -->
+  Build the proxy AMI with Packer and deploy the caching cluster to AWS using Terraform modules. Covers VPC endpoints, load balancers, database, DNS round-robin, and metrics dashboards.
+  * [Build (Packer)](image/README.md)
+  * [VPC Endpoints](deployment/docs/vpc-endpoints.md)
+  * [Deploy (Terraform)](deployment/README.md)
+  * [Metrics Dashboard](deployment/metrics/README.md)
+* **Reference**<br> <!-- icon: material-code-braces -->
+  Detailed technical reference for all components: NFS auto re-export, autoscaling, fanout topologies, filter patterns, security groups, FSIDs, metrics, ports, traffic distribution, and VPC endpoints.
+  * [Traffic Distribution](deployment/docs/traffic-distribution.md)
+  * [Filesystem IDs](deployment/docs/fsids.md)
+  * [Autoscaling](deployment/docs/autoscaling.md)
+  * [Metrics Agent (OpenTelemetry)](image/resources/knfsd-metrics-agent/README.md)
+* **User Guide**<br> <!-- icon: material-account-outline -->
+  Day-to-day operational guidance: verify proxy startup, configure NFS clients, collect client metrics, troubleshoot known issues, and stay current with the changelog and FAQ.
+  * [NFS Client Setup](docs/nfs-client-setup.md)
+  * [FAQ](docs/faq.md)
+  * [Known Issues](docs/known-issues.md)
+* **Tutorial**<br> <!-- icon: material-book-open-variant-outline -->
+  End-to-end walkthrough for deploying a kernel-space NFS caching proxy in AWS from scratch, including all required infrastructure, IAM permissions, and validation steps.
+  * [Deploy a Kernel-space NFS Caching Proxy in AWS](tutorial/README.md)
+* **Examples**<br> <!-- icon: material-folder-multiple-outline -->
+  Ready-to-use Terraform configurations for common AWS managed file systems and deployment topologies, including fanout with DNS round-robin and network load balancer.
+  * [FSx for NetApp ONTAP](examples/fsx-netapp/README.md)
+  * [FSx for OpenZFS](examples/fsx-zfs/README.md)
+  * [Weka NFS Gateway](examples/weka/README.md)
+* **Developer**<br> <!-- icon: material-tools -->
+  Advanced documentation for contributors and developers: local development setup, pre-commit hooks, GitLab CI pipelines, contributing guidelines, and code of conduct.
+  * [Advanced / Developer Guide](docs/developer.md)
+  * [Pre-Commit](docs/pre-commit.md)
+  * [GitLab CI](docs/gitlab-ci.md)
+<!-- grid-cards:end -->
 
 ## Metrics
 

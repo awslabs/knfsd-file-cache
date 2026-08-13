@@ -10,7 +10,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +31,7 @@ func (s *FakeSource) GetFSID(ctx context.Context, path string) (int32, error) {
 	case "/bar":
 		return 2, nil
 	default:
-		return 0, pgx.ErrNoRows
+		return 0, ErrNotFound
 	}
 }
 
@@ -44,7 +43,7 @@ func (s *FakeSource) AllocateFSID(ctx context.Context, path string) (int32, erro
 	case "/bar":
 		return 2, nil
 	default:
-		return 0, pgx.ErrNoRows
+		return 0, ErrNotFound
 	}
 }
 
@@ -56,7 +55,7 @@ func (s *FakeSource) GetPath(ctx context.Context, fsid int32) (string, error) {
 	case 2:
 		return "/bar", nil
 	default:
-		return "", pgx.ErrNoRows
+		return "", ErrNotFound
 	}
 }
 

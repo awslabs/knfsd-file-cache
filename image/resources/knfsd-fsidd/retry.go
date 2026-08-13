@@ -11,14 +11,24 @@ import (
 	"errors"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	sdkretry "github.com/aws/aws-sdk-go-v2/aws/retry"
+	"github.com/aws/smithy-go"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-fsidd/log"
 	"github.com/googleapis/gax-go/v2"
-	"github.com/jackc/pgx/v5/pgconn"
 )
+
+// Retry layering: the AWS SDK's standard retryer already performs
+// per-request exponential backoff with jitter for transient faults
+// (throttling, HTTP 5xx, connection errors). The withRetry/withRetryDeadline
+// loop below sits above the SDK and provides a wall-clock budget across
+// whole operations, covering longer infrastructure blips than the SDK's
+// per-request attempt limit, plus the application-level conflict-reread
+// convergence used by get_or_create_fsidnum.
 
 // defaultRetryDeadline bounds the per-call retry window for steady-state
 // callers (socket handlers). Long enough to ride out short infrastructure
-// blips (STS throttling, RDS minor-version bounces, brief network partitions)
+// blips (STS throttling, DynamoDB internal errors, brief network partitions)
 // without returning errors to the kernel NFS client, but short enough that a
 // genuine outage eventually surfaces.
 const defaultRetryDeadline = 5 * time.Minute
@@ -31,7 +41,7 @@ func withRetry(ctx context.Context, fn func() error) error {
 }
 
 // withRetryDeadline retries fn until it succeeds or the given wall-clock
-// budget is exhausted. Use this for boot-time paths (e.g. CreateTable) where
+// budget is exhausted. Use this for boot-time paths (e.g. CheckTable) where
 // a tight budget is preferred so that the process exits promptly on repeated
 // failure and systemd's Restart= loop takes over; this gives the AWS control
 // plane (IAM / STS) additional wall-clock time to re-propagate credentials
@@ -94,51 +104,64 @@ func sleep(ctx context.Context, d time.Duration) error {
 	}
 }
 
+// retryableErrorCodes lists DynamoDB API error codes that are worth retrying
+// at the application level, in addition to the AWS SDK's own retryable
+// classification (which already covers throttling, HTTP 5xx and transport
+// errors). The SDK retries these per-request; classifying them here lets the
+// wall-clock budget keep trying beyond the SDK's per-request attempt limit.
 var retryableErrorCodes = map[string]struct{}{
-	"08006": {}, // connection_failure
-	"08001": {}, // sqlclient_unable_to_establish_sqlconnection
-	"08004": {}, // sqlserver_rejected_establishment_of_sqlconnection
-	"08P01": {}, // protocol_violation
+	// throttling / capacity
+	"ThrottlingException":                    {},
+	"ProvisionedThroughputExceededException": {},
+	"RequestLimitExceeded":                   {},
+	"LimitExceededException":                 {},
 
-	// auth errors, often transient on fresh deployments due to IAM eventual
-	// consistency: the rds-db:connect policy attached to the EC2 instance
-	// role can take up to ~60 s to propagate. The pgxpool BeforeConnect hook
-	// regenerates a fresh IAM token on each retry attempt. Bounded retry
-	// budgets (withRetryDeadline + systemd StartLimitBurst) prevent a
-	// permanent misconfig from flapping the service indefinitely.
-	"28000": {}, // invalid_authorization_specification (RDS "PAM authentication failed")
+	// transient service faults
+	"InternalServerError": {},
+	"ServiceUnavailable":  {},
 
-	// constraint errors
-	"23505": {}, // unique_violation
+	// transactional conflicts, the transaction was cancelled so try again
+	"TransactionConflictException":   {},
+	"TransactionInProgressException": {},
 
-	// transaction errors, transaction will be rolled back so try again
-	"40000": {}, // transaction_rollback
-	"40002": {}, // transaction_integrity_constraint_violation
-	"40001": {}, // serialization_failure
-	"40003": {}, // statement_completion_unknown
-	"40P01": {}, // deadlock_detected
-
-	// consider a longer delay for these errors
-	// the server might recover itself as other clients disconnect, or if the
-	// database auto-grows.
-	"53000": {}, // insufficient_resources
-	"53100": {}, // disk_full
-	"53200": {}, // out_of_memory
-	"53300": {}, // too_many_connections
+	// auth errors
+	"AccessDeniedException":       {},
+	"ExpiredTokenException":       {},
+	"UnrecognizedClientException": {},
 }
 
 func ShouldRetry(err error) bool {
-	if pgconn.SafeToRetry(err) {
+	if err == nil {
+		return false
+	}
+	// ErrNotFound is not retried, it is used by get_fsid and get_path to
+	// signal that there is no record to return.
+	if IsNotFound(err) {
+		return false
+	}
+	// Conflicts are retryable: get_or_create_fsidnum re-reads the mapping
+	// allocated by the winning process and converges.
+	if IsConflict(err) {
 		return true
 	}
-	if pgconn.Timeout(err) {
+	// Defer to the AWS SDK's standard retryable classification for
+	// connection errors, HTTP 5xx responses and throttling codes.
+	if sdkRetryable(err) {
 		return true
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		_, retry := retryableErrorCodes[pgErr.Code]
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		_, retry := retryableErrorCodes[apiErr.ErrorCode()]
 		return retry
 	}
 	return false
+}
+
+// sdkRetryable reports whether the AWS SDK's default retryable checks
+// (connection errors, retryable HTTP status codes, throttling error codes)
+// classify err as retryable.
+func sdkRetryable(err error) bool {
+	retryables := sdkretry.IsErrorRetryables(sdkretry.DefaultRetryables)
+	return retryables.IsErrorRetryable(err) == aws.TrueTernary
 }

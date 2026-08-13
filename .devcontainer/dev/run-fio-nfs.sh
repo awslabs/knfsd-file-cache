@@ -15,7 +15,7 @@
 ## ./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/create-files.fio> [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <fio/nfs-fscache-deadlock/run-test.fio> [OPTIONS]
-## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID>] [OPTIONS]
+## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--tunnel <eice|ssm>] [OPTIONS]
 ## ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> [--instance-connect-endpoint-id <EICE_ID> --key-name <KEYPAIR_NAME>] [OPTIONS]
 ## ./run-fio-nfs.sh destroy
 
@@ -34,11 +34,22 @@
 ## The keypair must match the private key identified by shell variable: IDENTITY_FILE=<path> [default: ~/.ssh/id_rsa]
 
 ## PRIVATE SUBNET:
-## If FIO captain is in a private subnet (no public IP assigned), you will need to manually create an EC2 Instance Connect Endpoint (EICE) in your VPC
+## If FIO captain is in a private subnet (no public IP assigned), the SSH connection must be tunnelled.
+## Select the tunnel type with --tunnel on the "run" command only (default: eice):
+##
+## eice: manually create an EC2 Instance Connect Endpoint (EICE) in your VPC
 ##   aws ec2 create-instance-connect-endpoint --subnet-id <subnet-id>
 ## then pass the EICE ID to the "run" command only:
 ##   ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> --instance-connect-endpoint-id <EICE_ID> [--key-name <KEYPAIR_NAME>] [OPTIONS]
 ## AWS docs: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html
+##
+## ssm: no endpoint to create, requires the "session-manager-plugin" installed locally:
+##   ./run-fio-nfs.sh run --fio-job <FIO_JOB_FILE> --tunnel ssm [--key-name <KEYPAIR_NAME>] [OPTIONS]
+## The captain's IAM instance profile (IAM_PROFILE_NAME, default "knfsd-instance-role") must allow the
+## AWS SSM agent actions; the KNFSD instance role already attaches "AmazonSSMManagedInstanceCore".
+## AWS SSM reachability is also required (NAT or the ssm, ssmmessages and ec2messages VPC endpoints).
+## AWS docs: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+
 ## More info: https://github.com/awslabs/knfsd-file-cache/blob/main/docs/developer.md#remote-ssh-considerations
 
 ## fscache deadlock notes:
@@ -63,7 +74,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-beta.1"
+VERSION="1.1.0-beta.2"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -75,12 +86,10 @@ SHELL_DEFAULT='\033[0m'
 PRODUCT="server"
 RELEASE="26.04"
 ARCH="amd64"
-ARCH_ALT="x86_64"
 VOL_TYPE="ebs-gp3"
 
 # FIO captain always uses arm64
 CAPTAIN_ARCH="arm64"
-CAPTAIN_ARCH_ALT="aarch64"
 CAPTAIN_INSTANCE_TYPE="t4g.large"
 
 # FIO version (built from source)
@@ -99,6 +108,10 @@ FIO_JOB=""
 KNFSD_IP=""
 EICE_ID=""
 KEY_NAME=""
+# tunnel type used to reach the captain: eice (default) or ssm
+TUNNEL="eice"
+# max seconds to wait for the captain's AWS SSM agent to register
+SSM_WAIT_TIMEOUT=300
 
 # AWS "name" tag for all instances (captain + clients)
 FIO_TAG_PREFIX="knfsd-fio"
@@ -125,13 +138,15 @@ Commands:
 	./run-fio-nfs.sh scale --num-clients <N> --knfsd-ip <IP> --subnet <ID> --security-group-id <ID> [OPTIONS]
 		Add N additional FIO client instances to an existing fleet.
 		Requires an existing captain (run apply first).
-	./run-fio-nfs.sh run [OPTIONS] [--instance-connect-endpoint-id <EICE_ID>] [--key-name <KEYPAIR_NAME>]
+	./run-fio-nfs.sh run [OPTIONS] [--tunnel <eice|ssm>] [--instance-connect-endpoint-id <EICE_ID>] [--key-name <KEYPAIR_NAME>]
 		Copy job file to captain, run FIO client/server test,
 		and download results. Use --fio-job to select the job file.
 		Default: fio/nfs-fscache-deadlock/run-test.fio (deadlock test).
 		Optional: --key-name <KEYPAIR_NAME> uses keypair auth (skips send-ssh-public-key); must match private key identified by: IDENTITY_FILE=<path>
-		For captain in a private subnet (no public IP), pass
-		--instance-connect-endpoint-id <EICE_ID> to run only (not apply/scale/status/destroy).
+		For captain in a private subnet (no public IP), the SSH connection is tunnelled.
+		Optional: --tunnel <eice|ssm> selects the tunnel type [default: eice].
+		For the eice tunnel, pass --instance-connect-endpoint-id <EICE_ID> to run only (not apply/scale/status/destroy).
+		The ssm tunnel needs no endpoint, but requires the "session-manager-plugin" installed locally.
 		Example: create source files first:
 			./run-fio-nfs.sh run --fio-job fio/nfs-fscache-deadlock/create-files.fio
 		then run deadlock test (default job):
@@ -219,6 +234,15 @@ function parse_args() {
 				EICE_ID="$2"
 				shift 2
 				;;
+			--tunnel)
+				require_option_value "$1" "${2:-}"
+				TUNNEL="$2"
+				if [[ "${TUNNEL}" != "eice" && "${TUNNEL}" != "ssm" ]]; then
+					echo -e "${SHELL_RED}ERROR: --tunnel must be 'eice' or 'ssm' (got: ${TUNNEL})${SHELL_DEFAULT}" >&2
+					exit 1
+				fi
+				shift 2
+				;;
 			--key-name)
 				require_option_value "$1" "${2:-}"
 				KEY_NAME="$2"
@@ -244,7 +268,7 @@ function create_user_data_client() {
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y -q update
-apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev nfs-common jq unzip
+apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev nfs-common
 cd /tmp
 curl -fsSL "https://github.com/axboe/fio/archive/refs/tags/fio-${FIO_VERSION}.tar.gz" -o fio.tar.gz
 tar xzf fio.tar.gz
@@ -253,9 +277,10 @@ cd fio-fio-${FIO_VERSION}
 make -j\$(nproc)
 make install
 cd /tmp
-curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH_ALT}.zip" -o "awscliv2.zip"
-unzip -q awscliv2.zip
-./aws/install
+if ! snap debug seeding | grep -q "^seeded: *true\$"; then
+	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true\$"; do sleep 5; done'
+fi
+snap install aws-cli --classic
 mkdir -p ${MOUNT_PATH}
 mount -t nfs -o vers=3,tcp,noatime,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${KNFSD_IP}:${MOUNT_EXPORT} ${MOUNT_PATH}
 mkdir -p ${MOUNT_PATH}/fio
@@ -273,7 +298,7 @@ function create_user_data_captain() {
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y -q update
-apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev jq unzip
+apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev
 cd /tmp
 curl -fsSL "https://github.com/axboe/fio/archive/refs/tags/fio-${FIO_VERSION}.tar.gz" -o fio.tar.gz
 tar xzf fio.tar.gz
@@ -282,9 +307,10 @@ cd fio-fio-${FIO_VERSION}
 make -j\$(nproc)
 make install
 cd /tmp
-curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${CAPTAIN_ARCH_ALT}.zip" -o "awscliv2.zip"
-unzip -q awscliv2.zip
-./aws/install
+if ! snap debug seeding | grep -q "^seeded: *true\$"; then
+	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true\$"; do sleep 5; done'
+fi
+snap install aws-cli --classic
 REGION=\$(cloud-init query region)
 INSTANCE_ID=\$(cloud-init query instance_id)
 aws ec2 create-tags --region "\${REGION}" --resources "\${INSTANCE_ID}" --tags "Key=knfsd-file-cache:status,Value=ready"
@@ -424,6 +450,27 @@ function push_ssh_key() {
 	sleep 2
 }
 
+# wait_for_ssm_online polls AWS SSM until the instance's agent reports PingStatus
+# "Online". An SSM tunnel cannot be opened until the agent has registered.
+function wait_for_ssm_online() {
+	local instance_id="$1"
+	local deadline=$((SECONDS + SSM_WAIT_TIMEOUT))
+	local ping_status=""
+	echo -e "${SHELL_BLUE}Waiting for AWS SSM agent on ${instance_id} to report Online...${SHELL_DEFAULT}"
+	while ((SECONDS < deadline)); do
+		ping_status=$(aws ssm describe-instance-information \
+			--filters "Key=InstanceIds,Values=${instance_id}" \
+			--query 'InstanceInformationList[0].PingStatus' \
+			--output text 2> /dev/null) || ping_status=""
+		if [[ "${ping_status}" == "Online" ]]; then
+			return 0
+		fi
+		sleep 5
+	done
+	echo -e "${SHELL_RED}ERROR: timed out after ${SSM_WAIT_TIMEOUT}s waiting for AWS SSM agent on ${instance_id}${SHELL_DEFAULT}" >&2
+	return 1
+}
+
 # get_captain_instance_id prints the captain instance ID (or empty)
 function get_captain_instance_id() {
 	aws ec2 describe-instances \
@@ -533,10 +580,23 @@ function cmd_run() {
 		idx=$((idx + 1))
 	done
 
-	# SSH/SCP options for EC2 Instance Connect tunnelling
-	local proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
-	if [[ -n "${EICE_ID}" ]]; then
-		proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${EICE_ID}"
+	# SSH/SCP options for tunnelling to the captain
+	local proxy_cmd
+	if [[ "${TUNNEL}" == "ssm" ]]; then
+		if ! command -v session-manager-plugin > /dev/null 2>&1; then
+			echo -e "${SHELL_RED}ERROR: 'session-manager-plugin' not found in PATH${SHELL_DEFAULT}" >&2
+			exit 1
+		fi
+		# %h resolves to the instance-id (the ssh "host") and %p to the port (22)
+		proxy_cmd="aws ssm start-session --target %h"
+		proxy_cmd="${proxy_cmd} --document-name AWS-StartSSHSession"
+		proxy_cmd="${proxy_cmd} --parameters portNumber=%p"
+		wait_for_ssm_online "${captain_id}"
+	else
+		proxy_cmd="aws ec2-instance-connect open-tunnel --instance-id %h"
+		if [[ -n "${EICE_ID}" ]]; then
+			proxy_cmd="${proxy_cmd} --instance-connect-endpoint-id ${EICE_ID}"
+		fi
 	fi
 	local opts=(
 		-i "${IDENTITY_FILE}"

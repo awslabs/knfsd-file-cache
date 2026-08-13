@@ -12,12 +12,12 @@ output "autoscaling_group_security_group_id" {
 }
 
 output "database_config" {
-  description = "Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module."
+  description = "Database configuration for the deployed DynamoDB FSID table. Only available when database is deployed by this module."
   value       = length(module.proxy.database_config) > 0 ? module.proxy.database_config : null
 }
 
 output "database_iam_policy" {
-  description = "The ARN of the IAM policy for rds-db:connect database access. Only available when database is deployed by this module."
+  description = "The ARN of the IAM policy for DynamoDB table access. Only available when database is deployed by this module."
   value       = module.proxy.database_iam_policy
 }
 

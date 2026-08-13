@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.1"
+  default     = "1.1.0-beta.2"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.1\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.2\"."
   }
 }
 
@@ -112,7 +112,7 @@ variable "LOADBALANCER_IP" {
 }
 
 variable "HEALTHCHECK_INTERVAL_SECONDS" {
-  description = "How frequently (in seconds) to probe if a proxy instance is healthy. This is measured from the start of one probe, to the start of the next probe. Default: \"60\"."
+  description = "(Optional) How frequently (in seconds) to probe if a proxy instance is healthy. This is measured from the start of one probe, to the start of the next probe. Default: \"60\"."
   type        = number
   nullable    = false
   default     = 60
@@ -123,7 +123,7 @@ variable "HEALTHCHECK_INTERVAL_SECONDS" {
 }
 
 variable "HEALTHCHECK_TIMEOUT_SECONDS" {
-  description = "How long (in seconds) to wait for a response from a probe. Must be less than or equal to \"HEALTHCHECK_INTERVAL_SECONDS\". Default: \"5\"."
+  description = "(Optional) How long (in seconds) to wait for a response from a probe. Must be less than or equal to \"HEALTHCHECK_INTERVAL_SECONDS\". Default: \"5\"."
   type        = number
   nullable    = false
   default     = 5
@@ -134,7 +134,7 @@ variable "HEALTHCHECK_TIMEOUT_SECONDS" {
 }
 
 variable "HEALTHCHECK_HEALTHY_THRESHOLD" {
-  description = "Number of sequential successful probe results for a proxy instance to be considered healthy. Default: \"3\"."
+  description = "(Optional) Number of sequential successful probe results for a proxy instance to be considered healthy. Default: \"3\"."
   type        = number
   nullable    = false
   default     = 3
@@ -145,12 +145,23 @@ variable "HEALTHCHECK_HEALTHY_THRESHOLD" {
 }
 
 variable "HEALTHCHECK_UNHEALTHY_THRESHOLD" {
-  description = "Number of sequential failed probe results for a proxy instance to be considered unhealthy. Default: \"3\"."
+  description = "(Optional) Number of sequential failed probe results for a proxy instance to be considered unhealthy. Default: \"3\"."
   type        = number
   nullable    = false
   default     = 3
   validation {
     condition     = var.HEALTHCHECK_UNHEALTHY_THRESHOLD >= 2 && var.HEALTHCHECK_UNHEALTHY_THRESHOLD <= 10
     error_message = "HEALTHCHECK_UNHEALTHY_THRESHOLD must be between 2 and 10."
+  }
+}
+
+variable "EXISTING_SECURITY_GROUP_ID" {
+  description = "(Optional) ID of a pre-existing security group to use for the Network Load Balancer instead of creating one. When set, the module skips creating the security group and all of its ingress/egress rules. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition     = var.EXISTING_SECURITY_GROUP_ID == "" || can(regex("^sg-[0-9a-f]{8,17}$", var.EXISTING_SECURITY_GROUP_ID))
+    error_message = "When provided, EXISTING_SECURITY_GROUP_ID must be a valid AWS security group ID format. Example: \"sg-038e337f0ff4cd53f\"."
   }
 }

@@ -1,0 +1,181 @@
+site_name: "KNFSD File Cache"
+site_description: "Documentation for the KNFSD-File-Cache Solution"
+site_author: "Amazon Web Services"
+copyright: "Copyright &copy; Amazon {year}"
+
+site_url: !ENV [MKDOCS_SITE_URL]
+repo_url: !ENV [MKDOCS_REPO_URL]
+repo_name: !ENV [MKDOCS_REPO_NAME]
+
+# Use the repository root as the docs source so scattered *.md files and their
+# relative links keep working without moving anything (needs same-dir plugin).
+docs_dir: "."
+site_dir: "site"
+
+exclude_docs: |
+  .git/
+  .github/
+  .gitlab/
+  debug/
+  site/
+  mkdocs/hooks/
+
+# Rewrite links to repo-root files that a static site cannot host (extensionless
+# files like Makefile/LICENSE and dotfiles like .tflint.hcl) into canonical
+# repo_url links at build time — see mkdocs/hooks/repo_links.py. This is needed
+# because docs_dir is the repo root, so pages legitimately link to such files
+# with paths like ../Makefile. The hook uses the !ENV repo_url (per-platform,
+# nothing hard-coded); on local `mkdocs serve` (no repo_url) links are left as-is.
+hooks:
+  - mkdocs/hooks/repo_links.py
+  - mkdocs/hooks/copyright_year.py
+  - mkdocs/hooks/grid_cards.py
+
+watch:
+  - mkdocs/hooks
+  - mkdocs/stylesheets
+
+validation:
+  links:
+    not_found: info
+    anchors: warn
+
+theme:
+  name: material
+  logo: mkdocs/assets/logos/aws-logo-dark.svg
+  favicon: mkdocs/assets/favicon.svg
+  font: false
+  icon:
+    repo: fontawesome/brands/github
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: cloudscape-light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: cloudscape-dark
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - navigation.footer
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+    - search.highlight
+    - search.share
+    - search.suggest
+
+extra_css:
+  - mkdocs/stylesheets/cloudscape-tokens.css
+  - mkdocs/stylesheets/custom.css
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.escapeall:
+      hardbreak: true
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - same-dir
+
+nav:
+  - Home:
+      - Overview: README.md
+      - Index: docs/index.md
+      - Prerequisites: deployment/docs/prerequisites.md
+      - Security Considerations: docs/security-considerations.md
+      - IAM Permissions: docs/iam.md
+      - CHANGELOG: CHANGELOG.md
+  - Build & Deploy:
+      - Build (Packer): image/README.md
+      - Deploy (Terraform): deployment/README.md
+      - VPC Endpoints: deployment/vpc-endpoints/README.md
+      - Database: deployment/database/README.md
+      - DNS Round Robin: deployment/terraform-module-knfsd/modules/dns_round_robin/README.md
+      - Load Balancer: deployment/terraform-module-knfsd/modules/loadbalancer/README.md
+      - Metrics Dashboard: deployment/metrics/README.md
+  - Reference:
+      - VPC Endpoints: deployment/docs/vpc-endpoints.md
+      - FSIDs: deployment/docs/fsids.md
+      - Traffic Distribution: deployment/docs/traffic-distribution.md
+      - NFS Auto Re-Export: deployment/docs/auto-re-export.md
+      - Autoscaling: deployment/docs/autoscaling.md
+      - KNFSD HTTP Agent: image/resources/knfsd-agent/README.md
+      - Fanout: deployment/docs/fanout.md
+      - Filter Patterns: deployment/docs/filter-patterns.md
+      - Security Groups: deployment/docs/security-groups.md
+      - Metrics: deployment/docs/metrics.md
+      - Ports: deployment/docs/ports.md
+      - NetApp: deployment/docs/netapp.md
+      - NetApp ShowMount Tool: image/resources/netapp-exports/README.md
+      - Metrics Agent (OpenTelemetry):
+          - Overview: image/resources/knfsd-metrics-agent/README.md
+          - Connections: image/resources/knfsd-metrics-agent/internal/connections/documentation.md
+          - Exports: image/resources/knfsd-metrics-agent/internal/exports/documentation.md
+          - FSCache: image/resources/knfsd-metrics-agent/internal/fscache/documentation.md
+          - Mounts: image/resources/knfsd-metrics-agent/internal/mounts/documentation.md
+          - NFSD: image/resources/knfsd-metrics-agent/internal/nfsd/documentation.md
+          - Oldest File: image/resources/knfsd-metrics-agent/internal/oldestfile/documentation.md
+          - Slab: image/resources/knfsd-metrics-agent/internal/slab/documentation.md
+          - OTEL YAML Generator: image/resources/knfsd-metrics-agent/cmd/gen-overrides/README.md
+  - User Guide:
+      - Check Proxy Startup: docs/check-startup.md
+      - NFS Client Setup: docs/nfs-client-setup.md
+      - Client Metrics: docs/client-metrics.md
+      - FAQ: docs/faq.md
+      - Known Issues: docs/known-issues.md
+      - CHANGELOG: CHANGELOG.md
+  - Tutorial:
+      - Deploy a Kernel-space NFS Caching Proxy in AWS: tutorial/README.md
+  - Examples:
+      - Overview: examples/README.md
+      - Basic NFS Example: examples/basic/README.md
+      - FSx for NetApp ONTAP: examples/fsx-netapp/README.md
+      - FSx for OpenZFS: examples/fsx-zfs/README.md
+      - FSx for OpenZFS Fanout<br>(DNS Round Robin): examples/fsx-zfs-fanout-dns-rr/README.md
+      - FSx for OpenZFS Fanout<br>(Network Load Balancer): examples/fsx-zfs-fanout-loadbalancer/README.md
+      - Weka NFS Gateway: examples/weka/README.md
+  - Test Plans:
+      - Overview: docs/tests/README.md
+      - Directory Listing: docs/tests/directory-listing.md
+      - Recovery Source: docs/tests/recovery-source.md
+      - Recovery Proxy: docs/tests/recovery-proxy.md
+      - Recovery Network Load Balancer: docs/tests/recovery-load-balancer.md
+      - Smoke Tests: image/smoke-tests/README.md
+      - Smoke Tests<br>(NFS Client): image/smoke-tests/modules/nfs-client/README.md
+      - Smoke Tests<br>(Source NFS Server): image/smoke-tests/modules/source-nfs/README.md
+  - Developer:
+      - Advanced/Developer: docs/developer.md
+      - Pre-commit: docs/pre-commit.md
+      - GitLab CI: docs/gitlab-ci.md
+  - Resources: docs/resources.md
+  - Other:
+      - Acknowledgements: ACKNOWLEDGEMENTS.md
+      - Contributing: docs/CONTRIBUTING.md
+      - Code of Conduct: docs/CODE_OF_CONDUCT.md
+      - Security Policy: docs/SECURITY.md
+      - Notice: NOTICE.md
+
+extra:
+  generator: true

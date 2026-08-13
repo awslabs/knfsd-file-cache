@@ -27,18 +27,18 @@ module "nfs_client" {
 
 ## Inputs
 
-| Name                          | Description                                                                      | Type     | Default         |
-|-------------------------------|----------------------------------------------------------------------------------|----------|-----------------|
-| `REGION`                      | AWS region.                                                                      | `string` | n/a             |
-| `SUBNET`                      | Subnet ID the client instance is launched into.                                  | `string` | n/a             |
-| `SECURITY_GROUP_ID`           | Security group to attach.                                                        | `string` | n/a             |
-| `PREFIX`                      | Resource name prefix used to disambiguate parallel test runs.                    | `string` | n/a             |
-| `SOURCE_HOST`                 | Source NFS host, surfaced via the `knfsd-file-cache:source-host` tag.            | `string` | n/a             |
-| `PROXY_HOST`                  | KNFSD proxy DNS name, surfaced via the `knfsd-file-cache:proxy-host` tag.        | `string` | n/a             |
-| `ARCH`                        | `amd64` or `arm64` (used to resolve the Ubuntu AMI). Must match `INSTANCE_TYPE`. | `string` | `"amd64"`       |
-| `INSTANCE_TYPE`               | EC2 instance type. Must match `ARCH`.                                            | `string` | `"m6i.2xlarge"` |
-| `ASSOCIATE_PUBLIC_IP_ADDRESS` | Force a public IP (`null` = inherit subnet setting).                             | `bool`   | `null`          |
-| `CLUSTER_READY`               | Dependency handle gating client creation until the proxy cluster is ready.       | `any`    | `null`          |
+| Name                          | Description                                                                      | Required | Type     | Default         |
+|-------------------------------|----------------------------------------------------------------------------------|----------|----------|-----------------|
+| `REGION`                      | AWS region.                                                                      | True     | `string` | No default      |
+| `SUBNET`                      | Subnet ID the client instance is launched into.                                  | True     | `string` | No default      |
+| `SECURITY_GROUP_ID`           | Security group to attach.                                                        | True     | `string` | No default      |
+| `PREFIX`                      | Resource name prefix used to disambiguate parallel test runs.                    | True     | `string` | No default      |
+| `SOURCE_HOST`                 | Source NFS host, surfaced via the `knfsd-file-cache:source-host` tag.            | True     | `string` | No default      |
+| `PROXY_HOST`                  | KNFSD proxy DNS name, surfaced via the `knfsd-file-cache:proxy-host` tag.        | True     | `string` | No default      |
+| `ARCH`                        | `amd64` or `arm64` (used to resolve the Ubuntu AMI). Must match `INSTANCE_TYPE`. | False    | `string` | `"amd64"`       |
+| `INSTANCE_TYPE`               | EC2 instance type. Must match `ARCH`.                                            | False    | `string` | `"m6i.2xlarge"` |
+| `ASSOCIATE_PUBLIC_IP_ADDRESS` | Force a public IP (`null` = inherit subnet setting).                             | False    | `bool`   | `null`          |
+| `CLUSTER_READY`               | Dependency handle gating client creation until the proxy cluster is ready.       | False    | `any`    | `null`          |
 
 ## Outputs
 

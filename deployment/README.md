@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
+source = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
 ```
 
 ## Prerequisites
@@ -42,7 +42,7 @@ provider "aws" {
 }
 
 module "knfsd" {
-  source         = "github.com/awslabs/knfsd-file-cache/deployment/terraform-module-knfsd?ref=v1.1.0-beta.1"
+  source         = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg"
@@ -59,11 +59,11 @@ output "dns_name" {
 
 Edit the [configuration variables](#configuration-variables) to match your desired configuration.
 
-## Non-default VPC and Private Subnet Deployment
+## Private Subnet Deployment
 
-This above usage assumes you are using the **default** VPC. If you are using a **non-default** VPC, please make sure to review the [FSID Database Options](#fsid-database-options) section below; you must set either `FSID_DB_SUBNET_GROUP_NAME` (to reference a pre-existing DB subnet group) or `FSID_DB_SUBNET_IDS` (to let the `database` module create one for you) when using a non-default VPC.
+When deploying KNFSD File Cache in a private subnet without internet connectivity, VPC endpoints are required for AWS service access, including an Amazon DynamoDB Gateway endpoint for the `external` FSID database.
 
-When deploying KNFSD File Cache in private subnets without internet connectivity, VPC endpoints are required for AWS service access. See [VPC Endpoints](docs/vpc-endpoints.md) for detailed setup instructions.
+See [VPC Endpoints](docs/vpc-endpoints.md) for detailed setup instructions and [README](../deployment/vpc-endpoints/README.md) for the Terraform module.
 
   > NOTE: The VPC endpoints must be created or already exist **before** deploying KNFSD modules.
 
@@ -142,8 +142,8 @@ If using the NetApp Exports Auto-Discovery feature, please also read the [NetApp
 | `READ_AHEAD`                  | The NFS readahead value in bytes, applied via nfsrahead udev rule in `/etc/nfs.conf.d/knfsd.conf`. Applies to all NFS mounts.                                                                                                                                                                                                                                                                                                                                  | False    | `8388608`      |
 | `ENABLE_METRICS`              | Enable the Amazon CloudWatch Logs & EC2 Metrics and KNFSD Metrics (Open-Telemetry) Agents.                                                                                                                                                                                                                                                                                                                                                                     | False    | `true`         |
 | `METRICS_AGENT_CONFIG`        | Custom YAML configuration for the metrics agent. The configuration *is not* validated by Terraform when using a custom config, please check the proxy startup log. See the custom configuration section in the [metrics documentation](docs/metrics.md) for more details.                                                                                                                                                                                      | False    | `""`           |
-| `CUSTOM_PRE_STARTUP_SCRIPT`   | Optional bash script to run BEFORE the [proxy-startup.sh](terraform-module-knfsd/resources/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                              | False    | empty script   |
-| `CUSTOM_POST_STARTUP_SCRIPT`  | Optional bash script to run AFTER the [proxy-startup.sh](terraform-module-knfsd/resources/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                               | False    | empty script   |
+| `CUSTOM_PRE_STARTUP_SCRIPT`   | Optional bash script to run BEFORE the [proxy-startup.sh](../image/resources/startup/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                                    | False    | empty script   |
+| `CUSTOM_POST_STARTUP_SCRIPT`  | Optional bash script to run AFTER the [proxy-startup.sh](../image/resources/startup/proxy-startup.sh) script. For example `file("/home/ben/myscript.sh")`.                                                                                                                                                                                                                                                                                                     | False    | empty script   |
 | `INSTANCE_TYPE`               | The AWS EC2 instance type to use for the KNFSD cache. Must match `PROXY_AMI` architecture.                                                                                                                                                                                                                                                                                                                                                                     | False    | `i3en.6xlarge` |
 | `ROOT_DISK_SIZE`              | The size of the root disk in GB.                                                                                                                                                                                                                                                                                                                                                                                                                               | False    | `20`           |
 | `EBS_KMS_KEY_ID`              | Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt EBS volumes. Empty means use the account default `aws/ebs` key. Volumes are always encrypted. See [AWS ASG KMS key policy requirements](https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html). Ensure `AWSServiceRoleForAutoScaling` role is attached to KMS key policy.                                               | False    | `""`           |
@@ -205,14 +205,14 @@ Use of `AUTO_REEXPORT` requires that `FSID_MODE` is `local` or `external`. `exte
 
 ### FSID Database Options
 
-| Variable                    | Description                                                                                                                                                    | Required | Default      |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
-| `FSID_MODE`                 | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`.                                                | False    | `"external"` |
-| `FSID_DATABASE_DEPLOY`      | Set to `false` to prevent automatically creating an Amazon RDS PostgreSQL instance when `FSID_MODE` is set to `external`.                                      | False    | `true`       |
-| `FSID_DATABASE_CONFIG`      | Allows overriding the default FSID database configuration when `FSID_MODE` is set to `external`.                                                               | False    | `{}`         |
-| `FSID_DB_SUBNET_GROUP_NAME` | The name of an existing Amazon RDS DB subnet group to use for the FSID database. Required when using a non-default VPC. Alternative to `FSID_DB_SUBNET_IDS`.   | False    | `null`       |
-| `FSID_DB_SUBNET_IDS`        | Provide 2+ subnet IDs in different AZs; module creates the DB subnet group. Required when using a non-default VPC. Alternative to `FSID_DB_SUBNET_GROUP_NAME`. | False    | `null`       |
-| `FSID_DATABASE_IAM_POLICY`  | Allows overriding the default FSID database IAM policy when `FSID_MODE` is set to `external` with custom IAM policy ARN.                                       | False    | `""`         |
+| Variable                   | Description                                                                                                                 | Required | Default      |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
+| `FSID_MODE`                | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`.             | False    | `"external"` |
+| `FSID_DATABASE_DEPLOY`     | Set to `false` to prevent automatically creating an Amazon DynamoDB table when `FSID_MODE` is set to `external`.            | False    | `true`       |
+| `FSID_DATABASE_CONFIG`     | Allows overriding the default FSID database configuration when `FSID_MODE` is set to `external`.                            | False    | `{}`         |
+| `FSID_DATABASE_IAM_POLICY` | Allows overriding the default FSID database IAM policy when `FSID_MODE` is set to `external` with custom IAM policy ARN. \* | False    | `""`         |
+
+\* Applies whether reusing an existing external table (`FSID_DATABASE_DEPLOY = false`) or deploying the table (`FSID_DATABASE_DEPLOY = true`), where it skips creating the `aws_iam_policy` and attaches the provided policy instead.
 
 The recommended `FSID_MODE` is to always use `external`. For more details on `FSID_MODE` and `FSID_DATABASE_CONFIG` see [Filesystem Identifiers](docs/fsids.md).
 
@@ -224,19 +224,9 @@ The `FSID_MODE` option supports:
 
   If multiple proxy instances in a cluster allocate a different FSID to the same export then I/O errors or data corruption may occur if a client changes instance.
 
-* `external` - Each export is automatically allocated an FSID number by `mountd` using the `knfsd-fsidd` service. This uses an Amazon RDS PostgreSQL instance to store the FSID mappings. This ensures that all the instances in the cluster allocate the same FSID to each export.
+* `external` - Each export is automatically allocated an FSID number by `mountd` using the `knfsd-fsidd` service. This uses an Amazon DynamoDB table to store the FSID mappings. This ensures that all the instances in the cluster allocate the same FSID to each export.
 
-**NOTE:** The `database` module supports three ways to choose where the RDS DB instance is placed:
-
-| Scenario                                                   | `FSID_DB_SUBNET_GROUP_NAME` | `FSID_DB_SUBNET_IDS`                   | Result                                                             |
-| ---------------------------------------------------------- | --------------------------- | -------------------------------------- | ------------------------------------------------------------------ |
-| Default VPC (default)                                      | `null`                      | `null`                                 | AWS's regional `default` DB subnet group is used automatically.    |
-| Non-default VPC, pre-existing DB subnet group              | `"my-group"`                | `null`                                 | Module uses the DB subnet group you already created.               |
-| Non-default VPC, let the module create the DB subnet group | `null`                      | `["subnet-aaa...", "subnet-bbb..."]`   | Module creates `aws_db_subnet_group` from the supplied subnet IDs. |
-
-Setting both variables at the same time is an error. When `FSID_DB_SUBNET_IDS` is used, the list must contain at least 2 unique subnet IDs, must include the subnet in `var.SUBNET`, all subnets must be in the same VPC as `var.SUBNET`, and the subnets must span at least 2 availability zones (all enforced at `terraform plan` time). The single-AZ deployment of the DB instance still targets the availability zone of `var.SUBNET`.
-
-**INFO:** AWS mandates that the DB subnet group must contain at least 2 subnets, each in a different availability zone, just in case you want to convert the database to a multi-AZ deployment in the future or in the case of AZ failure, you will have the ability to failover manually to another AZ.
+**NOTE:** The DynamoDB table is addressed via the regional DynamoDB HTTPS API using IAM authentication, so no subnets, security groups, or VPC connectivity to a database host are required. For private subnets without internet access, add a DynamoDB Gateway VPC endpoint; see [VPC Endpoints](docs/vpc-endpoints.md).
 
 ### Autoscaling Configuration
 
@@ -247,11 +237,32 @@ Setting both variables at the same time is an error. When `FSID_DB_SUBNET_IDS` i
 | `KNFSD_AUTOSCALING_MIN_INSTANCES`             | The minimum number of KNFSD instances to set regardless of the traffic volumes.                                                        | False    | `1`     |
 | `KNFSD_AUTOSCALING_MAX_INSTANCES`             | The maximum number of KNFSD instances to set regardless of the traffic volumes.                                                        | False    | `10`    |
 
-### CI/CD Configuration
+### Restrictive IAM / Centrally-Managed Resources
 
-| Variable          | Description                                                                                                                                                                                                                                                                                                     | Required | Default |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
-| `ASSUME_ROLE_ARN` | The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners for CI/CD pipelines. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: `arn:*:iam::123456789012:role/DeploymentRole`. | False    | `null`  |
+Some AWS environments deny the deploying role `ec2:CreateSecurityGroup` and/or `iam:CreateRole`/`iam:CreatePolicy`, because networking and IAM resources are managed centrally and pre-created before application deployments. To deploy in such an environment, pre-create the resources and pass them in:
+
+| Variable                         | Description                                                                                                                                                                                                                                                                                            | Required | Default |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------- |
+| `ASSUME_ROLE_ARN`                | The ARN of the IAM role to assume for AWS CLI commands in local-exec provisioners. If not provided, no role assumption will be performed and the local-exec provisioner will use the existing AWS credentials from the environment. Example: `arn:*:iam::123456789012:role/DeploymentRole`.            | False    | `null`  |
+| `EXISTING_SECURITY_GROUP_ID`     | ID of a pre-existing security group to use for the KNFSD proxy Auto Scaling Group (and the Network Load Balancer when `TRAFFIC_MODE = "loadbalancer"`) instead of creating one. When set, the module skips creating the security group and all ingress/egress rules; you configure the rules yourself. | False    | `""`    |
+| `EXISTING_INSTANCE_PROFILE_NAME` | Name of a pre-existing IAM instance profile to use for the KNFSD proxy instances instead of creating one. When set, the module skips creating the IAM role, instance profile, and all associated policies/attachments; the provided profile must already grant the required permissions.               | False    | `""`    |
+| `EXISTING_LAMBDA_ROLE_ARN`       | ARN of a pre-existing IAM role for the DNS round-robin `static_ip` Lambda (`TRAFFIC_MODE = "dns_round_robin"`) instead of creating one. When set, the module skips creating the Lambda IAM role and its policy.                                                                                        | False    | `""`    |
+
+#### Service-Linked Roles
+
+The following service-linked roles are required:
+
+| Requirement                     | Service-Linked Role                     | Description           |
+| ------------------------------- | --------------------------------------- | --------------------- |
+| Always                          | `AWSServiceRoleForAutoScaling`          | Auto Scaling group    |
+| `TRAFFIC_MODE = "loadbalancer"` | `AWSServiceRoleForElasticLoadBalancing` | Network Load Balancer |
+
+The Terraform module performs a read-only pre-flight check (`iam:ListRoles`) and fails early with a clear message if a required role is missing. In a brand-new AWS account, or under a role without `iam:CreateServiceLinkedRole`, an administrator must create them manually once:
+
+```bash
+aws iam create-service-linked-role --aws-service-name autoscaling.amazonaws.com
+aws iam create-service-linked-role --aws-service-name elasticloadbalancing.amazonaws.com
+```
 
 ## Deploy KNFSD
 
@@ -264,17 +275,18 @@ terraform apply
 
 ## Outputs
 
-| Output                                | Description                                                                                                                                 |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `autoscaling_group_name`              | Name of the KNFSD proxy Auto Scaling Group.                                                                                                 |
-| `autoscaling_group_security_group_id` | Security Group ID for the KNFSD proxy Auto Scaling Group.                                                                                   |
-| `cluster_ready`                       | Boolean indicating if all KNFSD instances are ready and fully operational. Use this as a dependency for downstream resources.               |
-| `database_config`                     | Database configuration for deployed RDS PostgreSQL database. Only available when database is deployed by this module.                       |
-| `database_iam_policy`                 | The ARN of the IAM policy for `rds-db:connect` database access. Only available when database is deployed by this module.                    |
-| `dns_name`                            | The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`). |
-| `iam_role_name`                       | Name of the IAM role attached to the KNFSD proxy instances.                                                                                 |
-| `loadbalancer_ipaddress`              | The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                 |
-| `knfsd_security_group_id`             | Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`). |
+| Output                                | Description                                                                                                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `autoscaling_group_name`              | Name of the KNFSD proxy Auto Scaling Group.                                                                                                                    |
+| `autoscaling_group_security_group_id` | Security Group ID for the KNFSD proxy Auto Scaling Group.                                                                                                      |
+| `cluster_ready`                       | Boolean indicating if all KNFSD instances are ready and fully operational. Use this as a dependency for downstream resources.                                  |
+| `database_config`                     | Database configuration for the deployed DynamoDB FSID table. Only available when database is deployed by this module.                                          |
+| `database_iam_policy`                 | The ARN of the IAM policy for DynamoDB table access. Only available when database is deployed by this module.                                                  |
+| `dns_name`                            | The private DNS name of the KNFSD Network Load Balancer or Auto Scaling Group (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).                    |
+| `iam_role_name`                       | Name of the IAM role attached to the KNFSD proxy instances. `null` (omitted from `terraform output`) when `EXISTING_INSTANCE_PROFILE_NAME` is provided.        |
+| `instance_profile_name`               | Name of the IAM instance profile attached to the KNFSD proxy instances. Returns the module-created profile name, or `EXISTING_INSTANCE_PROFILE_NAME` when set. |
+| `loadbalancer_ipaddress`              | The private IP address of the Network Load Balancer (when `TRAFFIC_MODE = "loadbalancer"`).                                                                    |
+| `knfsd_security_group_id`             | Security Group ID for the NFS clients to connect to the KNFSD proxy instances (when `TRAFFIC_MODE` is `dns_round_robin` or `loadbalancer`).                    |
 
 ## Caveats
 

@@ -2,50 +2,21 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "KnfsdRds",
+      "Sid": "KnfsdDynamoDB",
       "Effect": "Allow",
       "Action": [
-        "rds:AddTagsToResource",
-        "rds:CreateDBInstance",
-        "rds:CreateDBParameterGroup",
-        "rds:CreateDBSubnetGroup",
-        "rds:DeleteDBInstance",
-        "rds:DeleteDBParameterGroup",
-        "rds:DeleteDBSubnetGroup",
-        "rds:DescribeDBInstances",
-        "rds:DescribeDBParameterGroups",
-        "rds:DescribeDBParameters",
-        "rds:DescribeDBSubnetGroups",
-        "rds:ListTagsForResource",
-        "rds:ModifyDBInstance",
-        "rds:ModifyDBParameterGroup",
-        "rds:ModifyDBSubnetGroup",
-        "rds:RebootDBInstance",
-        "rds:RemoveTagsFromResource"
+        "dynamodb:CreateTable",
+        "dynamodb:DeleteTable",
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeTable",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:ListTagsOfResource",
+        "dynamodb:TagResource",
+        "dynamodb:UntagResource",
+        "dynamodb:UpdateContinuousBackups",
+        "dynamodb:UpdateTable"
       ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "KnfsdRdsPassRole",
-      "Effect": "Allow",
-      "Action": "iam:PassRole",
-      "Resource": "arn:*:iam::*:role/knfsd-*-rds-enhanced-monitoring"
-    },
-    {
-      "Sid": "KnfsdRdsManagedSecret",
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:CreateSecret",
-        "secretsmanager:DescribeSecret",
-        "secretsmanager:TagResource"
-      ],
-      "Resource": "arn:*:secretsmanager:*:*:secret:rds!*"
-    },
-    {
-      "Sid": "KnfsdRdsManagedSecretKms",
-      "Effect": "Allow",
-      "Action": "kms:DescribeKey",
-      "Resource": "*"
+      "Resource": "arn:*:dynamodb:*:*:table/knfsd-*"
     },
     {
       "Sid": "KnfsdSecretsManager",
@@ -59,30 +30,10 @@
       "Resource": "arn:*:secretsmanager:*:*:secret:knfsd-*"
     },
     {
-      "Sid": "KnfsdVpcEndpoints",
+      "Sid": "KnfsdElbSlrCheck",
       "Effect": "Allow",
-      "Action": [
-        "ec2:CreateTags",
-        "ec2:CreateVpcEndpoint",
-        "ec2:DeleteTags",
-        "ec2:DeleteVpcEndpoints",
-        "ec2:DescribePrefixLists",
-        "ec2:DescribeVpcEndpoints",
-        "ec2:DescribeVpcEndpointServices",
-        "ec2:ModifyVpcEndpoint"
-      ],
+      "Action": "iam:ListRoles",
       "Resource": "*"
-    },
-    {
-      "Sid": "KnfsdElbServiceLinkedRole",
-      "Effect": "Allow",
-      "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:*:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/*",
-      "Condition": {
-        "StringEquals": {
-          "iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"
-        }
-      }
     },
     {
       "Sid": "KnfsdLoadBalancer",

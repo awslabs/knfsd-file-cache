@@ -25,14 +25,15 @@ Before a run you need:
 
 The smoke-test Terraform consumes the following inputs (defined in [`terraform/variables.tf`](terraform/variables.tf)):
 
-| Variable                      | Type   | Source                                                                                                                                     | Required | Default       |
-|-------------------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------|----------|---------------|
-| `REGION`                      | string | The AWS region in which the VPC/subnet live.                                                                                               | True     |               |
-| `SUBNET`                      | string | A subnet ID with outbound internet (NAT or public + IGW) so the SSM agent and `apt` work.                                                  | True     |               |
-| `PROXY_AMI`                   | string | KNFSD proxy AMI ID under test, supplied directly.                                                                                          | True     |               |
-| `ASSOCIATE_PUBLIC_IP_ADDRESS` | bool   | Force a public IP on all instances (`null` = inherit subnet). Set `true` for a public-subnet run with no NAT; SGs still block all ingress. | False    | `null`        |
-| `ARCH`                        | string | Selects the Ubuntu 26.04 client AMI resolved from Canonical's SSM parameter. Must be: `amd64` or `arm64`.                                  | False    | `amd64`       |
-| `INSTANCE_TYPE`               | string | EC2 instance type for the test client; defaults to `m6i.2xlarge`. Must match `ARCH` (e.g. `m7g.2xlarge` for `arm64`).                      | False    | `m6i.2xlarge` |
+| Variable                      | Type   | Source                                                                                                                                                | Required | Default       |
+|-------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------------|
+| `REGION`                      | string | The AWS region in which the VPC/subnet live.                                                                                                          | True     |               |
+| `SUBNET`                      | string | A subnet ID with outbound internet (NAT or public + IGW) so the SSM agent and `apt` work.                                                             | True     |               |
+| `PROXY_AMI`                   | string | KNFSD proxy AMI ID under test, supplied directly.                                                                                                     | True     |               |
+| `ASSOCIATE_PUBLIC_IP_ADDRESS` | bool   | Force a public IP on all instances (`null` = inherit subnet). Set `true` for a public-subnet run with no NAT; SGs still block all ingress.            | False    | `null`        |
+| `ARCH`                        | string | Selects the Ubuntu 26.04 client AMI resolved from Canonical's SSM parameter. Must be: `amd64` or `arm64`.                                             | False    | `amd64`       |
+| `INSTANCE_TYPE`               | string | EC2 instance type for the test client; defaults to `m6i.2xlarge`. Must match `ARCH` (e.g. `m7g.2xlarge` for `arm64`).                                 | False    | `m6i.2xlarge` |
+| `FSID_MODE`                   | string | `FSID_MODE` passed to the KNFSD module. `external` deploys the DynamoDB FSID table and enables the FSID table checks; `static` and `local` skip them. | False    | `external`    |
 
 The Terraform self-creates VPC-CIDR-scoped source-NFS and client security groups (see [`terraform/network.tf`](terraform/network.tf)) opening only the required NFS ports between the instances and the proxy.
 
@@ -44,6 +45,8 @@ The driver and the underlying Terraform need the canonical IAM policies document
 * [`docs/iam/tf-required.json`](../../docs/iam/tf-required.json)
 * [`docs/iam/tf-optional.json`](../../docs/iam/tf-optional.json)
 * [`docs/iam/testing.json`](../../docs/iam/testing.json)
+
+> NOTE: Unlike the production `deployment/` modules, the smoke-test harness self-creates its own security groups and IAM roles/instance profiles/policies per test instance and does not expose the `EXISTING_*` bring-your-own-resource variables. It is intended for permissive dev/test accounts; run it in a sandbox account if your environment enforces restrictive IAM (for example, denying `ec2:CreateSecurityGroup` or `iam:CreateRole`/`iam:CreatePolicy`).
 
 ## Local development
 

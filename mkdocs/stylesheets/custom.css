@@ -1,0 +1,393 @@
+/* =============================================================================
+ * Custom Overrides — Cloudscape Polish for Material for MkDocs
+ * =============================================================================
+ * Fine-tuning beyond token mapping: fonts, border radii, navigation, header,
+ * cards. Typography uses the native system font stack — no webfonts.
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * TYPOGRAPHY — native system font stack
+ * ---------------------------------------------------------------------------
+ * theme.font=false keeps the build free of external Google Fonts requests. It
+ * skips only the webfont <link> and the :root block that seeds these two vars,
+ * so we supply them here; Material's own stylesheet already applies them to
+ * body/input and code/kbd/pre. Each list is a fallback chain, so the browser
+ * picks the first face installed: SF Pro on macOS, Segoe UI on Windows, the
+ * desktop UI font on Linux.
+ * --------------------------------------------------------------------------- */
+:root {
+  --md-text-font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+  --md-code-font-family: SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* Material styles body/input directly but not .md-typeset, which sets its own
+ * font-size and inherits the family from body — restate it to be explicit. */
+.md-typeset {
+  font-family: var(--md-text-font-family);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * BORDER RADIUS — Cloudscape uses 16px containers, 8px form elements
+ * --------------------------------------------------------------------------- */
+:root {
+  --md-border-radius: 16px;   /* Containers, cards */
+}
+
+.md-content .admonition,
+.md-content details {
+  border-radius: 16px;
+}
+
+.md-search__input {
+  border-radius: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+ * GRID CARDS — layout and link lists
+ * ---------------------------------------------------------------------------
+ * Material's auto-fit grid packs in as many columns as will fit, which on a
+ * wide monitor spreads the cards into four or more thin columns. Cap the grid
+ * so it never exceeds three columns and centre it in the content area; it still
+ * reflows down to two and then one column on narrower viewports.
+ *
+ * The cap is a max-width rather than a fixed column count so the reflow stays
+ * Material's own: three 16rem columns plus two 0.4rem gaps needs 49.6rem, and
+ * 62rem leaves room for comfortable columns while stopping a fourth (which
+ * would need 65.2rem).
+ * --------------------------------------------------------------------------- */
+.md-typeset .grid.cards {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 62rem;
+}
+
+/* Cards built by the grid_cards hook can end with a list of related pages.
+ * Render it as a flush-left stack of links rather than a bulleted list, so the
+ * card reads as a small navigation block. A nested list inside a card item is
+ * always a link list, so target it structurally rather than tagging the
+ * Markdown. Links keep the normal body weight. */
+.md-typeset .grid.cards > ul > li > ul {
+  list-style: none;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-top: 0.8em;
+}
+
+.md-typeset .grid.cards > ul > li > ul > li {
+  display: block;
+  margin-bottom: 0.4em;
+  margin-left: 0;
+}
+
+.md-typeset .grid.cards > ul > li > ul > li:last-child {
+  margin-bottom: 0;
+}
+
+/* Material fades the card border to transparent on hover, which makes the
+   outline appear to vanish. Pin it to the idle colour so the border stays solid
+   at all times. Material's hover shadow is left in place as the affordance. */
+.md-typeset .grid.cards > ul > li:focus-within,
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid.cards > ol > li:focus-within,
+.md-typeset .grid.cards > ol > li:hover,
+.md-typeset .grid > .card:focus-within,
+.md-typeset .grid > .card:hover {
+  border-color: var(--md-default-fg-color--lightest);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * HEADER — Cloudscape top-nav is white in light mode, dark in dark mode
+ * --------------------------------------------------------------------------- */
+[data-md-color-scheme="cloudscape-light"] .md-header {
+  background-color: #ffffff;
+  color: #000716;
+  box-shadow: var(--md-shadow-z1);
+}
+
+[data-md-color-scheme="cloudscape-light"] .md-header .md-header__title,
+[data-md-color-scheme="cloudscape-light"] .md-header .md-header__topic,
+[data-md-color-scheme="cloudscape-light"] .md-header .md-header__button {
+  color: #000716;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-header {
+  background-color: #0f1b2d;
+  color: #d1d5db;
+  box-shadow: var(--md-shadow-z1);
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-header .md-header__title,
+[data-md-color-scheme="cloudscape-dark"] .md-header .md-header__topic,
+[data-md-color-scheme="cloudscape-dark"] .md-header .md-header__button {
+  color: #eaeef2;
+}
+
+/* ---------------------------------------------------------------------------
+ * LOGO — the shipped AWS mark is dark grey (Gray850) and vanishes on the dark
+ * header. Material only supports one theme.logo, so paint the logo via CSS and
+ * swap to the white mark in dark mode. The <img> is hidden but kept for a11y.
+ * --------------------------------------------------------------------------- */
+.md-header__button.md-logo {
+  width: 2.4rem;
+  height: 2.4rem;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  display: none;
+}
+
+[data-md-color-scheme="cloudscape-light"] .md-header__button.md-logo {
+  background-image: url("../assets/logos/aws-logo-dark.svg");
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-header__button.md-logo {
+  background-image: url("../assets/logos/aws-logo-light.svg");
+}
+
+
+/* ---------------------------------------------------------------------------
+ * TABS — Cloudscape-style underline accent
+ * --------------------------------------------------------------------------- */
+.md-tabs {
+  border-bottom: 1px solid rgba(0, 7, 22, 0.1);
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-tabs {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  border-bottom: 2px solid var(--md-accent-fg-color);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * NAV SIDEBAR — Cloudscape uses an open, spacious left-nav
+ * --------------------------------------------------------------------------- */
+.md-nav__item {
+  padding: 2px 0;
+}
+
+.md-nav__link--active {
+  font-weight: 700;
+  color: var(--md-primary-fg-color) !important;
+  border-left: 3px solid var(--md-primary-fg-color);
+  border-radius: 0;
+  padding-left: 10px;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * CONTENT — Cloudscape container card effect
+ * --------------------------------------------------------------------------- */
+
+/* Widen the main content column. Material caps .md-grid at 48rem by default;
+   a wider measure suits the technical tables/diagrams in these docs. */
+.md-grid {
+  max-width: min(95vw, 100rem);
+}
+
+/* Keep the first table column (Terraform variable names, wrapped in `code`)
+   on a single line. Wide tables scroll horizontally rather than wrapping the
+   variable names. */
+.md-typeset table:not([class]) td:first-child,
+.md-typeset table:not([class]) th:first-child {
+  white-space: nowrap;
+}
+
+/* Ensure table dividers are clearly visible in both light and dark modes.
+   Material derives cell borders from --md-typeset-table-color (set per scheme
+   in cloudscape-tokens.css); apply it explicitly so header and row separators
+   never fade out. */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  border-top: 0.05rem solid var(--md-typeset-table-color);
+}
+
+.md-typeset table:not([class]) thead th {
+  border-bottom: 0.1rem solid var(--md-typeset-table-color);
+}
+
+/* Vertical column separators: a right border on every cell except the last in
+   its row, giving a full grid appearance. */
+.md-typeset table:not([class]) th:not(:last-child),
+.md-typeset table:not([class]) td:not(:last-child) {
+  border-right: 0.05rem solid var(--md-typeset-table-color);
+}
+
+/* Zebra striping: shade alternate body rows with a scheme-aware grey. */
+.md-typeset table:not([class]) tbody tr:nth-child(even) {
+  background-color: var(--md-typeset-table-stripe);
+}
+
+/* No hover feedback on table rows: the permanent zebra striping is the only row
+   differentiation. Material tints the hovered row and adds an inset shadow, so
+   neutralise both, restoring the stripe colour on even rows (the plain :hover
+   rule would otherwise clear it). */
+.md-typeset table:not([class]) tbody tr:hover {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.md-typeset table:not([class]) tbody tr:nth-child(even):hover {
+  background-color: var(--md-typeset-table-stripe);
+}
+
+.md-content__inner {
+  padding: 2rem 2.5rem;
+}
+
+@media (min-width: 76.25em) {
+  .md-content {
+    background: var(--md-default-bg-color);
+    border-radius: var(--md-border-radius);
+    box-shadow: var(--md-shadow-z1);
+    margin: 1rem;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * BUTTONS / LINKS — Cloudscape interactive states
+ * --------------------------------------------------------------------------- */
+.md-typeset a {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.md-typeset a:hover {
+  border-bottom-color: var(--md-typeset-a-color);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * ADMONITIONS — Cloudscape "flashbar" style
+ * --------------------------------------------------------------------------- */
+.md-typeset .admonition,
+.md-typeset details {
+  border-left: 4px solid var(--md-primary-fg-color);
+  box-shadow: var(--md-shadow-z1);
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-left-color: #ec7211;
+}
+
+.md-typeset .admonition.danger,
+.md-typeset details.danger {
+  border-left-color: #d91515;
+}
+
+.md-typeset .admonition.success,
+.md-typeset details.success {
+  border-left-color: #037f0c;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * FOOTER — AWS Squid Ink
+ * --------------------------------------------------------------------------- */
+.md-footer {
+  border-top: 3px solid var(--md-accent-fg-color);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SEARCH BAR — Cloudscape search field style
+ * --------------------------------------------------------------------------- */
+.md-search__input {
+  border: 2px solid rgba(0, 7, 22, 0.2);
+  transition: border-color 0.15s ease;
+}
+
+/* The search input is rounded (8px) but Material draws a squared background on
+   the wrapping form, which shows through as grey corner blobs until hover. Match
+   the form's background to the input and round its corners so nothing peeks out. */
+.md-search__form {
+  background-color: transparent;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.md-search__form:hover {
+  background-color: transparent;
+}
+
+.md-search__input:focus {
+  border-color: var(--md-primary-fg-color);
+}
+
+/* The `search.suggest` feature renders an autocomplete "ghost" of the matched
+   term in .md-search__suggest, positioned exactly on top of .md-search__input.
+   When a query matches, the suggestion text is drawn over the typed text as a
+   separate raster layer; on hi-DPI displays the two overlapping glyph layers
+   read as slightly offset / "doubled" text. The feature is disabled in
+   mkdocs.yml; this hides any residual ghost overlay as a safety net. */
+.md-search__suggest {
+  display: none;
+}
+
+/* Light mode: dark text on a near-white header search field. */
+[data-md-color-scheme="cloudscape-light"] .md-search__input {
+  background: #ffffff;
+  border-color: rgba(0, 7, 22, 0.15);
+  color: #000716;
+}
+
+[data-md-color-scheme="cloudscape-light"] .md-search__input::placeholder,
+[data-md-color-scheme="cloudscape-light"] .md-search__input ~ .md-search__icon {
+  color: #5f6b7a;
+}
+
+/* Dark mode: the header is dark, so the search field, its typed text, its
+   placeholder and its icon must all be light to stay legible. */
+[data-md-color-scheme="cloudscape-dark"] .md-search__input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #eaeef2;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-search__input::placeholder,
+[data-md-color-scheme="cloudscape-dark"] .md-search__input ~ .md-search__icon {
+  color: #c6cdd6;
+}
+
+/* ---------------------------------------------------------------------------
+ * SEARCH RESULTS — matched-term rendering and hover highlight
+ * --------------------------------------------------------------------------- */
+
+/* Material underlines the matched query term and paints it in the accent
+   colour. On the dark scheme the softened-orange accent over the near-black
+   dropdown is low-contrast, and the underline sitting under the glyphs reads as
+   a blurry, "double-rendered" term. Drop the underline and emphasise with a
+   brighter, higher-contrast accent + weight so matches stay crisp. */
+.md-search-result mark {
+  text-decoration: none;
+  text-shadow: none;
+  color: var(--md-accent-fg-color);
+  font-weight: 700;
+}
+
+[data-md-color-scheme="cloudscape-dark"] .md-search-result mark {
+  color: #f5b183; /* brighter accent for legibility on dark dropdown */
+}
+
+/* The hovered/active result uses a faint grey wash by default, which looks
+   washed-out on the dark scheme. Give it a clearer accent-tinted background. */
+[data-md-color-scheme="cloudscape-dark"] .md-search-result__link:focus,
+[data-md-color-scheme="cloudscape-dark"] .md-search-result__link:hover,
+[data-md-color-scheme="cloudscape-dark"] .md-search-result__more > summary:focus > div,
+[data-md-color-scheme="cloudscape-dark"] .md-search-result__more > summary:hover > div {
+  background-color: rgba(83, 159, 229, 0.18); /* --md-primary-fg-color wash */
+}

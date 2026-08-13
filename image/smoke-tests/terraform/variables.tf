@@ -39,12 +39,12 @@ variable "ASSOCIATE_PUBLIC_IP_ADDRESS" {
 }
 
 variable "PREFIX" {
-  description = "(Optional) Resource name prefix. Used to disambiguate parallel test runs. The Go driver overrides this with random.UniqueID() at runtime. Must begin with \"knfsd\" so that created IAM, CloudFormation, and EventBridge resources fall under the \"knfsd-*\" ARN scope granted to the restricted CodeBuild pipeline role (docs/iam/tf-required.json)."
+  description = "(Optional) Resource name prefix. Used to disambiguate parallel test runs. The Go driver overrides this with random.UniqueID() at runtime. Must begin with \"knfsd\" so that created IAM, CloudFormation, and EventBridge resources fall under the \"knfsd-*\" ARN scope."
   type        = string
   default     = "knfsd-smoke"
   validation {
     condition     = can(regex("^knfsd", var.PREFIX))
-    error_message = "PREFIX must begin with \"knfsd\" to match the \"knfsd-*\" IAM resource scope used by the CodeBuild pipeline role."
+    error_message = "PREFIX must begin with \"knfsd\" to match the \"knfsd-*\" IAM resource scope."
   }
 }
 
@@ -65,5 +65,16 @@ variable "INSTANCE_TYPE" {
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
+  }
+}
+
+variable "FSID_MODE" {
+  description = "(Optional) FSID_MODE passed to the proxy module. \"external\" deploys the DynamoDB FSID table and enables the FSID table checks; \"static\" and \"local\" skip them. Default: \"external\"."
+  type        = string
+  nullable    = false
+  default     = "external"
+  validation {
+    condition     = contains(["static", "local", "external"], var.FSID_MODE)
+    error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
   }
 }

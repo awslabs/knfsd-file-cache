@@ -85,7 +85,7 @@ knfsd-metrics-agent.tar.gz
 .gitlab-ci.yml
 
 # debug files
-debug/
+/debug/
 
 # IDE files
 .cursor
@@ -98,3 +98,7 @@ tutorial/nfs-proxy-startup-user-data.sh
 
 # FIO files
 fio-output-*.json
+
+# docs build
+/site/
+__pycache__/

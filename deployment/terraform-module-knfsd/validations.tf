@@ -139,8 +139,8 @@ resource "null_resource" "validations" {
     # ignored.
     # This just avoids two possible errors:
     #   * This module ignores the custom configuration leading to confusion.
-    #   * This module uses the custom configuration leading to an unused RDS
-    #     PostgreSQL database being deployed.
+    #   * This module uses the custom configuration leading to an unused
+    #     DynamoDB table being deployed.
     precondition {
       condition = (
         var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
@@ -190,7 +190,7 @@ resource "null_resource" "validations" {
     }
 
     # Bug check: This should not occur and indicates a bug in the Terraform script.
-    # Check that if the script deployed a RDS PostgreSQL database, that database will
+    # Check that if the script deployed a DynamoDB table, that table will
     # be used by the proxy otherwise its just wasting money.
     # Including this here as this is the likely place people will update when
     # changing how FSID_MODE is handled as this is the main proxy validation.
@@ -202,17 +202,29 @@ resource "null_resource" "validations" {
         ? var.FSID_MODE == "external"
         : true
       )
-      error_message = "BUG: deployed RDS PostgreSQL database, but that database is not in use."
+      error_message = "BUG: deployed DynamoDB FSID table, but that table is not in use."
     }
 
-    # FSID_DB_SUBNET_GROUP_NAME and FSID_DB_SUBNET_IDS are mutually exclusive. This
-    # check is duplicated in the database module's validations.tf so standalone
-    # database use is also validated; surfacing it here lets users of the wrapper
-    # get the error early during "terraform plan" before Terraform descends into
-    # the child module.
+    # All-or-nothing for the EXISTING_* bring-your-own resource variables. Under a
+    # centrally-managed IAM role, a deployer who cannot create one class of resource
+    # (security group / instance profile) typically cannot create the others either,
+    # so if any EXISTING_* variable is set they should all be set to avoid a partial
+    # deployment that fails mid-apply on a create permission.
     precondition {
-      condition     = !(var.FSID_DB_SUBNET_GROUP_NAME != null && var.FSID_DB_SUBNET_IDS != null)
-      error_message = "FSID_DB_SUBNET_GROUP_NAME and FSID_DB_SUBNET_IDS are mutually exclusive; set only one (or leave both null to use the AWS default DB subnet group)."
+      condition     = (var.EXISTING_SECURITY_GROUP_ID != "") == (var.EXISTING_INSTANCE_PROFILE_NAME != "")
+      error_message = "EXISTING_SECURITY_GROUP_ID and EXISTING_INSTANCE_PROFILE_NAME must be set together (or both left empty). Provide both when deploying under a restricted role, or neither to let the module create them."
+    }
+
+    # EXISTING_LAMBDA_ROLE_ARN only applies to the static_ip Lambda in dns_round_robin
+    # mode. When any EXISTING_* variable is set in that mode, EXISTING_LAMBDA_ROLE_ARN
+    # should be set too, and vice-versa.
+    precondition {
+      condition = (
+        var.TRAFFIC_MODE == "dns_round_robin"
+        ? (var.EXISTING_LAMBDA_ROLE_ARN != "") == (var.EXISTING_SECURITY_GROUP_ID != "" || var.EXISTING_INSTANCE_PROFILE_NAME != "")
+        : true
+      )
+      error_message = "When TRAFFIC_MODE = \"dns_round_robin\" and using the EXISTING_* bring-your-own variables, EXISTING_LAMBDA_ROLE_ARN must be set together with EXISTING_SECURITY_GROUP_ID/EXISTING_INSTANCE_PROFILE_NAME (or all three left empty)."
     }
   }
 }

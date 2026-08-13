@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.1"
+  default     = "1.1.0-beta.2"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.1\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.2\"."
   }
 }
 
@@ -41,5 +41,16 @@ variable "DNS_NAME" {
   validation {
     condition     = var.DNS_NAME == "" || can(regex("^(([a-z0-9][a-z0-9\\-]*[a-z0-9])|[a-z0-9]+\\.)*([a-z]+|xn\\-\\-[a-z0-9]+)\\.$", var.DNS_NAME))
     error_message = "When provided, DNS_NAME must be a valid fully qualified domain name (FQDN) ending with a period. It should consist of valid domain name characters: alphanumeric, hyphen, and period(s)."
+  }
+}
+
+variable "EXISTING_LAMBDA_ROLE_ARN" {
+  description = "(Optional) ARN of a pre-existing IAM role to use for the static_ip Lambda function instead of creating one. When set, the module skips creating the Lambda IAM role and its policy. Default: \"\"."
+  type        = string
+  nullable    = false
+  default     = ""
+  validation {
+    condition     = var.EXISTING_LAMBDA_ROLE_ARN == "" || can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_/-]+$", var.EXISTING_LAMBDA_ROLE_ARN))
+    error_message = "When provided, EXISTING_LAMBDA_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/StaticIpLambdaRole\"."
   }
 }

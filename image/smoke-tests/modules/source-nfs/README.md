@@ -19,27 +19,25 @@ module "source_nfs" {
   NAME              = "knfsd-smoke-source-${random_id.run.hex}"
   SUBNET            = var.SUBNET
   SECURITY_GROUP_ID = aws_security_group.source_nfs.id
-  LATENCY_MS        = 0
-  RATE_LIMIT_MBIT   = 0
 }
 ```
 
 ## Inputs
 
-| Name                          | Description                                          | Type          | Default        |
-|-------------------------------|------------------------------------------------------|---------------|----------------|
-| `REGION`                      | AWS region.                                          | `string`      | n/a            |
-| `NAME`                        | EC2 Name tag.                                        | `string`      | n/a            |
-| `SUBNET`                      | Subnet ID (its VPC CIDR is used for the NFS export). | `string`      | n/a            |
-| `SECURITY_GROUP_ID`           | Security group to attach.                            | `string`      | n/a            |
-| `ASSOCIATE_PUBLIC_IP_ADDRESS` | Force a public IP (`null` = inherit subnet setting). | `bool`        | `false`        |
-| `INSTANCE_TYPE`               | EC2 instance type with local NVMe.                   | `string`      | `"i3en.large"` |
-| `AMI_ID`                      | Override AMI ID. Auto-resolved from SSM if empty.    | `string`      | `""`           |
-| `ARCH`                        | `amd64` or `arm64` (used to resolve default AMI).    | `string`      | `"amd64"`      |
-| `ROOT_VOLUME_SIZE_GB`         | Root EBS volume size.                                | `number`      | `20`           |
-| `LATENCY_MS`                  | tc netem delay in ms. 0 disables.                    | `number`      | `0`            |
-| `RATE_LIMIT_MBIT`             | tc netem rate in MBit. 0 disables.                   | `number`      | `0`            |
-| `TAGS`                        | Extra tags.                                          | `map(string)` | `{}`           |
+| Name                          | Description                                          | Required   | Type          | Default        |
+|-------------------------------|------------------------------------------------------|------------|---------------|----------------|
+| `REGION`                      | AWS region.                                          | True       | `string`      | n/a            |
+| `NAME`                        | EC2 Name tag.                                        | True       | `string`      | n/a            |
+| `SUBNET`                      | Subnet ID (its VPC CIDR is used for the NFS export). | True       | `string`      | n/a            |
+| `SECURITY_GROUP_ID`           | Security group to attach.                            | True       | `string`      | n/a            |
+| `ASSOCIATE_PUBLIC_IP_ADDRESS` | Force a public IP (`null` = inherit subnet setting). | False      | `bool`        | `false`        |
+| `INSTANCE_TYPE`               | EC2 instance type with local NVMe.                   | False      | `string`      | `"i3en.large"` |
+| `AMI_ID`                      | Override AMI ID. Auto-resolved from SSM if empty.    | False      | `string`      | `""`           |
+| `ARCH`                        | `amd64` or `arm64` (used to resolve default AMI).    | False      | `string`      | `"amd64"`      |
+| `ROOT_VOLUME_SIZE_GB`         | Root EBS volume size.                                | False      | `number`      | `20`           |
+| `LATENCY_MS`                  | tc netem delay in ms. 0 disables.                    | False      | `number`      | `0`            |
+| `RATE_LIMIT_MBIT`             | tc netem rate in MBit. 0 disables.                   | False      | `number`      | `0`            |
+| `TAGS`                        | Extra tags.                                          | False      | `map(string)` | `{}`           |
 
 ## Outputs
 

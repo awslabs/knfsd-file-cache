@@ -12,40 +12,40 @@ go build -o ~/netapp-exports
 
 ## Options
 
-* `-config path`\
+* `-config path`<br>
   Path to a config *.hcl file. This can be used as an alternative to specify the host, password, etc as command line options. Config files support listing multiple NetApp clusters in different locations.
 
-* `-host string`\
+* `-host string`<br>
   DNS or IP of the NetApp server (SVM endpoint). This is the DNS or IP name clients use when mounting the NFS shares.
 
-* `-url string`\
+* `-url string`<br>
   URL of the NetApp REST API (Management endpoint). This *must* include the API version and end with a slash, for example `https://netapp.example/api/v1/`.
 
-* `-user string`\
+* `-user string`<br>
   The username used to authenticate with the NetApp REST API.
 
-* `-password string`\
+* `-password string`<br>
   The password used to authenticate with the NetApp REST API. This option is not secure and is only intended for testing. For more secure options, use `-secret-name` or `-password-file`.
 
-* `-password-file path`\
+* `-password-file path`<br>
   A file containing the password to authenticate with the NetApp REST API.
 
-* `-secret-region string`\
+* `-secret-region string`<br>
   The AWS region where AWS Secrets Manager is storing the NetApp password. The [default credential provider chain](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html#credentialProviderChain) is used to locate AWS credentials, including region, unless specifically overridden by this CLI option.
 
-* `-secret-name string`\
+* `-secret-name string`<br>
   The name of an AWS Secrets Manager 'Secret' containing the NetApp REST API password.
 
-* `-secret-version string`\
+* `-secret-version string`<br>
   The version of the AWS Secrets Manager 'Secret'. Defaults to `AWSCURRENT`.
 
-* `-ca path`\
+* `-ca path`<br>
   Path to PEM encoded certificate file containing the root certificate for the NetApp REST API. This can also include intermediate certificates to provide the full certificate chain.
 
-* `-insecure`\
+* `-insecure`<br>
   Allow insecure connections. This permits the use of the unencrypted `http` connections and ignores any certificate errors. This is only intended for testing as it can expose the password over an unencrypted connection, and encrypted connections will be vulnerable to man in the middle attacks.
 
-* `-allow-common-name`\
+* `-allow-common-name`<br>
   Allows using the Common Name (CN) field of the certificate as a DNS name when the certificate does not include a Subject Alternate Name (SAN) field. Use of the CN field is now deprecated as CN is ambiguous and only intended to provide a human readable name. However, some self-signed NetApp certificates still rely on the CN field. If the certificate contains a SAN then the CN will be ignored.
 
 ## Environment Variables

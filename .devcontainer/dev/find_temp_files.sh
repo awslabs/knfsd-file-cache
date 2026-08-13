@@ -50,12 +50,14 @@ SEARCH_TARGETS=(
 	"knfsd-metrics-agent.tar.gz"
 	"tutorial/nfs-proxy-startup-user-data.sh"
 	"tutorial/nfs-client-startup-user-data.sh"
+	"__pycache__"
 )
 
 # list of dirs (relative to repo root) to delete in delete mode
 DIR_TARGETS=(
 	".mypy_cache"
 	".trivycache"
+	"site"
 )
 
 cd ../..

@@ -21,6 +21,16 @@ output "client_instance_id" {
   value       = module.nfs_client.instance_id
 }
 
+output "fsid_mode" {
+  description = "FSID_MODE the KNFSD proxy was deployed with. The Go driver skips the FSID table checks unless this is \"external\"."
+  value       = var.FSID_MODE
+}
+
+output "fsid_table_name" {
+  description = "Name of the DynamoDB table storing the FSID mappings. Empty unless FSID_MODE is \"external\"."
+  value       = try(module.proxy.database_config.table_name, "")
+}
+
 output "region" {
   description = "AWS region of the smoke-test deployment."
   value       = var.REGION

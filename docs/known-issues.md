@@ -84,10 +84,7 @@ To fix the issue, re-export using NFSv4 (the proxy can still mount the source us
 DISABLED_NFS_VERSIONS = "3,4.0,4.2"
 ```
 
-For further details see:
-
-* [Reexporting NFS filesystems - Filehandle limits](https://www.kernel.org/doc/html/latest/filesystems/nfs/reexport.html#filehandle-limits)
-* [NFS wiki - filehandle limits](https://linux-nfs.org/wiki/index.php/NFS_re-export#filehandle_limits)
+For further details see [Resources](resources.md) for AWS articles, official guidance, and upstream Linux NFS documentation.
 
 ## NFS transport metrics add up to the wrong value
 
@@ -98,3 +95,47 @@ While these metrics are reported per mount, the same transport may be shared by 
 If you sum the transport level metrics such as OTEL: `nfs.mount.ops_per_second` (CloudWatch: `knfsd/nfsiostat_ops_per_second`) the total value will be higher than expected due to counting the same TCP connection multiple times.
 
 Where possible the per-operation statistics should be summarised as these will give the correct value.
+
+## Status tagging disabled when the EC2 API is unreachable
+
+The `proxy-startup.sh` script reports its progress by setting the `knfsd-file-cache:status` tag on its own instance, which requires the proxy instance to reach the EC2 API (`ec2.<region>.amazonaws.com`).
+
+A proxy instance in a private subnet with no NAT gateway, no public IP, and no `com.amazonaws.<region>.ec2` interface VPC endpoint cannot reach that endpoint. Status tagging is best-effort, so the first failed call disables tagging for the remainder of that boot and startup continues:
+
+```text
+WARNING: unable to set tag "knfsd-file-cache:status", disabling status tagging for this boot
+WARNING: check the EC2 API is reachable (add a "com.amazonaws.ap-northeast-1.ec2" interface VPC endpoint, a NAT gateway, or a public IP) and that the instance role grants "ec2:CreateTags"
+WARNING: startup continues and NFS caching is unaffected, but Terraform "ENABLE_STATUS_CHECK" and the AWS Console status column will not work
+```
+
+The warning is only emitted once per boot; the EC2 API is not called again after the first failure, so startup is not slowed down by repeated timeouts.
+
+NFS caching is unaffected. Mounting the source, re-exporting, and serving clients need no EC2 API access. Only status reporting degrades:
+
+* `ENABLE_STATUS_CHECK = true` waits for every instance to report `ready`, so it times out after 60 minutes. Leave it at the default of `false` in these environments, or restore EC2 API access. Note that `fanout` deployments require `ENABLE_STATUS_CHECK = true`.
+* The `cluster_ready` module output, and any `depends_on` chained to it, cannot be used to gate downstream provisioning.
+* The `knfsd-file-cache:status` column in the AWS Console stays at `starting`, the value set by the launch template.
+
+Use the log based checks in [Check Proxy Startup](check-startup.md) to confirm the proxy started, either the `cloud-init` output log on the instance or the CloudWatch Logs copy of it.
+
+The same warning appears when the EC2 API is reachable but the instance role does not grant `ec2:CreateTags`. This is worth checking when `EXISTING_INSTANCE_PROFILE_NAME` is set, since the module does not create or manage the policies on a user supplied instance profile.
+
+## Startup fails to load parameters from SSM Parameter Store
+
+Unlike status tagging, the SSM Parameter Store call is a hard requirement. The entire proxy configuration is read from `/knfsd/<cluster-name>`, so `proxy-startup.sh` exits immediately if it cannot be read:
+
+```text
+ERROR: failed to read parameters from SSM Parameter Store path /knfsd/knfsd-a1b2c3d4
+ERROR: check the SSM API is reachable (add a "com.amazonaws.ap-northeast-1.ssm" interface VPC endpoint, a NAT gateway, or a public IP) and that the instance role grants "ssm:GetParametersByPath" for "/knfsd/knfsd-a1b2c3d4"
+```
+
+No VPC provides an implicit private path to the AWS service endpoints, so reaching `ssm.<region>.amazonaws.com` needs an internet gateway with a public IP, a NAT gateway, or a `com.amazonaws.<region>.ssm` interface VPC endpoint. See [VPC Endpoints](../deployment/docs/vpc-endpoints.md).
+
+A related error is raised when the call succeeds but returns nothing:
+
+```text
+ERROR: no parameters found under /knfsd/knfsd-a1b2c3d4
+ERROR: check "CLUSTER_NAME" matches the deployed cluster and the instance role grants "ssm:GetParametersByPath" for that path
+```
+
+This means the instance is talking to SSM but is looking at the wrong path, or the instance role is scoped to a different parameter hierarchy. Check the parameters exist with `aws ssm get-parameters-by-path --path /knfsd/<cluster-name> --recursive` using the same region as the instance.

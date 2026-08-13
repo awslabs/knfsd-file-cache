@@ -657,12 +657,12 @@ processors:
         new_name: fsid/request/retries
 
       - action: update
-        include: fsid.sql.query.count
-        new_name: fsid/sql/query/count
+        include: fsid.db.query.count
+        new_name: fsid/db/query/count
 
       - action: update
-        include: fsid.sql.query.duration
-        new_name: fsid/sql/query/duration
+        include: fsid.db.query.duration
+        new_name: fsid/db/query/duration
 
       # prefix all custom metrics with "knfsd/"
       - action: update
