@@ -335,7 +335,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 26.04 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.1.8-knfsd
+amazon-ebs.knfsd: Kernel:       7.2.3-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -402,7 +402,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-beta.2"
+VERSION="1.1.0-beta.3"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -565,7 +565,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 26.04 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.1.8-knfsd
+Kernel:       7.2.3-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

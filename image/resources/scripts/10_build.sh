@@ -12,8 +12,8 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 # pinned versions
-VERSION="1.1.0-beta.2"
-KERNEL="7.1.8"
+VERSION="1.1.0-beta.3"
+KERNEL="7.2.3"
 
 # identify architecture
 export ARCH=$(uname -m)
@@ -361,7 +361,7 @@ function install_cloudwatch_agent() (
 function install_golang() (
 	begin_command "installing golang"
 	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
-		-o go.tar.gz https://dl.google.com/go/go1.26.5.linux-${ARCH_ALT}.tar.gz
+		-o go.tar.gz https://dl.google.com/go/go1.27.1.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
 	tar -C /usr/local -xzf go.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"

@@ -70,7 +70,7 @@ Each invocation drives `go test` against the smoke-test Terraform in [`terraform
 
 * AWS credentials with the IAM policies described above.
 * [Terraform](https://www.terraform.io/) 1.2.9 (matches the dev container).
-* [Go 1.26](https://go.dev/) or higher.
+* [Go 1.27.1](https://go.dev/).
 * [GNU Make](https://www.gnu.org/software/make/).
 * OpenSSH client (`ssh`, `scp`), the [AWS CLI](https://docs.aws.amazon.com/cli/), and the [`session-manager-plugin`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (all preinstalled in the dev container).
 * A KNFSD proxy AMI ID supplied directly via `PROXY_AMI`. The test source/client AMIs are always resolved from SSM based on `ARCH`; see [`terraform/variables.tf`](terraform/variables.tf).

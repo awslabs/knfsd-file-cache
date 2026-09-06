@@ -77,8 +77,7 @@ func countConnectedClients(ctx context.Context) (connectionCounts, error) {
 	err := cmd.Run()
 
 	if err != nil {
-		var exit *exec.ExitError
-		if errors.As(err, &exit) {
+		if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 			err = fmt.Errorf("command terminated with exit code %d\n%s", exit.ExitCode(), stderr.String())
 		}
 		return connectionCounts{}, err

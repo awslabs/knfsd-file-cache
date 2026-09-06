@@ -332,8 +332,8 @@ func (s FSIDSource) nextFSID(ctx context.Context) (next int64, exists bool, err 
 //
 //	index 0: COUNTER update, 1: PATH# put, 2: FSID# put
 func classifyAllocateError(err error, path string) error {
-	var canceled *types.TransactionCanceledException
-	if !errors.As(err, &canceled) {
+	canceled, ok := errors.AsType[*types.TransactionCanceledException](err)
+	if !ok {
 		// Transport faults, throttling, TransactionConflictException, etc.
 		// are returned as-is for ShouldRetry to classify.
 		return err

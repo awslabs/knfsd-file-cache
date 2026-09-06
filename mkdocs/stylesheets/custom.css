@@ -64,7 +64,7 @@
   max-width: 62rem;
 }
 
-/* Cards built by the grid_cards hook can end with a list of related pages.
+/* Cards built by the cards hook can end with a list of related pages.
  * Render it as a flush-left stack of links rather than a bulleted list, so the
  * card reads as a small navigation block. A nested list inside a card item is
  * always a link list, so target it structurally rather than tagging the
@@ -96,6 +96,127 @@
 .md-typeset .grid > .card:focus-within,
 .md-typeset .grid > .card:hover {
   border-color: var(--md-default-fg-color--lightest);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * VIDEOS — click-to-play facades in a card grid
+ * ---------------------------------------------------------------------------
+ * Markup comes from the cards hook: a .video-card per video, holding a poster
+ * link that videos.js swaps for an iframe on click. The poster is authored as
+ * Markdown so MkDocs rewrites its relative path, which means python-markdown
+ * wraps it in a paragraph — hence the "> p" step in these selectors rather than
+ * a direct child element.
+ *
+ * The poster paragraph is the media frame, and the poster and the iframe are
+ * both stretched to fill it, so the swap causes no reflow. An iframe has fixed
+ * intrinsic dimensions, so it has to be told to fill its parent rather than
+ * being left to size itself. */
+
+/* Two columns, matching the 62rem cap used by the card grid above. Collapses to
+ * one column below 45rem, where a half-width video gets too small to read. */
+.md-typeset .grid.video-cards {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1.5em auto;
+  max-width: 62rem;
+}
+
+@media screen and (max-width: 45em) {
+  .md-typeset .grid.video-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.md-typeset .video-card {
+  margin: 0;
+  min-width: 0; /* let a grid child shrink below its content width */
+}
+
+/* The media frame: fixes the 16:9 box and clips the poster's rounded corners. */
+.md-typeset .video-card > p:first-child {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--md-border-radius);
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.md-typeset .video-card > p:first-child > a,
+.md-typeset .video-card > p:first-child > iframe {
+  border: 0;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+/* Material gives .md-typeset a a hover underline; suppress it on the poster so
+ * only the play badge and the zoom respond. */
+.md-typeset .video-card > p:first-child > a:hover {
+  border-bottom-color: transparent;
+}
+
+.md-typeset .video-card > p:first-child > a > img {
+  display: block;
+  height: 100%;
+  object-fit: cover; /* crop rather than letterbox a poster that is not 16:9 */
+  transition: transform 0.25s ease;
+  width: 100%;
+}
+
+/* Play badge: a rounded plate with a triangle cut into it, centred on the
+ * poster. Two pseudo-elements, so no extra markup and no image asset: ::before
+ * is the plate and ::after the white triangle over it. Only drawn once
+ * videos.js has claimed the card, so a reader without JavaScript is never
+ * promised inline playback that cannot happen. */
+.md-typeset .video-card--ready > p:first-child > a::before,
+.md-typeset .video-card--ready > p:first-child > a::after {
+  content: "";
+  height: 2.8rem;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4rem;
+}
+
+.md-typeset .video-card--ready > p:first-child > a::before {
+  background-color: rgb(0 0 0 / 65%);
+  border-radius: 0.6rem;
+  transition: background-color 0.25s ease;
+}
+
+.md-typeset .video-card--ready > p:first-child > a::after {
+  background-color: #ffffff;
+  clip-path: polygon(41% 32%, 41% 68%, 65% 50%);
+}
+
+.md-typeset .video-card--ready > p:first-child > a:hover::before,
+.md-typeset .video-card--ready > p:first-child > a:focus-visible::before {
+  background-color: #d91515; /* Cloudscape red, matching the danger accent */
+}
+
+.md-typeset .video-card--ready > p:first-child > a:hover > img {
+  transform: scale(1.03);
+}
+
+/* Keyboard focus must stay visible: the poster link is the play control. */
+.md-typeset .video-card--ready > p:first-child > a:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+
+/* Honour a reduced-motion preference: drop the poster zoom, keep the colour
+ * change so the badge still signals hover. */
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset .video-card > p:first-child > a > img {
+    transition: none;
+  }
+
+  .md-typeset .video-card--ready > p:first-child > a:hover > img {
+    transform: none;
+  }
 }
 
 

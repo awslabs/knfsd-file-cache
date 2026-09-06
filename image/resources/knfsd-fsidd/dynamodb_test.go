@@ -50,6 +50,12 @@ func connectTest(t *testing.T) FSIDSource {
 
 	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		o.BaseEndpoint = aws.String(testEndpoint)
+		// DynamoDB Local omits the x-amz-crc32 header on error responses. The
+		// SDK wraps every response body in a CRC32 validator regardless, so it
+		// compares the real checksum against a zero expectation and logs a
+		// spurious warning on each intentionally-failing request.
+		// BUG: https://github.com/aws/aws-sdk-go-v2/issues/3545
+		o.DisableValidateResponseChecksum = true
 	})
 
 	source := FSIDSource{

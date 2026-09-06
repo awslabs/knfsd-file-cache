@@ -26,7 +26,15 @@ function stop_dynamodb() {
 }
 
 function endpoint() {
-	local port
+	local port container ip
+
+	if [[ -f /.dockerenv ]]; then
+		container="$(compose ps -q dynamodb)"
+		ip="$(docker inspect "${container}" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+		printf 'http://%s:8000' "${ip}"
+		return
+	fi
+
 	port="$(compose port dynamodb 8000)"
 	# docker compose port outputs in the format ip:port, separate out the port
 	port="${port##*:}"

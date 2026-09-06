@@ -117,8 +117,11 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
     # Docker persistent volume: pre-commit cache: $HOME/.cache/pre-commit
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
 
+    # Docker persistent volume: $MYPY_CACHE_DIR: $HOME/.cache/mypy
+    "source=knfsd-dev-mypy-cache,target=/home/ubuntu/.cache/mypy,type=volume",
+
     # Docker persistent volume: saves all terminal/shell history from container for future use
-    "source=knfsd-dev-commandhistory,target=/home/ubuntu/.commandhistory,type=volume",
+    "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
 
     # Docker persistent volume: uv cache: $HOME/.cache/uv
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",

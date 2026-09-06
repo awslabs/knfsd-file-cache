@@ -27,6 +27,8 @@ locals {
   # determine zone ID based on whether we're creating a new zone or using existing
   r53_zone_id = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].zone_id : data.aws_route53_zone.existing[0].zone_id
   r53_fqdn    = var.DNS_NAME == "" ? aws_route53_zone.knfsd[0].name : var.DNS_NAME
+  # use the pre-existing Lambda role when provided, otherwise the one created by this module
+  lambda_static_ip_role_arn = var.EXISTING_LAMBDA_ROLE_ARN != "" ? var.EXISTING_LAMBDA_ROLE_ARN : aws_iam_role.lambda_static_ip[0].arn
 }
 
 # create zip file of the python script for the Lambda function
@@ -42,39 +44,6 @@ resource "aws_cloudwatch_log_group" "lambda_static_ip" {
   name              = "/knfsd/lambda/static-ip/${var.PROXY_BASENAME}"
   retention_in_days = 30
   tags              = local.tags
-}
-
-# Lambda function to manage secondary ENI on instances in an EC2 ASG
-resource "aws_lambda_function" "static_ip" {
-  depends_on    = [data.archive_file.static_ip_zip, aws_cloudwatch_log_group.lambda_static_ip]
-  function_name = "${var.PROXY_BASENAME}-static-ip"
-  description   = "Lambda Python function to manage secondary ENI on instances in an EC2 ASG"
-  role          = local.lambda_static_ip_role_arn
-  handler       = "static_ip.lambda_handler"
-  architectures = ["arm64"]
-  runtime       = "python3.14"
-  timeout       = 600
-  filename      = "${path.module}/resources/static_ip.zip"
-  # nosemgrep: aws-lambda-environment-unencrypted
-  environment {
-    variables = {
-      USER_AGENT     = "AWSSOLUTION/SO9129/${var.VERSION}"
-      VERSION        = var.VERSION
-      PROXY_BASENAME = var.PROXY_BASENAME
-      SUBNET         = var.SUBNET
-      R53_ZONE_ID    = local.r53_zone_id
-      R53_FQDN       = local.r53_fqdn
-    }
-  }
-  logging_config {
-    log_format = "Text"
-    log_group  = aws_cloudwatch_log_group.lambda_static_ip.name
-  }
-  tracing_config {
-    mode = "Active"
-  }
-  reserved_concurrent_executions = 1
-  tags                           = local.tags
 }
 
 # IAM role for the Lambda function (skipped when EXISTING_LAMBDA_ROLE_ARN is set)
@@ -94,11 +63,6 @@ resource "aws_iam_role" "lambda_static_ip" {
   })
   force_detach_policies = true
   tags                  = local.tags
-}
-
-locals {
-  # use the pre-existing Lambda role when provided, otherwise the one created by this module
-  lambda_static_ip_role_arn = var.EXISTING_LAMBDA_ROLE_ARN != "" ? var.EXISTING_LAMBDA_ROLE_ARN : aws_iam_role.lambda_static_ip[0].arn
 }
 
 # custom IAM policy for Lambda statc_ip function (skipped when EXISTING_LAMBDA_ROLE_ARN is set)
@@ -180,6 +144,44 @@ resource "aws_iam_role_policy_attachment" "lambda_static_ip" {
   count      = var.EXISTING_LAMBDA_ROLE_ARN == "" ? 1 : 0
   role       = aws_iam_role.lambda_static_ip[0].name
   policy_arn = aws_iam_policy.lambda_static_ip[0].arn
+}
+
+# Lambda function to manage secondary ENI on instances in an EC2 ASG
+resource "aws_lambda_function" "static_ip" {
+  function_name = "${var.PROXY_BASENAME}-static-ip"
+  description   = "Lambda Python function to manage secondary ENI on instances in an EC2 ASG"
+  role          = local.lambda_static_ip_role_arn
+  handler       = "static_ip.lambda_handler"
+  architectures = ["arm64"]
+  runtime       = "python3.14"
+  timeout       = 600
+  filename      = "${path.module}/resources/static_ip.zip"
+  # nosemgrep: aws-lambda-environment-unencrypted
+  environment {
+    variables = {
+      USER_AGENT     = "AWSSOLUTION/SO9129/${var.VERSION}"
+      VERSION        = var.VERSION
+      PROXY_BASENAME = var.PROXY_BASENAME
+      SUBNET         = var.SUBNET
+      R53_ZONE_ID    = local.r53_zone_id
+      R53_FQDN       = local.r53_fqdn
+    }
+  }
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.lambda_static_ip.name
+  }
+  tracing_config {
+    mode = "Active"
+  }
+  reserved_concurrent_executions = 1
+  tags                           = local.tags
+
+  depends_on = [
+    data.archive_file.static_ip_zip,
+    aws_cloudwatch_log_group.lambda_static_ip,
+    aws_iam_role_policy_attachment.lambda_static_ip,
+  ]
 }
 
 # LAUNCHING: EventBridge Rule for launching instances

@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.2"
+VERSION="1.1.0-beta.3"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -149,45 +149,45 @@ KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.70
+KNFSD_BOTO3_VERSION=1.43.89
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.10
+KNFSD_CHECKOV_VERSION=3.3.16
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-KNFSD_EDITORCONFIG_VERSION=3.11.1
+KNFSD_EDITORCONFIG_VERSION=4.0.1
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.12.2
+KNFSD_GOLANGCI_LINT_VERSION=2.13.2
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.26.5
+KNFSD_GOLANG_VERSION=1.27.1
 # https://github.com/securego/gosec/releases
-KNFSD_GOSEC_VERSION=2.28.0
+KNFSD_GOSEC_VERSION=2.29.0
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=2.3.0
+KNFSD_MYPY_VERSION=2.3.1
 # https://github.com/hashicorp/packer/releases
 KNFSD_PACKER_VERSION=1.16.0
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
-KNFSD_PYLINT_VERSION=4.0.7
+KNFSD_PYLINT_VERSION=4.0.8
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.172.0
+KNFSD_SEMGREP_VERSION=1.176.1
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
-KNFSD_SHFMT_VERSION=3.13.1
+KNFSD_SHFMT_VERSION=3.14.0
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.73.0
+KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.12.3
+KNFSD_UV_VERSION=0.12.10
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -230,11 +230,10 @@ curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BA
 	&& rm -rf bats-core.zip bats-core-${KNFSD_BATS_CORE_VERSION}
 
 ## install editorconfig-checker
-curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/ec-linux-${BUILDARCH}.tar.gz" \
-	-o ec.tar.gz \
-	&& sudo tar -xzf ec.tar.gz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${BUILDARCH}" \
-	&& sudo mv "/usr/local/bin/ec-linux-${BUILDARCH}" /usr/local/bin/editorconfig-checker \
-	&& sudo chmod +x /usr/local/bin/editorconfig-checker && rm ec.tar.gz
+curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/editorconfig-checker-linux-${BUILDARCH}.tar.gz" \
+	-o editorconfig-checker.tar.gz \
+	&& sudo tar -xzf editorconfig-checker.tar.gz -C /usr/local/bin editorconfig-checker \
+	&& sudo chmod +x /usr/local/bin/editorconfig-checker && rm editorconfig-checker.tar.gz
 
 ## install shfmt
 sudo curl -fsSL "https://github.com/mvdan/sh/releases/download/v${KNFSD_SHFMT_VERSION}/shfmt_v${KNFSD_SHFMT_VERSION}_linux_${BUILDARCH}" \
@@ -273,6 +272,10 @@ echo 'export GOLANGCI_LINT_CACHE=\$HOME/.cache/golangci-lint' >> ~/.bashrc
 ## create pre-commit cache directory
 mkdir -p ~/.cache/pre-commit
 echo 'export PRE_COMMIT_HOME=\$HOME/.cache/pre-commit' >> ~/.bashrc
+
+## create mypy cache directory
+mkdir -p ~/.cache/mypy
+echo 'export MYPY_CACHE_DIR=\$HOME/.cache/mypy' >> ~/.bashrc
 
 ## create terraform plugin-cache directory
 mkdir -p ~/.terraform.d/plugin-cache

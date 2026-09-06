@@ -44,7 +44,7 @@ The [fsx-zfs-fanout-loadbalancer](../../examples/fsx-zfs-fanout-loadbalancer/REA
 
 ```terraform
 module "knfsd_fanout" {
-  source                = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
+  source                = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.3"
   SUBNET                = var.SUBNET
   TRAFFIC_MODE          = "loadbalancer"
   PROXY_AMI             = var.PROXY_AMI
@@ -59,7 +59,7 @@ module "knfsd_fanout" {
 }
 
 module "knfsd_cluster" {
-  source                   = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.2"
+  source                   = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.3"
   SUBNET                   = var.SUBNET
   TRAFFIC_MODE             = "loadbalancer"
   PROXY_AMI                = var.PROXY_AMI

@@ -1,5 +1,28 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.3 (September 7, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
+
+> BREAKING CHANGES: Ensure `.devcontainer/prod` environment is rebuilt if used for production.
+
+* Packer: Updated to Linux kernel v7.2.3-knfsd.
+* Packer: Updated to `amzn/amzn-drivers` ENA driver v2.17.3 (required for Linux kernel v7.2).
+* Packer: The `reboot` provisioner now sets `skip_clean` and a 1m `timeout`, and `pause_before` on the following provisioner as per Packer documentation for [handling reboots](https://developer.hashicorp.com/packer/docs/provisioners/shell#handling-reboots).
+* Fixed intermittent `mypy` `Bus error` (SIGBUS, exit code 135) failures in the `dev` container that caused `make lint` and `make pc` to fail on alternating runs. `mypy` stores its incremental cache in sqlite databases using WAL journal mode, which memory maps a `*-shm` file, and that mapping faults on the `virtiofs` workspace bind mount. The `dev` container now sets `MYPY_CACHE_DIR` to a `knfsd-dev-mypy-cache` container volume so the cache is no longer written to the workspace. The `setup-remote-vm.sh` Remote-SSH user-data script exports the same variable for consistency.
+* Disabled IPv6 in the `dev` and `prod` devcontainers.
+* Set `DisableValidateResponseChecksum` on the `knfsd-fsidd` DynamoDB test client to suppress spurious `WARN failed to close HTTP response body` messages, as `DynamoDB Local` omits the `x-amz-crc32` header on error responses and the AWS SDK for Go v2 validates the body against a zero checksum ([aws/aws-sdk-go-v2#3545](https://github.com/aws/aws-sdk-go-v2/issues/3545)).
+* Added `aws_iam_role_policy_attachment.lambda_static_ip` to the `depends_on` of the `static_ip` Lambda function in the `dns_round_robin` module, so the IAM policy is attached to the Lambda role before the function is created. Previously the function and the policy attachment were created in parallel, leaving a window where EventBridge could invoke the function before its role had any permissions.
+* Reliability improvements to `update-pinned-versions.sh` script.
+* Replaced the `errors.As` calls in `knfsd-fsidd` and `knfsd-metrics-agent` with the generic `errors.AsType` added in Golang v1.26, resolving the new `golangci-lint` `modernize` findings.
+* Removed the redundant embedded field types from the `nfsStatsGroup` and `Config` struct literals in `knfsd-metrics-agent`, resolving the new `golangci-lint` `modernize` `embedlit` findings enabled by Golang v1.27.
+* Updated to Golang v1.27.1.
+* Updated to Terraform `aws` provider v6.63.0.
+* Updated GitHub CodeQL actions.
+* Minor Golang package updates.
+
 ## v1.1.0-beta.2 (August 13, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer: `v1.1.0-beta.2` or later AMI is required for the new DynamoDB FSID database.
@@ -23,7 +46,7 @@
 * The `fsid.sql.query.*` metrics were renamed to `fsid.db.query.*` and the CloudWatch `metrics` dashboard's RDS section was replaced with a DynamoDB section.
 * `DynamoDB Local` Docker container is now used for the FSID database in the `smoke-tests` local `./image/smoke-tests/test.sh` harness and GitLab CI instead of PostgreSQL.
 * Updated KNFSD Monitoring Dashboard to `v15`.
-* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the dev-container host architecture.
+* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the devcontainer host architecture.
 * Added an optional [VPC Endpoints](deployment/docs/vpc-endpoints.md) Terraform module ([deployment/vpc-endpoints](deployment/vpc-endpoints/README.md)) for deploying the AWS PrivateLink interface endpoints and DynamoDB gateway endpoint required to run KNFSD in a private subnet without internet connectivity.
 * Added `EXISTING_SECURITY_GROUP_ID` and `EXISTING_INSTANCE_PROFILE_NAME` variables to the `terraform-module-knfsd` module (both default `""`). When set, the module skips creating the ASG security group (and all ingress/egress rules) and/or the IAM role, instance profile, and associated policies, using the pre-created resources instead. This supports deployment under restrictive IAM roles that deny `ec2:CreateSecurityGroup` and/or `iam:CreateRole`/`iam:CreatePolicy`. A single `EXISTING_SECURITY_GROUP_ID` serves both the ASG and the Network Load Balancer in `loadbalancer` mode.
 * Added `EXISTING_LAMBDA_ROLE_ARN` variable to the `dns_round_robin` module (default `""`) to reuse a pre-created IAM role for the `static_ip` Lambda function instead of creating one.
@@ -64,7 +87,7 @@
 * Fixed `tflint` inheritance issue in GitLab CI and `Makefile` configuration by setting `TFLINT_CONFIG_FILE` environment variable.
 * Fixed typo in `terraform-module-knfsd` `README.md` and `variables.tf`. `TRAFFIC_MODE` is no longer a required (now optional) Terraform variable.
 * Switched `devcontainer` default architecture from `amd64` to `arm64`. See [docs/developer.md](docs/developer.md) if you need to force `amd64` instead.
-* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the dev-container host architecture.
+* Fixed the `smoke-tests` `build-remote` target to cross-compile the `remote.test` binary for the client architecture (Terraform `ARCH`, default `amd64`) via a new `TARGET_ARCH` variable, decoupling it from the devcontainer host architecture.
 * Added GitLab CI configuration for running `smoke-tests` CI jobs.
 * Added `TRIVY_DISABLE_VEX_NOTICE` environment variable to disable VEX notices from Trivy security scans.
 * Updated to Terraform `aws` provider v6.55.0.

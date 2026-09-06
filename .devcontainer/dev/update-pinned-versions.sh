@@ -11,6 +11,8 @@
 ## Pre-release versions (rc, beta, dev and similar) are never suggested, and nor
 ## are the tags a repo flags upstream as a pre-release or a draft, which can look
 ## stable, such as a "v3.9.0" tagged while "v3.8.0" is still the latest release.
+## A pin listed in PATCH_ONLY only follows the release series it is already on, so
+## the patch releases are applied while a newer series is reported and left alone.
 ## Set GITHUB_COM_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
 
 ## NETWORK: only these hosts are contacted, and nothing here runs the "go" binary
@@ -92,11 +94,38 @@ NOTIFY_ONLY=(
 	"KNFSD_MKDOCS_VERSION"
 )
 
+## pins that only follow the release series of the current pin, so the patch
+## releases within that series are applied as usual, while a newer series is only
+## reported and never written, not even by --write
+## the series is the pin without its final component, so a pin of "1.26.6" follows
+## "1.26.7" and "1.26.8" while "1.27.1" is only mentioned; moving the pin to the
+## new series by hand is all that is needed to follow that series from then on
+## Go is the case this exists for: a new "1.N" release changes the language
+## toolchain across the whole repo, so it is upgraded deliberately, whereas a
+## "1.N.P" release is a bug fix and security roll up that is always wanted
+PATCH_ONLY=(
+	"KNFSD_GOLANG_VERSION"
+)
+
 ## pins that repeat a version as a literal, with no variable to match on, as
 ## "VARIABLE|FILE|LITERAL_PREFIX"; the version following the prefix is kept in
 ## step with the variable
+## the prefix is a literal, matched anywhere on the line rather than only at its
+## start, so a version inside an indented command is reached too; every line of
+## the file carrying the prefix is rewritten, so one file can appear more than
+## once when it repeats the version behind different prefixes
+## the Go release is repeated as a download URL in the AMI build script and twice
+## in the client metrics guide, and those drifted to 1.26.6 while the pin was on
+## 1.26.8, which is what these entries prevent; the prerequisite prose in the
+## client metrics guide and in the smoke tests README names the full release
+## rather than a release series, so it is kept in step here as well
 EXTRA_PINS=(
 	"KNFSD_BATS_CORE_VERSION|image/resources/startup/tests/Dockerfile|FROM bats/bats:"
+	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|[Go "
+	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|https://go.dev/dl/go"
+	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|-xzf go"
+	"KNFSD_GOLANG_VERSION|image/resources/scripts/10_build.sh|https://dl.google.com/go/go"
+	"KNFSD_GOLANG_VERSION|image/smoke-tests/README.md|[Go "
 )
 
 ## a stable version is 2 to 4 dot separated numbers, with an optional "v" prefix,
@@ -109,13 +138,21 @@ GITHUB_API="https://api.github.com"
 PYPI_API="https://pypi.org/pypi"
 DOCKERHUB_API="https://hub.docker.com/v2/repositories"
 ECR_PUBLIC="https://public.ecr.aws"
-GODEV_DL="https://go.dev/dl/?mode=json"
+# "include=all" returns the whole release history rather than only the two current
+# release series, so the series a PATCH_ONLY pin sits on stays visible once it is
+# no longer one of the two newest
+GODEV_DL="https://go.dev/dl/?mode=json&include=all"
 # fallback for the Go release when "go.dev" is unreachable; the tags are read with
 # "git ls-remote" rather than the API, as the "golang/go" tag list is far longer
 # than one API page and the API does not return it in version order
 GOLANG_REPO="https://github.com/golang/go.git"
 # tags requested per page; the newest tags are returned first
 TAGS_PER_PAGE=100
+# Docker Hub caps a page at 100 tags however many are asked for, and orders them by
+# the last update rather than by version, so the pages are followed until enough
+# plain version tags are collected, or the page cap is reached
+DOCKERHUB_MAX_PAGES=10
+DOCKERHUB_MIN_TAGS=10
 
 # never consult the Go module proxy, which is blocked on the corporate network;
 # nothing here runs the "go" binary, so this is belt and braces for any future
@@ -133,6 +170,8 @@ function usage() {
 	printf '    -w/--write: rewrite the outdated pins in place\n'
 	printf '    VARIABLE:   limit the run to one KNFSD_*_VERSION variable\n'
 	printf '    Example: ./update-pinned-versions.sh --write KNFSD_UV_VERSION\n'
+	printf '    A PATCH_ONLY pin follows only the release series it is on; a newer\n'
+	printf '    series is reported and upgraded by hand\n'
 }
 
 # check for help flags
@@ -192,12 +231,28 @@ function version_gt() {
 	[[ $1 != "$2" && $(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1) == "$1" ]]
 }
 
-# print the highest stable version from a list of versions on stdin
-function highest_stable() {
-	grep -E "${STABLE_VERSION}" | sed -E 's/^v//' | sort -V | tail -1
+# print the stable versions from a list of versions on stdin, lowest first, so the
+# caller can take the last line for the latest, or filter to one release series
+function stable_versions() {
+	grep -E "${STABLE_VERSION}" | sed -E 's/^v//' | sort -uV
 }
 
-# print the latest stable release of a GitHub repo, without the "v" prefix
+# print the release series of a version, which is the version without its final
+# component, so "1.26.6" gives "1.26" and "1.2.3.4" gives "1.2.3"
+function version_series() {
+	printf '%s\n' "${1%.*}"
+}
+
+# print the highest version of the given series from a list of versions on stdin,
+# where a version is in the series when it is the series plus one more component,
+# so "1.26" selects "1.26.8" but neither "1.26" nor "1.27.1"
+# nothing is printed when the series has no such version
+function highest_in_series() {
+	local series=${1//./\\.}
+	grep -E "^${series}\.[0-9]+$" | sort -V | tail -1
+}
+
+# print the stable releases of a GitHub repo, lowest first, without the "v" prefix
 # both the tags and the published releases are checked, then the highest is taken,
 # as neither is reliable on its own: a repo can tag a version it never publishes as
 # a release ("golang/vuln" tags v1.6.0 while its latest release is v1.1.4), and a
@@ -237,39 +292,61 @@ function resolve_github() {
 	if [[ -n ${prefix} ]]; then
 		# a prefixed repo publishes several modules from one tag namespace, so
 		# only the tags carrying the prefix of the wanted module are considered
-		grep -E "^${prefix}" <<< "${candidates}" | sed -E "s#^${prefix}##" | highest_stable
+		grep -E "^${prefix}" <<< "${candidates}" | sed -E "s#^${prefix}##" | stable_versions
 		return 0
 	fi
 
-	highest_stable <<< "${candidates}"
+	stable_versions <<< "${candidates}"
 }
 
-# print the latest stable, non yanked release of a PyPI package
+# print the stable, non yanked releases of a PyPI package, lowest first
 function resolve_pypi() {
 	local package=$1
 	curl "${CURL_ARGS[@]}" "${PYPI_API}/${package}/json" \
 		| jq -r '.releases | to_entries[]
 			| select([.value[] | select(.yanked == false)] | length > 0)
 			| .key' \
-		| highest_stable
+		| stable_versions
 }
 
-# print the highest stable tag of a Docker Hub repo, without the "v" prefix
+# print the stable tags of a Docker Hub repo, lowest first, without the "v" prefix
 # a Docker Hub repo also carries floating tags such as "3.14" alongside the full
 # "3.14.6" tag, so only the tags with the same number of parts as the current pin
 # are considered, which keeps a floating tag from winning
 # a repo may publish its tags with a "v" prefix, and may also carry variant tags
 # such as "v2.1.20-debian", which are skipped as the pin is the plain tag
+# the tags come back in "last updated" order, not in version order, and a page is
+# capped at 100 tags, so a busy repo can fill a whole page with the variant tags of
+# a single release and leave no plain tag on it at all: "library/python" carries
+# close to 4000 tags and puts the plain "3.14.7" tag on page 2, behind a page of
+# "-slim", "-alpine" and "-windowsservercore" variants. So the pages are followed
+# until enough plain tags are collected, which costs one request for a small repo
 function resolve_dockerhub() {
 	local repo=$1 parts=$2
-	curl "${CURL_ARGS[@]}" "${DOCKERHUB_API}/${repo}/tags?page_size=${TAGS_PER_PAGE}" \
-		| jq -r '.results[].name // empty' \
-		| grep -E "^v?[0-9]+(\.[0-9]+){$((parts - 1))}$" \
-		| sed -E 's/^v//' \
-		| sort -V | tail -1
+	local url="${DOCKERHUB_API}/${repo}/tags?page_size=${TAGS_PER_PAGE}"
+	local page=0 response='' matched='' collected=''
+
+	while [[ -n ${url} ]] && ((page < DOCKERHUB_MAX_PAGES)); do
+		page=$((page + 1))
+		response=$(curl "${CURL_ARGS[@]}" "${url}") || return 1
+
+		matched=$(jq -r '.results[].name // empty' <<< "${response}" \
+			| grep -E "^v?[0-9]+(\.[0-9]+){$((parts - 1))}$") || matched=''
+		if [[ -n ${matched} ]]; then
+			collected=$(printf '%s\n%s' "${collected}" "${matched}")
+		fi
+
+		if (($(grep -c . <<< "${collected}") >= DOCKERHUB_MIN_TAGS)); then
+			break
+		fi
+
+		url=$(jq -r '.next // empty' <<< "${response}") || url=''
+	done
+
+	stable_versions <<< "${collected}"
 }
 
-# print the highest stable tag of a public Amazon ECR repo
+# print the stable tags of a public Amazon ECR repo, lowest first
 function resolve_ecr_public() {
 	local repo=$1 parts=$2
 	local token=''
@@ -283,22 +360,22 @@ function resolve_ecr_public() {
 		"${ECR_PUBLIC}/v2/${repo}/tags/list" \
 		| jq -r '.tags[] // empty' \
 		| grep -E "^[0-9]+(\.[0-9]+){$((parts - 1))}$" \
-		| sort -V | tail -1
+		| sort -uV
 }
 
-# print the current stable Go release, without the "go" prefix
+# print the stable Go releases, lowest first, without the "go" prefix
 # "go.dev" is a plain HTTPS JSON endpoint, not the blocked Go module proxy, but if
 # it cannot be reached the tags are read directly from the GitHub repo instead
 function resolve_godev() {
-	local latest=''
+	local versions=''
 
-	latest=$(curl "${CURL_ARGS[@]}" "${GODEV_DL}" 2> /dev/null \
+	versions=$(curl "${CURL_ARGS[@]}" "${GODEV_DL}" 2> /dev/null \
 		| jq -r '.[] | select(.stable == true) | .version // empty' \
 		| sed -E 's/^go//' \
-		| highest_stable) || latest=''
+		| stable_versions) || versions=''
 
-	if [[ -n ${latest} ]]; then
-		printf '%s\n' "${latest}"
+	if [[ -n ${versions} ]]; then
+		printf '%s\n' "${versions}"
 		return 0
 	fi
 
@@ -306,11 +383,11 @@ function resolve_godev() {
 		| sed -E 's#.*refs/tags/##' \
 		| grep -E '^go[0-9]+(\.[0-9]+){1,3}$' \
 		| sed -E 's/^go//' \
-		| sort -V | tail -1
+		| stable_versions
 }
 
-# print the latest stable version for the given source and reference
-function resolve_latest() {
+# print the stable versions for the given source and reference, lowest first
+function resolve_versions() {
 	local source=$1 reference=$2 prefix=$3 parts=$4
 
 	case ${source} in
@@ -343,15 +420,31 @@ function find_pins() {
 		| sed -E "s#^([^:]+):([0-9]+):.*${variable}[[:space:]]*[:=][[:space:]]*\"?([0-9]+(\.[0-9]+)+)\"?.*#\1:\2:\3#"
 }
 
+# escape the ERE metacharacters in a literal so it can be interpolated into a
+# "grep -E" or "sed -E" pattern, including "#", which is the sed delimiter used
+# below; without this the dots in a prefix such as "https://dl.google.com/go/go"
+# would be wildcards that also match an unrelated lookalike host
+function ere_escape() {
+	sed -E 's/[][(){}.*+?^$|\#]/\\&/g' <<< "$1"
+}
+
 # print every tracked file line that repeats a version after a literal prefix
+# the prefix is matched anywhere on the line, not only at its start, so a version
+# inside an indented command, such as a "curl" in a fenced code block, is found
 function find_literal_pins() {
 	local file=$1 prefix=$2
-	git -C "${REPO_ROOT}" grep -nE "^${prefix}[0-9]+(\.[0-9]+)+" -- "${file}" \
-		| sed -E "s#^([^:]+):([0-9]+):${prefix}([0-9]+(\.[0-9]+)+).*#\1:\2:\3#"
+	local escaped
+	escaped=$(ere_escape "${prefix}")
+	git -C "${REPO_ROOT}" grep -nE -e "${escaped}[0-9]+(\.[0-9]+)+" -- "${file}" \
+		| sed -E "s#^([^:]+):([0-9]+):.*${escaped}([0-9]+(\.[0-9]+)+).*#\1:\2:\3#"
 }
 
 # replace the version on a single line, leaving the rest of the line untouched so
 # the "# https://..." discoverability comments survive (RULE 2)
+# the version must not be flanked by a digit or a dot, so a pin of "1.27" is never
+# matched inside "1.27.1"; a trailing dot is allowed only when a non-digit follows
+# it, which reaches the version in a Go tarball name such as "go1.27.1.linux-amd64"
+# while still refusing the "1.27.1" inside a longer "1.27.1.4"
 function replace_version_on_line() {
 	local file=$1 line=$2 old=$3 new=$4
 	local path="${REPO_ROOT}/${file}"
@@ -360,7 +453,7 @@ function replace_version_on_line() {
 	local mode
 	# "sed -i" writes a new inode, which can drop the executable bit
 	mode=$(stat -c '%a' "${path}")
-	sed -i -E "${line}s#(^|[^0-9.])${escaped}([^0-9.]|$)#\1${new}\2#g" "${path}"
+	sed -i -E "${line}s#(^|[^0-9.])${escaped}([^0-9.]|\.[^0-9]|\$)#\1${new}\2#g" "${path}"
 	chmod "${mode}" "${path}"
 }
 
@@ -407,6 +500,7 @@ updates=0
 drifted=0
 failures=0
 frozen_errors=0
+series_available=0
 # every variable this script knows about, used to reject an unknown VARIABLE
 KNOWN_VARIABLES=()
 
@@ -460,15 +554,43 @@ for entry in "${VERSION_SOURCES[@]}"; do
 
 	# the lowest pin is the one to compare, so a partial update is still caught
 	current=${found[0]}
+	# the highest pin is the floor for any rewrite, so converging a variable that is
+	# pinned inconsistently moves the stale copies up to meet the rest, rather than
+	# dragging the rest back down to the stale copy
+	highest=${found[-1]}
 
-	# match the shape of the current pin so a floating registry tag cannot win
-	parts=$(awk -F. '{ print NF }' <<< "${current}")
+	# match the shape of the highest pin so a floating registry tag cannot win
+	parts=$(awk -F. '{ print NF }' <<< "${highest}")
 
-	if ! latest=$(resolve_latest "${source}" "${reference}" "${prefix}" "${parts}") \
-		|| [[ -z ${latest} ]]; then
+	if ! resolved=$(resolve_versions "${source}" "${reference}" "${prefix}" "${parts}") \
+		|| [[ -z ${resolved} ]]; then
 		failures=$((failures + 1))
 		echo -e "${SHELL_RED}✗ ${variable} could not resolve the latest version from ${source} (${reference})${SHELL_DEFAULT}"
 		continue
+	fi
+
+	# the versions come back lowest first, so the last is the latest upstream
+	latest=$(tail -1 <<< "${resolved}")
+
+	## RULE 4: a PATCH_ONLY pin only follows its own release series, so the target
+	## is the highest version of that series, and a newer series is only mentioned
+	series=''
+	series_latest=''
+	if in_list "${variable}" "${PATCH_ONLY[@]}" && ((parts > 1)); then
+		# the series comes from the highest pin, so one stale copy left behind on an
+		# older series cannot pull the whole repo back onto that older series
+		series=$(version_series "${highest}")
+		series_latest=$(highest_in_series "${series}" <<< "${resolved}") || series_latest=''
+		# upstream no longer lists the pinned series at all, so there is nothing
+		# to compare against and any move off it has to be a deliberate one
+		target=${series_latest:-${highest}}
+	else
+		target=${latest}
+	fi
+
+	## a rewrite must never move a pin backwards, whatever the series lookup said
+	if version_gt "${highest}" "${target}"; then
+		target=${highest}
 	fi
 
 	# a pin spread over several versions needs a rewrite whatever upstream says
@@ -477,19 +599,25 @@ for entry in "${VERSION_SOURCES[@]}"; do
 		echo -e "${SHELL_YELLOW}! ${variable} is pinned inconsistently: ${found[*]}${SHELL_DEFAULT}"
 	fi
 
-	if ! version_gt "${latest}" "${current}"; then
+	if ! version_gt "${target}" "${current}"; then
 		echo -e "✓ ${variable} ${SHELL_GREEN}${current}${SHELL_DEFAULT} is current"
 	elif in_list "${variable}" "${NOTIFY_ONLY[@]}"; then
 		## RULE 3: report the new release, but never rewrite the pin
-		echo -e "${SHELL_BLUE}i ${variable} ${current} -> ${latest} available, pin kept deliberately${SHELL_DEFAULT}"
+		echo -e "${SHELL_BLUE}i ${variable} ${current} -> ${target} available, pin kept deliberately${SHELL_DEFAULT}"
 		continue
 	else
 		updates=$((updates + 1))
-		echo -e "${SHELL_YELLOW}• ${variable} ${current} -> ${latest}${SHELL_DEFAULT}"
+		echo -e "${SHELL_YELLOW}• ${variable} ${current} -> ${target}${SHELL_DEFAULT}"
 	fi
 
-	if ${WRITE_MODE} && (version_gt "${latest}" "${current}" || ((${#found[@]} > 1))); then
-		apply_version "${variable}" "${latest}"
+	# mention the newer series a PATCH_ONLY pin is deliberately not following
+	if [[ -n ${series} ]] && version_gt "${latest}" "${target}"; then
+		series_available=$((series_available + 1))
+		echo -e "${SHELL_BLUE}i ${variable} ${latest} is available, outside the pinned ${series}.x series; upgrade it by hand${SHELL_DEFAULT}"
+	fi
+
+	if ${WRITE_MODE} && (version_gt "${target}" "${current}" || ((${#found[@]} > 1)) ); then
+		apply_version "${variable}" "${target}"
 	fi
 done
 
@@ -508,6 +636,9 @@ if ((frozen_errors > 0)); then
 fi
 if ((drifted > 0)); then
 	echo -e "${SHELL_YELLOW}${drifted} variable(s) are pinned to more than one version${SHELL_DEFAULT}"
+fi
+if ((series_available > 0)); then
+	echo -e "${SHELL_BLUE}${series_available} variable(s) have a newer release series available; upgrade by hand${SHELL_DEFAULT}"
 fi
 
 if ${WRITE_MODE}; then

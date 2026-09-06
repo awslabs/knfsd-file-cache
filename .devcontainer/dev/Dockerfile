@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-beta.2"
+ARG VERSION="1.1.0-beta.3"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -136,23 +136,23 @@ ARG KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.70
+ARG KNFSD_BOTO3_VERSION=1.43.89
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.10
+ARG KNFSD_CHECKOV_VERSION=3.3.16
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/go-delve/delve/tags
 ARG KNFSD_DLV_VERSION=1.27.1
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=3.11.1
+ARG KNFSD_EDITORCONFIG_VERSION=4.0.1
 # https://github.com/golangci/golangci-lint/releases
-ARG KNFSD_GOLANGCI_LINT_VERSION=2.12.2
+ARG KNFSD_GOLANGCI_LINT_VERSION=2.13.2
 # https://go.dev/dl/
-ARG KNFSD_GOLANG_VERSION=1.26.5
+ARG KNFSD_GOLANG_VERSION=1.27.1
 # https://pkg.go.dev/golang.org/x/tools/gopls
 ARG KNFSD_GOPLS_VERSION=0.23.0
 # https://github.com/securego/gosec/releases
-ARG KNFSD_GOSEC_VERSION=2.28.0
+ARG KNFSD_GOSEC_VERSION=2.29.0
 # https://github.com/iann0036/iamlive/releases
 ARG KNFSD_IAMLIVE_VERSION=1.1.28
 # https://github.com/squidfunk/mkdocs-material/releases
@@ -162,31 +162,31 @@ ARG KNFSD_MKDOCS_VERSION=1.6.1
 # https://github.com/oprypin/mkdocs-same-dir/tags
 ARG KNFSD_MKDOCS_SAME_DIR_VERSION=0.1.5
 # https://github.com/python/mypy/tags
-ARG KNFSD_MYPY_VERSION=2.3.0
+ARG KNFSD_MYPY_VERSION=2.3.1
 # https://github.com/hashicorp/packer/releases
 ARG KNFSD_PACKER_VERSION=1.16.0
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
-ARG KNFSD_PYLINT_VERSION=4.0.7
+ARG KNFSD_PYLINT_VERSION=4.0.8
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.172.0
+ARG KNFSD_SEMGREP_VERSION=1.176.1
 # https://github.com/aws/session-manager-plugin/tags
 ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
-ARG KNFSD_SHFMT_VERSION=3.13.1
+ARG KNFSD_SHFMT_VERSION=3.14.0
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 ARG KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
-ARG KNFSD_TRIVY_VERSION=0.73.0
+ARG KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.12.3
+ARG KNFSD_UV_VERSION=0.12.10
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -228,6 +228,10 @@ ENV PATH="$PATH:/home/${USERNAME}/go/bin"
 RUN mkdir -p "/home/${USERNAME}/.cache/pre-commit"
 ENV PRE_COMMIT_HOME="/home/${USERNAME}/.cache/pre-commit"
 
+## create mypy cache directory
+RUN mkdir -p "/home/${USERNAME}/.cache/mypy"
+ENV MYPY_CACHE_DIR="/home/${USERNAME}/.cache/mypy"
+
 ## change current working directory
 WORKDIR /tmp
 
@@ -263,11 +267,10 @@ RUN curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFS
     && rm -rf bats-core.zip bats-core-${KNFSD_BATS_CORE_VERSION}
 
 ## install editorconfig-checker
-RUN curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/ec-linux-${BUILDARCH}.tar.gz" \
-    -o ec.tar.gz \
-    && sudo tar -xzf ec.tar.gz --strip-components=1 -C /usr/local/bin "bin/ec-linux-${BUILDARCH}" \
-    && sudo mv "/usr/local/bin/ec-linux-${BUILDARCH}" /usr/local/bin/editorconfig-checker \
-    && sudo chmod +x /usr/local/bin/editorconfig-checker && rm ec.tar.gz
+RUN curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${KNFSD_EDITORCONFIG_VERSION}/editorconfig-checker-linux-${BUILDARCH}.tar.gz" \
+    -o editorconfig-checker.tar.gz \
+    && sudo tar -xzf editorconfig-checker.tar.gz -C /usr/local/bin editorconfig-checker \
+    && sudo chmod +x /usr/local/bin/editorconfig-checker && rm editorconfig-checker.tar.gz
 
 ## install shfmt
 RUN sudo curl -fsSL "https://github.com/mvdan/sh/releases/download/v${KNFSD_SHFMT_VERSION}/shfmt_v${KNFSD_SHFMT_VERSION}_linux_${BUILDARCH}" \

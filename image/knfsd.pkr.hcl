@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-beta.2"
+  version       = "1.1.0-beta.3"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -436,7 +436,8 @@ build {
     execute_command   = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline            = ["reboot"]
     expect_disconnect = true
-    pause_after       = "30s"
+    skip_clean        = true
+    timeout           = "1m"
   }
 
   provisioner "shell" {
@@ -445,6 +446,7 @@ build {
       "mount -t tmpfs -o size=${local.build_fs_size}G tmpfs /mnt/build",
       "chown ubuntu:ubuntu /mnt/build"
     ]
+    pause_before        = "30s"
     start_retry_timeout = "10m"
   }
 

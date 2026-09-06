@@ -150,8 +150,7 @@ func ShouldRetry(err error) bool {
 		return true
 	}
 
-	var apiErr smithy.APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[smithy.APIError](err); ok {
 		_, retry := retryableErrorCodes[apiErr.ErrorCode()]
 		return retry
 	}

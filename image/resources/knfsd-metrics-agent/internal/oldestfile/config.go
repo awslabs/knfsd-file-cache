@@ -25,9 +25,7 @@ type Config struct {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		ControllerConfig: scraperhelper.ControllerConfig{
-			CollectionInterval: 10 * time.Minute,
-		},
+		CollectionInterval:   10 * time.Minute,
 		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		CachePath:            "/var/cache/fscache/cache",
 	}

@@ -83,8 +83,7 @@ func (s *nfsdScraper) scrapeThreadCount(ctx context.Context, now pcommon.Timesta
 	err := cmd.Run()
 
 	if err != nil {
-		var exit *exec.ExitError
-		if errors.As(err, &exit) {
+		if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 			return fmt.Errorf("pgrep terminated with exit code %d\n%s", exit.ExitCode(), stderr.String())
 		}
 		return fmt.Errorf("failed to run pgrep: %w", err)

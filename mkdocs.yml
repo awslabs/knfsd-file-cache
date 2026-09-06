@@ -26,13 +26,20 @@ exclude_docs: |
 # because docs_dir is the repo root, so pages legitimately link to such files
 # with paths like ../Makefile. The hook uses the !ENV repo_url (per-platform,
 # nothing hard-coded); on local `mkdocs serve` (no repo_url) links are left as-is.
+#
+# cards.py upgrades portable Markdown (a bullet list of links, a bullet list of
+# linked video thumbnails) into the richer HTML that Material's card grids and
+# click-to-play video facades need, both of which GitHub/GitLab would strip.
+# Registered after repo_links.py so link rewriting happens while the content is
+# still a plain list.
 hooks:
   - mkdocs/hooks/repo_links.py
   - mkdocs/hooks/copyright_year.py
-  - mkdocs/hooks/grid_cards.py
+  - mkdocs/hooks/cards.py
 
 watch:
   - mkdocs/hooks
+  - mkdocs/javascripts
   - mkdocs/stylesheets
 
 validation:
@@ -77,6 +84,9 @@ theme:
 extra_css:
   - mkdocs/stylesheets/cloudscape-tokens.css
   - mkdocs/stylesheets/custom.css
+
+extra_javascript:
+  - mkdocs/javascripts/videos.js
 
 markdown_extensions:
   - toc:

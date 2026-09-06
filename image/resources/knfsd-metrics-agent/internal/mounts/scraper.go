@@ -197,9 +197,7 @@ func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
 	grp, found := agg[server]
 	if !found {
 		grp = nfsStatsGroup{
-			nfsStats: nfsStats{
-				server: server,
-			},
+			server:     server,
 			localPaths: make(stringSet),
 			blockIDs:   make(stringSet),
 		}

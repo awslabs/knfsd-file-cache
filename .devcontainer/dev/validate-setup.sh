@@ -11,7 +11,7 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.2"
+VERSION="1.1.0-beta.3"
 
 # List of binaries to check
 binaries=(
@@ -87,6 +87,7 @@ env_vars=(
 	"PACKER_GITHUB_API_TOKEN"
 	"SHELL"
 	"GOLANGCI_LINT_CACHE"
+	"MYPY_CACHE_DIR"
 	"HOME"
 	"TF_APPEND_USER_AGENT"
 )
@@ -99,6 +100,7 @@ expected_values=(
 	"^ghp_[a-zA-Z0-9]{36}$"
 	"/bin/bash"
 	"/home/${USERNAME}/.cache/golangci-lint"
+	"/home/${USERNAME}/.cache/mypy"
 	"/home/${USERNAME}"
 	"AWSSOLUTION/SO9129/${VERSION}"
 )

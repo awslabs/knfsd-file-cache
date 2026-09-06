@@ -59,6 +59,7 @@
     "source=knfsd-dev-go-pkg-cache,target=/home/ubuntu/.cache/go/pkg,type=volume",
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
+    "source=knfsd-dev-mypy-cache,target=/home/ubuntu/.cache/mypy,type=volume",
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",
@@ -84,7 +85,8 @@
     "seccomp=unconfined",
     "--name=knfsd-dev",
     "--hostname=knfsd-dev",
-    "--network=host",
+    "--sysctl",
+    "net.ipv6.conf.all.disable_ipv6=1",
     "--add-host=knfsd-dev:127.0.0.1",
     "--platform=${localEnv:BUILDPLATFORM:linux/arm64}"
   ]

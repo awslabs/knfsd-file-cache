@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a DynamoDB FSID table for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache//deployment/database?ref=v1.1.0-beta.2"
+  source = "github.com/awslabs/knfsd-file-cache//deployment/database?ref=v1.1.0-beta.3"
 }
 
 output "table_name" {
