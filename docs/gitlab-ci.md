@@ -282,6 +282,14 @@ located in `image/smoke-tests/`:
 - **Configuration**: Uses `.kics.yaml` configuration file
 - **Failure Policy**: Warning
 
+#### `semgrep`
+
+- **Purpose**: Static code analysis using the open source (community) rule set
+- **Tool**: [Semgrep](https://semgrep.dev/)
+- **Reference**: [Semgrep Documentation](https://semgrep.dev/docs/)
+- **Configuration**: Uses `.semgrepignore` for exclusions
+- **Failure Policy**: Warning
+
 #### `trivy`
 
 - **Purpose**: Comprehensive security scanning for secrets, vulnerabilities, misconfigurations, and licenses

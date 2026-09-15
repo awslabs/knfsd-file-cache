@@ -2140,7 +2140,7 @@
           "width": 24,
           "height": 2,
           "properties": {
-              "markdown": "## Disk IO Performance\n\nThe following graphs show disk IO performance stats for NVMe or if used, EBS (/var/cache/fscache).",
+              "markdown": "## FS-Cache Fragmentation\n\nThe following graphs show extent fragmentation of the FS-Cache backing files.",
               "background": "transparent"
           }
       },
@@ -2148,6 +2148,171 @@
           "type": "metric",
           "x": 0,
           "y": 175,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "/knfsd/metrics", "knfsd/fscache/extents/mean_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "mean_extents_length" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Mean Extents Length",
+              "period": 600,
+              "stat": "Average",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "min healthy: CACHEFILESD_EXTSIZE (4 MiB)",
+                          "value": 4194304,
+                          "color": "#ffa500"
+                      },
+                      {
+                          "label": "critical: rsize (1 MiB), writes not coalescing",
+                          "value": 1048576,
+                          "color": "#cb0000",
+                          "fill": "below"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "min": 0,
+                      "max": 16777216,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 6,
+          "y": 175,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "/knfsd/metrics", "knfsd/fscache/extents/max", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "max_extents_per_file" } ],
+                  [ "/knfsd/metrics", "knfsd/fscache/fragmentation/scrape_duration", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "scrape_duration", "yAxis": "right", "color": "#69ae34" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Max Extents per File",
+              "period": 600,
+              "stat": "Maximum",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "warning: extents count rising",
+                          "value": 20000,
+                          "color": "#ffa500"
+                      },
+                      {
+                          "label": "critical: extents scan cost",
+                          "value": 100000,
+                          "color": "#cb0000",
+                          "fill": "above"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "min": 0,
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "Time (ms)",
+                      "min": 0,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 12,
+          "y": 175,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ "/knfsd/metrics", "knfsd/fscache/extents/unwritten_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "label": "unwritten_bytes" } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "FS-Cache: Unwritten Capacity",
+              "period": 600,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "label": "Bytes",
+                      "min": 0,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "metric",
+          "x": 18,
+          "y": 175,
+          "width": 6,
+          "height": 8,
+          "properties": {
+              "metrics": [
+                  [ { "expression": "IF(m2 > 0, (m1 * 1000 * PERIOD(m2)) / m2, 0)", "label": "cpu_percent_per_1000_cache_reads", "id": "e1" } ],
+                  [ "/knfsd/ec2", "cpu_usage_active", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "cpu", "cpu-total", { "id": "m1", "stat": "Average", "visible": false } ],
+                  [ "/knfsd/metrics", "knfsd/netfs/cache_read/requests", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "stat": "Sum", "visible": false } ]
+              ],
+              "view": "timeSeries",
+              "stacked": false,
+              "region": "${region_filter}",
+              "title": "CPU per FS-Cache Read",
+              "period": 60,
+              "stat": "Average",
+              "annotations": {
+                  "horizontal": [
+                      {
+                          "label": "warning: per-read cost rising",
+                          "value": 10,
+                          "color": "#ffa500"
+                      },
+                      {
+                          "label": "critical: per-read CPU cost",
+                          "value": 90,
+                          "color": "#cb0000",
+                          "fill": "above"
+                      }
+                  ]
+              },
+              "yAxis": {
+                  "left": {
+                      "label": "CPU % per 1000 reads/s",
+                      "min": 0,
+                      "showUnits": false
+                  }
+              }
+          }
+      },
+      {
+          "type": "text",
+          "x": 0,
+          "y": 183,
+          "width": 24,
+          "height": 2,
+          "properties": {
+              "markdown": "## Disk IO Performance\n\nThe following graphs show disk IO performance stats for NVMe or if used, EBS (/var/cache/fscache).",
+              "background": "transparent"
+          }
+      },
+      {
+          "type": "metric",
+          "x": 0,
+          "y": 185,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2171,7 +2336,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 175,
+          "y": 185,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2195,7 +2360,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 175,
+          "y": 185,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2221,7 +2386,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 183,
+          "y": 193,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2244,7 +2409,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 183,
+          "y": 193,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2268,7 +2433,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 183,
+          "y": 193,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2292,7 +2457,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 191,
+          "y": 201,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2303,7 +2468,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 193,
+          "y": 203,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2339,7 +2504,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 193,
+          "y": 203,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2366,7 +2531,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 193,
+          "y": 203,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2402,7 +2567,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 193,
+          "y": 203,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2427,7 +2592,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 201,
+          "y": 211,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2466,7 +2631,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 201,
+          "y": 211,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2494,7 +2659,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 201,
+          "y": 211,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2520,7 +2685,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 201,
+          "y": 211,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2548,7 +2713,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 209,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2597,7 +2762,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 209,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2626,7 +2791,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 209,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2653,7 +2818,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 209,
+          "y": 219,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2690,7 +2855,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 217,
+          "y": 227,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2701,7 +2866,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 219,
+          "y": 229,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2733,7 +2898,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 219,
+          "y": 229,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2766,7 +2931,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 219,
+          "y": 229,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2795,7 +2960,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 219,
+          "y": 229,
           "width": 6,
           "height": 8,
           "properties": {
@@ -2824,7 +2989,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 227,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2853,7 +3018,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 227,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2883,7 +3048,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 227,
+          "y": 237,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2912,7 +3077,7 @@
       {
           "type": "text",
           "x": 0,
-          "y": 235,
+          "y": 245,
           "width": 24,
           "height": 2,
           "properties": {
@@ -2923,7 +3088,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 237,
+          "y": 247,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2950,7 +3115,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 237,
+          "y": 247,
           "width": 8,
           "height": 8,
           "properties": {
@@ -2977,7 +3142,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 237,
+          "y": 247,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3005,7 +3170,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 245,
+          "y": 255,
           "width": 6,
           "height": 8,
           "properties": {
@@ -3029,7 +3194,7 @@
       {
           "type": "metric",
           "x": 6,
-          "y": 245,
+          "y": 255,
           "width": 6,
           "height": 8,
           "properties": {
@@ -3053,7 +3218,7 @@
       {
           "type": "metric",
           "x": 12,
-          "y": 245,
+          "y": 255,
           "width": 6,
           "height": 8,
           "properties": {
@@ -3077,7 +3242,7 @@
       {
           "type": "metric",
           "x": 18,
-          "y": 245,
+          "y": 255,
           "width": 6,
           "height": 8,
           "properties": {
@@ -3101,7 +3266,7 @@
       {
           "type": "metric",
           "x": 0,
-          "y": 253,
+          "y": 263,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3125,7 +3290,7 @@
       {
           "type": "metric",
           "x": 8,
-          "y": 253,
+          "y": 263,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3149,7 +3314,7 @@
       {
           "type": "metric",
           "x": 16,
-          "y": 253,
+          "y": 263,
           "width": 8,
           "height": 8,
           "properties": {

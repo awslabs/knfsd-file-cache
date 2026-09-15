@@ -103,6 +103,32 @@ receivers:
     collection_interval: 30s
 ```
 
+#### FS-Cache Fragmentation
+
+Reports extent fragmentation of the FS-Cache backing files.
+
+`cachefiles` writes to its backing files using `O_DIRECT`, which bypasses XFS delayed allocation, so each cache write allocates in isolation and a backing file accumulates roughly one extent per write. `SEEK_HOLE` in the `cachefiles` read path is a linear scan of the extent list, so a heavily fragmented cache becomes CPU bound. See [known-issues](../../../docs/known-issues.md) for the full description, and the `CACHEFILESD_EXTSIZE` Terraform variable for the remedy.
+
+Collecting these metrics requires walking the cache and reading each file's extent map with the `FIEMAP` ioctl, so it is scraped far less often than the `/proc` based receivers. Use the `fscache.fragmentation.scrape_duration` metric to tune the interval, keeping the duration well below the `collection_interval`.
+
+The extent map also identifies unwritten extents, which is how `fscache.extents.unwritten_bytes` measures the capacity the XFS extent size hint has reserved ahead of use. XFS pads each allocation up to the hint and marks the surplus unwritten, so the figure is measured rather than estimated. It is consumed as backing files fill.
+
+See [fragmentation/metadata.yaml](internal/fragmentation/metadata.yaml)
+
+* `collection_interval` (default = `10m`): This receiver collects metrics on an interval. Valid time units are s, m, h.
+
+* `cache_path` (default = `/var/cache/fscache/cache`): The path to the cachefilesd cache directory.
+
+* `min_file_size` (default = `1048576`): Files smaller than this are ignored. Small files cannot accumulate enough extents to matter, and they dominate the file count in most caches.
+
+```yaml
+receivers:
+  fragmentation:
+    collection_interval: 10m
+    cache_path: /var/cache/fscache/cache
+    min_file_size: 1048576
+```
+
 #### Exports
 
 Reports on NFS export statistics such as total number of operations, read and write bytes.
@@ -198,6 +224,7 @@ receivers:
   nfsd:
   oldestfile:
   slabinfo:
+  fragmentation:
 
   # Declare a second instance of the connections receiver, with a different
   # interval.
@@ -245,6 +272,7 @@ service:
         - mounts
         - nfsd
         - slabinfo
+        - fragmentation
       processors:
         - resourcedetection
       exporters:
@@ -304,6 +332,7 @@ service:
         - mounts
         - nfsd
         # - slabinfo removed
+        - fragmentation
 ```
 
 Likewise, to enable the `oldestfile` collector (which is disabled by default):
@@ -320,6 +349,7 @@ service:
         - mounts
         - nfsd
         - slabinfo
+        - fragmentation
         - oldestfile # added
 ```
 

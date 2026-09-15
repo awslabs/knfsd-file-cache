@@ -1,6 +1,7 @@
 .git/
 .devcontainer/
 .trivycache/
+debug/
 .gitlab-ci.yml
 testcert.go
 *_test.go

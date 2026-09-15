@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.3"
+VERSION="1.1.0-beta.4"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -149,9 +149,9 @@ KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.89
+KNFSD_BOTO3_VERSION=1.43.94
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.16
+KNFSD_CHECKOV_VERSION=3.3.17
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
@@ -171,13 +171,13 @@ KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.0.8
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.176.1
+KNFSD_SEMGREP_VERSION=1.177.0
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
-KNFSD_SHFMT_VERSION=3.14.0
+KNFSD_SHFMT_VERSION=3.14.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
@@ -187,7 +187,7 @@ KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.12.10
+KNFSD_UV_VERSION=0.12.15
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -276,6 +276,10 @@ echo 'export PRE_COMMIT_HOME=\$HOME/.cache/pre-commit' >> ~/.bashrc
 ## create mypy cache directory
 mkdir -p ~/.cache/mypy
 echo 'export MYPY_CACHE_DIR=\$HOME/.cache/mypy' >> ~/.bashrc
+
+## create trivy cache directory
+mkdir -p ~/.cache/trivy
+echo 'export TRIVY_CACHE_DIR=\$HOME/.cache/trivy' >> ~/.bashrc
 
 ## create terraform plugin-cache directory
 mkdir -p ~/.terraform.d/plugin-cache

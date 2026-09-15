@@ -128,5 +128,3 @@ index d4d236f..6c435f6 100644
 +		cullready[--nr_in_ready_table] = NULL;
  	}
  }
-
-

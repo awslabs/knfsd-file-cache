@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-beta.3"
+ARG VERSION="1.1.0-beta.4"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -136,13 +136,13 @@ ARG KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.89
+ARG KNFSD_BOTO3_VERSION=1.43.94
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.16
+ARG KNFSD_CHECKOV_VERSION=3.3.17
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/go-delve/delve/tags
-ARG KNFSD_DLV_VERSION=1.27.1
+ARG KNFSD_DLV_VERSION=1.27.2
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 ARG KNFSD_EDITORCONFIG_VERSION=4.0.1
 # https://github.com/golangci/golangci-lint/releases
@@ -170,13 +170,13 @@ ARG KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
 ARG KNFSD_PYLINT_VERSION=4.0.8
 # https://github.com/semgrep/semgrep/releases
-ARG KNFSD_SEMGREP_VERSION=1.176.1
+ARG KNFSD_SEMGREP_VERSION=1.177.0
 # https://github.com/aws/session-manager-plugin/tags
 ARG KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
 # https://pypi.org/project/shellcheck-py/
 ARG KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
-ARG KNFSD_SHFMT_VERSION=3.14.0
+ARG KNFSD_SHFMT_VERSION=3.14.1
 # https://github.com/hashicorp/terraform/releases
 ARG KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
@@ -186,7 +186,7 @@ ARG KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.12.10
+ARG KNFSD_UV_VERSION=0.12.15
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -260,6 +260,10 @@ RUN curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v$
 RUN ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "ARM64" || echo "64bit") \
     && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${KNFSD_TRIVY_VERSION}/trivy_${KNFSD_TRIVY_VERSION}_Linux-${ARCH}.deb" \
     -o trivy.deb && sudo dpkg -i trivy.deb && rm trivy.deb
+
+## create trivy cache directory
+RUN mkdir -p "/home/${USERNAME}/.cache/trivy"
+ENV TRIVY_CACHE_DIR="/home/${USERNAME}/.cache/trivy"
 
 ## install bats-core
 RUN curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BATS_CORE_VERSION}.zip" \

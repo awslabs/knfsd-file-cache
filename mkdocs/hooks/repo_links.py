@@ -4,20 +4,30 @@
 """MkDocs build hook: rewrite links to unhostable repo targets into repo URLs.
 
 Because ``docs_dir`` is the repository root (so scattered ``*.md`` files keep
-their relative links), Markdown pages legitimately link to targets that a
-static site cannot host: repo-root files such as ``../Makefile`` or
-``../.tflint.hcl`` (MkDocs never publishes extensionless files or dotfiles),
-and directories such as ``../image/`` or ``resources/scripts`` (MkDocs does not
-resolve arbitrary folder links the way the GitLab/GitHub repo browser does).
+their relative links), Markdown pages legitimately link to targets the hosted
+site cannot serve usefully. There are three such cases.
 
-Both work fine when browsing the repo but would 404 on the hosted page. This
-hook acts like a ``${root}`` substitution: at build time it resolves each such
-link against the page's source directory and rewrites it so the hosted page
-keeps working. A directory that contains a hostable ``README.md``/``index.md``
-is repointed at that page (staying inside the docs site); otherwise the target
-is rewritten to a canonical repository URL (``/blob/`` for files, ``/tree/``
-for directories) derived from ``repo_url`` — injected per-platform via
-``!ENV``, so nothing is hard-coded.
+Files MkDocs never publishes: extensionless files such as ``../Makefile``,
+dotfiles such as ``../.tflint.hcl``, and anything inside a dot-prefixed
+directory such as ``.devcontainer/``. These 404 on the hosted page.
+
+Files MkDocs copies verbatim but a browser only downloads, such as ``*.sh``,
+``*.tf``, ``*.json``, and ``*.yaml``. Clicking one saves a file instead of
+navigating, whereas the repo browser renders it with syntax highlighting.
+
+Directories such as ``../image/`` or ``resources/scripts``, which MkDocs does
+not resolve the way the GitLab/GitHub repo browser does.
+
+All of these work fine when browsing the repo. This hook acts like a ``${root}``
+substitution: at build time it resolves each such link against the page's source
+directory and rewrites it so the hosted page behaves sensibly. A directory that
+contains a published ``README.md``/``index.md`` is repointed at that page
+(staying inside the docs site); otherwise the target is rewritten to a canonical
+repository URL (``/blob/`` for files, ``/tree/`` for directories) derived from
+``repo_url``, injected per-platform via ``!ENV`` so nothing is hard-coded.
+
+Markdown pages and genuine browser-renderable assets (images, media, CSS, JS,
+fonts, PDFs) are deliberately left alone so they keep being served locally.
 
 When ``repo_url`` is unset (e.g. local ``mkdocs serve``) links are left
 untouched, which is harmless locally.
@@ -36,6 +46,49 @@ _LINK_RE = re.compile(r"(\]\()\s*(<?)([^)\s]+?)(>?)(\s+\"[^\"]*\")?(\))")
 
 # Directory index files MkDocs publishes as the folder's page.
 _INDEX_FILES = ("README.md", "index.md")
+
+# Extensions MkDocs turns into real HTML pages.
+_PAGE_EXTS = frozenset({".md", ".markdown", ".mdown", ".mkdn", ".mkd"})
+
+# Extensions a browser renders in place, so the site's own copy is genuinely
+# useful and the link should stay local. Anything absent from this set is a
+# source or config file that reads better in the repo browser than as a
+# download, so it gets rewritten to a repository URL.
+_ASSET_EXTS = frozenset(
+    {
+        # Images
+        ".apng",
+        ".avif",
+        ".bmp",
+        ".gif",
+        ".ico",
+        ".jpeg",
+        ".jpg",
+        ".png",
+        ".svg",
+        ".webp",
+        # Audio and video
+        ".m4a",
+        ".mp3",
+        ".mp4",
+        ".ogg",
+        ".wav",
+        ".webm",
+        # Documents and web assets the browser displays
+        ".css",
+        ".htm",
+        ".html",
+        ".js",
+        ".mjs",
+        ".pdf",
+        # Fonts
+        ".eot",
+        ".otf",
+        ".ttf",
+        ".woff",
+        ".woff2",
+    }
+)
 
 # Repo root == docs_dir == the directory containing mkdocs.yml.
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -57,10 +110,41 @@ def _is_external(target: str) -> bool:
     return bool(urlsplit(target).scheme) or target.startswith(("//", "#", "mailto:"))
 
 
-def _hostable(rel_path: str) -> bool:
-    """True if MkDocs would publish this file (has an extension, not a dotfile)."""
-    name = posixpath.basename(rel_path)
-    return bool(posixpath.splitext(name)[1]) and not name.startswith(".")
+def _served_usefully(rel_path: str) -> bool:
+    """True if the site's own copy of this file is worth linking to.
+
+    False means the link should point at the repo browser instead, either
+    because MkDocs will not publish the file at all (extensionless, dotfile, or
+    inside a dot-prefixed directory, per its built-in ``.*`` exclusion), or
+    because it publishes the file verbatim and a browser would merely download
+    it rather than display it.
+    """
+    parts = rel_path.split("/")
+    if any(part.startswith(".") for part in parts):
+        return False
+    ext = posixpath.splitext(parts[-1])[1].lower()
+    if not ext:
+        return False
+    return ext in _PAGE_EXTS or ext in _ASSET_EXTS
+
+
+def _is_image(markdown: str, bracket_pos: int) -> bool:
+    """True if the link closing at ``bracket_pos`` is an ``![alt](...)`` image.
+
+    Scans back for the ``[`` matching this ``]`` and checks for a leading ``!``.
+    An image must keep pointing at a file the browser can load inline, so it is
+    never rewritten to a repository URL.
+    """
+    depth = 0
+    for i in range(bracket_pos - 1, -1, -1):
+        char = markdown[i]
+        if char == "]":
+            depth += 1
+        elif char == "[":
+            if depth == 0:
+                return i > 0 and markdown[i - 1] == "!"
+            depth -= 1
+    return False
 
 
 # `files` is part of the MkDocs on_page_markdown signature but unused here.
@@ -76,7 +160,7 @@ def on_page_markdown(markdown: str, *, page, config, files) -> str:
 
     def replace(match: re.Match[str]) -> str:
         open_paren, lt, target, gt, title, close_paren = match.groups()
-        if _is_external(target):
+        if _is_external(target) or _is_image(markdown, match.start()):
             return match.group(0)
 
         # Split off any anchor/query so it survives the rewrite.
@@ -103,8 +187,9 @@ def on_page_markdown(markdown: str, *, page, config, files) -> str:
                 new_target = f"{rel}{sep}{suffix}"
             else:
                 new_target = f"{tree_base}/{resolved}{sep}{suffix}"
-        elif abs_target.is_file() and not _hostable(resolved):
-            # Real repo file MkDocs will not publish (extensionless/dotfile).
+        elif abs_target.is_file() and not _served_usefully(resolved):
+            # Unpublished file, or one the browser would download rather than
+            # display; the repo browser renders it instead.
             new_target = f"{blob_base}/{resolved}{sep}{suffix}"
 
         if new_target is None:

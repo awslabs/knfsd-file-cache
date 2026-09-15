@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block, referencing a git tag in the repository.
 
 ```bash
-source = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.3"
+source = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.4"
 ```
 
 ## Prerequisites
@@ -42,7 +42,7 @@ provider "aws" {
 }
 
 module "knfsd" {
-  source         = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.3"
+  source         = "github.com/awslabs/knfsd-file-cache//deployment/terraform-module-knfsd?ref=v1.1.0-beta.4"
   SUBNET         = "subnet-0123456789abcdefg"
   TRAFFIC_MODE   = "dns_round_robin"
   PROXY_AMI      = "ami-0123456789abcdefg"
@@ -159,6 +159,7 @@ If using the NetApp Exports Auto-Discovery feature, please also read the [NetApp
 | `CACHEFILESD_EBS_SIZE`       | (Only used if `CACHEFILESD_DISK_TYPE` = `ebs-gp3` or `ebs-io2`), the size of the EBS volume in GB. `ebs-gp3` supports 1 GiB - 65536 GiB (64 TiB), `ebs-io2` supports 4 GiB - 65536 GiB (64 TiB).                | False    | `1024`       |
 | `CACHEFILESD_EBS_IOPS`       | (Only used if `CACHEFILESD_DISK_TYPE` = `ebs-gp3` or `ebs-io2`), the number of I/O operations per second (IOPS) for the EBS volume. `ebs-gp3` supports 3000 - 80000 IOPS, `ebs-io2` supports 100 - 256000 IOPS. | False    | `3000`       |
 | `CACHEFILESD_EBS_THROUGHPUT` | (Only used if `CACHEFILESD_DISK_TYPE` = `ebs-gp3`), the throughput (MB/s) for the EBS volume. `ebs-gp3` supports 125 - 2000 MiB/s.                                                                              | False    | `125`        |
+| `CACHEFILESD_EXTSIZE`        | The XFS extent size hint (in MiB) applied to the FS-Cache filesystem (`/var/cache/fscache`). Reduces extent fragmentation of the FS-Cache backing files. Allowed values are `0` (disabled), `4`, `8` or `16`.   | False    | `8`          |
 
 ### Mount Options
 

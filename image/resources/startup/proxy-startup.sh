@@ -402,6 +402,7 @@ function init() {
 	READ_AHEAD=$(get_parameter READ_AHEAD)
 
 	CACHEFILESD_DISK_TYPE=$(get_parameter CACHEFILESD_DISK_TYPE)
+	CACHEFILESD_EXTSIZE=$(get_parameter CACHEFILESD_EXTSIZE)
 
 	ENABLE_METRICS=$(get_parameter ENABLE_METRICS)
 	METRICS_AGENT_CONFIG=$(get_parameter METRICS_AGENT_CONFIG)
@@ -675,6 +676,69 @@ function configure_network() {
 	complete_command
 }
 
+# get_fscache_extsize() reads the current XFS extent size hint (in bytes) for a
+# path. xfs_io reports the hint as "[<bytes>] <path>", or "[0] <path>" when the
+# hint is unset. Prints 0 if the hint cannot be determined.
+# @param (str) $1 Path
+function get_fscache_extsize() {
+	local output
+	if ! output=$(xfs_io -c "extsize" "$1" 2> /dev/null); then
+		echo 0
+		return
+	fi
+
+	# extract the value between the square brackets
+	local value
+	value=$(echo "${output}" | sed -n 's/^\[\([0-9]\+\)\].*/\1/p')
+	echo "${value:-0}"
+}
+
+# configure_fscache_extsize() applies the XFS extent size hint to the FS-Cache
+# filesystem. Cachefilesd writes to backing files using O_DIRECT (IOCB_DIRECT in
+# fs/cachefiles/io.c), which bypasses XFS delayed allocation and speculative
+# preallocation. Each write is therefore allocated immediately and in isolation,
+# so a backing file accumulates one extent per cache write. Large files reach
+# hundreds of thousands of extents, and because SEEK_HOLE is a linear scan of
+# the extent list, cachefiles_prepare_read() becomes very expensive. The extent
+# size hint is the only allocation control that applies to the O_DIRECT path.
+# @param (str) $1 Mount point
+function configure_fscache_extsize() {
+	local mount_point="$1"
+
+	# Guard against a missing or malformed parameter
+	if [[ ! ${CACHEFILESD_EXTSIZE:-} =~ ^[0-9]+$ ]]; then
+		echo "CACHEFILESD_EXTSIZE is not set to a number ('${CACHEFILESD_EXTSIZE:-}'); skipping XFS extent size hint" >&2
+		return
+	fi
+
+	if [[ ${CACHEFILESD_EXTSIZE} -eq 0 ]]; then
+		echo "CACHEFILESD_EXTSIZE is 0; XFS extent size hint disabled"
+	else
+		echo "Setting XFS extent size hint to: ${CACHEFILESD_EXTSIZE} MiB"
+	fi
+
+	local desired
+	desired=$((CACHEFILESD_EXTSIZE * 1024 * 1024))
+
+	local current
+	current=$(get_fscache_extsize "${mount_point}")
+
+	if [[ ${current} -eq ${desired} ]]; then
+		echo "XFS extent size hint already set to ${desired} bytes; skipping"
+		return
+	fi
+
+	# "extsize -D" recursively descends, modifying the hint on directories only.
+	# Pre-existing backing files keep their previous hint and age out naturally.
+	echo "Applying XFS extent size hint (${current} -> ${desired} bytes)..."
+	if ! xfs_io -c "extsize -D ${desired}" "${mount_point}"; then
+		echo "WARNING: failed to set XFS extent size hint on ${mount_point}" >&2
+		return
+	fi
+
+	echo "Finished applying XFS extent size hint to ${mount_point} and its directories"
+}
+
 # create_fs_cache() creates a RAID 0 array from local NVMe
 # or EBS volumes and mounts it to /var/cache/fscache
 function create_fs_cache() {
@@ -740,6 +804,7 @@ function create_fs_cache() {
 		echo "Finished mounting ${dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" ""
+		configure_fscache_extsize "${mount_point}"
 		start_fs_cache
 	else
 		# multiple (NVMe or EBS) devices -> mdraid0 on /dev/md127
@@ -789,6 +854,7 @@ function create_fs_cache() {
 		echo "Finished mounting ${raid_dev} to FS-Cache directory (${mount_point})"
 
 		tune_block_devices "${DEVICESLIST}" "${raid_dev}"
+		configure_fscache_extsize "${mount_point}"
 		start_fs_cache
 	fi
 

@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-beta.3"
+  version       = "1.1.0-beta.4"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8

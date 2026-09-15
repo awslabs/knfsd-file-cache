@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.3"
+  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.4"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -209,6 +209,19 @@ See [Network Filesystem Services Library](https://www.kernel.org/doc/html/latest
 |         | mis=N  | `knfsd/fscache/io/misfit`                 | Number of DIO misfit operations                     | Sum  | Count | 60s    |
 
 See [FS-Cache](https://www.kernel.org/doc/html/latest/filesystems/caching/fscache.html) for more information.
+
+#### FS-Cache Fragmentation Metrics
+
+Extent statistics for the FS-Cache backing files, collected via the `FIEMAP` ioctl. `cachefiles` writes to the backing files using `O_DIRECT`, which bypasses XFS delayed allocation, so each cache write allocates in isolation and a backing file accumulates roughly one extent per write. `SEEK_HOLE` in the `cachefiles` read path is a linear scan of the extent list, so a heavily fragmented cache becomes CPU bound. See [known-issues](../../docs/known-issues.md) for the full description.
+
+These metrics are collected every 10 minutes by default, as collecting them requires walking the cache.
+
+| Metric Name                                   | Description                                                     | Stat    | Unit  | Period |
+| --------------------------------------------- | --------------------------------------------------------------- | ------- | ----- | ------ |
+| `knfsd/fscache/extents/max`                   | Highest extent count of any single FS-Cache backing file        | Maximum | Count | 600s   |
+| `knfsd/fscache/extents/mean_bytes`            | Mean allocated bytes per extent (higher is better)              | Average | Bytes | 600s   |
+| `knfsd/fscache/extents/unwritten_bytes`       | Capacity allocated in unwritten extents, reserved ahead of use  | Average | Bytes | 600s   |
+| `knfsd/fscache/fragmentation/scrape_duration` | Time taken to collect these metrics (used to tune the interval) | Average | ms    | 600s   |
 
 #### Optional Metrics
 
@@ -428,6 +441,33 @@ Performance metrics for FS-Cache operations.
 | FS-Cache: Relinqs | `knfsd/fscache/relinquish/*`  | Relinquish requests, retire, drop                   | Sum  | auto   | Count |
 | FS-Cache: NoSpace | `knfsd/fscache/nospace/*`     | Write/create refused (no space), objects culled     | Sum  | auto   | Count |
 | FS-Cache: IO      | `knfsd/fscache/io/*`          | Cache read, write, misfit operations                | Sum  | auto   | Count |
+
+### FS-Cache Fragmentation
+
+Extent allocation of the FS-Cache backing files. A rising max extent count with a falling mean extent length is the signature of the fragmentation issue described in [known-issues](../../docs/known-issues.md), and is addressed with the `CACHEFILESD_EXTSIZE` Terraform variable.
+
+| Widget                         | Metrics                                                      | Description                                                  | Stat    | Period | Label            |
+|------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ------ | ---------------- |
+| FS-Cache: Mean Extents Length  | `knfsd/fscache/extents/mean_bytes`                           | Mean allocated bytes per extent. Higher is better            | Average | 600s   | Bytes            |
+| FS-Cache: Max Extents per File | `knfsd/fscache/extents/max`, `fragmentation/scrape_duration` | Worst single backing file; scrape duration on the right axis | Maximum | 600s   | Count, Time (ms) |
+| FS-Cache: Unwritten Capacity   | `knfsd/fscache/extents/unwritten_bytes`                      | Disk capacity allocated but not yet holding cached data      | Average | 600s   | Bytes            |
+| CPU per FS-Cache Read          | `cpu_usage_active`, `knfsd/netfs/cache_read/requests`        | Metric math, isolates per-read CPU cost from load            | Average | 60s    | CPU %            |
+
+#### Interpreting the fragmentation widgets
+
+**Mean Extents Length.** Higher is always better, and there is no upper bound to worry about. A single XFS extent can span up to 8 GiB, so a sequentially filled backing file occupies one or two extents and reports a mean of that order. As a worked example, a contiguous 10 GiB backing file must split into an 8 GiB and a 2 GiB extent, giving a mean of roughly 5 GiB. Values of that magnitude are healthy, not anomalous. What matters is the floor: a reading at or near the 1 MiB NFS `rsize` means every cache write is creating its own extent, which is the failure mode. The lower annotation is fixed at 4 MiB, the smallest non-zero `CACHEFILESD_EXTSIZE` allowed, so it remains a valid floor whichever value (`4`, `8` or `16`) is deployed.
+
+**Max Extents per File.** The leading indicator, because `SEEK_HOLE` cost is proportional to it. Watch the trend rather than the absolute value: a steady climb over days on a cache that never culls is the condition to act on. `fragmentation/scrape_duration` is overlaid on the right axis, since the cost of collecting these metrics scales with the total extent count. Keep the scrape duration well below the receiver `collection_interval`, and raise the interval on very large caches.
+
+**Unwritten Capacity.** Disk capacity that `CACHEFILESD_EXTSIZE` has allocated but which holds no cached data yet. XFS pads each allocation up to the hint and marks the surplus as an **unwritten extent**, so this is measured directly from the extent map rather than inferred, and it reads exactly zero when the hint is disabled.
+
+Some unwritten capacity is intentional and temporary. The padding is consumed by subsequent writes into the same region, so expect the figure to be highest while the cache is cold and to fall as backing files fill. A non-zero value means the feature is working.
+
+The cost scales with how far the hint exceeds the actual cache write size, approximately `extsize / write_size` while a file is sparsely populated. A **larger** hint therefore allocates **more** capacity: measured against 256 KiB writes at 5 percent populated, `4m` cost 11.12x the data size, `8m` cost 16.16x and `16m` cost 19.16x. So capacity sustained at a high level on a cache that is not filling means the hint is too large for the workload, and the response is to **reduce** `CACHEFILESD_EXTSIZE`, or set `0` to disable it. Watch this against the cache size, since `cachefilesd` begins culling at 93 percent used and culling resets extent counts.
+
+**CPU per FS-Cache Read.** The most diagnostic of the four. It normalises CPU by cache read count, so a flat line as client count rises is healthy and a rising line means each individual read is becoming more expensive.
+
+Reading them together: **max extents rising and mean extent length falling** is fragmentation developing, and is the condition `CACHEFILESD_EXTSIZE` addresses. **Unwritten capacity falling** is simply a cache filling up and consuming its own padding.
 
 ### Disk IO Performance
 

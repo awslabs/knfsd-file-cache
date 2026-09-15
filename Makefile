@@ -10,6 +10,7 @@ SHELL := /bin/bash
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 USERNAME := $(shell id -un)
 TF_DIRS := $(sort $(dir $(shell find $(ROOT_DIR) -name "*.tf")))
+TRIVY_CACHE_DIR ?= $(HOME)/.cache/trivy
 SHELL_BLUE := "\033[0;34m"
 SHELL_DEFAULT := "\033[0m"
 
@@ -85,12 +86,18 @@ clean delete del:
 .PHONY: lic-scan
 lic-scan:
 	@echo "[license scan]"
-	@trivy fs --scanners license --license-full $(ROOT_DIR)
+	@trivy fs --scanners license --license-full \
+		--cache-dir "$(TRIVY_CACHE_DIR)" \
+		--skip-dirs debug \
+		$(ROOT_DIR)
 
 .PHONY: lic-scan-ignore
 lic-scan-ignore:
 	@echo "[license scan, ignore]"
-	@trivy fs --scanners license --license-full --ignorefile $(ROOT_DIR)/.trivyignore.yaml $(ROOT_DIR)
+	@trivy fs --scanners license --license-full --ignorefile $(ROOT_DIR)/.trivyignore.yaml \
+		--cache-dir "$(TRIVY_CACHE_DIR)" \
+		--skip-dirs debug \
+		$(ROOT_DIR)
 
 .PHONY: lint ec codespell shfmt shellcheck-sh shellcheck-bash shellcheck-bats black mypy pylint iam-size
 lint: ec codespell shfmt shellcheck-sh shellcheck-bash shellcheck-bats black mypy pylint iam-size
@@ -121,22 +128,22 @@ shellcheck-bats:
 
 black:
 	@echo "[black]"
-	@black --target-version py312 --quiet .
+	@black --target-version py314 --quiet --extend-exclude '^/(site|debug)/' .
 
 mypy:
 	@echo "[mypy]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/opt/venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^site/' .; \
+		/opt/venv/bin/python -m mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^(site|debug)/' .; \
 	else \
-		mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^site/' .; \
+		mypy --follow-untyped-imports --no-error-summary --show-error-context --pretty --exclude '^(site|debug)/' .; \
 	fi
 
 pylint:
 	@echo "[pylint]"
 	@if [ "$$CI" = "devcontainer" ]; then \
-		/opt/venv/bin/python -m pylint --output-format=colorized --score=n --ignore-paths='^site/.*' .; \
+		/opt/venv/bin/python -m pylint --output-format=colorized --score=n --ignore-paths='^site/.*,^debug/.*' .; \
 	else \
-		pylint --output-format=colorized --score=n --ignore-paths='^site/.*' .; \
+		pylint --output-format=colorized --score=n --ignore-paths='^site/.*,^debug/.*' .; \
 	fi
 
 define IAM_SIZE_PY
@@ -245,8 +252,9 @@ scan: scan-trivy trivy
 scan-trivy trivy:
 	@echo "[trivy]"
 	@TRIVY_DISABLE_VEX_NOTICE="true" trivy fs --ignorefile $(ROOT_DIR)/.trivyignore.yaml --exit-code 1 \
-		--cache-dir "$(ROOT_DIR)/.trivycache" \
+		--cache-dir "$(TRIVY_CACHE_DIR)" \
 		--tf-vars $(ROOT_DIR)/.trivy.tfvars \
+		--skip-dirs debug \
 		--scanners secret,vuln,misconfig,license $(ROOT_DIR)
 
 .PHONY: scan-kics kics

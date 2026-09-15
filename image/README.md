@@ -332,10 +332,10 @@ packer build -var-file image/image.pkrvars.hcl image
 
 ```bash
 amazon-ebs.knfsd: ---- SYSTEM INFO
-amazon-ebs.knfsd: Description:  Ubuntu 26.04 LTS
+amazon-ebs.knfsd: Description:  Ubuntu 26.04.1 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.2.3-knfsd
+amazon-ebs.knfsd: Kernel:       7.2.6-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -402,7 +402,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-beta.3"
+VERSION="1.1.0-beta.4"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -562,10 +562,10 @@ A successful build will output something similar to the following:
 
 ```bash
 ---- SYSTEM INFO
-Description:  Ubuntu 26.04 LTS
+Description:  Ubuntu 26.04.1 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.2.3-knfsd
+Kernel:       7.2.6-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

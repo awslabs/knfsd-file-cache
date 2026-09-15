@@ -9,6 +9,7 @@ package main
 import (
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/connections"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/exports"
+	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/fragmentation"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/fscache"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/mounts"
 	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-metrics-agent/internal/nfsd"
@@ -50,6 +51,7 @@ func components() (otelcol.Factories, error) {
 		fscache.NewFactory(),
 		exports.NewFactory(),
 		oldestfile.NewFactory(),
+		fragmentation.NewFactory(),
 		slab.NewFactory(),
 	)
 	errs = multierr.Append(errs, err)

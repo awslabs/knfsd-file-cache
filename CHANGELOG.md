@@ -1,6 +1,35 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.4 (September 15, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: Ensure `.devcontainer/dev` environment is rebuilt if used for local development.
+
+* Packer: Updated to Linux kernel v7.2.6-knfsd.
+* Packer: Added kernel patch `0001-block-Fix-start-and-length-check-added-to-iov_iter_extract_bvecs.patch`, fixing `iov_iter_extract_bvecs()` for the `ITER_FOLIOQ` iterators used by `cachefiles`. Without this, FS-Cache reads are never served from the cache and sparse source ranges are never cached.
+* Added a new `CACHEFILESD_EXTSIZE` Terraform variable (default `8`, allowed values `0`, `4`, `8`, `16` MiB) that applies an XFS extent size hint to the FS-Cache filesystem (`/var/cache/fscache`).
+* The extent size hint is re-applied recursively to existing cache directories when the value changes, so updating `CACHEFILESD_EXTSIZE` takes effect on the next instance boot.
+* Introduced a `fragmentation` Open Telemetry `receiver/component` reporting FS-Cache backing file extent statistics via the `FIEMAP` ioctl: `knfsd/fscache/extents/mean_bytes`, `knfsd/fscache/extents/max`, `knfsd/fscache/extents/unwritten_bytes`, and `knfsd/fscache/fragmentation/scrape_duration`. Collected every 10 minutes as it requires walking the cache.
+* Added a new `FS-Cache Fragmentation` section to the CloudWatch `metrics` dashboard with 4 widgets: `FS-Cache: Mean Extents Length`, `FS-Cache: Max Extents per File`, `FS-Cache: Unwritten Capacity`, and `CPU per FS-Cache Read`.
+* Updated KNFSD Monitoring Dashboard to `v16`.
+* Added `docs/known-issues.md` entry describing FS-Cache backing file extent fragmentation, its symptoms, and the remedy.
+* Added `GET /api/v1/cache/stats` to the KNFSD Agent, reporting the `DownOps`, `CaRdOps` and `CaWrOps` counters from `/proc/fs/fscache/stats` so that a cache which is written but never read can be detected.
+* Added `POST /api/v1/cache/drop` to the KNFSD Agent, freeing the kernel caches with an optional `mode` of `1`, `2` or `3` (default `3`).
+* Smoke-tests: Added a `proxy serves reads from cache` check asserting the FS-Cache read counter increases, dropping the page cache on both the client and the proxy so the re-read cannot be served from RAM. The previous check only measured cache growth, which passes even when the cache never serves a read.
+* Smoke-tests: Added a `proxy caches sparse source files` check, covering buffered reads of sparse source files, which were not previously exercised as all test data was written as random bytes.
+* Added `AGENTS.md` for AI coding assistant guidance (excluded from the documentation site).
+* Enhanced the `repo_links.py` MkDocs hook so links to unpublished or non-renderable repository files now resolve to the repository browser.
+* Improved the regex for matching icon/emoji shortcodes in the `cards.py` MkDocs hook to avoid exponential backtracking.
+* Updated `pre-commit` documentation.
+* Added a `semgrep` GitLab CI job to the `security` stage.
+* Excluded `debug/` directory from `make pylint`, `make black`, and `make mypy` targets.
+* Moved the Trivy cache out of the workspace. The Trivy targets now use `TRIVY_CACHE_DIR` (default `$HOME/.cache/trivy`) instead of `.trivycache` in the repository root, and the `dev` container backs that path with a `knfsd-dev-trivy-cache` container volume. The `setup-remote-vm.sh` Remote-SSH user-data script exports the same variable for consistency. GitLab CI is unchanged, as it caches `.trivycache` inside the project directory.
+* Minor Golang package updates.
+
 ## v1.1.0-beta.3 (September 7, 2026)
+
+> BROKEN: Do NOT use this release.
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 

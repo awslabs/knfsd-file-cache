@@ -53,6 +53,7 @@ To allow rapid onboarding of developers to the integrated development environmen
   * `DynamoDB Local`: ~500MB
   * `knfsd-go-build-cache` volume: ~multiple GB
   * `knfsd-go-pkg-cache` volume: ~multiple GB
+  * `knfsd-dev-trivy-cache` volume: ~1.3GB
   * `vscode` volume: ~266MB
 
 * The `knfsd-dev.code-workspace` is respected independently of the devcontainer setup, with minimal `golang` configuration. We are using a multi-root workspace, so all roots/folders will be opened in the same .devcontainer, regardless of whether there are configuration files at lower levels in this project. This is a known devcontainer limitation and explains why we provide only a single "monorepo" .devcontainer configuration at the root.
@@ -119,6 +120,9 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
 
     # Docker persistent volume: $MYPY_CACHE_DIR: $HOME/.cache/mypy
     "source=knfsd-dev-mypy-cache,target=/home/ubuntu/.cache/mypy,type=volume",
+
+    # Docker persistent volume: $TRIVY_CACHE_DIR: $HOME/.cache/trivy
+    "source=knfsd-dev-trivy-cache,target=/home/ubuntu/.cache/trivy,type=volume",
 
     # Docker persistent volume: saves all terminal/shell history from container for future use
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",

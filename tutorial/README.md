@@ -489,8 +489,8 @@ Production KNFSD deployments support comprehensive metrics exported to Amazon Cl
 
 A CloudWatch dashboard is available when you deploy using the Terraform module. For more information, see:
 
-* [Metrics documentation](https://github.com/awslabs/knfsd-file-cache/blob/main/deployment/metrics/README.md)
-* [Autoscaling documentation](https://github.com/awslabs/knfsd-file-cache/blob/main/deployment/docs/autoscaling.md)
+* [Metrics documentation](../deployment/metrics/README.md)
+* [Autoscaling documentation](../deployment/docs/autoscaling.md)
 
 ### Production deployment with Terraform
 
@@ -504,7 +504,7 @@ For production use, we strongly recommend using the AWS provided Terraform modul
 * Autoscaling based on NFS connection metrics
 * VPC endpoint support for private subnets
 
-See the [deployment documentation](https://github.com/awslabs/knfsd-file-cache/tree/main/deployment) for complete instructions.
+See the [deployment documentation](../deployment/README.md) for complete instructions.
 
 ## Clean up
 

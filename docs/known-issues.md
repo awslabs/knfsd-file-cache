@@ -139,3 +139,37 @@ ERROR: check "CLUSTER_NAME" matches the deployed cluster and the instance role g
 ```
 
 This means the instance is talking to SSM but is looking at the wrong path, or the instance role is scoped to a different parameter hierarchy. Check the parameters exist with `aws ssm get-parameters-by-path --path /knfsd/<cluster-name> --recursive` using the same region as the instance.
+
+## Performance degrades over time as FS-Cache backing files fragment
+
+Read performance can degrade progressively over days or weeks of uptime. The symptoms are distinctive:
+
+* CPU rises to 100% under client load and recovers when clients disconnect, so it is not permanently pinned.
+* `cpu_usage_iowait` stays close to zero while `cpu_usage_active` saturates, so the NVMe or EBS cache device is not the constraint.
+* Reading uncached files straight from the source filer is unaffected. Only cached reads are slow.
+* It gets worse the longer the proxy has been up, and a cache reset resolves it.
+
+`cachefiles` writes to its backing files using `O_DIRECT`, which bypasses XFS delayed allocation and speculative preallocation. Each cache write is therefore allocated immediately and in isolation, with no opportunity to merge with a logically adjacent write that has not happened yet. A backing file accumulates roughly one extent per cache write, so a large, heavily read file can reach hundreds of thousands of extents.
+
+`SEEK_HOLE` is a linear scan of the extent list, and `cachefiles_prepare_read()` issues one per read subrequest to determine whether a range is already cached. Once a backing file is fully populated there is no hole to terminate the scan, so the scan runs to end of file. At around 200,000 extents a single `llseek()` can consume tens of milliseconds of CPU, which multiplied across thousands of reads per second saturates the instance.
+
+Note that a cache which never reaches the `cachefilesd` cull threshold (roughly 80% used) never evicts a backing file, so extent counts only ever grow. A persistently half-full cache is therefore more exposed to this than a full one.
+
+Check the current state on a proxy:
+
+```bash
+# mean extent length across the cache, and the worst single file
+find /var/cache/fscache/cache -type f -size +1G -exec filefrag {} \; | sort -t: -k2 -rn | head
+
+# extent count and populated ratio for one file
+filefrag -v <backing-file> | tail -3
+stat --format='apparent=%s allocated=%b*512' <backing-file>
+```
+
+The `FS-Cache: Mean Extents Length` and `FS-Cache: Max Extents per File` widgets on the CloudWatch dashboard track this directly, and `CPU per FS-Cache Read` isolates the per-read CPU cost.
+
+The fix is the XFS extent size hint, exposed as the `CACHEFILESD_EXTSIZE` Terraform variable and applied to `/var/cache/fscache` at startup. It is the only allocation control that affects the `O_DIRECT` path, and it forces XFS to allocate in aligned multiples of the hint so neighbouring cache writes land in already-allocated space. The default of `8` MiB reduces extents on a 60 GiB file by roughly 8x.
+
+The hint is inherited by files from their parent directory at creation time, so it only affects backing files created after it is applied. Existing fragmented files are not rewritten; they age out of the cache. Changing `CACHEFILESD_EXTSIZE` and running `terraform apply` updates the SSM parameter, and the new value is applied on the next instance boot via `xfs_io -c "extsize -D <bytes>"`, which recursively updates the mount point and every directory `cachefilesd` has already created.
+
+There is a trade-off. Because the hint rounds each allocation up, XFS allocates more space than the data currently occupies, marking the surplus as an unwritten extent. That padding is consumed as the backing file fills, so the cost is highest on a cold cache and falls as it warms, and small files are unaffected because XFS bounds the hint by what the file actually needs. The `FS-Cache: Unwritten Capacity` widget measures this directly, in bytes. The cost scales with how far the hint exceeds the cache write size, so a larger hint wastes more: if the cache is close to full, or capacity stays high on a cache that is not filling, use a smaller value or `0` to disable the hint.

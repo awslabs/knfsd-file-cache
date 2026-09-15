@@ -230,6 +230,20 @@ receivers:
   oldestfile:
     collection_interval: 10m
 
+  # Reports extent fragmentation of the FS-Cache backing files. cachefiles
+  # writes with O_DIRECT, so each cache write allocates in isolation and a
+  # backing file accumulates one extent per write. SEEK_HOLE in the cachefiles
+  # read path is a linear scan of the extent list, so a heavily fragmented cache
+  # becomes CPU bound. This requires walking the cache and issuing a FIEMAP
+  # ioctl per file, so it is scraped far less often than the /proc receivers.
+  # Use the fscache/fragmentation/scrape_duration metric to tune the interval;
+  # keep the duration well below the collection_interval.
+  fragmentation:
+    collection_interval: 10m
+    # Files smaller than min_file_size are ignored. They cannot accumulate
+    # enough extents to matter and they dominate the file count in most caches.
+    # min_file_size: 1048576
+
 processors:
   resourcedetection:
     detectors: [ec2]
@@ -388,6 +402,23 @@ processors:
       - action: update
         include: fscache.oldest_file
         new_name: fscache/oldest_file
+
+      # FS-Cache fragmentation metrics (from FIEMAP)
+      - action: update
+        include: fscache.extents.max
+        new_name: fscache/extents/max
+
+      - action: update
+        include: fscache.extents.mean_bytes
+        new_name: fscache/extents/mean_bytes
+
+      - action: update
+        include: fscache.extents.unwritten_bytes
+        new_name: fscache/extents/unwritten_bytes
+
+      - action: update
+        include: fscache.fragmentation.scrape_duration
+        new_name: fscache/fragmentation/scrape_duration
 
       # FS-Cache metrics (from /proc/fs/fscache/stats)
       - action: update

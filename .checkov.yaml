@@ -11,6 +11,8 @@ framework:
 mask: []
 secrets-history-timeout: 12h
 secrets-scan-file-type: []
+skip-path:
+  - debug/
 summary-position: bottom
 skip-check:
   - CKV_AWS_91   # Ensure the ELBv2 (Application/Network) has access logging enabled

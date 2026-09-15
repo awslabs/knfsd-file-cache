@@ -7,13 +7,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"testing"
+	"unsafe"
 
+	"github.com/awslabs/knfsd-file-cache/image/resources/knfsd-agent/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
@@ -23,6 +27,11 @@ const (
 	KB = 1024
 	MB = KB * 1024
 	GB = MB * 1024
+
+	// directIOAlignment is the alignment O_DIRECT requires for the buffer,
+	// offset and length. 4096 covers the logical block size of every device
+	// used by the smoke tests.
+	directIOAlignment = 4096
 )
 
 func TestSmoke(t *testing.T) {
@@ -262,10 +271,24 @@ func TestSmoke(t *testing.T) {
 		// Read the file through the proxy and ensure it matches.
 		assertFilesEqual(t, local, "/test/proxy/"+name)
 
-		// Read it a few more times to ensure it is fully cached
+		// Read it a few more times to ensure it is fully cached.
+		//
+		// These are BUFFERED reads. That is deliberate and is asserted below,
+		// rather than being left as an implicit consequence of how copyFile
+		// happens to be implemented: buffered and O_DIRECT reads take different
+		// paths through netfs and have been observed to differ in whether they
+		// populate the cache, so which one is under test must not be accidental.
 		for range 10 {
 			err = copyFile("/test/proxy/"+name, "/dev/null")
 			require.NoError(t, err)
+		}
+
+		// Confirm both read modes work against the cached file, so a regression
+		// in either is caught here rather than only in the fragmentation rig.
+		for _, direct := range []bool{false, true} {
+			data, err := readRange("/test/proxy/"+name, 0, 1*MB, direct)
+			require.NoError(t, err, "reading via the proxy with direct=%t", direct)
+			require.Len(t, data, 1*MB, "short read with direct=%t", direct)
 		}
 
 		err = dropLocalVMCaches()
@@ -293,6 +316,112 @@ func TestSmoke(t *testing.T) {
 			)
 			t.Error(msg)
 		}
+	})
+
+	// Checks that the cache actually *serves* reads, not just that it grows.
+	//
+	// Cache writes and cache reads fail independently. A cache can be filling
+	// correctly while never serving a single read, in which case every request
+	// still goes to the source filer and the cache is pure overhead. That state
+	// was observed in the field, and the "proxy caches file data" test above
+	// cannot detect it for two reasons:
+	//
+	//   * it asserts on filesystem bytes used, which only proves writes work
+	//   * it drops caches on the client only, so the re-read is served from the
+	//     proxy's page cache (L1) rather than from FS-Cache (L2)
+	//
+	// This test closes both gaps by dropping the proxy's page cache too and
+	// asserting on the kernel's own cache-read counter.
+	t.Run("proxy serves reads from cache", func(t *testing.T) {
+		dir, err := createTestDir("cache-read")
+		require.NoError(t, err)
+		t.Cleanup(dir.cleanup)
+
+		name := "cache-read.bin"
+		const size = 512 * MB
+
+		require.NoError(t, writeRandomData(dir.source+"/"+name, size))
+
+		// Populate the cache. Read twice; the first read may be satisfied
+		// before the cache write completes.
+		for range 2 {
+			require.NoError(t, copyFile(dir.proxy+"/"+name, "/dev/null"))
+		}
+
+		// Evict L1 on BOTH sides so the next read has to come from FS-Cache.
+		// Pagecache alone is enough, and avoids discarding dentry and inode
+		// caches that the rest of the suite relies on.
+		require.NoError(t, dropLocalVMCaches())
+		_, err = proxy.DropCaches(client.DropCachesPageCache)
+		require.NoError(t, err)
+
+		before, err := proxy.CacheStats()
+		require.NoError(t, err)
+
+		require.NoError(t, copyFile(dir.proxy+"/"+name, "/dev/null"))
+
+		after, err := proxy.CacheStats()
+		require.NoError(t, err)
+
+		reads := after.CacheReads.Requests - before.CacheReads.Requests
+		downloads := after.DownOps.Downloads - before.DownOps.Downloads
+
+		assert.Positive(t, reads,
+			"expected the proxy to read from FS-Cache, but CaRdOps.RD did not increase "+
+				"(cache reads: %d, source downloads: %d). The cache is being written "+
+				"but never read, so every request goes to the source filer.",
+			reads, downloads)
+
+		assert.Zero(t, after.CacheReads.Failed-before.CacheReads.Failed,
+			"cache reads were attempted but failed")
+	})
+
+	// Checks that a sparse source file is cached. Reads of a hole return zeros,
+	// and those zeros still have to be stored in the cache, otherwise a filer
+	// holding sparse files gets a silently useless cache.
+	//
+	// The existing tests all write random data, so they never exercise this.
+	t.Run("proxy caches sparse source files", func(t *testing.T) {
+		dir, err := createTestDir("sparse")
+		require.NoError(t, err)
+		t.Cleanup(dir.cleanup)
+
+		name := "sparse.bin"
+		const (
+			apparentSize = 1 * GB
+			readSize     = 256 * MB
+		)
+
+		// truncate sets i_size without allocating blocks, so this is instant
+		// and consumes no space on the source.
+		require.NoError(t, createSparseFile(dir.source+"/"+name, apparentSize))
+
+		info, err := os.Stat(dir.source + "/" + name)
+		require.NoError(t, err)
+		require.Equal(t, int64(apparentSize), info.Size(), "sparse file should report its apparent size")
+
+		initialSize, err := fsCacheSize()
+		require.NoError(t, err)
+
+		// Buffered read of the first readSize bytes, twice, so the cache write
+		// has completed by the time it is measured.
+		for range 2 {
+			data, err := readRange(dir.proxy+"/"+name, 0, readSize, false)
+			require.NoError(t, err)
+			require.Len(t, data, readSize)
+			assert.True(t, allZeros(data), "reads of a hole should return zeros")
+		}
+
+		cacheSize, err := fsCacheSize()
+		require.NoError(t, err)
+
+		// Allow a generous lower bound; the cache stores the range read plus
+		// metadata, and may round up to its own granularity.
+		delta := (cacheSize - initialSize) / MB
+		assert.Greater(t, delta, uint64(readSize/MB)/2,
+			"expected roughly %d MB of cache growth after reading a sparse range, got %d MB. "+
+				"Sparse source ranges are not being cached.",
+			readSize/MB, delta)
 	})
 }
 
@@ -366,6 +495,69 @@ func assertFilesEqual(t *testing.T, expected, actual string) {
 	if err != nil {
 		t.Logf("files were different: %s", out)
 	}
+}
+
+// createSparseFile creates a file with the given apparent size without
+// allocating any blocks, so reads of it return zeros from a hole.
+func createSparseFile(path string, size int64) error {
+	f, err := os.Create(path) // #nosec G304 -- test path built from the test's own temp dir
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := f.Truncate(size); err != nil {
+		return fmt.Errorf("truncate %s to %d: %w", path, size, err)
+	}
+	return nil
+}
+
+// readRange reads length bytes from offset.
+//
+// The read mode is explicit rather than inherited from whatever cp happens to
+// do, because buffered and O_DIRECT reads take different paths through netfs and
+// have been observed to differ in whether they populate the cache. Relying on
+// cp's implementation detail would mean a change to coreutils could silently
+// alter what these tests cover.
+func readRange(path string, offset int64, length int, direct bool) ([]byte, error) {
+	flags := os.O_RDONLY
+	if direct {
+		flags |= unix.O_DIRECT
+	}
+
+	f, err := os.OpenFile(path, flags, 0) // #nosec G304 -- test path built from the test's own temp dir
+	if err != nil {
+		return nil, fmt.Errorf("open %s (direct=%t): %w", path, direct, err)
+	}
+	defer f.Close()
+
+	// O_DIRECT requires the buffer, offset and length to be aligned to the
+	// logical block size. Allocate an extra page and slice to an aligned start
+	// so the buffer address satisfies the constraint.
+	buf := make([]byte, length+directIOAlignment)
+	start := 0
+	if direct {
+		if off := int(uintptr(unsafe.Pointer(&buf[0]))) % directIOAlignment; off != 0 {
+			start = directIOAlignment - off
+		}
+	}
+	buf = buf[start : start+length]
+
+	n, err := f.ReadAt(buf, offset)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, fmt.Errorf("read %s at %d (direct=%t): %w", path, offset, direct, err)
+	}
+	return buf[:n], nil
+}
+
+// allZeros reports whether b contains only zero bytes, i.e. hole contents.
+func allZeros(b []byte) bool {
+	for _, c := range b {
+		if c != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func removeTestFile(name string) {

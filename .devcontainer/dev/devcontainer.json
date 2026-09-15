@@ -60,6 +60,7 @@
     "source=knfsd-dev-golangci-lint-cache,target=/home/ubuntu/.cache/golangci-lint,type=volume",
     "source=knfsd-dev-pre-commit-cache,target=/home/ubuntu/.cache/pre-commit,type=volume",
     "source=knfsd-dev-mypy-cache,target=/home/ubuntu/.cache/mypy,type=volume",
+    "source=knfsd-dev-trivy-cache,target=/home/ubuntu/.cache/trivy,type=volume",
     "source=knfsd-dev-command-history,target=/home/ubuntu/.commandhistory,type=volume",
     "source=knfsd-dev-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
     "source=//var/run/docker.sock,target=/var/run/docker.sock,type=bind",

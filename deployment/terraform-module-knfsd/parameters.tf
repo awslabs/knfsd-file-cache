@@ -53,6 +53,7 @@ locals {
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = "(Optional) The disk type to use for the cachefiles directory. Can be either \"local-nvme\", \"ebs-gp3\" or \"ebs-io2\". Local ephemeral NVMe provides the highest performance, whilst EBS can provide data persistence. Default: \"local-nvme\"."
+    CACHEFILESD_EXTSIZE   = "(Optional) The XFS extent size hint (in MiB) applied to the FS-Cache filesystem (\"/var/cache/fscache\"). Reduces extent fragmentation of FS-Cache backing files, which otherwise accumulate one extent per cache write and make SEEK_HOLE increasingly expensive. Larger values reduce fragmentation further, at the cost of temporary space amplification for partially cached large files. Allowed values are \"0\" (disabled), \"4\", \"8\" or \"16\". Default: \"8\"."
 
     # metrics / http agent
     ENABLE_METRICS       = "(Optional) Enable the KNFSD Metrics (Open-Telemetry) Agent. Default: \"true\"."
@@ -111,6 +112,7 @@ resource "aws_ssm_parameter" "settings" {
 
     # cachefilesd
     CACHEFILESD_DISK_TYPE = var.CACHEFILESD_DISK_TYPE
+    CACHEFILESD_EXTSIZE   = var.CACHEFILESD_EXTSIZE
 
     # metrics / http agent
     ENABLE_METRICS       = var.ENABLE_METRICS

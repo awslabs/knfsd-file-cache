@@ -13,6 +13,8 @@ The following methods are supported:
 
 ```http
   GET /api/v1/cache/usage
+  GET /api/v1/cache/stats
+  POST /api/v1/cache/drop
   GET /api/v1/nodeInfo
   GET /api/v1/mounts
   GET /api/v1/mountStats
@@ -65,6 +67,76 @@ Reports the disk usage of FS-Cache.
 * `filesTotal` - (uint64) Total number of files (inodes) in the FS-Cache filesystem.
 * `filesUsed` - (uint64) Number of files (inodes) used in the FS-Cache filesystem.
 * `filesFree` - (uint64) Number of files (inodes) free in the FS-Cache filesystem.
+
+### GET /api/v1/cache/stats
+
+Reports the netfslib counters from `/proc/fs/fscache/stats` that show whether the cache is being read from, not merely written to.
+
+Cache reads and cache writes fail independently. A cache can be filling correctly, with `cacheWrites.requests` climbing, while never serving a single read, with `cacheReads.requests` stuck at zero. In that state every request still goes to the source filer and the cache provides no benefit. Disk usage alone cannot detect this, because the writes still land.
+
+```json
+{
+  "downOps": {
+    "downloads": 12026307,
+    "done": 12026307,
+    "failed": 0,
+    "instead": 0
+  },
+  "cacheReads": {
+    "requests": 500,
+    "done": 490,
+    "failed": 10
+  },
+  "cacheWrites": {
+    "requests": 9684543,
+    "done": 9684543,
+    "failed": 0
+  }
+}
+```
+
+* `downOps.downloads` - (uint64) Reads fetched from the source filer, i.e. cache misses (`DownOps: DL`).
+* `downOps.done` - (uint64) Downloads that completed (`DownOps: ds`).
+* `downOps.failed` - (uint64) Downloads that failed (`DownOps: df`).
+* `downOps.instead` - (uint64) Downloads performed instead of a cache read (`DownOps: di`).
+
+* `cacheReads.requests` - (uint64) Reads served from FS-Cache (`CaRdOps: RD`).
+* `cacheReads.done` - (uint64) Cache reads that completed (`CaRdOps: rs`).
+* `cacheReads.failed` - (uint64) Cache reads that failed (`CaRdOps: rf`).
+
+* `cacheWrites.requests` - (uint64) Writes into FS-Cache, i.e. cache population (`CaWrOps: WR`).
+* `cacheWrites.done` - (uint64) Cache writes that completed (`CaWrOps: ws`).
+* `cacheWrites.failed` - (uint64) Cache writes that failed (`CaWrOps: wf`).
+
+> NOTE: this method requires a kernel built with `CONFIG_FSCACHE_STATS`. If `/proc/fs/fscache/stats` is absent the method returns an error rather than zeroed counters, which would otherwise be indistinguishable from a completely idle cache.
+
+### POST /api/v1/cache/drop
+
+Frees the kernel caches, so that subsequent reads must come from FS-Cache (L2) rather than the page cache (L1). Used by the smoke tests to prove the cache is genuinely serving reads.
+
+This is the only method that changes state, so it accepts `POST` only. Any other method returns `405 Method Not Allowed`.
+
+```bash
+curl -s -X POST "http://localhost:80/api/v1/cache/drop?mode=1"
+```
+
+The optional `mode` query parameter selects what is freed, matching the values `/proc/sys/vm/drop_caches` accepts (see [proc_sys_vm(5)](https://man7.org/linux/man-pages/man5/proc_sys_vm.5.html)):
+
+* `1` - Free pagecache only. Sufficient to force reads down to FS-Cache.
+* `2` - Free dentries and inodes only.
+* `3` - Free pagecache, dentries and inodes. This is the default when `mode` is omitted.
+
+Any other value returns `400 Bad Request`. A `sync` is always performed first, because dirty objects are not freeable.
+
+```json
+{
+  "mode": 1
+}
+```
+
+* `mode` - (int) The mode that was applied.
+
+> WARNING: dropping caches discards the benefit of caching and will temporarily degrade performance while the caches repopulate.
 
 ### GET /api/v1/nodeInfo
 
@@ -515,7 +587,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "7.2.3-knfsd",
+  "kernel": "7.2.6-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",
@@ -526,7 +598,7 @@ Gets the OS and kernel versions.
     "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
     "SUPPORT_URL": "https://help.ubuntu.com/",
     "UBUNTU_CODENAME": "resolute",
-    "VERSION": "26.04 LTS (Resolute Raccoon)",
+    "VERSION": "26.04.1 LTS (Resolute Raccoon)",
     "VERSION_CODENAME": "resolute",
     "VERSION_ID": "26.04"
   }
@@ -545,7 +617,7 @@ Gets the OS and kernel versions.
 
   * `ID` - Lower-case string identifying the operating system, excluding an version information and suitable for processing by scripts or usage in filenames (e.g. "ubuntu").
 
-  * `VERSION` - Operating System version, excluding any OS name information, suitable for presentation to the user (e.g. "26.04 LTS (Resolute Raccoon)"). This field is optional.
+  * `VERSION` - Operating System version, excluding any OS name information, suitable for presentation to the user (e.g. "26.04.1 LTS (Resolute Raccoon)"). This field is optional.
 
   * `VERSION_ID` - Lower-case string identifying the operating system version (e.g. "26.04"). This field is optional.
 

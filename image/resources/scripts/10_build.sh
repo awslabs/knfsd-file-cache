@@ -12,8 +12,8 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 # pinned versions
-VERSION="1.1.0-beta.3"
-KERNEL="7.2.3"
+VERSION="1.1.0-beta.4"
+KERNEL="7.2.6"
 
 # identify architecture
 export ARCH=$(uname -m)
@@ -236,7 +236,7 @@ function download_nfs-utils() (
 	begin_command "downloading nfs-utils"
 	# https://git.linux-nfs.org/?p=steved/nfs-utils.git;a=summary
 	# Need nfs-utils >2.6.3 to support the new reexport features and fsidd service.
-	# Resolute Raccoon (Ubuntu 26.04) has nfs-common 2.8.5
+	# Resolute Raccoon (Ubuntu 26.04.1) has nfs-common 2.8.5
 	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
 		-o nfs-utils.tar.gz https://cdn.kernel.org/pub/linux/utils/nfs-utils/2.8.5/nfs-utils-2.8.5.tar.gz
 	tar xf nfs-utils.tar.gz

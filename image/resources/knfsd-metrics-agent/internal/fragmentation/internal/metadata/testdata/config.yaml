@@ -1,0 +1,21 @@
+default:
+all_set:
+  metrics:
+    fscache.extents.max:
+      enabled: true
+    fscache.extents.mean_bytes:
+      enabled: true
+    fscache.extents.unwritten_bytes:
+      enabled: true
+    fscache.fragmentation.scrape_duration:
+      enabled: true
+none_set:
+  metrics:
+    fscache.extents.max:
+      enabled: false
+    fscache.extents.mean_bytes:
+      enabled: false
+    fscache.extents.unwritten_bytes:
+      enabled: false
+    fscache.fragmentation.scrape_duration:
+      enabled: false

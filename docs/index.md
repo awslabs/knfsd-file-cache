@@ -35,6 +35,7 @@
   * [Connections](../image/resources/knfsd-metrics-agent/internal/connections/documentation.md)
   * [Exports](../image/resources/knfsd-metrics-agent/internal/exports/documentation.md)
   * [FSCache](../image/resources/knfsd-metrics-agent/internal/fscache/documentation.md)
+  * [FSCache Fragmentation](../image/resources/knfsd-metrics-agent/internal/fragmentation/documentation.md)
   * [Mounts](../image/resources/knfsd-metrics-agent/internal/mounts/documentation.md)
   * [NFSD](../image/resources/knfsd-metrics-agent/internal/nfsd/documentation.md)
   * [Oldest File](../image/resources/knfsd-metrics-agent/internal/oldestfile/documentation.md)

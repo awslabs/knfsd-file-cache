@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.3"
+  default     = "1.1.0-beta.4"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.3\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.4\"."
   }
 }
 
@@ -490,6 +490,17 @@ variable "CACHEFILESD_EBS_THROUGHPUT" {
   type        = number
   nullable    = false
   default     = 125
+}
+
+variable "CACHEFILESD_EXTSIZE" {
+  description = "(Optional) The XFS extent size hint (in MiB) applied to the FS-Cache filesystem (\"/var/cache/fscache\"). Reduces extent fragmentation of FS-Cache backing files, which otherwise accumulate one extent per cache write and make SEEK_HOLE increasingly expensive. Larger values reduce fragmentation further, at the cost of temporary space amplification for partially cached large files. Allowed values are \"0\" (disabled), \"4\", \"8\" or \"16\". Default: \"8\"."
+  type        = number
+  nullable    = false
+  default     = 8
+  validation {
+    condition     = contains([0, 4, 8, 16], var.CACHEFILESD_EXTSIZE)
+    error_message = "CACHEFILESD_EXTSIZE must be one of 0 (disabled), 4, 8 or 16 (MiB). A value of 1 is not permitted as it matches the cache write size and provides no benefit."
+  }
 }
 
 variable "NCONNECT" {

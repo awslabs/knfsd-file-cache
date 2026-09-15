@@ -1,0 +1,51 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+type: fragmentation
+
+scope_name: knfsd-metrics-agent/fragmentation
+
+status:
+  class: receiver
+  stability:
+    alpha: [metrics]
+  codeowners:
+    active: [AWS]
+  unsupported_platforms: [windows]
+
+metrics:
+  fscache.extents.max:
+    enabled: true
+    stability: alpha
+    description: Highest extent count of any single FS-Cache backing file. SEEK_HOLE cost in the cachefiles read path is proportional to this value.
+    unit: "{extents}"
+    gauge:
+      value_type: int
+
+  fscache.extents.mean_bytes:
+    enabled: true
+    stability: alpha
+    description: Mean extent length across all FS-Cache backing files. A value below the NFS rsize indicates cache writes are not coalescing into larger extents.
+    unit: By
+    gauge:
+      value_type: int
+
+  fscache.extents.unwritten_bytes:
+    enabled: true
+    stability: alpha
+    description: Disk capacity allocated to FS-Cache backing files in unwritten extents, holding no cached data yet. XFS pads each allocation up to the extent size hint and marks the surplus unwritten, so this is the capacity CACHEFILESD_EXTSIZE has reserved ahead of use. Consumed as backing files fill. Zero when the hint is disabled.
+    unit: By
+    gauge:
+      value_type: int
+
+  fscache.fragmentation.scrape_duration:
+    enabled: true
+    stability: alpha
+    description: Time taken to scan FS-Cache and collect extent statistics. Use this to tune the collection_interval; keep the duration well below the interval.
+    unit: ms
+    gauge:
+      value_type: int
+
+tests:
+  config:
+    cache_path: "/tmp"

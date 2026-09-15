@@ -12,7 +12,7 @@ For every run, the harness performs the following steps:
 
 The Golang compiled `remote.test` binary reads `source_host` / `proxy_host` from EC2 instance tags via IMDSv2 and exercises mounts through the proxy. The `remote.test` binary is compiled using the `build-remote` target via the `Makefile`. Because the binary runs on the remote NFS client (not the machine driving the tests), `build-remote` cross-compiles it for `GOOS=linux GOARCH=$(TARGET_ARCH)`. `TARGET_ARCH` defaults to `amd64` to match the Terraform `ARCH` default and is independent of the dev-container host architecture; override it (e.g. `make test TARGET_ARCH=arm64`) to match a non-default client `ARCH`.
 
-The smoke-test Terraform in [`terraform/`](terraform/) wires three modules — [`modules/source-nfs`](modules/source-nfs), [`deployment/terraform-module-knfsd`](../../deployment/terraform-module-knfsd), and [`modules/nfs-client`](modules/nfs-client) — plus the self-created security groups in [`terraform/network.tf`](terraform/network.tf).
+The smoke-test Terraform in [`terraform/`](terraform/) wires together three modules, [`modules/source-nfs`](modules/source-nfs), [`deployment/terraform-module-knfsd`](../../deployment/terraform-module-knfsd), and [`modules/nfs-client`](modules/nfs-client), along with the self-created security groups in [`terraform/network.tf`](terraform/network.tf).
 
 ## Prerequisites
 
@@ -97,7 +97,7 @@ A single ephemeral key is pushed per run; SSH connection multiplexing (`ControlM
 
 ### Stage skipping
 
-The smoke-test driver runs three stages in sequence within a single `go test` invocation: `apply` (provision TF infrastructure), `check` (run the validation block), and `destroy` (tear down TF resources). State is persisted between `go test` runs via terratest's `terraform/.test-data/` directory, which lets you split the stages across multiple invocations — useful when iterating on the check stage without re-paying the apply cost every time.
+The smoke-test driver runs three stages in sequence within a single `go test` invocation: `apply` (provision TF infrastructure), `check` (run the validation block), and `destroy` (tear down TF resources). State is persisted between `go test` runs via terratest's `terraform/.test-data/` directory, which lets you split the stages across multiple invocations. That is useful when iterating on the check stage without re-paying the apply cost every time.
 
 Each stage is gated by an environment variable. Setting the variable to **any non-empty value** tells the driver to skip that stage and move on; an unset variable (or one set to the empty string) lets the stage run normally:
 
@@ -107,7 +107,7 @@ Each stage is gated by an environment variable. Setting the variable to **any no
 | `SKIP_check`   | The validation block (`scp` + remote `go test`).            |
 | `SKIP_destroy` | `terraform destroy`. Leaves infra up for inspection.        |
 
-The `make apply` / `make check` / `make destroy` wrappers above set these for you — each target sets the other two `SKIP_*` variables to `true` and clears the one for the stage you want to run, so each invocation runs exactly one stage. Direct env-var use is rarely needed; reach for it only when driving `go test` outside `make` (e.g. from an IDE debugger), or for a non-standard combination such as `SKIP_destroy=true make test` (apply + check, leave infra up).
+The `make apply` / `make check` / `make destroy` wrappers above set these for you. Each target sets the other two `SKIP_*` variables to `true` and clears the one for the stage you want to run, so each invocation runs exactly one stage. Direct env-var use is rarely needed; reach for it only when driving `go test` outside `make` (e.g. from an IDE debugger), or for a non-standard combination such as `SKIP_destroy=true make test` (apply + check, leave infra up).
 
 Typical iteration flow:
 

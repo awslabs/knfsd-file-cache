@@ -96,7 +96,7 @@ _ITEM_RE = re.compile(r"^[-*][ \t]+", re.MULTILINE)
 _SUBITEM_RE = re.compile(r"^[ \t]*[-*][ \t]+")
 
 # A leading icon/emoji shortcode, e.g. ":material-cog-outline:".
-_ICON_RE = re.compile(r"^(?P<icon>:[a-z0-9_+-]+(?:-[a-z0-9_+-]+)*:)[ \t]*")
+_ICON_RE = re.compile(r"^(?P<icon>:[a-z0-9_+-]+:)[ \t]*")
 
 # Icon supplied as an HTML comment so the repo browser, which does not
 # understand Material's shortcodes, shows nothing rather than literal text:

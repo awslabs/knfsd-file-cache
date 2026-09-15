@@ -2,6 +2,7 @@ verbose: false
 exclude-paths:
   - "/knfsd-file-cache/.devcontainer/"
   - ".devcontainer/"
+  - "/knfsd-file-cache/debug/"
 exclude-severities:
   - LOW
   - INFO

@@ -132,6 +132,8 @@ func registerRoutes(mux *http.ServeMux) {
 	mux.Handle("/", JSONHandler(handleNodeInfo))
 	mux.Handle("/favicon.ico", http.HandlerFunc(handleFavIcon))
 	mux.Handle("/api/v1/cache/usage", JSONHandler(handleCacheUsage))
+	mux.Handle("/api/v1/cache/stats", JSONHandler(handleCacheStats))
+	mux.Handle("/api/v1/cache/drop", http.HandlerFunc(handleCacheDrop))
 	mux.Handle("/api/v1/nodeInfo", JSONHandler(handleNodeInfo))
 	mux.Handle("/api/v1/mounts", JSONHandler(handleMounts))
 	mux.Handle("/api/v1/mountStats", JSONHandler(handleMountStats))
