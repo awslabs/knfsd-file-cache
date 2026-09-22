@@ -7,16 +7,16 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.64.0"
+      version = "~> 6.66.0"
     }
     archive = {
       source  = "hashicorp/archive"
-      version = "~> 2.8.0"
+      version = "~> 2.8.1"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/dns_round_robin/1.1.0-beta.4"
+      "knfsd-file-cache/modules/dns_round_robin/1.1.0-beta.5"
     ]
   }
 }

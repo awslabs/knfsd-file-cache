@@ -295,14 +295,17 @@
           "height": 3,
           "properties": {
               "metrics": [
-                  [ "/knfsd/metrics", "knfsd/mount/read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", "server", "SOURCE_FILTER", { "id": "m1", "visible": false, "stat": "Sum" } ],
+                  [ { "expression": "SEARCH('{/knfsd/metrics,AutoScalingGroupName,InstanceId,server} AutoScalingGroupName=\"ASG_FILTER\" InstanceId=\"INSTANCE_FILTER\" MetricName=\"knfsd/mount/read_bytes\"', 'Sum')", "id": "m1", "visible": false } ],
                   [ "/knfsd/metrics", "knfsd/exports/total_read_bytes", "AutoScalingGroupName", "ASG_FILTER", "InstanceId", "INSTANCE_FILTER", { "id": "m2", "visible": false, "stat": "Sum" } ],
-                  [ { "expression": "IF(m2 > 0, (1 - (m1/m2)) * 100, 0)", "label": "${PROP('Dim.InstanceId')}", "color": "#08aad2", "id": "e1" } ]
+                  [ { "expression": "SUM(REMOVE_EMPTY(m1))", "id": "e1", "visible": false } ],
+                  [ { "expression": "SUM([m2])", "id": "e2", "visible": false } ],
+                  [ { "expression": "IF(e2 > 0, (1 - (e1/e2)) * 100, 0)", "id": "e3", "visible": false } ],
+                  [ { "expression": "IF(e3 < 0, 0, IF(e3 > 100, 100, e3))", "label": "Percent %", "color": "#08aad2", "id": "e4" } ]
               ],
               "view": "singleValue",
               "stacked": false,
               "region": "${region_filter}",
-              "title": "Cache Hit Ratio %",
+              "title": "Cache Hit Ratio: INSTANCE_FILTER",
               "period": 60,
               "stat": "Sum",
               "yAxis": {

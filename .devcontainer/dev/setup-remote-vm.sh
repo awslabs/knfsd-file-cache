@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.4"
+VERSION="1.1.0-beta.5"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -149,13 +149,13 @@ KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.94
+KNFSD_BOTO3_VERSION=1.43.99
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.17
+KNFSD_CHECKOV_VERSION=3.3.19
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-KNFSD_EDITORCONFIG_VERSION=4.0.1
+KNFSD_EDITORCONFIG_VERSION=4.0.2
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.13.2
 # https://go.dev/dl/
@@ -165,7 +165,7 @@ KNFSD_GOSEC_VERSION=2.29.0
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=2.3.1
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.16.0
+KNFSD_PACKER_VERSION=1.16.1
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
@@ -187,7 +187,7 @@ KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.12.15
+KNFSD_UV_VERSION=0.12.17
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

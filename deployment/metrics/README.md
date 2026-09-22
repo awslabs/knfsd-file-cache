@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.4"
+  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.5"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -326,7 +326,7 @@ Overview of KNFSD caching layers including L1 (Linux filesystem cache) and L2 (F
 | Total WRITE Bytes               | `knfsd/exports/total_write_bytes`                                | Total bytes written by clients to proxies in ASG                | Sum     | 60s    | Bytes            |
 | Total BW                        | Expression: `ABS(RATE(SUM(m1)))`                                 | Total Bandwidth by clients to all proxies in ASG                | Sum     | 60s    | Bytes/Second     |
 | Total IOPS                      | `knfsd/exports/total_operations`                                 | Total NFS operations from clients to all proxies in ASG         | Sum     | 60s    | Count            |
-| Cache Hit Ratio %               | Expression: `IF(m2 > 0, (1 - (m1/m2)) * 100, 0)`                 | Percentage of reads served from cache (not fetched from source) | Sum     | 60s    | Percent %        |
+| Cache Hit Ratio %               | Expression: `IF(e3 < 0, 0, IF(e3 > 100, 100, e3))`               | Percentage of reads served from cache (not fetched from source) | Sum     | 60s    | Percent %        |
 | Cluster Size                    | `AWS/AutoScaling.GroupInServiceInstances`                        | Number of active proxy instances in ASG                         | Maximum | 60s    | Active Instances |
 | FS-Cache Disk Used %            | `disk_used_percent` (path: `/var/cache/fscache`)                 | Percentage of FS-Cache disk space used                          | Maximum | 60s    | Percent %        |
 | FS-Cache Disk Free Space        | `disk_free` (path: `/var/cache/fscache`)                         | Free space available in FS-Cache                                | Minimum | 60s    | Size             |

@@ -6,7 +6,7 @@
 
 FROM --platform=${BUILDPLATFORM} public.ecr.aws/lts/ubuntu:26.04
 
-ARG VERSION="1.1.0-beta.4"
+ARG VERSION="1.1.0-beta.5"
 
 LABEL org.opencontainers.image.source="https://github.com/awslabs/knfsd-file-cache"
 LABEL org.opencontainers.image.description="knfsd-file-cache development container image"
@@ -136,15 +136,15 @@ ARG KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 ARG KNFSD_BLACK_VERSION=26.5.1
 # https://github.com/boto/boto3/tags
-ARG KNFSD_BOTO3_VERSION=1.43.94
+ARG KNFSD_BOTO3_VERSION=1.43.99
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-ARG KNFSD_CHECKOV_VERSION=3.3.17
+ARG KNFSD_CHECKOV_VERSION=3.3.19
 # https://github.com/codespell-project/codespell/releases
 ARG KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/go-delve/delve/tags
 ARG KNFSD_DLV_VERSION=1.27.2
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-ARG KNFSD_EDITORCONFIG_VERSION=4.0.1
+ARG KNFSD_EDITORCONFIG_VERSION=4.0.2
 # https://github.com/golangci/golangci-lint/releases
 ARG KNFSD_GOLANGCI_LINT_VERSION=2.13.2
 # https://go.dev/dl/
@@ -164,7 +164,7 @@ ARG KNFSD_MKDOCS_SAME_DIR_VERSION=0.1.5
 # https://github.com/python/mypy/tags
 ARG KNFSD_MYPY_VERSION=2.3.1
 # https://github.com/hashicorp/packer/releases
-ARG KNFSD_PACKER_VERSION=1.16.0
+ARG KNFSD_PACKER_VERSION=1.16.1
 # https://github.com/pre-commit/pre-commit/releases
 ARG KNFSD_PRECOMMIT_VERSION=4.6.2
 # https://github.com/pylint-dev/pylint/tags
@@ -186,7 +186,7 @@ ARG KNFSD_TRIVY_VERSION=0.74.0
 # https://pypi.org/project/tzupdate/
 ARG KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-ARG KNFSD_UV_VERSION=0.12.15
+ARG KNFSD_UV_VERSION=0.12.17
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 RUN curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

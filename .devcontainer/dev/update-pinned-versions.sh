@@ -13,7 +13,29 @@
 ## stable, such as a "v3.9.0" tagged while "v3.8.0" is still the latest release.
 ## A pin listed in PATCH_ONLY only follows the release series it is already on, so
 ## the patch releases are applied while a newer series is reported and left alone.
+## A pin listed in ALSO_REQUIRED has to be published by a second source before it is
+## suggested, which keeps a version that is consumed two ways, such as bats being
+## both a GitHub source archive and a "bats/bats" image, from moving ahead of either.
 ## Set GITHUB_COM_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
+
+## The Terraform providers pinned under a "required_providers" block in any "*.tf"
+## file are checked in the same run, along with the Packer plugins pinned under a
+## "required_plugins" block and the tflint ruleset plugins pinned in ".tflint.hcl".
+## Each is named by its address, as "hashicorp/aws". The blocks are parsed rather
+## than grepped, so the Terraform "required_version" is never touched: that stays on
+## ">= 1.2.9" deliberately, as every module in this repo has to keep working on
+## Terraform v1.2. The Packer "required_version" is a pin of the Packer release, so
+## it is kept in step with KNFSD_PACKER_VERSION through EXTRA_PINS instead.
+## The upstream repo of a provider or plugin follows from its address by naming
+## convention, so "hashicorp/aws" is read from the tags of
+## "hashicorp/terraform-provider-aws", and no per-provider configuration is needed
+## to add one. A tflint plugin names its repo in its own "source" attribute.
+## A provider or Packer plugin only follows the major version it is already pinned
+## to, because a major release is a breaking change and usually raises the minimum
+## Terraform version, which this repo cannot follow. So a new minor or patch is
+## applied and a new major is reported and left for a deliberate migration. A tflint
+## ruleset has no such limit, as it lints the Terraform rather than being a
+## dependency of the deployed infrastructure.
 
 ## NETWORK: only these hosts are contacted, and nothing here runs the "go" binary
 ##   api.github.com, pypi.org, hub.docker.com, public.ecr.aws, go.dev, github.com
@@ -28,6 +50,7 @@
 ## ./update-pinned-versions.sh                           report the available updates
 ## ./update-pinned-versions.sh --write                   rewrite the pins in place
 ## ./update-pinned-versions.sh --write KNFSD_UV_VERSION  limit the run to one variable
+## ./update-pinned-versions.sh hashicorp/aws             limit the run to one provider
 
 set -eo pipefail
 
@@ -107,6 +130,19 @@ PATCH_ONLY=(
 	"KNFSD_GOLANG_VERSION"
 )
 
+## pins whose version has to be published by a second source before it can be
+## suggested, as "VARIABLE|SOURCE|REFERENCE"; only a version that both sources carry
+## is offered, so the pin never moves ahead of either one
+## bats is the case this exists for, as one version is consumed two different ways:
+## the dev container and the remote VM install it from the GitHub source archive,
+## while the BATS test container pulls the "bats/bats" image. The image is published
+## a little after the GitHub release, so resolving from GitHub alone would rewrite
+## the "FROM bats/bats:" tag to an image that does not exist yet, and "make bats"
+## would then fail to pull it
+ALSO_REQUIRED=(
+	"KNFSD_BATS_CORE_VERSION|dockerhub|bats/bats"
+)
+
 ## pins that repeat a version as a literal, with no variable to match on, as
 ## "VARIABLE|FILE|LITERAL_PREFIX"; the version following the prefix is kept in
 ## step with the variable
@@ -119,6 +155,9 @@ PATCH_ONLY=(
 ## 1.26.8, which is what these entries prevent; the prerequisite prose in the
 ## client metrics guide and in the smoke tests README names the full release
 ## rather than a release series, so it is kept in step here as well
+## the Packer template's own "required_version" is a floor on the Packer release, so
+## it belongs with KNFSD_PACKER_VERSION rather than with the plugin pins below,
+## which is also why the "required_plugins" parse leaves it alone
 EXTRA_PINS=(
 	"KNFSD_BATS_CORE_VERSION|image/resources/startup/tests/Dockerfile|FROM bats/bats:"
 	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|[Go "
@@ -126,6 +165,53 @@ EXTRA_PINS=(
 	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|-xzf go"
 	"KNFSD_GOLANG_VERSION|image/resources/scripts/10_build.sh|https://dl.google.com/go/go"
 	"KNFSD_GOLANG_VERSION|image/smoke-tests/README.md|[Go "
+	"KNFSD_PACKER_VERSION|image/knfsd.pkr.hcl|required_version = \">= "
+)
+
+## The Terraform providers, tflint ruleset plugins and Packer plugins pinned in the
+## repo are discovered from their declaration blocks rather than listed here, so one
+## added to a new module is picked up without editing this script. Three kinds are
+## recognised, and the settings below are keyed by that kind:
+##   provider       a "required_providers" entry in a "*.tf" file
+##   packer-plugin  a "required_plugins" entry in a "*.pkr.hcl" file
+##   tflint-plugin  a "plugin" block in ".tflint.hcl"
+## the upstream repo follows from the address by naming convention, so no
+## per-plugin configuration is needed to add one:
+##   hashicorp/aws    -> hashicorp/terraform-provider-aws
+##   hashicorp/amazon -> hashicorp/packer-plugin-amazon
+## a tflint plugin is the exception, as its "source" already names the repo
+
+## a pin whose namespace is not listed here is reported and skipped, because the
+## upstream repo of a third party provider or plugin does not reliably follow the
+## naming convention that the lookup depends on
+## a tflint plugin is exempt, as nothing is derived for it
+HCL_NAMESPACES=(
+	"hashicorp"
+)
+
+## the kinds that follow only the major version they are already pinned to, because
+## a major release is a breaking change that usually raises the minimum Terraform or
+## Packer version, and this repo holds Terraform at v1.2 deliberately
+## a tflint ruleset is absent on purpose: it lints the Terraform rather than being a
+## dependency of the deployed infrastructure, so the newest ruleset is always wanted
+HCL_MAJOR_ONLY=(
+	"provider"
+	"packer-plugin"
+)
+
+## a pin that is reported but never rewritten, as "KIND|ADDRESS", the declaration
+## block equivalent of NOTIFY_ONLY
+HCL_NOTIFY_ONLY=()
+
+## the constraint operator to preserve on a rewrite, as "KIND|OPERATOR"
+## a pessimistic "~>" constraint on the full version allows the patch releases of the
+## pinned minor and nothing further, so a "terraform init" or "packer init" picks up
+## a patch without a repo change while a minor stays deliberate
+## a tflint plugin takes an exact version with no operator at all
+HCL_CONSTRAINTS=(
+	"provider|~>"
+	"packer-plugin|~>"
+	"tflint-plugin|"
 )
 
 ## a stable version is 2 to 4 dot separated numbers, with an optional "v" prefix,
@@ -148,6 +234,9 @@ GODEV_DL="https://go.dev/dl/?mode=json&include=all"
 GOLANG_REPO="https://github.com/golang/go.git"
 # tags requested per page; the newest tags are returned first
 TAGS_PER_PAGE=100
+# the tflint configuration, whose "plugin" blocks pin the ruleset plugins; a plugin
+# names its own repo, so this is the only path that has to be known
+TFLINT_CONFIG=".tflint.hcl"
 # Docker Hub caps a page at 100 tags however many are asked for, and orders them by
 # the last update rather than by version, so the pages are followed until enough
 # plain version tags are collected, or the page cap is reached
@@ -165,13 +254,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 function usage() {
-	printf 'Syntax: ./update-pinned-versions.sh [-w/--write] [VARIABLE]\n'
+	printf 'Syntax: ./update-pinned-versions.sh [-w/--write] [VARIABLE|PROVIDER]\n'
 	printf '    Default:    report the pins that are behind their latest stable release\n'
 	printf '    -w/--write: rewrite the outdated pins in place\n'
 	printf '    VARIABLE:   limit the run to one KNFSD_*_VERSION variable\n'
+	printf '    PROVIDER:   limit the run to one provider or plugin, as "hashicorp/aws"\n'
 	printf '    Example: ./update-pinned-versions.sh --write KNFSD_UV_VERSION\n'
 	printf '    A PATCH_ONLY pin follows only the release series it is on; a newer\n'
 	printf '    series is reported and upgraded by hand\n'
+	printf '    A Terraform provider and a Packer plugin follow only their pinned\n'
+	printf '    major version; a newer major is reported and migrated by hand\n'
 }
 
 # check for help flags
@@ -187,11 +279,21 @@ if [[ $1 == '-w' || $1 == '--write' ]]; then
 	shift
 fi
 
-ONLY_VARIABLE=$1
-if [[ -n ${ONLY_VARIABLE} && ${ONLY_VARIABLE} != KNFSD_*_VERSION ]]; then
-	echo -e "${SHELL_RED}ERROR: not a KNFSD_*_VERSION variable: ${ONLY_VARIABLE}${SHELL_DEFAULT}" 1>&2
-	usage 1>&2
-	exit 2
+## the optional filter is either a "KNFSD_*_VERSION" variable or the registry
+## address of a Terraform provider, as "hashicorp/aws"; the two cannot overlap, as
+## a variable never contains a "/"
+ONLY_VARIABLE=''
+ONLY_PROVIDER=''
+if [[ -n $1 ]]; then
+	if [[ $1 == */* ]]; then
+		ONLY_PROVIDER=$1
+	elif [[ $1 == KNFSD_*_VERSION ]]; then
+		ONLY_VARIABLE=$1
+	else
+		echo -e "${SHELL_RED}ERROR: not a KNFSD_*_VERSION variable or a provider address: $1${SHELL_DEFAULT}" 1>&2
+		usage 1>&2
+		exit 2
+	fi
 fi
 
 # check the required tools are installed
@@ -496,6 +598,288 @@ function pinned_versions() {
 	} | sort -uV
 }
 
+# print the highest version of the given major version from a list of versions on
+# stdin, keeping to the same number of dot separated parts as the pin, so a shorter
+# tag such as "6.65" cannot replace a three part pin of "6.64.0"
+# nothing is printed when that major version has no such release
+function highest_in_major() {
+	local major=$1 parts=$2
+	grep -E "^${major}(\.[0-9]+){$((parts - 1))}$" | sort -V | tail -1
+}
+
+# print every entry of a named HCL map block, as "KIND|FILE|LINE|ADDRESS|CONSTRAINT"
+#   deployment/database/main.tf|14|hashicorp/random|~> 3.9.0
+# this covers both a Terraform "required_providers" block and a Packer
+# "required_plugins" block, which have the same shape: a map keyed by the local name
+# of the provider or plugin, each entry holding a "source" and a "version"
+# the block is parsed rather than grepped so that only the "version" belonging to an
+# entry is reported: a "required_version" sits in the same enclosing block and must
+# never be touched, as it pins Terraform or Packer itself rather than a plugin
+# "git grep -l" narrows the parse to the tracked files that have such a block, so an
+# ignored path, such as a ".terraform" working directory, is never read
+# an entry declared without a "version" is skipped, as it has no pin to follow
+function find_block_pins() {
+	local kind=$1 block=$2 glob=$3
+	local file
+	while IFS= read -r file; do
+		[[ -n ${file} ]] || continue
+		awk -v path="${file}" -v kind="${kind}" -v block="${block}" '
+			# count the braces on a line without altering it, so the depth is
+			# tracked from the same text the patterns below are matched against
+			function braces(text, char) {
+				return gsub(char, "&", text)
+			}
+			BEGIN {
+				depth = 0
+				block_depth = -1
+				entry = ""
+				e_depth = -1
+				source = ""
+				constraint = ""
+				line_no = 0
+				opening = "^[[:space:]]*" block "[[:space:]]*(=[[:space:]]*)?\\{"
+			}
+			{
+				line = $0
+				# a trailing comment can hold anything, including a brace
+				sub(/[[:space:]]*(#|\/\/).*$/, "", line)
+
+				if (block_depth < 0) {
+					if (line ~ opening) {
+						block_depth = depth + 1
+					}
+				} else if (entry == "") {
+					# each entry is one provider or plugin, keyed by its local name
+					if (line ~ /^[[:space:]]*[A-Za-z0-9_-]+[[:space:]]*=[[:space:]]*\{/) {
+						entry = line
+						sub(/^[[:space:]]*/, "", entry)
+						sub(/[[:space:]]*=.*$/, "", entry)
+						e_depth = depth + 1
+						source = ""
+						constraint = ""
+						line_no = 0
+					}
+				} else {
+					if (match(line, /^[[:space:]]*source[[:space:]]*=[[:space:]]*"[^"]*"/)) {
+						source = substr(line, RSTART, RLENGTH)
+						sub(/^[^"]*"/, "", source)
+						sub(/"$/, "", source)
+						# a source may be fully qualified with the registry or
+						# repository host, as "registry.terraform.io/hashicorp/aws"
+						# or "github.com/hashicorp/amazon"; the host is dropped so
+						# an address is always "NAMESPACE/TYPE"
+						sub(/^[^\/]*\.[^\/]*\//, "", source)
+					}
+					if (match(line, /^[[:space:]]*version[[:space:]]*=[[:space:]]*"[^"]*"/)) {
+						constraint = substr(line, RSTART, RLENGTH)
+						sub(/^[^"]*"/, "", constraint)
+						sub(/"$/, "", constraint)
+						line_no = FNR
+					}
+				}
+
+				depth += braces(line, "{") - braces(line, "}")
+
+				if (entry != "" && depth < e_depth) {
+					if (source != "" && constraint != "") {
+						print kind "|" path "|" line_no "|" source "|" constraint
+					}
+					entry = ""
+					e_depth = -1
+				}
+				if (block_depth >= 0 && depth < block_depth) {
+					block_depth = -1
+				}
+			}
+		' "${REPO_ROOT}/${file}"
+	done < <(git -C "${REPO_ROOT}" grep -lE "^[[:space:]]*${block}[[:space:]]*(=[[:space:]]*)?\{" -- "${glob}")
+}
+
+# print every tflint ruleset plugin pinned in ".tflint.hcl", as
+# "KIND|FILE|LINE|ADDRESS|CONSTRAINT"
+# a tflint plugin is a labelled block rather than a map entry, and carries other
+# attributes such as "enabled" and "preset", so it needs its own parse
+# the bundled "terraform" ruleset can be enabled without a "source", in which case
+# there is no repo to query and the entry is skipped
+function find_tflint_plugin_pins() {
+	local file="${TFLINT_CONFIG}"
+	[[ -f "${REPO_ROOT}/${file}" ]] || return 0
+	awk -v path="${file}" -v kind='tflint-plugin' '
+		function braces(text, char) {
+			return gsub(char, "&", text)
+		}
+		BEGIN { depth = 0; p_depth = -1 }
+		{
+			line = $0
+			sub(/[[:space:]]*(#|\/\/).*$/, "", line)
+
+			if (p_depth < 0) {
+				if (line ~ /^[[:space:]]*plugin[[:space:]]+"[^"]*"[[:space:]]*\{/) {
+					p_depth = depth + 1
+					source = ""
+					constraint = ""
+					line_no = 0
+				}
+			} else {
+				if (match(line, /^[[:space:]]*source[[:space:]]*=[[:space:]]*"[^"]*"/)) {
+					source = substr(line, RSTART, RLENGTH)
+					sub(/^[^"]*"/, "", source)
+					sub(/"$/, "", source)
+					# the source is a repo URL, so reduce it to "OWNER/NAME"
+					sub(/^[a-z]+:\/\//, "", source)
+					sub(/^github\.com\//, "", source)
+				}
+				if (match(line, /^[[:space:]]*version[[:space:]]*=[[:space:]]*"[^"]*"/)) {
+					constraint = substr(line, RSTART, RLENGTH)
+					sub(/^[^"]*"/, "", constraint)
+					sub(/"$/, "", constraint)
+					line_no = FNR
+				}
+			}
+
+			depth += braces(line, "{") - braces(line, "}")
+
+			if (p_depth >= 0 && depth < p_depth) {
+				if (source != "" && constraint != "") {
+					print kind "|" path "|" line_no "|" source "|" constraint
+				}
+				p_depth = -1
+			}
+		}
+	' "${REPO_ROOT}/${file}"
+}
+
+# print every provider and plugin pin in the repo, as
+# "KIND|FILE|LINE|ADDRESS|REPO|CONSTRAINT", with the upstream repo resolved
+# a pin whose repo cannot be derived is dropped here and reported by the caller,
+# which sees the address with no pin behind it
+function find_hcl_pins() {
+	local kind file line address constraint repo
+	{
+		find_block_pins 'provider' 'required_providers' '*.tf'
+		find_block_pins 'packer-plugin' 'required_plugins' '*.pkr.hcl'
+		find_tflint_plugin_pins
+	} | while IFS='|' read -r kind file line address constraint; do
+		repo=$(hcl_repo "${kind}" "${address}") || repo=''
+		printf '%s|%s|%s|%s|%s|%s\n' "${kind}" "${file}" "${line}" "${address}" "${repo}" "${constraint}"
+	done
+}
+
+# print the GitHub repo that publishes a provider or plugin, derived from its address
+# the Terraform Registry requires a provider repo to be named
+# "terraform-provider-<type>", and Packer requires "packer-plugin-<type>", so
+# "hashicorp/aws" and "hashicorp/amazon" both resolve without a per-plugin mapping
+# a tflint plugin already names its repo, so it is returned unchanged
+function hcl_repo() {
+	local kind=$1 address=$2
+	case ${kind} in
+		provider)
+			printf '%s/terraform-provider-%s\n' "${address%%/*}" "${address#*/}"
+			;;
+		packer-plugin)
+			printf '%s/packer-plugin-%s\n' "${address%%/*}" "${address#*/}"
+			;;
+		tflint-plugin)
+			printf '%s\n' "${address}"
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+# print the pins of one kind and address, as "KIND|FILE|LINE|ADDRESS|REPO|CONSTRAINT"
+function hcl_pins_for() {
+	local kind=$1 address=$2
+	awk -F'|' -v kind="${kind}" -v want="${address}" \
+		'$1 == kind && $4 == want' <<< "${HCL_PINS}"
+}
+
+# print the value for a key from a "KEY|VALUE" list given as the remaining
+# arguments, which is how HCL_CONSTRAINTS and ALSO_REQUIRED are read
+# a value holding further "|" separated fields comes back whole, for the caller to
+# split, so a three field entry works as well as a two field one
+function value_for_key() {
+	local key=$1 entry
+	shift
+	for entry in "$@"; do
+		if [[ ${entry%%|*} == "${key}" ]]; then
+			printf '%s\n' "${entry#*|}"
+			return 0
+		fi
+	done
+	return 1
+}
+
+# print the constraint a pin of the given kind should carry for a version, so a pin
+# written back matches the house style of that kind
+function format_constraint() {
+	local kind=$1 version=$2 operator
+	operator=$(value_for_key "${kind}" "${HCL_CONSTRAINTS[@]}") || operator=''
+	if [[ -n ${operator} ]]; then
+		printf '%s %s\n' "${operator}" "${version}"
+	else
+		printf '%s\n' "${version}"
+	fi
+}
+
+# print the version inside a version constraint, or nothing when the constraint is
+# not a single version this script can follow
+# only "~>", ">=", "=" and a bare version are followed. A compound constraint has
+# more than one version and no single pin to raise, and an upper bound such as
+# "< 7.0.0" means the opposite of a pin, so raising it would change the intent
+function constraint_version() {
+	local constraint=$1 version
+	[[ ${constraint} != *,* ]] || return 1
+	version=$(sed -E 's/^[[:space:]]*(~>|>=|=)?[[:space:]]*//' <<< "${constraint}")
+	[[ ${version} =~ ^[0-9]+(\.[0-9]+){1,3}$ ]] || return 1
+	printf '%s\n' "${version}"
+}
+
+# print the distinct versions a provider or plugin is pinned to across the repo
+function hcl_pinned_versions() {
+	local kind=$1 address=$2
+	local pin_kind file line addr repo constraint
+	while IFS='|' read -r pin_kind file line addr repo constraint; do
+		constraint_version "${constraint}" || continue
+	done < <(hcl_pins_for "${kind}" "${address}") | sort -uV
+}
+
+# rewrite every pin of a provider or plugin to the target version, printing each file
+# only the version is replaced, so a trailing comment on the line survives; a pin
+# carrying a different constraint has the whole constraint rewritten, so a bare or
+# ">=" pin is brought into line with the house style of its kind
+function apply_hcl_version() {
+	local kind=$1 address=$2 target=$3
+	local pin_kind file line addr repo constraint current wanted
+
+	wanted=$(format_constraint "${kind}" "${target}")
+	while IFS='|' read -r pin_kind file line addr repo constraint; do
+		current=$(constraint_version "${constraint}") || continue
+		if [[ ${constraint} == "${wanted}" ]]; then
+			continue
+		fi
+		if [[ ${constraint} == *"${current}" && $(format_constraint "${kind}" "${current}") == "${constraint}" ]]; then
+			replace_version_on_line "${file}" "${line}" "${current}" "${target}"
+		else
+			replace_constraint_on_line "${file}" "${line}" "${wanted}"
+		fi
+		echo -e "      ${SHELL_BLUE}${file}:${line}${SHELL_DEFAULT} ${constraint} -> ${wanted}"
+	done < <(hcl_pins_for "${kind}" "${address}")
+}
+
+# rewrite the whole quoted constraint on a version line, used when the operator on
+# the line is not the one that kind of pin should carry
+function replace_constraint_on_line() {
+	local file=$1 line=$2 constraint=$3
+	local path="${REPO_ROOT}/${file}"
+	local mode
+	# "sed -i" writes a new inode, which can drop the executable bit
+	mode=$(stat -c '%a' "${path}")
+	sed -i -E "${line}s#(version[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"${constraint}\"#" "${path}"
+	chmod "${mode}" "${path}"
+}
+
 updates=0
 drifted=0
 failures=0
@@ -503,6 +887,11 @@ frozen_errors=0
 series_available=0
 # every variable this script knows about, used to reject an unknown VARIABLE
 KNOWN_VARIABLES=()
+# every provider and plugin address found in the repo, used to reject an unknown one
+KNOWN_PROVIDERS=()
+# the declaration block pins are parsed once, as the parse walks every tracked file
+# that has such a block
+HCL_PINS=$(find_hcl_pins)
 
 echo -e "Checking pinned versions in: ${SHELL_BLUE}${REPO_ROOT}${SHELL_DEFAULT}"
 if [[ -z ${GITHUB_COM_TOKEN} ]]; then
@@ -514,7 +903,7 @@ echo ''
 for frozen in "${FROZEN_VERSIONS[@]}"; do
 	IFS='|' read -r variable required <<< "${frozen}"
 	KNOWN_VARIABLES+=("${variable}")
-	if [[ -n ${ONLY_VARIABLE} && ${ONLY_VARIABLE} != "${variable}" ]]; then
+	if [[ -n ${ONLY_PROVIDER} ]] || [[ -n ${ONLY_VARIABLE} && ${ONLY_VARIABLE} != "${variable}" ]]; then
 		continue
 	fi
 
@@ -542,7 +931,7 @@ for entry in "${VERSION_SOURCES[@]}"; do
 	IFS='|' read -r variable source reference prefix <<< "${entry}"
 	KNOWN_VARIABLES+=("${variable}")
 
-	if [[ -n ${ONLY_VARIABLE} && ${ONLY_VARIABLE} != "${variable}" ]]; then
+	if [[ -n ${ONLY_PROVIDER} ]] || [[ -n ${ONLY_VARIABLE} && ${ONLY_VARIABLE} != "${variable}" ]]; then
 		continue
 	fi
 
@@ -567,6 +956,25 @@ for entry in "${VERSION_SOURCES[@]}"; do
 		failures=$((failures + 1))
 		echo -e "${SHELL_RED}✗ ${variable} could not resolve the latest version from ${source} (${reference})${SHELL_DEFAULT}"
 		continue
+	fi
+
+	## a pin with a second required source is held back to what both publish, so it
+	## is never moved to a version one of its consumers cannot fetch yet
+	if also=$(value_for_key "${variable}" "${ALSO_REQUIRED[@]}"); then
+		IFS='|' read -r also_source also_reference <<< "${also}"
+		if ! also_resolved=$(resolve_versions "${also_source}" "${also_reference}" '' "${parts}") \
+			|| [[ -z ${also_resolved} ]]; then
+			failures=$((failures + 1))
+			echo -e "${SHELL_RED}✗ ${variable} could not resolve the latest version from ${also_source} (${also_reference})${SHELL_DEFAULT}"
+			continue
+		fi
+		# whole line, fixed string matching, as a version is not a regex
+		if ! resolved=$(grep -Fxf <(printf '%s\n' "${also_resolved}") <<< "${resolved}") \
+			|| [[ -z ${resolved} ]]; then
+			failures=$((failures + 1))
+			echo -e "${SHELL_RED}✗ ${variable} has no version published by both ${source} and ${also_source}${SHELL_DEFAULT}"
+			continue
+		fi
 	fi
 
 	# the versions come back lowest first, so the last is the latest upstream
@@ -621,6 +1029,97 @@ for entry in "${VERSION_SOURCES[@]}"; do
 	fi
 done
 
+## RULE 5: check each provider and plugin pinned in a declaration block against the
+## tags of its upstream repo, following only the pinned major version where that kind
+## of pin calls for it
+## the pins are deduplicated by kind and address, so a provider used by several
+## modules costs one upstream lookup however many modules pin it
+mapfile -t hcl_addresses < <(cut -d'|' -f1,4 <<< "${HCL_PINS}" | grep . | sort -u)
+for entry in "${hcl_addresses[@]}"; do
+	kind=${entry%%|*}
+	address=${entry#*|}
+	KNOWN_PROVIDERS+=("${address}")
+
+	if [[ -n ${ONLY_VARIABLE} ]] || [[ -n ${ONLY_PROVIDER} && ${ONLY_PROVIDER} != "${address}" ]]; then
+		continue
+	fi
+
+	# a tflint plugin names its own repo, so there is no convention to vouch for
+	if [[ ${kind} != tflint-plugin ]] && ! in_list "${address%%/*}" "${HCL_NAMESPACES[@]}"; then
+		echo -e "${SHELL_YELLOW}? ${address} is outside the known registry namespaces; check it by hand${SHELL_DEFAULT}"
+		continue
+	fi
+
+	mapfile -t found < <(hcl_pinned_versions "${kind}" "${address}")
+	if ((${#found[@]} == 0)); then
+		echo -e "${SHELL_YELLOW}? ${address} is pinned by a constraint this script does not follow; check it by hand${SHELL_DEFAULT}"
+		continue
+	fi
+
+	# as with a variable, compare the lowest pin and rewrite up to the highest, so a
+	# provider left behind in one module is caught and moved up to meet the rest
+	current=${found[0]}
+	highest=${found[-1]}
+	parts=$(awk -F. '{ print NF }' <<< "${highest}")
+	repo=$(hcl_pins_for "${kind}" "${address}" | head -1 | cut -d'|' -f5)
+
+	if [[ -z ${repo} ]]; then
+		failures=$((failures + 1))
+		echo -e "${SHELL_RED}✗ ${address} has no upstream repo for a ${kind} pin${SHELL_DEFAULT}"
+		continue
+	fi
+
+	if ! resolved=$(resolve_github "${repo}" '') || [[ -z ${resolved} ]]; then
+		failures=$((failures + 1))
+		echo -e "${SHELL_RED}✗ ${address} could not resolve the latest version from github (${repo})${SHELL_DEFAULT}"
+		continue
+	fi
+
+	latest=$(tail -1 <<< "${resolved}")
+
+	## a provider or Packer plugin only follows its pinned major version, as a major
+	## release is a breaking change and usually raises the minimum Terraform version,
+	## which this repo holds at v1.2 deliberately
+	major=''
+	if in_list "${kind}" "${HCL_MAJOR_ONLY[@]}"; then
+		major=${highest%%.*}
+		major_latest=$(highest_in_major "${major}" "${parts}" <<< "${resolved}") || major_latest=''
+		target=${major_latest:-${highest}}
+	else
+		target=${latest}
+	fi
+
+	## a rewrite must never move a pin backwards, whatever the major lookup said
+	if version_gt "${highest}" "${target}"; then
+		target=${highest}
+	fi
+
+	if ((${#found[@]} > 1)); then
+		drifted=$((drifted + 1))
+		echo -e "${SHELL_YELLOW}! ${address} is pinned inconsistently: ${found[*]}${SHELL_DEFAULT}"
+	fi
+
+	if ! version_gt "${target}" "${current}"; then
+		echo -e "✓ ${address} ${SHELL_GREEN}${current}${SHELL_DEFAULT} is current"
+	elif in_list "${kind}|${address}" "${HCL_NOTIFY_ONLY[@]}"; then
+		echo -e "${SHELL_BLUE}i ${address} ${current} -> ${target} available, pin kept deliberately${SHELL_DEFAULT}"
+		continue
+	else
+		updates=$((updates + 1))
+		echo -e "${SHELL_YELLOW}• ${address} ${current} -> ${target}${SHELL_DEFAULT}"
+	fi
+
+	# mention the newer major version the pin is deliberately not following
+	if [[ -n ${major} ]] && version_gt "${latest}" "${target}" && [[ ${latest%%.*} != "${major}" ]]; then
+		series_available=$((series_available + 1))
+		echo -e "${SHELL_BLUE}i ${address} ${latest} is available, outside the pinned ${major}.x major version; migrate it by hand${SHELL_DEFAULT}"
+	fi
+
+	if ${WRITE_MODE} && (version_gt "${target}" "${current}" || ((${#found[@]} > 1)) ); then
+		apply_hcl_version "${kind}" "${address}" "${target}"
+	fi
+done
+
 echo ''
 if [[ -n ${ONLY_VARIABLE} ]] && ! in_list "${ONLY_VARIABLE}" "${KNOWN_VARIABLES[@]}"; then
 	echo -e "${SHELL_RED}ERROR: unknown variable: ${ONLY_VARIABLE}${SHELL_DEFAULT}" 1>&2
@@ -628,17 +1127,23 @@ if [[ -n ${ONLY_VARIABLE} ]] && ! in_list "${ONLY_VARIABLE}" "${KNOWN_VARIABLES[
 	exit 2
 fi
 
+if [[ -n ${ONLY_PROVIDER} ]] && ! in_list "${ONLY_PROVIDER}" "${KNOWN_PROVIDERS[@]}"; then
+	echo -e "${SHELL_RED}ERROR: unknown provider: ${ONLY_PROVIDER}${SHELL_DEFAULT}" 1>&2
+	echo -e "${SHELL_BLUE}Only the providers and plugins pinned in a declaration block are checked${SHELL_DEFAULT}" 1>&2
+	exit 2
+fi
+
 if ((failures > 0)); then
-	echo -e "${SHELL_RED}${failures} variable(s) could not be resolved upstream${SHELL_DEFAULT}"
+	echo -e "${SHELL_RED}${failures} pin(s) could not be resolved upstream${SHELL_DEFAULT}"
 fi
 if ((frozen_errors > 0)); then
 	echo -e "${SHELL_RED}${frozen_errors} frozen pin(s) have drifted; re-run with --write to restore${SHELL_DEFAULT}"
 fi
 if ((drifted > 0)); then
-	echo -e "${SHELL_YELLOW}${drifted} variable(s) are pinned to more than one version${SHELL_DEFAULT}"
+	echo -e "${SHELL_YELLOW}${drifted} pin(s) are pinned to more than one version${SHELL_DEFAULT}"
 fi
 if ((series_available > 0)); then
-	echo -e "${SHELL_BLUE}${series_available} variable(s) have a newer release series available; upgrade by hand${SHELL_DEFAULT}"
+	echo -e "${SHELL_BLUE}${series_available} pin(s) have a newer release series available; upgrade by hand${SHELL_DEFAULT}"
 fi
 
 if ${WRITE_MODE}; then

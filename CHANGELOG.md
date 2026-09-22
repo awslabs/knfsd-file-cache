@@ -1,5 +1,20 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.5 (September 22, 2026)
+
+* Packer: Updated to Linux kernel v7.2.7-knfsd.
+* Packer: Removed kernel patch `0001-block-Fix-start-and-length-check-added-to-iov_iter_extract_bvecs.patch` which is now merged into the Linux kernel.
+* Improved the `Cache Hit Ratio %` widget on the CloudWatch `metrics` dashboard.
+* Updated KNFSD Monitoring Dashboard to `v17`.
+* Enhanced the `update-pinned-versions.sh` script to handle more pinned versions.
+* Reduced total wall clock time by ~80 seconds to deploy the `fsx-zfs` example.
+* Updated to Packer v1.16.1.
+* Updated to Terraform `aws` provider v6.66.0.
+* Updated various Terraform `hashicorp` providers.
+* Updated GitHub CodeQL actions.
+* Updated `THIRD-PARTY-LICENSES` report.
+* Minor Golang package updates.
+
 ## v1.1.0-beta.4 (September 15, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

@@ -12,8 +12,8 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 # pinned versions
-VERSION="1.1.0-beta.4"
-KERNEL="7.2.6"
+VERSION="1.1.0-beta.5"
+KERNEL="7.2.7"
 
 # identify architecture
 export ARCH=$(uname -m)

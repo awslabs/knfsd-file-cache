@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.64.0"
+      version = "~> 6.66.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-beta.4"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-beta.5"
     ]
   }
 }
@@ -187,8 +187,7 @@ module "proxy" {
   NFS_MOUNT_VERSION       = "3"                                      # Mount the source filer as NFSv3
   DISABLED_NFS_VERSIONS   = "4.0,4.1,4.2"                            # Ensure NFS v3 is used ("showmount" auto-discovery)
   depends_on = [
-    data.aws_ami.proxy_exists,      # Ensure proxy AMI exists
-    data.aws_ami.proxy_arch,        # Ensure proxy AMI architecture matches instance type
-    aws_fsx_openzfs_file_system.zfs # Ensure FSx for OpenZFS is created before deploying the proxy
+    data.aws_ami.proxy_exists, # Ensure proxy AMI exists
+    data.aws_ami.proxy_arch    # Ensure proxy AMI architecture matches instance type
   ]
 }

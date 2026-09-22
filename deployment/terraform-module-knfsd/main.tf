@@ -7,20 +7,20 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.64.0"
+      version = "~> 6.66.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.9.0"
+      version = "~> 3.9.1"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.3.0"
+      version = "~> 3.3.2"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.4"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.5"
     ]
   }
 }
