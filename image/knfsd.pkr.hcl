@@ -9,13 +9,13 @@ packer {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
       source  = "github.com/hashicorp/amazon"
-      version = "~> 1.8.2"
+      version = "~> 1.8.3"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-beta.5"
+  version       = "1.1.0-beta.6"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -50,6 +50,9 @@ locals {
 
   # Whether Packer tunnels SSH over AWS SSM
   use_ssm = var.SSH_INTERFACE == "session_manager"
+
+  # GLOBAL_TAGS, or null when empty
+  global_tags = length(var.GLOBAL_TAGS) > 0 ? var.GLOBAL_TAGS : null
 
   custom_pre_build_script = (
     var.CUSTOM_PRE_BUILD_SCRIPT != "" ?
@@ -114,11 +117,17 @@ source "amazon-ebs" "knfsd-amd64" {
   spot_price               = "auto"
   iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
 
-  run_tags = {
+  run_tags = merge(var.GLOBAL_TAGS, {
     "Name"                            = local.build_name_amd64
     "knfsd-file-cache:version"        = local.version
     "knfsd-file-cache:packer:version" = "${packer.version}"
-  }
+  })
+  # tags applied to the build volumes only (not inherited by the AMI)
+  run_volume_tags = local.global_tags
+  # tags applied to the spot request (requires "spot_price", set to "auto" above)
+  spot_tags = local.global_tags
+  # tags applied to the EC2 Fleet issued for "spot_instance_types"
+  fleet_tags = local.global_tags
 
   # SSH Connectivity
   # If using non-default VPC, whether to forcefully associate a public IP address (default: null)
@@ -218,9 +227,11 @@ source "amazon-ebs" "knfsd-amd64" {
     http_tokens            = "required"
     instance_metadata_tags = "enabled"
   }
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "Name" = local.image_name_amd64
-  }
+  })
+  # tags applied on top of the AMI tags on the resulting snapshots
+  snapshot_tags = local.global_tags
 
   # Communicator
   communicator = "ssh"
@@ -267,11 +278,17 @@ source "amazon-ebs" "knfsd-arm64" {
   spot_price               = "auto"
   iam_instance_profile     = var.IAM_INSTANCE_PROFILE != "" ? var.IAM_INSTANCE_PROFILE : null
 
-  run_tags = {
+  run_tags = merge(var.GLOBAL_TAGS, {
     "Name"                            = local.build_name_arm64
     "knfsd-file-cache:version"        = local.version
     "knfsd-file-cache:packer:version" = "${packer.version}"
-  }
+  })
+  # tags applied to the build volumes only (not inherited by the AMI)
+  run_volume_tags = local.global_tags
+  # tags applied to the spot request (requires "spot_price", set to "auto" above)
+  spot_tags = local.global_tags
+  # tags applied to the EC2 Fleet issued for "spot_instance_types"
+  fleet_tags = local.global_tags
 
   # SSH Connectivity
   # If using non-default VPC, whether to forcefully associate a public IP address (default: null)
@@ -371,9 +388,11 @@ source "amazon-ebs" "knfsd-arm64" {
     http_tokens            = "required"
     instance_metadata_tags = "enabled"
   }
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "Name" = local.image_name_arm64
-  }
+  })
+  # tags applied on top of the AMI tags on the resulting snapshots
+  snapshot_tags = local.global_tags
 
   # Communicator
   communicator = "ssh"

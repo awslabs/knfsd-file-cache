@@ -107,6 +107,7 @@ aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
 | `KEY_NAME`       | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                           | False    | `""`           |
 | `INSTANCE_TYPE`  | The AWS EC2 instance type to use for the KNFSD cache.                                                                                          | False    | `i3en.6xlarge` |
 | `KNFSD_NODES`    | The number of KNFSD instances to deploy as part of the cluster.                                                                                | False    | `1`            |
+| `GLOBAL_TAGS`    | AWS TAGS to apply to ALL AWS resources created by this example, including the KNFSD File Cache.                                                | False    | `{}`           |
 
 ## Outputs
 

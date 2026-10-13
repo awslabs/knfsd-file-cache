@@ -44,6 +44,10 @@
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
   ],
+  "initializeCommand": {
+    "mkdir-ssh-dir": "mkdir -p \"${localEnv:HOME}${localEnv:USERPROFILE}/.ssh\"",
+    "mkdir-aws-dir": "mkdir -p \"${localEnv:HOME}${localEnv:USERPROFILE}/.aws\""
+  },
   "postCreateCommand": {
     "configure-docker": "sudo chown $(whoami):$(whoami) /var/run/docker.sock",
     "git-add-safe-dir": "sudo git config --system --add safe.directory ${containerWorkspaceFolder}",

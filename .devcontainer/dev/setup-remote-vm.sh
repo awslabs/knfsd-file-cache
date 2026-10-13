@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.5"
+VERSION="1.1.0-beta.6"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -108,7 +108,7 @@ setfacl --modify user:${USERNAME}:rw /var/run/docker.sock
 
 ## add extra env vars
 # shellcheck disable=SC2031
-echo "GITHUB_COM_TOKEN=" >> /etc/environment \
+echo "GITHUB_TOKEN=" >> /etc/environment \
 	&& echo "PACKER_GITHUB_API_TOKEN=" >> /etc/environment \
 	&& echo "CI=devcontainer" >> /etc/environment \
 	&& echo "DOCKER_CLI_HINTS=false" >> /etc/environment \
@@ -147,33 +147,33 @@ update_status "installing"
 # https://github.com/bats-core/bats-core/releases
 KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
-KNFSD_BLACK_VERSION=26.5.1
+KNFSD_BLACK_VERSION=26.10.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.99
+KNFSD_BOTO3_VERSION=1.43.112
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.19
+KNFSD_CHECKOV_VERSION=3.3.28
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=4.0.2
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.13.2
+KNFSD_GOLANGCI_LINT_VERSION=2.14.0
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.27.1
+KNFSD_GOLANG_VERSION=1.27.2
 # https://github.com/securego/gosec/releases
 KNFSD_GOSEC_VERSION=2.29.0
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=2.3.1
+KNFSD_MYPY_VERSION=2.4.0
 # https://github.com/hashicorp/packer/releases
 KNFSD_PACKER_VERSION=1.16.1
 # https://github.com/pre-commit/pre-commit/releases
-KNFSD_PRECOMMIT_VERSION=4.6.2
+KNFSD_PRECOMMIT_VERSION=4.7.0
 # https://github.com/pylint-dev/pylint/tags
-KNFSD_PYLINT_VERSION=4.0.8
+KNFSD_PYLINT_VERSION=4.1.3
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.177.0
+KNFSD_SEMGREP_VERSION=1.180.0
 # https://github.com/aws/session-manager-plugin/tags
-KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.835.0
+KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.896.0
 # https://pypi.org/project/shellcheck-py/
 KNFSD_SHELLCHECK_PY_VERSION=0.11.0.1
 # https://github.com/mvdan/sh/releases
@@ -183,11 +183,11 @@ KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
 KNFSD_TFLINT_VERSION=0.64.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.74.0
+KNFSD_TRIVY_VERSION=0.75.0
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.12.17
+KNFSD_UV_VERSION=0.13.0
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \

@@ -1,5 +1,41 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.6 (October 13, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Updated to Linux kernel v7.2.10-knfsd.
+* Added `GLOBAL_TAGS` variable to apply (up to 40) custom AWS tags to all resources that support tagging, across the Packer AMI build process and Terraform deployment, including `./examples/*`. The [docs/iam/tf-required.json](docs/iam/tf-required.json) policy gains the matching tag and untag permissions. Exception: CloudWatch "log" groups created automatically by the CWAgent or OTEL Metrics Agent do not have the `GLOBAL_TAGS` applied to them.
+* Packer: Migrated the `amazon-ec2-net-utils` refresh timer override from an in-place rewrite of the packaged unit in `10_build.sh` to a `refresh-policy-routes@.timer.d/10-interval.conf` systemd drop-in, so upstream timer changes are preserved, and removed the 5s `RandomizedDelaySec` jitter.
+* Packer: Suppressed `amazon-ec2-net-utils` notice/info/debug messages via `LogLevelMax=warning` in the `refresh-policy-routes@.service.d/10-quiet.conf` file.
+* Packer: Updated `cachefilesd` to `0.10.10-0.6ubuntu2`, which ships a native `cachefilesd.service` systemd unit, removing the deprecated `systemd-sysv-generator` compatibility warning for `/etc/init.d/cachefilesd` from the journal.
+* Packer: Added a `cachefilesd.service.d/10-forking.conf` systemd drop-in that runs `cachefilesd` as `Type=forking`, so `systemctl start cachefilesd` blocks until the cache is bound and fails if the bind fails.
+* Packer: Fixed `rsyslog` log rotation to rotate weekly or when a log exceeds 100M, whichever comes first, by replacing `size` (which silently overrode `weekly`) with `maxsize`.
+* Packer: Added `go_mod_download` retry wrapper before each Go build, and changed `GOPROXY` to `https://proxy.golang.org|direct` so any proxy error falls back to `direct`, fixing transient `proxy.golang.org` HTTP/2 `INTERNAL_ERROR` stream failures.
+* Packer: Added `pull_lp_source` retry wrapper (5 attempts, 30-120s delay) around `pull-lp-source` when building `cachefilesd`, fixing transient Launchpad API `TimeoutError: [Errno 110] Connection timed out` build failures.
+* Fixed `knfsd-fsidd` being killed by the systemd start timeout when DynamoDB is unreachable, which left the proxy instance never ready and only logged `DescribeTable ... canceled, context canceled`. Each boot-time `DescribeTable` attempt is now bounded to 15 secs, and the whole check (including any in-flight attempt) to 60 secs (was 90 secs), so the service exits with the real error before systemd's timeout.
+* Added actionable hints to `knfsd-fsidd` start-up errors explaining the likely cause and fix: DynamoDB unreachable (route table, VPC endpoint, NAT, egress), IAM not authorised, table not found, or throttling. Hints are logged once per error class while retrying, and on the final error.
+* `knfsd-fsidd` retries are now logged at `WARN` level with the remaining retry budget, except FSID allocation conflicts between nodes, which remain at `DEBUG`.
+* Set an explicit `TimeoutStartSec=90` in `knfsd-fsidd.service`.
+* Updated the FAQ entry "The knfsd-fsidd service cannot reach DynamoDB" with the new error message and troubleshooting steps.
+* Migrated `markdownlint` configuration to the repository root in `.markdownlint.json`.
+* Fixed `pylint` v4.1 `broad-exception-caught` findings in the `static_ip` Lambda function: narrowed the lifecycle `ABANDON` handler to `botocore` exceptions, raised a dedicated `EniNotFoundError` instead of a bare `Exception`, extracted the ENI detach polling loop into `wait_for_eni_available()`, and scoped `pylint` disables with `disable-next` or inline comments so they no longer leak to the rest of the module.
+* Simplified `go/image/smoke-tests` terminal label to `go/smoke-tests` in the `knfsd-dev.code-workspace` file.
+* Added a new `initializeCommand` to the `dev/devcontainer.json` file to create the `.aws`, `.cursor`, and `.ssh` directories in the `dev` devcontainer if they don't exist during startup.
+* Added a new `initializeCommand` to the `prod/devcontainer.json` file to create the `.aws` and `.ssh` directories in the `prod` devcontainer if they don't exist during startup.
+* Fix typos in the `knfsd-agent` API documentation.
+* Added a Terraform precondition that fails when `ENABLE_KNFSD_AUTOSCALING` is `true` but `ENABLE_METRICS` is `false`, as autoscaling relies on the KNFSD metrics.
+* Added a GitLab CI cache for the `tflint` binary and ruleset plugins in the `tf-lint` job, and support for an optional `GITHUB_TOKEN` CI/CD variable, to avoid GitHub API `403 API rate limit exceeded` errors during `tflint --init`.
+* Removed `plugin_dir` from `.tflint.hcl` so the `TFLINT_PLUGIN_DIR` environment variable is honoured. Local runs still default to `~/.tflint.d/plugins`.
+* Renamed the `GITHUB_COM_TOKEN` environment variable to `GITHUB_TOKEN` in the `dev` devcontainer, `setup-remote-vm.sh`, `update-github-action-shas.sh`, `update-pinned-versions.sh`, `validate-setup.sh`, and `docs/developer.md`.
+* Switched to using `@master` branch of `gosec` for the `security` GitLab CI jobs.
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.3.
+* Updated to Golang v1.27.2.
+* Updated to Terraform `aws` provider v6.68.0.
+* Updated to Python v3.14.8.
+* Minor software version updates.
+* Minor Golang package updates.
+
 ## v1.1.0-beta.5 (September 22, 2026)
 
 * Packer: Updated to Linux kernel v7.2.7-knfsd.

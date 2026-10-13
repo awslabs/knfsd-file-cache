@@ -19,6 +19,7 @@ To use DNS round-robin the KNFSD proxy cluster must be configured with:
 | `PROXY_BASENAME`           | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a unique basename to avoid conflicts (some of the resources created must have a globally unique name within an AWS account). | True     | No default |
 | `DNS_NAME`                 | The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. Defaults to: `knfsd.{PROXY_BASENAME}.aws.internal.` [Note: the trailing period is required].                                           | False    | `""`       |
 | `EXISTING_LAMBDA_ROLE_ARN` | ARN of a pre-existing IAM role to use for the static_ip Lambda function instead of creating one. When set, the module skips creating the Lambda IAM role and its policy.                                         | False    | `""`       |
+| `GLOBAL_TAGS`              | AWS TAGS to apply to ALL AWS resources created by this module.                                                                                                                                                   | False    | `{}`       |
 
 ## Outputs
 

@@ -75,6 +75,7 @@ aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
 | `FSID_MODE`               | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`.                            | False    | `external`        |
 | `FSX_STORAGE_CAPACITY`    | The storage capacity of the FSx for OpenZFS source filer in GiB.                                                                           | False    | `1024`            |
 | `FSX_THROUGHPUT_CAPACITY` | The throughput capacity of the FSx for OpenZFS source filer in MB/s.                                                                       | False    | `512`             |
+| `GLOBAL_TAGS`             | AWS TAGS to apply to ALL AWS resources created by this example, including the KNFSD File Cache.                                            | False    | `{}`              |
 
 ## Outputs
 

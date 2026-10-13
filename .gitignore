@@ -31,6 +31,9 @@ TerraformOptions.json
 .test-data
 remote.test
 
+# TFLint
+.tflint.d/
+
 # Packer variables/debug files
 *.pkrvars.hcl
 *.auto.pkrvars.hcl

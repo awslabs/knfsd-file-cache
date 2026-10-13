@@ -16,7 +16,7 @@
 ## A pin listed in ALSO_REQUIRED has to be published by a second source before it is
 ## suggested, which keeps a version that is consumed two ways, such as bats being
 ## both a GitHub source archive and a "bats/bats" image, from moving ahead of either.
-## Set GITHUB_COM_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
+## Set GITHUB_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
 
 ## The Terraform providers pinned under a "required_providers" block in any "*.tf"
 ## file are checked in the same run, along with the Packer plugins pinned under a
@@ -243,9 +243,7 @@ TFLINT_CONFIG=".tflint.hcl"
 DOCKERHUB_MAX_PAGES=10
 DOCKERHUB_MIN_TAGS=10
 
-# never consult the Go module proxy, which is blocked on the corporate network;
-# nothing here runs the "go" binary, so this is belt and braces for any future
-# edit that adds a "go list -m" style lookup
+# never consult the Go module proxy, which is blocked on corporate network(s)
 export GOPROXY=direct
 # never prompt for git credentials, so an unreachable host fails fast
 export GIT_TERMINAL_PROMPT=0
@@ -312,8 +310,8 @@ fi
 # authenticate when a token is available to avoid the low anonymous rate limit
 CURL_ARGS=(--silent --show-error --fail --location --max-time 30)
 GITHUB_ARGS=("${CURL_ARGS[@]}" --header "Accept: application/vnd.github+json")
-if [[ -n ${GITHUB_COM_TOKEN} ]]; then
-	GITHUB_ARGS+=(--header "Authorization: Bearer ${GITHUB_COM_TOKEN}")
+if [[ -n ${GITHUB_TOKEN} ]]; then
+	GITHUB_ARGS+=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
 
 # returns 0 (true) if the given variable is in the given list of variables
@@ -894,8 +892,8 @@ KNOWN_PROVIDERS=()
 HCL_PINS=$(find_hcl_pins)
 
 echo -e "Checking pinned versions in: ${SHELL_BLUE}${REPO_ROOT}${SHELL_DEFAULT}"
-if [[ -z ${GITHUB_COM_TOKEN} ]]; then
-	echo -e "${SHELL_YELLOW}- GITHUB_COM_TOKEN not set; using the 60 req/hour anonymous rate limit${SHELL_DEFAULT}"
+if [[ -z ${GITHUB_TOKEN} ]]; then
+	echo -e "${SHELL_YELLOW}- GITHUB_TOKEN not set; using the 60 req/hour anonymous rate limit${SHELL_DEFAULT}"
 fi
 echo ''
 

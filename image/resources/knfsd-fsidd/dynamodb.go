@@ -39,11 +39,23 @@ import (
 // allocate an FSID for the same path, exactly one writer wins and the
 // remainder observe a conflict.
 
-// bootRetryDeadline bounds the initial CheckTable retry window. Kept short
-// so that if fsidd is racing IAM policy propagation on a fresh deployment,
-// the process exits promptly and systemd's Restart= loop takes over (giving
-// AWS IAM additional wall-clock time to replicate between process restarts).
-const bootRetryDeadline = 90 * time.Second
+// bootRetryDeadline bounds the initial CheckTable retry window, including any
+// in-flight attempt. Kept short so that if fsidd is racing IAM policy
+// propagation on a fresh deployment, the process exits promptly and systemd's
+// Restart= loop takes over (giving AWS IAM additional wall-clock time to
+// replicate between process restarts).
+//
+// This must stay comfortably below TimeoutStartSec in knfsd-fsidd.service
+// (90s), less the 10s metrics shutdown in run(). Otherwise systemd kills the
+// process first and the journal only shows "context canceled" instead of the
+// real cause.
+const bootRetryDeadline = 60 * time.Second
+
+// checkTableAttemptTimeout bounds a single DescribeTable call, including the
+// AWS SDK's internal retries. Without it a black-holed endpoint (no route to
+// DynamoDB) consumes ~90s per call (3 SDK attempts x 30s connect timeout),
+// exceeding bootRetryDeadline within a single attempt.
+const checkTableAttemptTimeout = 15 * time.Second
 
 // DynamoDB item attribute names and key prefixes.
 const (
@@ -130,13 +142,68 @@ type FSIDSource struct {
 // Terraform. Retried with a bounded boot budget to ride out IAM policy
 // propagation delays on fresh deployments.
 func (s FSIDSource) CheckTable(ctx context.Context) error {
+	return s.checkTable(ctx, bootRetryDeadline, checkTableAttemptTimeout)
+}
+
+// checkTable implements CheckTable with configurable budgets for testing.
+//
+// Unlike withRetryDeadline on its own, the budget also bounds the in-flight
+// attempt, so the call always returns within the budget. When the budget is
+// exhausted the most recent DescribeTable error is returned, annotated with
+// a hint describing the likely cause and fix. If the parent context is
+// cancelled (e.g. SIGTERM) the cancellation error is returned unchanged.
+func (s FSIDSource) checkTable(ctx context.Context, budget, attemptTimeout time.Duration) error {
 	log.Debug.Printf("checking table: %q", s.tableName)
-	return withRetryDeadline(ctx, bootRetryDeadline, func() error {
-		_, err := s.client.DescribeTable(ctx, &dynamodb.DescribeTableInput{
+	region := s.client.Options().Region
+
+	bootCtx, cancel := context.WithTimeout(ctx, budget)
+	defer cancel()
+
+	var lastErr error
+	var lastHint string
+	err := withRetryDeadline(bootCtx, budget, func() error {
+		attemptCtx, cancelAttempt := context.WithTimeout(bootCtx, attemptTimeout)
+		defer cancelAttempt()
+
+		_, err := s.client.DescribeTable(attemptCtx, &dynamodb.DescribeTableInput{
 			TableName: aws.String(s.tableName),
 		})
+		if err == nil {
+			return nil
+		}
+		if bootCtx.Err() != nil {
+			// Boot budget exhausted or parent cancelled mid-attempt; keep the
+			// previous (more informative) error and stop retrying.
+			if lastErr == nil {
+				lastErr = err
+			}
+			return err
+		}
+		if errors.Is(attemptCtx.Err(), context.DeadlineExceeded) {
+			err = fmt.Errorf("%w after %s: %w", errAttemptTimeout, attemptTimeout, err)
+		}
+		lastErr = err
+
+		// Explain the likely cause once per class of error, rather than on
+		// every retry. Non-retryable errors are reported once, on return.
+		if hint := checkTableHint(s.tableName, region, err); ShouldRetry(err) && hint != lastHint {
+			lastHint = hint
+			log.Warn.Printf("FSID table %q check failed, retrying for up to %s: %s", s.tableName, budget, hint)
+		}
 		return err
 	})
+	if err == nil {
+		return nil
+	}
+	if ctx.Err() != nil {
+		// Parent context cancelled (e.g. SIGTERM during boot).
+		return err
+	}
+	if lastErr == nil {
+		lastErr = err
+	}
+	return fmt.Errorf("FSID table %q check failed after %s: %s: %w",
+		s.tableName, budget, checkTableHint(s.tableName, region, lastErr), lastErr)
 }
 
 func (s FSIDSource) GetFSID(ctx context.Context, path string) (int32, error) {

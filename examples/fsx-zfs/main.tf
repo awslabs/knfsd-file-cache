@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs/1.1.0-beta.5"
+      "knfsd-file-cache/examples/fsx-zfs/1.1.0-beta.6"
     ]
   }
 }
@@ -58,7 +58,7 @@ resource "aws_fsx_openzfs_file_system" "zfs" {
     data_compression_type  = "NONE"
   }
 
-  tags = { "knfsd-file-cache:examples" = "fsx-zfs" }
+  tags = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-zfs" })
 }
 
 # create a dedicated SG for FSx for OpenZFS
@@ -115,10 +115,10 @@ resource "aws_security_group" "fsx_sg" {
     description = "Allow inbound UDP for OpenZFS management: NFS mount, status monitor, and lock daemon"
   }
 
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "Name"                      = "fsx-zfs-sg",
     "knfsd-file-cache:examples" = "fsx-zfs"
-  }
+  })
 }
 
 # Validate that the proxy AMI exists and is accessible.
@@ -176,6 +176,7 @@ module "proxy" {
   KNFSD_NODES             = var.KNFSD_NODES
   PROXY_AMI               = var.PROXY_AMI
   INSTANCE_TAGS           = { "knfsd-file-cache:examples" = "fsx-zfs" }
+  GLOBAL_TAGS             = var.GLOBAL_TAGS
   PROXY_BASENAME          = var.PROXY_BASENAME
   TRAFFIC_MODE            = var.TRAFFIC_MODE
   KEY_NAME                = var.KEY_NAME

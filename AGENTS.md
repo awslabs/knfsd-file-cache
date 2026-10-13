@@ -258,7 +258,9 @@ behaviour never reach SSM. Examples are `INSTANCE_TYPE`, `ROOT_DISK_SIZE`,
 1. `variables.tf` declares it.
 2. `validations.tf` validates it.
 3. The `.tf` file that consumes it (`compute.tf`, `autoscaling.tf`,
-   `loadbalancing.tf`, `vpc.tf`, `iam.tf`, `status.tf`, or `main.tf`).
+   `loadbalancing.tf`, `vpc.tf`, `iam.tf`, `status.tf`, or `main.tf`). If the
+   variable introduces a new taggable resource, apply `local.tags` (see Tagging
+   in section 9).
 4. `outputs.tf`, if it changes what the module returns.
 5. `deployment/README.md`, the variable table, and the Outputs table if step 4
    applied.
@@ -448,6 +450,8 @@ Gotchas:
   exists to find capacity.
 * `/mnt/build` and `/tmp` are `tmpfs`. Large intermediate artifacts consume RAM,
   not disk.
+* Any new taggable build resource or tag field must include `GLOBAL_TAGS`,
+  mirrored in both builder blocks (see Tagging in section 9).
 
 Verify with `make packer-fmt packer-val shellcheck-bash shfmt`. Validating the
 template does **not** build an image; an actual `make image` run launches large EC2
@@ -487,7 +491,7 @@ Gotchas:
 * `image/smoke-tests` dependencies never reach the AMI; the other five modules'
   binaries are installed into it by `10_build.sh`.
 * The Go toolchain itself is pinned separately. `10_build.sh` downloads a fixed
-  release, `go1.27.1` at the time of writing, and `KNFSD_GOLANG_VERSION` in
+  release, `go1.27.2` at the time of writing, and `KNFSD_GOLANG_VERSION` in
   `.gitlab-ci-aws.yml` must match. `goget` changes neither.
 * There is no Go workspace file, so `go get` and `go mod tidy` must run per module.
   The root aggregate targets already handle the loop.
@@ -606,6 +610,16 @@ least-privilege reference material. Adding a permission means editing the policy
 file *and* keeping it under the size limit. Never add credentials, account IDs, or
 ARNs of real accounts to the repository; `gitleaks` and `detect-aws-credentials`
 run in pre-commit.
+
+**Tagging.** Every AWS resource that supports tags must receive
+`var.GLOBAL_TAGS`. When you create or modify a Terraform resource, or the Packer
+configuration, merge `GLOBAL_TAGS` *underneath* the resource's fixed tags, as in
+`merge(var.GLOBAL_TAGS, { Name = ... })`, so `Name` and
+`knfsd-file-cache:version` cannot be overridden. In Terraform, use the module's
+`local.tags`, which already carries it, and pass `GLOBAL_TAGS` into any new child
+module. In Packer, apply it in **both** `amazon-ebs` sources, covering `run_tags`,
+`run_volume_tags`, `spot_tags`, `fleet_tags`, `tags`, and `snapshot_tags`. Check
+that the deploying identity can tag and untag the new resource type (7.5).
 
 ## 10. Vocabulary
 

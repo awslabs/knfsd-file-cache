@@ -43,6 +43,7 @@ aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
 | `PROXY_AMI`     | The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script.          | True     | No default      |
 | `KEY_NAME`      | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                       | False    | `""`            |
 | `INSTANCE_TYPE` | The AWS EC2 instance type to use for the KNFSD cache.                                                                                      | False    | `i3en.12xlarge` |
+| `GLOBAL_TAGS`   | AWS TAGS to apply to ALL AWS resources created by this example, including the KNFSD File Cache.                                            | False    | `{}`            |
 
 ## Outputs
 

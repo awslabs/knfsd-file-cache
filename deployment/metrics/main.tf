@@ -6,18 +6,20 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/metrics/1.1.0-beta.5"
+      "knfsd-file-cache/metrics/1.1.0-beta.6"
     ]
   }
 }
 
 locals {
   dashboard_name = "KNFSD-File-Cache-v${var.VERSION}"
+  # VERSION here is the dashboard version, not the release version, so only GLOBAL_TAGS are applied
+  tags = var.GLOBAL_TAGS
 }
 
 resource "aws_cloudwatch_dashboard" "knfsd_monitoring_dashboard" {
@@ -29,6 +31,7 @@ resource "aws_cloudwatch_dashboard" "knfsd_monitoring_dashboard" {
 resource "aws_cloudformation_stack" "metrics_dashboard" {
   name          = "knfsd-metrics-dashboard"
   on_failure    = "DO_NOTHING"
+  tags          = local.tags
   template_body = <<STACK
     {
         "AWSTemplateFormatVersion": "2010-09-09",

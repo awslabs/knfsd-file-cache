@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/weka/1.1.0-beta.5"
+      "knfsd-file-cache/examples/weka/1.1.0-beta.6"
     ]
   }
 }
@@ -28,6 +28,8 @@ module "projects" {
   SUBNET = var.SUBNET
 
   INSTANCE_TAGS = { "knfsd-file-cache:examples" = "weka-projects" }
+
+  GLOBAL_TAGS = var.GLOBAL_TAGS
 
   INSTANCE_TYPE  = "i3en.6xlarge"
   PROXY_AMI      = var.PROXY_AMI
@@ -65,6 +67,8 @@ module "software" {
   SUBNET = var.SUBNET
 
   INSTANCE_TAGS = { "knfsd-file-cache:examples" = "weka-software" }
+
+  GLOBAL_TAGS = var.GLOBAL_TAGS
 
   INSTANCE_TYPE  = "i3en.6xlarge"
   PROXY_AMI      = var.PROXY_AMI

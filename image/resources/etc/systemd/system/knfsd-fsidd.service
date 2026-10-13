@@ -10,6 +10,7 @@ StartLimitBurst=3
 [Service]
 Type=notify
 ExecStart=/usr/local/sbin/knfsd-fsidd
+TimeoutStartSec=90
 Restart=on-failure
 RestartSec=10s
 

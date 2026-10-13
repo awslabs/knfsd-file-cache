@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/database/1.1.0-beta.5"
+      "knfsd-file-cache/database/1.1.0-beta.6"
     ]
   }
 }
@@ -36,7 +36,7 @@ data "aws_region" "current" {}
 
 # local variables
 locals {
-  tags   = { "knfsd-file-cache:version" = var.VERSION }
+  tags   = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:version" = var.VERSION })
   name   = coalesce(var.NAME, random_id.name.hex)
   region = data.aws_region.current.region
 

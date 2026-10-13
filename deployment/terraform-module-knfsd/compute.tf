@@ -102,17 +102,25 @@ resource "aws_launch_template" "knfsd_launch_template" {
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
+    tags = merge(var.GLOBAL_TAGS, {
       "Name" = local.name
-    }
+    })
   }
 
   tag_specifications {
     resource_type = "volume"
-    tags = {
+    tags = merge(var.GLOBAL_TAGS, {
       "Name"                     = "${local.name}-vol",
       "knfsd-file-cache:version" = var.VERSION
-    }
+    })
+  }
+
+  tag_specifications {
+    resource_type = "network-interface"
+    tags = merge(var.GLOBAL_TAGS, {
+      "Name"                     = "${local.name}-primary-ip",
+      "knfsd-file-cache:version" = var.VERSION
+    })
   }
 
   iam_instance_profile {

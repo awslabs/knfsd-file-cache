@@ -861,20 +861,12 @@ function create_fs_cache() {
 	complete_command
 }
 
-# start_fs_cache() starts the FS-Cache service
+# start_fs_cache() starts the FS-Cache service. The cachefilesd.service drop-in
+# (Type=forking) makes "systemctl start" block until the cache is bound.
 function start_fs_cache() {
 	if ! systemctl start cachefilesd; then
-		# Sometimes cachefilesd reports an error when starting but does
-		# start correctly. This is likely an error in the init script or
-		# with how systemd integrates with init scripts.
-		# Trying a second time normally works. If you check
-		# /proc/fs/fscache/caches the cache is actually active.
-		if ! systemctl start cachefilesd; then
-			# Second attempt failed, this is now a genuine error so report
-			# what went wrong and terminate.
-			systemctl status cachefilesd
-			exit 1
-		fi
+		systemctl status cachefilesd
+		exit 1
 	fi
 
 	MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"

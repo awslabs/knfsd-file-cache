@@ -6,7 +6,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -23,7 +23,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-netapp/1.1.0-beta.5"
+      "knfsd-file-cache/examples/fsx-netapp/1.1.0-beta.6"
     ]
   }
 }
@@ -76,7 +76,7 @@ resource "aws_secretsmanager_secret" "fsxadmin_password" {
   name                    = "${var.PROXY_BASENAME}-fsxadmin-password"
   description             = "FSx for NetApp ONTAP fsxadmin password"
   recovery_window_in_days = 0
-  tags                    = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags                    = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
 }
 
 # store the fsxadmin password in the secret
@@ -98,14 +98,14 @@ resource "aws_fsx_ontap_file_system" "ontap" {
   automatic_backup_retention_days = 0
   security_group_ids              = [aws_security_group.fsx_sg.id]
   fsx_admin_password              = random_password.fsxadmin_password.result
-  tags                            = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags                            = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
 }
 
 # create Storage Virtual Machine (SVM)
 resource "aws_fsx_ontap_storage_virtual_machine" "svm" {
   file_system_id = aws_fsx_ontap_file_system.ontap.id
   name           = "svm01"
-  tags           = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags           = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
 }
 
 # create volume 1 (500GB)
@@ -117,7 +117,7 @@ resource "aws_fsx_ontap_volume" "volume1" {
   storage_efficiency_enabled = true
   skip_final_backup          = true
   tiering_policy { name = "NONE" }
-  tags = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
 }
 
 # create volume 2 (500GB) - junction point under volume 1
@@ -129,7 +129,7 @@ resource "aws_fsx_ontap_volume" "volume2" {
   storage_efficiency_enabled = true
   skip_final_backup          = true
   tiering_policy { name = "NONE" }
-  tags       = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags       = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
   depends_on = [aws_fsx_ontap_volume.volume1]
 }
 
@@ -142,7 +142,7 @@ resource "aws_fsx_ontap_volume" "volume3" {
   storage_efficiency_enabled = true
   skip_final_backup          = true
   tiering_policy { name = "NONE" }
-  tags = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
 }
 
 # create volume 4 (500GB) - nested under vol3
@@ -154,7 +154,7 @@ resource "aws_fsx_ontap_volume" "volume4" {
   storage_efficiency_enabled = true
   skip_final_backup          = true
   tiering_policy { name = "NONE" }
-  tags       = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags       = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
   depends_on = [aws_fsx_ontap_volume.volume3]
 }
 
@@ -167,7 +167,7 @@ resource "aws_fsx_ontap_volume" "volume5" {
   storage_efficiency_enabled = true
   skip_final_backup          = true
   tiering_policy { name = "NONE" }
-  tags       = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  tags       = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-netapp" })
   depends_on = [aws_fsx_ontap_volume.volume4]
 }
 
@@ -322,10 +322,10 @@ resource "aws_security_group" "fsx_sg" {
     description = "Allow all outbound traffic to VPC"
   }
 
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "Name"                      = "fsx-netapp-sg",
     "knfsd-file-cache:examples" = "fsx-netapp"
-  }
+  })
 }
 
 # Validate that the proxy AMI exists and is accessible.
@@ -402,6 +402,7 @@ module "proxy" {
   INSTANCE_TYPE             = var.INSTANCE_TYPE
   FSID_MODE                 = "external"
   INSTANCE_TAGS             = { "knfsd-file-cache:examples" = "fsx-netapp" }
+  GLOBAL_TAGS               = var.GLOBAL_TAGS
   ENABLE_NETAPP_AUTO_DETECT = true                                                                                     # Enable automatic detection of NetApp exports
   NETAPP_HOST               = aws_fsx_ontap_storage_virtual_machine.svm.endpoints[0].nfs[0].dns_name                   # NetApp NFS SVM dns name
   NETAPP_URL                = "https://${aws_fsx_ontap_file_system.ontap.endpoints[0].management[0].dns_name}/api/v1/" # NetApp ONTAP REST API endpoint URL

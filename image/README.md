@@ -27,6 +27,21 @@ To enable it:
 1. Set `TAG_BUILD_STATUS = true` in your Packer variables file.
 2. Set `IAM_INSTANCE_PROFILE` to the name of an IAM instance profile that is attached to the build instance and whose role holds at least the `ec2:CreateTags` permission.
 
+## AWS resource tagging
+
+Set `GLOBAL_TAGS` to apply your own AWS tags, such as cost allocation tags, to every resource the build creates and to the resulting image. The Terraform deployment modules accept a variable of the same name, so one map can tag both phases.
+
+| Resource                                                                         | Packer setting    |
+|----------------------------------------------------------------------------------|-------------------|
+| Build instance, its ENIs, the temporary key pair and security group, snapshot    | `run_tags`        |
+| Build EBS volumes                                                                | `run_volume_tags` |
+| Spot request                                                                     | `spot_tags`       |
+| EC2 Fleet issued for `spot_instance_types`                                       | `fleet_tags`      |
+| Resulting AMI (also copied to every region in `DISTRIBUTION_REGIONS`)            | `tags`            |
+| Resulting AMI snapshots                                                          | `snapshot_tags`   |
+
+Keys must be IMDS-compatible (letters, digits, and `+ - = . _ : @`), because the build instance enables instance metadata tags. Keys must not start with `aws:`, and keys or values must not contain `{{`, because these settings are processed by the Packer template engine. At most 40 tags are allowed.
+
 ## Build Using Packer
 
 The easiest way to build the AMI is using Packer.
@@ -76,6 +91,7 @@ Enter at least the following required variable (additional `SUBNET` variable is 
 | `SKIP_CREATE_IMAGE`                         | Skip creating the image. Useful for setting to `true` during a build test stage.                                                                                                                                                                                                       | bool         | False    | `false`                                             |
 | `IAM_INSTANCE_PROFILE`                      | The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources, or if `TAG_BUILD_STATUS` is `true`.                                                                                                                 | string       | False    | `""`                                                |
 | `TAG_BUILD_STATUS`                          | Whether to update the build instance status via the `knfsd-file-cache:status` tag.<br><br>Requires `IAM_INSTANCE_PROFILE` to be set to an instance profile whose role holds the `ec2:CreateTags` permission.                                                                           | bool         | False    | `false`                                             |
+| `GLOBAL_TAGS`                               | AWS TAGS to apply to ALL AWS resources created by the build, plus the resulting AMI and its snapshots.<br><br>Existing hard-wired tags take precedence on duplicate keys. See [AWS resource tagging](#aws-resource-tagging).                                                           | map(string)  | False    | `{}`                                                |
 | `CUSTOM_PRE_BUILD_SCRIPT`                   | Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                            | string       | False    | `""`                                                |
 | `CUSTOM_POST_BUILD_SCRIPT`                  | Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                        | string       | False    | `""`                                                |
 | `DISTRIBUTION_REGIONS`                      | A list of additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Example: `["us-east-2", "us-west-2"]`.                                                                                                                               | list(string) | False    | `[]`                                                |
@@ -335,7 +351,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 26.04.1 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.2.7-knfsd
+amazon-ebs.knfsd: Kernel:       7.2.10-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -402,7 +418,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-beta.5"
+VERSION="1.1.0-beta.6"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -565,7 +581,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 26.04.1 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.2.7-knfsd
+Kernel:       7.2.10-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

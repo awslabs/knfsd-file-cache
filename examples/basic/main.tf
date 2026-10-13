@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/basic/1.1.0-beta.5"
+      "knfsd-file-cache/examples/basic/1.1.0-beta.6"
     ]
   }
 }
@@ -36,5 +36,6 @@ module "proxy" {
   EXPORT_MAP     = var.EXPORT_MAP
   PROXY_BASENAME = var.PROXY_BASENAME
   INSTANCE_TAGS  = { "knfsd-file-cache:examples" = "nfs-basic" }
+  GLOBAL_TAGS    = var.GLOBAL_TAGS
   depends_on     = [data.aws_ami.proxy_exists]
 }

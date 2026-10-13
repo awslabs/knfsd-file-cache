@@ -44,6 +44,7 @@ The table name flows through the module outputs into `FSID_DATABASE_CONFIG`, so 
 | `NAME_PREFIX`              | Prefix to use when generating a random DynamoDB table name (used when `NAME` is left blank). The prefix will be suffixed with a hyphen and 8 random letters/digits (e.g. `knfsd-fsids-a1b2c3d4`).           | False    | `knfsd-fsids` |
 | `DELETION_PROTECTION`      | Whether or not to allow Terraform to destroy the DynamoDB table. Unless this field is set to false in Terraform state, a `terraform destroy` or `terraform apply` command that deletes the table will fail. | False    | `true`        |
 | `FSID_DATABASE_IAM_POLICY` | ARN of a custom IAM policy granting DynamoDB item-level access to the FSID table. \**                                                                                                                       | False    | `""`          |
+| `GLOBAL_TAGS`              | AWS TAGS to apply to ALL AWS resources created by this module.                                                                                                                                              | False    | `{}`          |
 
 \* The table name must be unique within your AWS account in the current AWS Region.
 

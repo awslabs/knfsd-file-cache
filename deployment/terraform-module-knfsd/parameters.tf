@@ -56,7 +56,7 @@ locals {
     CACHEFILESD_EXTSIZE   = "(Optional) The XFS extent size hint (in MiB) applied to the FS-Cache filesystem (\"/var/cache/fscache\"). Reduces extent fragmentation of FS-Cache backing files, which otherwise accumulate one extent per cache write and make SEEK_HOLE increasingly expensive. Larger values reduce fragmentation further, at the cost of temporary space amplification for partially cached large files. Allowed values are \"0\" (disabled), \"4\", \"8\" or \"16\". Default: \"8\"."
 
     # metrics / http agent
-    ENABLE_METRICS       = "(Optional) Enable the KNFSD Metrics (Open-Telemetry) Agent. Default: \"true\"."
+    ENABLE_METRICS       = "(Optional) Enable the Amazon CloudWatch Logs & EC2 Metrics and KNFSD Metrics (Open-Telemetry) Agents. Default: \"true\"."
     METRICS_AGENT_CONFIG = "(Optional) Custom YAML configuration for the metrics agent. The configuration is not validated by Terraform when using a custom config, please check the proxy startup log. See the custom configuration section in the metrics documentation for more details. Default: \"\"."
     ENABLE_KNFSD_AGENT   = "(Optional) Enable the KNFSD HTTP Agent. Default: \"true\"."
   }

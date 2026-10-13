@@ -80,7 +80,8 @@
         "ssm:GetParameters",
         "ssm:GetParametersByPath",
         "ssm:ListTagsForResource",
-        "ssm:PutParameter"
+        "ssm:PutParameter",
+        "ssm:RemoveTagsFromResource"
       ],
       "Resource": "*"
     },
@@ -105,8 +106,11 @@
         "cloudwatch:DescribeAlarms",
         "cloudwatch:GetDashboard",
         "cloudwatch:ListDashboards",
+        "cloudwatch:ListTagsForResource",
         "cloudwatch:PutDashboard",
-        "cloudwatch:PutMetricAlarm"
+        "cloudwatch:PutMetricAlarm",
+        "cloudwatch:TagResource",
+        "cloudwatch:UntagResource"
       ],
       "Resource": "*"
     },
@@ -178,7 +182,8 @@
         "events:PutRule",
         "events:PutTargets",
         "events:RemoveTargets",
-        "events:TagResource"
+        "events:TagResource",
+        "events:UntagResource"
       ],
       "Resource": "arn:*:events:*:*:rule/knfsd-*"
     },
@@ -191,7 +196,8 @@
         "logs:DescribeLogGroups",
         "logs:ListTagsForResource",
         "logs:PutRetentionPolicy",
-        "logs:TagResource"
+        "logs:TagResource",
+        "logs:UntagResource"
       ],
       "Resource": "*"
     },
@@ -228,7 +234,8 @@
         "iam:GetPolicyVersion",
         "iam:ListPolicyVersions",
         "iam:SetDefaultPolicyVersion",
-        "iam:TagPolicy"
+        "iam:TagPolicy",
+        "iam:UntagPolicy"
       ],
       "Resource": "arn:*:iam::*:policy/knfsd-*"
     },
@@ -241,7 +248,8 @@
         "iam:DeleteInstanceProfile",
         "iam:GetInstanceProfile",
         "iam:RemoveRoleFromInstanceProfile",
-        "iam:TagInstanceProfile"
+        "iam:TagInstanceProfile",
+        "iam:UntagInstanceProfile"
       ],
       "Resource": "arn:*:iam::*:instance-profile/knfsd-*"
     },

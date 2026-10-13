@@ -94,6 +94,14 @@ func TestShouldRetry(t *testing.T) {
 		}
 		assert.False(t, ShouldRetry(err))
 	})
+
+	t.Run("AttemptTimeout", func(t *testing.T) {
+		t.Parallel()
+		// A boot-time DescribeTable attempt abandoned after its per-attempt
+		// timeout is retryable while the overall boot budget remains.
+		err := fmt.Errorf("%w after 15s: %w", errAttemptTimeout, context.DeadlineExceeded)
+		assert.True(t, ShouldRetry(err))
+	})
 }
 
 // TestWithRetryDeadline_BoundedBudget verifies that withRetryDeadline honours

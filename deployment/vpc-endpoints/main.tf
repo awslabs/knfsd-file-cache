@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/vpc-endpoints/1.1.0-beta.5"
+      "knfsd-file-cache/vpc-endpoints/1.1.0-beta.6"
     ]
   }
 }
@@ -44,7 +44,7 @@ data "aws_vpc" "selected" {
 # local variables
 locals {
   partition      = data.aws_partition.current.partition
-  tags           = { "knfsd-file-cache:version" = var.VERSION }
+  tags           = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:version" = var.VERSION })
   vpc_id         = data.aws_vpc.selected.id
   vpc_cidr_block = data.aws_vpc.selected.cidr_block
   services = [

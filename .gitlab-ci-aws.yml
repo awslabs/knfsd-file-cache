@@ -37,31 +37,30 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
   KNFSD_ALPINE_VERSION: 3.24.2 # https://hub.docker.com/_/alpine/tags
-  KNFSD_BLACK_VERSION: 26.5.1 # https://github.com/psf/black/releases
-  KNFSD_BOTO3_VERSION: 1.43.99 # https://github.com/boto/boto3/tags
-  KNFSD_CHECKOV_VERSION: 3.3.19 # https://hub.docker.com/r/bridgecrew/checkov/tags
+  KNFSD_BLACK_VERSION: 26.10.1 # https://github.com/psf/black/releases
+  KNFSD_BOTO3_VERSION: 1.43.112 # https://github.com/boto/boto3/tags
+  KNFSD_CHECKOV_VERSION: 3.3.28 # https://hub.docker.com/r/bridgecrew/checkov/tags
   KNFSD_CODESPELL_VERSION: 2.4.3 # https://github.com/codespell-project/codespell/releases
   KNFSD_DYNAMODB_VERSION: 3.3.1 # https://gallery.ecr.aws/aws-dynamodb-local/aws-dynamodb-local
   KNFSD_EDITORCONFIG_VERSION: 4.0.2 # https://github.com/editorconfig-checker/editorconfig-checker/releases
-  KNFSD_GOLANGCI_LINT_VERSION: 2.13.2 # https://github.com/golangci/golangci-lint/releases
-  KNFSD_GOLANG_VERSION: 1.27.1 # https://go.dev/dl/
-  KNFSD_GOSEC_VERSION: 2.29.0 # https://github.com/securego/gosec/releases
-  KNFSD_GOVULNCHECK_VERSION: 1.8.0 # https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
+  KNFSD_GOLANGCI_LINT_VERSION: 2.14.0 # https://github.com/golangci/golangci-lint/releases
+  KNFSD_GOLANG_VERSION: 1.27.2 # https://go.dev/dl/
+  KNFSD_GOVULNCHECK_VERSION: 1.9.0 # https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
   KNFSD_KANIKO_VERSION: 1.24.0 # https://github.com/GoogleContainerTools/kaniko/releases
   KNFSD_KICS_VERSION: 2.1.20 # https://hub.docker.com/r/checkmarx/kics/tags
   KNFSD_MKDOCS_MATERIAL_VERSION: 9.7.7 # https://github.com/squidfunk/mkdocs-material/releases
   KNFSD_MKDOCS_SAME_DIR_VERSION: 0.1.5 # https://github.com/oprypin/mkdocs-same-dir/tags
   KNFSD_MKDOCS_VERSION: 1.6.1 # https://github.com/mkdocs/mkdocs/releases
-  KNFSD_MYPY_VERSION: 2.3.1 # https://github.com/python/mypy/tags
+  KNFSD_MYPY_VERSION: 2.4.0 # https://github.com/python/mypy/tags
   KNFSD_PACKER_VERSION: 1.16.1 # https://github.com/hashicorp/packer/releases
-  KNFSD_PYLINT_VERSION: 4.0.8 # https://github.com/pylint-dev/pylint/tags
-  KNFSD_PYTHON_VERSION: 3.14.7 # https://hub.docker.com/_/python/tags
-  KNFSD_SEMGREP_VERSION: 1.177.0 # https://github.com/semgrep/semgrep/releases
+  KNFSD_PYLINT_VERSION: 4.1.3 # https://github.com/pylint-dev/pylint/tags
+  KNFSD_PYTHON_VERSION: 3.14.8 # https://hub.docker.com/_/python/tags
+  KNFSD_SEMGREP_VERSION: 1.180.0 # https://github.com/semgrep/semgrep/releases
   KNFSD_SHELLCHECK_VERSION: 0.11.0 # https://github.com/koalaman/shellcheck/releases
   KNFSD_SHFMT_VERSION: 3.14.1 # https://github.com/mvdan/sh/releases
   KNFSD_TERRAFORM_VERSION: 1.2.9 # https://github.com/hashicorp/terraform/releases
   KNFSD_TFLINT_VERSION: 0.64.0 # https://github.com/terraform-linters/tflint/releases
-  KNFSD_TRIVY_VERSION: 0.74.0 # https://github.com/aquasecurity/trivy/releases
+  KNFSD_TRIVY_VERSION: 0.75.0 # https://github.com/aquasecurity/trivy/releases
 
 .renovate-config: &renovate-config
   environment: renovate
@@ -78,7 +77,7 @@ variables:
 .go-config:
   stage: build
   variables:
-    GOPROXY: https://proxy.golang.org,direct
+    GOPROXY: "https://proxy.golang.org|direct"
     GOPATH: /go
     GOMODCACHE: ${CI_PROJECT_DIR}/.go/pkg/mod
     GOCACHE: ${CI_PROJECT_DIR}/.go/.cache/go-build
@@ -136,13 +135,13 @@ variables:
 .gosec-config:
   stage: security
   variables:
-    GOPROXY: https://proxy.golang.org,direct
+    GOPROXY: "https://proxy.golang.org|direct"
     GOPATH: /go
     GOMODCACHE: ${CI_PROJECT_DIR}/.go/pkg/mod
   image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:${KNFSD_GOLANG_VERSION}
   before_script:
     - mkdir -p ".go/pkg/mod"
-    - go install github.com/securego/gosec/v2/cmd/gosec@v${KNFSD_GOSEC_VERSION}
+    - go install github.com/securego/gosec/v2/cmd/gosec@master
   allow_failure: true
   <<: *default-config
   tags:
@@ -158,7 +157,7 @@ renovate:
   stage: dependencies
   needs: ["renovate-config-validator"]
   variables:
-    GOPROXY: https://proxy.golang.org,direct
+    GOPROXY: "https://proxy.golang.org|direct"
     RENOVATE_EXTRA_FLAGS: ${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
   allow_failure: false
   <<: *renovate-config
@@ -313,16 +312,31 @@ tf-lint:
     entrypoint: [""]
   variables:
     TFLINT_CONFIG_FILE: ${CI_PROJECT_DIR}/.tflint.hcl
+    TFLINT_PLUGIN_DIR: ${CI_PROJECT_DIR}/.tflint.d/plugins
+    TFLINT_BIN_DIR: ${CI_PROJECT_DIR}/.tflint.d/bin
+  cache:
+    key:
+      files:
+        - .tflint.hcl
+      prefix: tflint-${KNFSD_TFLINT_VERSION}
+    paths:
+      - .tflint.d
   script:
     - apk --no-cache add curl unzip
+    - mkdir -p "${TFLINT_PLUGIN_DIR}" "${TFLINT_BIN_DIR}"
     # https://github.com/terraform-linters/tflint/releases
-    - curl -L "https://github.com/terraform-linters/tflint/releases/download/v${KNFSD_TFLINT_VERSION}/tflint_linux_amd64.zip" -o tflint.zip
-    - unzip -q -o tflint.zip
-    - rm tflint.zip
-    - chmod +x tflint
-    - ./tflint -v
-    - ./tflint --init
-    - ./tflint --recursive
+    - |
+      if [ ! -x "${TFLINT_BIN_DIR}/tflint" ]; then
+        curl -fsSL --retry 5 --retry-delay 5 \
+          "https://github.com/terraform-linters/tflint/releases/download/v${KNFSD_TFLINT_VERSION}/tflint_linux_amd64.zip" \
+          -o tflint.zip
+        unzip -q -o tflint.zip -d "${TFLINT_BIN_DIR}"
+        rm tflint.zip
+      fi
+    - export PATH="${TFLINT_BIN_DIR}:${PATH}"
+    - tflint -v
+    - tflint --init
+    - tflint --recursive
   allow_failure: false
   <<: *default-config
 

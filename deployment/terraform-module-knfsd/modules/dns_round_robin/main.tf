@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
     archive = {
       source  = "hashicorp/archive"
@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/dns_round_robin/1.1.0-beta.5"
+      "knfsd-file-cache/modules/dns_round_robin/1.1.0-beta.6"
     ]
   }
 }
@@ -33,9 +33,9 @@ data "aws_vpc" "selected" {
 
 # local variables
 locals {
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "knfsd-file-cache:version" = var.VERSION
-  }
+  })
 }
 
 # create a private route53 DNS zone for the dns-rr cluster

@@ -33,12 +33,13 @@
       "path": "image/resources/netapp-exports"
     },
     {
-      "name": "go/image/smoke-tests",
+      "name": "go/smoke-tests",
       "path": "image/smoke-tests"
     }
   ],
   "settings": {
     "remote.autoForwardPorts": false,
+    "markdownlint.configFile": "${workspaceFolder:knfsd-file-cache}/.markdownlint.json",
     "go.toolsManagement.checkForUpdates": "proxy",
     "go.useLanguageServer": true,
     "go.toolsEnvVars": {
@@ -59,16 +60,6 @@
       "JavaScript Debug Terminal": null
     },
     "task.allowAutomaticTasks": "on",
-    "markdownlint.config": {
-      "MD013": false,
-      "MD024": false,
-      "MD028": false,
-      "MD033": false,
-      "MD034": false,
-      "MD041": false,
-      "MD053": false,
-      "MD059": false
-    },
     "workbench.activityBar.orientation": "vertical",
     "workbench.remoteIndicator.showExtensionRecommendations": false
   },
@@ -92,7 +83,7 @@
           "go/knfsd-fsidd",
           "go/knfsd-metrics-agent",
           "go/netapp-exports",
-          "go/image/smoke-tests"
+          "go/smoke-tests"
         ]
       },
       {
@@ -270,7 +261,7 @@
         }
       },
       {
-        "label": "go/image/smoke-tests",
+        "label": "go/smoke-tests",
         "type": "process",
         "command": "/usr/bin/bash",
         "windows": {

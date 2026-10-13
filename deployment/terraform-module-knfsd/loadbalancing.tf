@@ -16,6 +16,7 @@ module "loadbalancer" {
   HEALTHCHECK_HEALTHY_THRESHOLD   = var.HEALTHCHECK_HEALTHY_THRESHOLD
   HEALTHCHECK_UNHEALTHY_THRESHOLD = var.HEALTHCHECK_UNHEALTHY_THRESHOLD
   EXISTING_SECURITY_GROUP_ID      = var.EXISTING_SECURITY_GROUP_ID
+  GLOBAL_TAGS                     = var.GLOBAL_TAGS
 }
 
 resource "null_resource" "dns_round_robin" {
@@ -35,5 +36,6 @@ module "dns_round_robin" {
   PROXY_BASENAME           = local.name
   DNS_NAME                 = var.DNS_NAME
   EXISTING_LAMBDA_ROLE_ARN = var.EXISTING_LAMBDA_ROLE_ARN
+  GLOBAL_TAGS              = var.GLOBAL_TAGS
   depends_on               = [null_resource.dns_round_robin]
 }

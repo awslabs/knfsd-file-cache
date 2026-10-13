@@ -18,6 +18,7 @@ import logging
 import time
 import boto3
 from botocore.config import Config
+from botocore.exceptions import BotoCoreError, ClientError
 
 # configure logging
 logger = logging.getLogger()
@@ -67,7 +68,11 @@ fn instance_terminated():
 """
 
 
-# pylint: disable=unused-argument
+class EniNotFoundError(Exception):
+    """Raised when no available ENI is found for a terminated instance."""
+
+
+# pylint: disable-next=unused-argument
 def lambda_handler(event, context):
     """
     Main Lambda function handler that processes EC2 ASG
@@ -124,8 +129,8 @@ def lambda_handler(event, context):
             )
             logger.info("EVENT: instance TERMINATED EVENT: COMPLETED SUCCESSFULLY")
 
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
+    # catch-all is deliberate: any failure must ABANDON the lifecycle hook
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error: %s", str(e))
         status_code = 500
         message = f"Error: {str(e)}"
@@ -142,7 +147,7 @@ def lambda_handler(event, context):
                     lifecycle_action_token,
                     "ABANDON",
                 )
-            except Exception as lifecycle_error:
+            except (BotoCoreError, ClientError) as lifecycle_error:
                 logger.error(
                     "Error completing lifecycle action: %s", str(lifecycle_error)
                 )
@@ -153,7 +158,35 @@ def lambda_handler(event, context):
     }
 
 
-# pylint: disable=too-many-locals
+def build_eni_tags(
+    proxy_basename: str | None, asg_name: str, version: str | None
+) -> list[dict[str, str]]:
+    """
+    Build the tag list for a new secondary ENI. The user-provided GLOBAL_TAGS
+    (JSON object in the environment) are applied first, then the fixed tags,
+    so "Name", "knfsd-file-cache:asg-name" and "knfsd-file-cache:version" can
+    never be overridden (the ENI lookup filters on "knfsd-file-cache:asg-name").
+    """
+    tags: dict[str, str] = {}
+    try:
+        global_tags = json.loads(os.environ.get("GLOBAL_TAGS") or "{}")
+    except json.JSONDecodeError:
+        logger.warning("GLOBAL_TAGS is not valid JSON, ignoring")
+        global_tags = {}
+    if isinstance(global_tags, dict):
+        tags.update({str(k): str(v) for k, v in global_tags.items()})
+
+    tags.update(
+        {
+            "Name": f"{proxy_basename}-static-ip",
+            "knfsd-file-cache:asg-name": asg_name,
+            "knfsd-file-cache:version": str(version),
+        }
+    )
+    return [{"Key": k, "Value": v} for k, v in tags.items()]
+
+
+# pylint: disable-next=too-many-locals
 def instance_launching(instance_id, asg_name, hook_name, token):
     """
     Handle the EC2 instance launch lifecycle action.
@@ -207,11 +240,7 @@ def instance_launching(instance_id, asg_name, hook_name, token):
             TagSpecifications=[
                 {
                     "ResourceType": "network-interface",
-                    "Tags": [
-                        {"Key": "Name", "Value": f"{proxy_basename}-static-ip"},
-                        {"Key": "knfsd-file-cache:asg-name", "Value": asg_name},
-                        {"Key": "knfsd-file-cache:version", "Value": version},
-                    ],
+                    "Tags": build_eni_tags(proxy_basename, asg_name, version),
                 }
             ],
         )
@@ -326,10 +355,29 @@ def instance_terminating(instance_id, asg_name, hook_name, token):
 
     # detach and wait until ENI becomes 'available'
     ec2.detach_network_interface(AttachmentId=attachment_id, Force=True)
+    eni_desc = wait_for_eni_available(eni_id)
 
-    # wait up to 2 mins (bounded loop) for the ENI to transition to "available"
-    max_attempts = 12
-    delay_sec = 10
+    # delete the DNS "A" record now that the ENI is detached
+    private_ip = eni_desc["PrivateIpAddress"]
+    change_dns_record(private_ip, "DELETE")
+    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
+
+    # complete the terminating lifecycle so ASG can proceed
+    complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
+
+
+def wait_for_eni_available(eni_id, max_attempts=12, delay_sec=10):
+    """
+    Poll (bounded, up to 2 mins by default) until the ENI status is "available".
+
+    Args:
+        eni_id: The ENI ID to poll
+        max_attempts: Maximum number of polling attempts
+        delay_sec: Delay between polling attempts in seconds
+
+    Returns:
+        The last ENI description, whether or not it reached "available"
+    """
     for attempt in range(1, max_attempts + 1):
         eni_desc = ec2.describe_network_interfaces(NetworkInterfaceIds=[eni_id])[
             "NetworkInterfaces"
@@ -347,13 +395,7 @@ def instance_terminating(instance_id, asg_name, hook_name, token):
         # nosemgrep: arbitrary-sleep
         time.sleep(delay_sec)
 
-    # delete the DNS "A" record now that the ENI is detached
-    private_ip = eni_desc["PrivateIpAddress"]
-    change_dns_record(private_ip, "DELETE")
-    logger.info("DNS 'A' record deleted successfully: %s", private_ip)
-
-    # complete the terminating lifecycle so ASG can proceed
-    complete_lifecycle_action(asg_name, hook_name, token, "CONTINUE")
+    return eni_desc
 
 
 def instance_terminated(instance_id, asg_name, cause):
@@ -400,7 +442,7 @@ def get_eni(subnet_id, asg_name, instance_id, max_attempts=10, delay_sec=30):
         List of ENI responses
 
     Raises:
-        Exception: If no ENIs found after max retries
+        EniNotFoundError: If no ENIs found after max retries
     """
     attempt = 1
     while attempt <= max_attempts:
@@ -439,8 +481,7 @@ def get_eni(subnet_id, asg_name, instance_id, max_attempts=10, delay_sec=30):
 
         attempt += 1
 
-    # pylint: disable=broad-exception-raised
-    raise Exception(
+    raise EniNotFoundError(
         f"Failed to find ENI for instance {instance_id} after {max_attempts} attempts"
     )
 

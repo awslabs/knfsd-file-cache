@@ -12,8 +12,8 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 # pinned versions
-VERSION="1.1.0-beta.5"
-KERNEL="7.2.7"
+VERSION="1.1.0-beta.6"
+KERNEL="7.2.10"
 
 # identify architecture
 export ARCH=$(uname -m)
@@ -34,7 +34,7 @@ export MAKE_VERBOSITY="-s" # quiet: warnings/errors/summary
 export GOCACHE="/mnt/build/go/.cache/go-build"
 export GOMODCACHE="/mnt/build/go/pkg/mod"
 export GOTMPDIR="/mnt/build/go/tmp"
-export GOPROXY=https://proxy.golang.org,direct
+export GOPROXY="https://proxy.golang.org|direct"
 
 # set the working directory to "/mnt/build"
 cd "$(dirname "$0")"/../
@@ -93,9 +93,9 @@ function disable_unattended_upgrades() {
 	complete_command
 }
 
-# git clone with retry, 10-50s delay between attempts
+# git clone with retry, 10-20s delay between attempts
 function git_clone() {
-	local max_attempts=5
+	local max_attempts=3
 	local attempt
 	local target="${!#}"
 	if [[ "$target" == https://* ]] || [[ "$target" == git@* ]]; then
@@ -105,22 +105,24 @@ function git_clone() {
 		if git clone "$@"; then
 			return 0
 		fi
-		echo "git clone failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
 		rm -rf "$target"
+		[[ $attempt -lt $max_attempts ]] || break
+		echo "git clone failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
 		sleep $((attempt * 10))
 	done
 	echo "git clone failed after $max_attempts attempts"
 	return 1
 }
 
-# snap refresh with retry, 10-50s delay between attempts
-snap_refresh() {
-	local max_attempts=5
+# snap refresh with retry, 10-20s delay between attempts
+function snap_refresh() {
+	local max_attempts=3
 	local attempt
 	for attempt in $(seq 1 $max_attempts); do
 		if snap refresh "$@"; then
 			return 0
 		fi
+		[[ $attempt -lt $max_attempts ]] || break
 		echo "snap refresh failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
 		sleep $((attempt * 10))
 	done
@@ -148,7 +150,7 @@ function update_amazon_ssm_agent() (
 
 # wait for apt lists lock to be released
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1069167
-wait_for_apt_lock() {
+function wait_for_apt_lock() {
 	local max_attempts=60
 	local attempt=1
 	local lock_file="/var/lib/apt/lists/lock"
@@ -190,7 +192,7 @@ function install_build_dependencies() (
 		build-essential libevent-dev libsqlite3-dev libblkid-dev \
 		libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
 		libkeyutils-dev libdevmapper-dev libxml2-dev cdbs debhelper ubuntu-dev-tools \
-		gawk llvm pkg-config shellcheck bc libnl-3-dev libnl-genl-3-dev \
+		gawk llvm pkg-config shellcheck bats bc libnl-3-dev libnl-genl-3-dev \
 		libreadline-dev libdw-dev libslang2-dev libnuma-dev libtraceevent-dev \
 		python3-dev python-is-python3 binutils perl gettext cmake wget
 	complete_command
@@ -207,11 +209,37 @@ function install_mdadm() (
 	complete_command
 )
 
+# pull-lp-source with retry, 30-120s delay between attempts
+# the Launchpad API (api.launchpad.net) is queried before any download, and
+# its outages tend to outlast the 10-20s delays used by the other wrappers
+# @param (str) $1 source package name
+# @param (str) $2 source package version
+function pull_lp_source() {
+	local package="$1"
+	local version="$2"
+	local max_attempts=5
+	local attempt
+	for attempt in $(seq 1 $max_attempts); do
+		if pull-lp-source "$package" "$version"; then
+			return 0
+		fi
+		# remove partial downloads and extracted sources before retrying
+		rm -rf "${package}"_"${version%%-*}"* "${package}"-"${version%%-*}"/
+		[[ $attempt -lt $max_attempts ]] || break
+		echo "pull-lp-source failed (attempt $attempt/$max_attempts), retrying in $((attempt * 30))s..."
+		sleep $((attempt * 30))
+	done
+	echo "pull-lp-source failed after $max_attempts attempts"
+	return 1
+}
+
 # build and install cachefilesd with patches
 function install_cachefilesd() (
 	begin_command "installing cachefilesd"
 
-	pull-lp-source cachefilesd 0.10.10-0.6ubuntu1
+	# Resolute (26.04): 0.10.10-0.6ubuntu1 (sysv)
+	# Stonking (26.10): 0.10.10-0.6ubuntu2 (systemd)
+	pull_lp_source cachefilesd 0.10.10-0.6ubuntu2
 	cd cachefilesd-0.10.10/
 	mkdir -p debian/patches
 
@@ -223,8 +251,8 @@ function install_cachefilesd() (
 
 	cd ..
 	apt-get install -y \
-		./cachefilesd_0.10.10-0.6ubuntu1+knfsd1_${ARCH_ALT}.deb \
-		./cachefilesd-dbgsym_0.10.10-0.6ubuntu1+knfsd1_${ARCH_ALT}.ddeb
+		./cachefilesd_0.10.10-0.6ubuntu2+knfsd1_${ARCH_ALT}.deb \
+		./cachefilesd-dbgsym_0.10.10-0.6ubuntu2+knfsd1_${ARCH_ALT}.ddeb
 
 	systemctl disable cachefilesd
 	echo "RUN=yes" >> /etc/default/cachefilesd
@@ -330,16 +358,6 @@ function install_amazon_ec2_net_utils() (
 	# always use 'git clone' to ensure .gitattributes is ignored (removes debian/ directory from build image)
 	git_clone --depth 1 --branch v2.7.3 https://github.com/amazonlinux/amazon-ec2-net-utils.git amazon-ec2-net-utils
 	cd amazon-ec2-net-utils
-	# edit systemd global @timer settings, execute every 30s, after initial 30s delay, with jitter of 5s
-	# Ubuntu 26.04 uses systemd v259: https://www.freedesktop.org/software/systemd/man/259/systemd.timer.html
-	rm -f systemd/system/refresh-policy-routes@.timer
-	cat <<- EOF > systemd/system/refresh-policy-routes@.timer
-		[Timer]
-		OnActiveSec=30
-		OnUnitInactiveSec=30
-		RandomizedDelaySec=5
-		AccuracySec=1s
-	EOF
 	dpkg-buildpackage -uc -us -b
 	apt-get install -y ../amazon-ec2-net-utils*.deb
 	complete_command
@@ -361,17 +379,34 @@ function install_cloudwatch_agent() (
 function install_golang() (
 	begin_command "installing golang"
 	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
-		-o go.tar.gz https://dl.google.com/go/go1.27.1.linux-${ARCH_ALT}.tar.gz
+		-o go.tar.gz https://dl.google.com/go/go1.27.2.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
 	tar -C /usr/local -xzf go.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"
 	complete_command
 )
 
+# go mod download with retry, 10-20s delay between attempts
+function go_mod_download() {
+	local max_attempts=3
+	local attempt
+	for attempt in $(seq 1 $max_attempts); do
+		if go mod download > /dev/null; then
+			return 0
+		fi
+		[[ $attempt -lt $max_attempts ]] || break
+		echo "go mod download failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
+		sleep $((attempt * 10))
+	done
+	echo "go mod download failed after $max_attempts attempts"
+	return 1
+}
+
 # install the knfsd-fsidd service
 function install_fsidd_service() (
 	begin_command "installing knfsd-fsidd service"
 	cd knfsd-fsidd
+	go_mod_download
 	go build -o /usr/local/sbin/knfsd-fsidd -ldflags "-X main.version=${VERSION}"
 	complete_command
 )
@@ -380,6 +415,7 @@ function install_fsidd_service() (
 function install_knfsd_agent() (
 	begin_command "installing knfsd-agent"
 	cd knfsd-agent
+	go_mod_download
 	go build -o /usr/local/bin/knfsd-agent -ldflags "-X main.version=${VERSION}"
 	cp knfsd-logrotate.conf /etc/logrotate.d/
 	cp knfsd-agent.service /etc/systemd/system/
@@ -390,6 +426,7 @@ function install_knfsd_agent() (
 function install_knfsd_metrics_agent() (
 	begin_command "installing knfsd-metrics-agent"
 	cd knfsd-metrics-agent
+	go_mod_download
 	go build -o /usr/local/bin/knfsd-metrics-agent -ldflags "-X main.version=${VERSION}"
 	mkdir -p /etc/knfsd-metrics-agent
 	cp config/*.yaml /etc/knfsd-metrics-agent/
@@ -401,6 +438,7 @@ function install_knfsd_metrics_agent() (
 function install_filter_exports() (
 	begin_command "installing filter-exports"
 	cd filter-exports
+	go_mod_download
 	go test ./...
 	go build -o /usr/local/bin/filter-exports -ldflags "-X main.version=${VERSION}"
 	complete_command
@@ -410,6 +448,7 @@ function install_filter_exports() (
 function install_netapp_exports() (
 	begin_command "installing netapp-exports"
 	cd netapp-exports
+	go_mod_download
 	go run internal/testcert/gen_certs.go > internal/testcert/testcert.go
 	go test ./...
 	go build -o /usr/local/bin/netapp-exports -ldflags "-X main.version=${VERSION}"

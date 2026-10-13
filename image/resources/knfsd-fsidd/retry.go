@@ -62,7 +62,8 @@ func withRetryDeadline(ctx context.Context, budget time.Duration, fn func() erro
 	var err error
 	for {
 		// Not interrupting an attempt once it has started, the deadline only
-		// applies to the sleep/retry loop.
+		// applies to the sleep/retry loop. Callers that must bound the
+		// attempt as well (e.g. CheckTable) pass a context with a deadline.
 		err = fn()
 		if err == nil {
 			return nil
@@ -77,7 +78,14 @@ func withRetryDeadline(ctx context.Context, budget time.Duration, fn func() erro
 			return err
 		}
 
-		log.Debug.Printf("[%d] RETRY (%s): %v", log.ID(ctx), pause, err)
+		if IsConflict(err) {
+			// Conflicts are the normal way concurrent nodes converge on an
+			// FSID allocation, so they are not worth a warning.
+			log.Debug.Printf("[%d] RETRY (%s): %v", log.ID(ctx), pause, err)
+		} else {
+			log.Warn.Printf("[%d] RETRY (%s, %s remaining): %v",
+				log.ID(ctx), pause, time.Until(deadline).Round(time.Second), err)
+		}
 
 		// Allow sleep to be interrupted by the context being cancelled to allow
 		// for graceful shutdown.
@@ -142,6 +150,11 @@ func ShouldRetry(err error) bool {
 	// Conflicts are retryable: get_or_create_fsidnum re-reads the mapping
 	// allocated by the winning process and converges.
 	if IsConflict(err) {
+		return true
+	}
+	// A boot-time DescribeTable attempt that timed out while the overall
+	// budget is still running (e.g. no route to DynamoDB) is retryable.
+	if errors.Is(err, errAttemptTimeout) {
 		return true
 	}
 	// Defer to the AWS SDK's standard retryable classification for

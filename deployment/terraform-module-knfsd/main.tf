@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -20,7 +20,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.5"
+      "knfsd-file-cache/terraform-module-knfsd/1.1.0-beta.6"
     ]
   }
 }
@@ -48,9 +48,9 @@ data "aws_vpc" "selected" {
 
 # local variables
 locals {
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "knfsd-file-cache:version" = var.VERSION
-  }
+  })
   az                   = data.aws_subnet.selected.availability_zone
   region               = regex("^([a-z]{2}(?:-[a-z]+)+-[0-9]+)", local.az)[0]
   vpc_id               = data.aws_vpc.selected.id
@@ -85,6 +85,7 @@ module "fsid_database" {
   NAME                     = local.name
   DELETION_PROTECTION      = false
   FSID_DATABASE_IAM_POLICY = var.FSID_DATABASE_IAM_POLICY
+  GLOBAL_TAGS              = var.GLOBAL_TAGS
 }
 
 # this solution collects anonymous operational metrics to help AWS improve the quality of features of the solution

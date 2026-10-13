@@ -151,8 +151,8 @@ func extractPeerIP(line string) string {
 	// Handle IPv4 and IPv6 without brackets
 	// For IPv4: 10.0.2.100:45678 -> last colon separates IP and port
 	// For IPv6: ::1:45678 -> need to find the last colon that separates port
-	if idx := strings.LastIndex(peerAddr, ":"); idx != -1 {
-		return peerAddr[:idx]
+	if host, _, found := strings.CutLast(peerAddr, ":"); found {
+		return host
 	}
 
 	return ""

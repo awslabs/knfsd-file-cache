@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -16,7 +16,7 @@ terraform {
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/modules/loadbalancer/1.1.0-beta.5"
+      "knfsd-file-cache/modules/loadbalancer/1.1.0-beta.6"
     ]
   }
 }
@@ -46,7 +46,7 @@ data "aws_route53_zone" "existing" {
 
 # local variables
 locals {
-  tags     = { "knfsd-file-cache:version" = var.VERSION }
+  tags     = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:version" = var.VERSION })
   vpc_id   = data.aws_vpc.selected.id
   dns_name = trimspace(coalesce(var.DNS_NAME, "${var.PROXY_BASENAME}.aws.internal."))
   # use the pre-existing security group when provided, otherwise the one created by this module

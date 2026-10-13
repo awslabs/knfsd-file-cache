@@ -124,14 +124,24 @@ resource "null_resource" "validations" {
     #   else
     #     skip precondition
 
+    # AUTO_REEXPORT requires an fsid service to be enabled
     precondition {
-      # AUTO_REEXPORT requires an fsid service to be enabled
       condition = (
         var.AUTO_REEXPORT
         ? contains(["local", "external"], var.FSID_MODE)
         : true
       )
       error_message = "FSID_MODE must be either \"local\" or \"external\" when AUTO_REEXPORT is enabled."
+    }
+
+    # Autoscaling scales on the KNFSD metrics, so ENABLE_METRICS is required
+    precondition {
+      condition = (
+        var.ENABLE_KNFSD_AUTOSCALING
+        ? var.ENABLE_METRICS
+        : true
+      )
+      error_message = "ENABLE_METRICS must be true when ENABLE_KNFSD_AUTOSCALING is enabled, as autoscaling uses the KNFSD metrics."
     }
 
     # If this module has created the database ensure that the user did not try
@@ -225,6 +235,13 @@ resource "null_resource" "validations" {
         : true
       )
       error_message = "When TRAFFIC_MODE = \"dns_round_robin\" and using the EXISTING_* bring-your-own variables, EXISTING_LAMBDA_ROLE_ARN must be set together with EXISTING_SECURITY_GROUP_ID/EXISTING_INSTANCE_PROFILE_NAME (or all three left empty)."
+    }
+
+    # EC2 instances allow at most 50 tags. The ASG propagates GLOBAL_TAGS and
+    # INSTANCE_TAGS to each instance, alongside "Name" and "knfsd-file-cache:*" tags.
+    precondition {
+      condition     = length(merge(var.GLOBAL_TAGS, var.INSTANCE_TAGS)) <= 40
+      error_message = "GLOBAL_TAGS and INSTANCE_TAGS combined must not exceed 40 unique tag keys (EC2 allows 50 tags per resource, 10 are reserved for \"Name\" and \"knfsd-file-cache:*\" tags)."
     }
   }
 }

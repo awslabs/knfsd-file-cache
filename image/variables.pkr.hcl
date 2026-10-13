@@ -192,3 +192,16 @@ variable "TAG_BUILD_STATUS" {
   type        = bool
   default     = false
 }
+
+variable "GLOBAL_TAGS" {
+  description = "(Optional) AWS TAGS to apply to ALL AWS resources created by the Packer build: build instance, volumes, ENIs, temporary key pair and security group, spot request, EC2 Fleet, the resulting AMI (including copies in \"DISTRIBUTION_REGIONS\"), and its snapshots. Existing hard-wired tags take precedence over duplicate keys. Default: \"{}\"."
+  type        = map(string)
+  default     = {}
+  validation {
+    condition = length(var.GLOBAL_TAGS) <= 40 && alltrue([
+      for k, v in var.GLOBAL_TAGS :
+      can(regex("^[a-zA-Z0-9+=._:@-]{1,128}$", k)) && !contains([".", "..", "_index"], k) && !can(regex("^(?i)aws:", k)) && length(v) <= 256 && !can(regex("[{][{]", "${k}${v}"))
+    ])
+    error_message = "GLOBAL_TAGS allows at most 40 tags. Keys must be 1-128 characters using only a-z, A-Z, 0-9, and + - = . _ : @ (IMDS compatible), must not start with \"aws:\", values must be 256 characters or fewer, and neither may contain \"{{\" (Packer template engine)."
+  }
+}

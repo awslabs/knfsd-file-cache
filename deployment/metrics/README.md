@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.5"
+  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.6"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -229,7 +229,7 @@ These metrics are collected every 10 minutes by default, as collecting them requ
 | --------------------------- | ----------------------------------------------------------- | ------- | ------- | ------ |
 | `knfsd/fscache/oldest_file` | Age of the oldest file in FS-Cache (NOT enabled by default) | Average | Seconds | 60s    |
 
-#### NFS Server Metrics
+#### NFSD Server Metrics
 
 | Metric Name                  | Description                                                                                         | Stat    | Unit  | Period |
 | ---------------------------- | --------------------------------------------------------------------------------------------------- | ------- | ----- | ------ |

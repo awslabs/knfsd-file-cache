@@ -19,6 +19,7 @@ These prerequisites are normally created by the main KNFSD proxy module.
 | `VPC_CIDR`                   | List of CIDR blocks to allow in security group ingress/egress rules.                                                                                      | True     | No default                           |
 | `LOADBALANCER_IP`            | The static private IPv4 address to use for the Network Load Balancer. If not specified, a random IP address will be assigned from the subnet.             | False    | `null`                               |
 | `EXISTING_SECURITY_GROUP_ID` | ID of a pre-existing security group to use for the Network Load Balancer instead of creating one. When set, the module skips creating the security group. | False    | `""`                                 |
+| `GLOBAL_TAGS`                | AWS TAGS to apply to ALL AWS resources created by this module.                                                                                            | False    | `{}`                                 |
 
 ## Outputs
 

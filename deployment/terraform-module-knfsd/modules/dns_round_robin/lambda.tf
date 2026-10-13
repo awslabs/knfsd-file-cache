@@ -162,6 +162,7 @@ resource "aws_lambda_function" "static_ip" {
       USER_AGENT     = "AWSSOLUTION/SO9129/${var.VERSION}"
       VERSION        = var.VERSION
       PROXY_BASENAME = var.PROXY_BASENAME
+      GLOBAL_TAGS    = jsonencode(var.GLOBAL_TAGS)
       SUBNET         = var.SUBNET
       R53_ZONE_ID    = local.r53_zone_id
       R53_FQDN       = local.r53_fqdn

@@ -81,12 +81,12 @@ To allow rapid onboarding of developers to the integrated development environmen
 
 ### Devcontainer: API Throttling
 
-Regardless of where you clone the [knfsd-file-cache](https://github.com/awslabs/knfsd-file-cache) repository locally on your host machine; to avoid API throttling from GitHub whenever we pull golang 3rd party packages or use Packer, enter your GitHub **classic** [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) for the following environment variables into your `/etc/environment` file in your devcontainer. Open the file (`sudo` required) and insert your [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) `ghp_*` for both variables. The [Post-Build](#post-build) `validate-setup.sh` script can be used to validate your devcontainer setup. Ensure you close/re-open VS Code or `source /etc/environment` each terminal to receive the updated environment variables. Alternatively, the devcontainer will attempt to use these ENV VARs if already present in your local OS environment.
+Regardless of where you clone the [knfsd-file-cache](https://github.com/awslabs/knfsd-file-cache) repository locally on your host machine; to avoid API throttling from GitHub whenever we pull golang 3rd party packages or use Packer, enter your GitHub **classic** or **fine-grained** [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) for the following environment variables into your `/etc/environment` file in your devcontainer. Open the file (`sudo` required) and insert your [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) `ghp_*` or `github_pat_*` for both variables. The [Post-Build](#post-build) `validate-setup.sh` script can be used to validate your devcontainer setup. Ensure you close/re-open VS Code or `source /etc/environment` each terminal to receive the updated environment variables. Alternatively, the devcontainer will attempt to use these ENV VARs if already present in your local OS environment.
 
   ```bash
   $ sudo vim /etc/environment
-  GITHUB_COM_TOKEN=<GITHUB-CLASSIC-PAT>
-  PACKER_GITHUB_API_TOKEN=<GITHUB-CLASSIC-PAT>
+  GITHUB_TOKEN=<GITHUB-PAT>
+  PACKER_GITHUB_API_TOKEN=<GITHUB-PAT>
   ```
 
 ### Devcontainer: Mounts/Volumes
@@ -138,7 +138,7 @@ The `devcontainer.json` file has a number of custom mounts configured (see break
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind",
 
     # Docker bind mount: pass user's ~/.aws creds/config through to container user's ~/.aws
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind"
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/ubuntu/.aws,type=bind",
 
     # Docker bind mount: pass user's ~/.cursor directory through to container user's ~/.cursor directory
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.cursor,target=/home/ubuntu/.cursor,type=bind"
@@ -183,16 +183,16 @@ All `✓` means success! `✗` is an error (RED) or warning (YELLOW). `-` means 
 ✓ gcc found
 ✓ git found
 ...
-✗ GITHUB_COM_TOKEN is not set
+✗ GITHUB_TOKEN is not set
 ✗ PACKER_GITHUB_API_TOKEN is not set
 ✓ HOME is set to: /home/ubuntu
 - Not running on EC2. IMDSv2 check skipped
 ```
 
-* The `go-mod-download.sh` script will hydrate the Docker `knfsd-dev-go-pkg-cache` volume (`$ go env GOMODCACHE`) with all required `golang` packages for all the go projects. Ideally, you should execute this script whilst connected to a fast internet link. Ensure your devcontainer has the `GITHUB_COM_TOKEN` environment variable configured.
+* The `go-mod-download.sh` script will hydrate the Docker `knfsd-dev-go-pkg-cache` volume (`$ go env GOMODCACHE`) with all required `golang` packages for all the go projects. Ideally, you should execute this script whilst connected to a fast internet link. Ensure your devcontainer has the `GITHUB_TOKEN` environment variable configured.
 
 ```bash
-env | grep GITHUB_COM_TOKEN
+env | grep GITHUB_TOKEN
 cd /knfsd-file-cache/.devcontainer/dev
 ./go-mod-download.sh # execution time: ~15 minutes
 ```

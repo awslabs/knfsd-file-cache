@@ -147,24 +147,24 @@ This method provides basic information on the KNFSD proxy node. It is useful for
 ```json
 {
   "name": "knfsd-a1b2c3d4",
-  "instanceID": "i-09e5a3c0d764b4389",
+  "instanceId": "i-09e5a3c0d764b4389",
   "hostname": "ip-172-31-74-7.eu-west-2.compute.internal",
   "interfaceConfig": {
-    "ipAddress": "172.31.74.7",
+    "ipAddress": "172.31.42.7",
     "macAddress": "06:56:3e:19:87:68",
-    "privateIPs": "172.31.74.7,172.31.64.10,172.31.75.6",
-    "vpcID": "vpc-fad86193",
-    "subnetID": "subnet-06102abf7dff10ed2",
-    "securityGroups": "default,ssh",
-    "securityGroupIDs": "sg-1e680277,sg-04fabc4c405b76359"
+    "privateIps": "172.31.42.7",
+    "vpcId": "vpc-fad86192",
+    "subnetId": "subnet-06102abf7dff10ed2",
+    "securityGroups": "ssh,knfsd-a1b2c3d4-asg-sg",
+    "securityGroupIds": "sg-1e680277,sg-04fabc4c405b76359"
   },
   "domain": "amazonaws.com",
   "partition": "aws",
   "region": "eu-west-2",
   "availabilityZone": "eu-west-2a",
-  "availabilityZoneID": "euw2-az2",
+  "availabilityZoneId": "euw2-az2",
   "instanceType": "i3en.6xlarge",
-  "imageID": "ami-07c1b39b7b3d2525d"
+  "amiId": "ami-07c1b39b7b3d2525d"
 }
 ```
 
@@ -587,7 +587,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "7.2.7-knfsd",
+  "kernel": "7.2.10-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",
@@ -650,7 +650,7 @@ The endpoint will always return `200 Ok` with a response, even if one or more se
           "error": ""
         }
       ],
-      "log": "Apr 15 09:43:14 ip-172-31-45-135 systemd[1]: Starting cachefilesd.service - LSB: CacheFiles daemon...\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8561]:  * Starting FilesCache daemon  cachefilesd\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8569]: About to bind cache\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8569]: Bound cache\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8571]: Daemon Started\nApr 15 09:43:14 ip-172-31-45-135 cachefilesd[8561]:    ...done.\nApr 15 09:43:14 ip-172-31-45-135 systemd[1]: Started cachefilesd.service - LSB: CacheFiles daemon.\n"
+      "log": "Oct 10 10:56:08 ip-172-31-42-72 systemd[1]: Starting cachefilesd.service - CacheFiles daemon...\nOct 10 10:56:08 ip-172-31-42-72 cachefilesd[19280]: About to bind cache\nOct 10 10:56:08 ip-172-31-42-72 cachefilesd[19280]: Bound cache\nOct 10 10:56:08 ip-172-31-42-72 cachefilesd[19281]: Daemon Started\nOct 10 10:56:08 ip-172-31-42-72 systemd[1]: Started cachefilesd.service - CacheFiles daemon.\n"
     }
   ]
 }

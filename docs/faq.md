@@ -16,9 +16,21 @@ The AMI must be in the same AWS Region as the KNFSD proxy instances.
 
 ## The knfsd-fsidd service cannot reach DynamoDB
 
-When using the default `FSID_MODE="external"`, the `knfsd-fsidd` service on each proxy instance connects to the Amazon DynamoDB regional API endpoint over HTTPS. If the proxy is deployed in a private subnet without internet connectivity, the service will fail to verify the FSID table on start-up (look for `DescribeTable` timeouts in the `knfsd-fsidd` journal).
+When using the default `FSID_MODE="external"`, the `knfsd-fsidd` service on each proxy instance connects to the Amazon DynamoDB regional API endpoint over HTTPS. If the proxy is deployed in a private subnet without internet connectivity, the service will fail to verify the FSID table on start-up, and the proxy instance never becomes ready. The `knfsd-fsidd` journal (`journalctl -u knfsd-fsidd`) shows:
 
-Add an Amazon DynamoDB Gateway VPC endpoint to the subnet's route table; see [VPC Endpoints](../deployment/docs/vpc-endpoints.md).
+```text
+ERROR: FSID table "<table>" check failed after 1m0s: cannot reach the DynamoDB endpoint in region "<region>", check the subnet route table has a DynamoDB gateway VPC endpoint or a NAT gateway route, and that security group and network ACL egress allow TCP 443 (see FAQ: "The knfsd-fsidd service cannot reach DynamoDB")
+```
+
+Older AMIs instead report `DescribeTable, https response error StatusCode: 0, RequestID: , canceled, context canceled` followed by `Failed with result 'timeout'`, because systemd stopped the service before the real error was logged.
+
+Add an Amazon DynamoDB Gateway VPC endpoint to the subnet's route table; see [VPC Endpoints](../deployment/docs/vpc-endpoints.md). After a `terraform destroy` and `terraform apply`, also confirm the gateway endpoint is still associated with the route table the proxy subnet actually uses. To confirm connectivity from the proxy instance, the following command must print an HTTP status code rather than timeout:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 10 "https://dynamodb.<region>.amazonaws.com"
+```
+
+The same start-up check reports other causes with their own hint, such as `the instance role is not authorised to call dynamodb:DescribeTable` (FSID database IAM policy not attached to the instance role), or `table "<table>" not found in region "<region>"` (`FSID_DATABASE_CONFIG` does not match the deployed table).
 
 ## Error creating resource: already exists
 

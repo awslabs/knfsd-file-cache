@@ -53,6 +53,7 @@ See [Security Groups](../../deployment/docs/security-groups.md).
 | `PROXY_AMI`      | The AMI ID to use for the KNFSD caching proxy. This should be built using the Packer [image build](../../image/README.md) script.   | True     | No default |
 | `EXPORT_MAP`     | A list of NFS exports to mount from the source and re-export in the format `<SOURCE_IP>;<SOURCE_EXPORT>;<TARGET_EXPORT>`. *         | True     | No default |
 | `PROXY_BASENAME` | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a globally, unique basename to avoid conflicts. | False    | `knfsd`    |
+| `GLOBAL_TAGS`    | AWS TAGS to apply to ALL AWS resources created by this example, including the KNFSD File Cache.                                     | False    | `{}`       |
 
 \* See [KNFSD Deployment](../../deployment/README.md) for more details.
 

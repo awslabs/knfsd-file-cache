@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.5"
+  default     = "1.1.0-beta.6"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.5\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.6\"."
   }
 }
 
@@ -52,5 +52,19 @@ variable "EXISTING_LAMBDA_ROLE_ARN" {
   validation {
     condition     = var.EXISTING_LAMBDA_ROLE_ARN == "" || can(regex("^arn:aws[a-z-]*:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_/-]+$", var.EXISTING_LAMBDA_ROLE_ARN))
     error_message = "When provided, EXISTING_LAMBDA_ROLE_ARN must be a valid IAM role ARN format. Example: \"arn:*:iam::123456789012:role/StaticIpLambdaRole\"."
+  }
+}
+
+variable "GLOBAL_TAGS" {
+  description = "(Optional) AWS TAGS to apply to ALL AWS resources created by this module. Default: {}."
+  type        = map(string)
+  nullable    = false
+  default     = {}
+  validation {
+    condition = length(var.GLOBAL_TAGS) <= 40 && alltrue([
+      for k, v in var.GLOBAL_TAGS :
+      can(regex("^[a-zA-Z0-9+=._:@-]{1,128}$", k)) && !contains([".", "..", "_index"], k) && !can(regex("^(?i)aws:", k)) && length(v) <= 256
+    ])
+    error_message = "GLOBAL_TAGS allows at most 40 tags. Keys must be 1-128 characters using only a-z, A-Z, 0-9, and + - = . _ : @ (IMDS compatible), must not start with \"aws:\", and values must be 256 characters or fewer."
   }
 }

@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.66.0"
+      version = "~> 6.68.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-beta.5"
+      "knfsd-file-cache/examples/fsx-zfs-fanout-dns-rr/1.1.0-beta.6"
     ]
   }
 }
@@ -49,7 +49,7 @@ resource "aws_fsx_openzfs_file_system" "zfs" {
     data_compression_type  = "NONE"
   }
 
-  tags = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
+  tags = merge(var.GLOBAL_TAGS, { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" })
 }
 
 # create a dedicated SG for FSx for OpenZFS
@@ -111,10 +111,10 @@ resource "aws_security_group" "fsx_sg" {
     description     = "Allow ZFS management UDP from proxy ASG"
   }
 
-  tags = {
+  tags = merge(var.GLOBAL_TAGS, {
     "Name"                      = "fsx-zfs-sg",
     "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr"
-  }
+  })
 }
 
 # Validate that the proxy AMI exists and is accessible.
@@ -173,6 +173,7 @@ module "knfsd_fanout" {
   KEY_NAME              = var.KEY_NAME
   PROXY_AMI             = var.PROXY_AMI
   INSTANCE_TAGS         = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
+  GLOBAL_TAGS           = var.GLOBAL_TAGS
   INSTANCE_TYPE         = var.INSTANCE_TYPE                                       # Use a higher CPU and Memory machine type to increase fanout performance
   KNFSD_NODES           = 1                                                       # Only deploy 1 node in the cluster because we want a single fanout node
   EXPORT_MAP            = "${aws_fsx_openzfs_file_system.zfs.dns_name};/fsx;/fsx" # FSx ZFS mount target
@@ -193,6 +194,7 @@ module "knfsd_cluster" {
   KEY_NAME                 = var.KEY_NAME
   PROXY_AMI                = var.PROXY_AMI
   INSTANCE_TAGS            = { "knfsd-file-cache:examples" = "fsx-zfs-fanout-dns-rr" }
+  GLOBAL_TAGS              = var.GLOBAL_TAGS
   FSID_DATABASE_DEPLOY     = false                                   # Reuse the FSID table from the fanout module
   FSID_DATABASE_CONFIG     = module.knfsd_fanout.database_config     # Database configuration from the fanout module
   FSID_DATABASE_IAM_POLICY = module.knfsd_fanout.database_iam_policy # ARN of the IAM policy for DynamoDB table access from the fanout module

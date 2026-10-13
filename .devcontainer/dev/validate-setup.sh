@@ -11,7 +11,7 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_BLUE='\033[0;34m'
 SHELL_DEFAULT='\033[0m'
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.5"
+VERSION="1.1.0-beta.6"
 
 # List of binaries to check
 binaries=(
@@ -83,7 +83,7 @@ done
 env_vars=(
 	"CI"
 	"LANG"
-	"GITHUB_COM_TOKEN"
+	"GITHUB_TOKEN"
 	"PACKER_GITHUB_API_TOKEN"
 	"SHELL"
 	"GOLANGCI_LINT_CACHE"
@@ -97,8 +97,8 @@ env_vars=(
 expected_values=(
 	"devcontainer"
 	"en_US.UTF-8"
-	"^ghp_[a-zA-Z0-9]{36}$"
-	"^ghp_[a-zA-Z0-9]{36}$"
+	"^(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59})$"
+	"^(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59})$"
 	"/bin/bash"
 	"/home/${USERNAME}/.cache/golangci-lint"
 	"/home/${USERNAME}/.cache/mypy"
@@ -107,18 +107,34 @@ expected_values=(
 	"AWSSOLUTION/SO9129/${VERSION}"
 )
 
+# Function to mask a secret, keeping only the known token prefix and the length
+function mask_secret() {
+	local value=$1
+	local prefix=""
+	if [[ $value =~ ^(github_pat_|ghp_) ]]; then
+		prefix="${BASH_REMATCH[1]}"
+	fi
+	echo "${prefix}**** (${#value} chars)"
+}
+
 # Function to check an environment variable
 function check_env_var() {
 	local var_name=$1
 	local expected_value=$2
 	local actual_value="${!var_name}"
+	local display_value="${actual_value}"
+
+	# never print secrets in full
+	if [[ $var_name == *TOKEN* ]]; then
+		display_value=$(mask_secret "${actual_value}")
+	fi
 
 	if [ -z "$actual_value" ]; then
 		echo -e "${SHELL_RED}✗ $var_name is not set${SHELL_DEFAULT}"
 	elif [[ $actual_value =~ $expected_value ]]; then
-		echo -e "✓ $var_name is set to: ${SHELL_GREEN}$actual_value${SHELL_DEFAULT}"
+		echo -e "✓ $var_name is set to: ${SHELL_GREEN}$display_value${SHELL_DEFAULT}"
 	else
-		echo -e "${SHELL_YELLOW}✗ $var_name is set to: $actual_value (expected format: $expected_value)${SHELL_DEFAULT}"
+		echo -e "${SHELL_YELLOW}✗ $var_name is set to: $display_value (expected format: $expected_value)${SHELL_DEFAULT}"
 	fi
 }
 

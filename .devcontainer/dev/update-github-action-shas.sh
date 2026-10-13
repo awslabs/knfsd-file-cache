@@ -13,7 +13,7 @@
 ## dropped too, as such a tag is not a release to pin to.
 ## Local ("./.github/actions/...") and Docker ("docker://...") references are
 ## skipped as they have no upstream commit SHA to resolve.
-## Set GITHUB_COM_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
+## Set GITHUB_TOKEN to raise the GitHub API rate limit (60 to 5000 req/hour).
 
 ## USAGE:
 ## ./update-github-action-shas.sh            report outdated actions only, exit 1 if any
@@ -77,8 +77,8 @@ fi
 
 # authenticate when a token is available to avoid the low anonymous rate limit
 CURL_ARGS=(--silent --show-error --fail --max-time 30 --header "Accept: application/vnd.github+json")
-if [[ -n ${GITHUB_COM_TOKEN} ]]; then
-	CURL_ARGS+=(--header "Authorization: Bearer ${GITHUB_COM_TOKEN}")
+if [[ -n ${GITHUB_TOKEN} ]]; then
+	CURL_ARGS+=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
 
 # cache of "owner/repo" to "tag sha" to avoid repeat API calls for shared actions
