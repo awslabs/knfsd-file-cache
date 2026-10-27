@@ -84,78 +84,117 @@ func TestMetricsBuilder(t *testing.T) {
 			mb.RecordNfsMountOperationErrorsDataPoint(ts, 1, "server-val", "instance-val", "operation-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOperationErrorsDataPoint(ts, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOperationErrorsDataPoint(ts+1, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOperationErrors.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountOperationMajorTimeoutsDataPoint(ts, 1, "server-val", "instance-val", "operation-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOperationMajorTimeoutsDataPoint(ts, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOperationMajorTimeoutsDataPoint(ts+1, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOperationMajorTimeouts.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountOperationReceivedBytesDataPoint(ts, 1, "server-val", "instance-val", "operation-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOperationReceivedBytesDataPoint(ts, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOperationReceivedBytesDataPoint(ts+1, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOperationReceivedBytes.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountOperationRequestsDataPoint(ts, 1, "server-val", "instance-val", "operation-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOperationRequestsDataPoint(ts, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOperationRequestsDataPoint(ts+1, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOperationRequests.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountOperationSentBytesDataPoint(ts, 1, "server-val", "instance-val", "operation-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOperationSentBytesDataPoint(ts, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOperationSentBytesDataPoint(ts+1, 3, "server-val-2", "instance-val-2", "operation-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOperationSentBytes.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountOpsPerSecondDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountOpsPerSecondDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountOpsPerSecondDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountOpsPerSecond.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountReadBytesDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountReadBytesDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountReadBytesDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountReadBytes.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountReadExeDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountReadExeDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountReadExeDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountReadExe.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountReadRttDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountReadRttDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountReadRttDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountReadRtt.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountRPCBacklogDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountRPCBacklogDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountRPCBacklogDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountRPCBacklog.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountWriteBytesDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountWriteBytesDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountWriteBytesDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountWriteBytes.data.Sum().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountWriteExeDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountWriteExeDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountWriteExeDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountWriteExe.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordNfsMountWriteRttDataPoint(ts, 1, "server-val", "instance-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordNfsMountWriteRttDataPoint(ts, 3, "server-val-2", "instance-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordNfsMountWriteRttDataPoint(ts+1, 3, "server-val-2", "instance-val-2")
+				assert.Equal(t, 2, mb.metricNfsMountWriteRtt.data.Gauge().DataPoints().Len())
 			}
 
 			res := pcommon.NewResource()
@@ -229,7 +268,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.operation.errors"], "Found a duplicate in the metrics slice: nfs.mount.operation.errors")
 						validatedMetrics["nfs.mount.operation.errors"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Number of requests that complete with tk_status < 0", mi.Description())
 						assert.Equal(t, "{errors}", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -283,7 +324,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.operation.major_timeouts"], "Found a duplicate in the metrics slice: nfs.mount.operation.major_timeouts")
 						validatedMetrics["nfs.mount.operation.major_timeouts"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Number of times a request has had a major timeout", mi.Description())
 						assert.Equal(t, "{timeouts}", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -337,7 +380,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.operation.received_bytes"], "Found a duplicate in the metrics slice: nfs.mount.operation.received_bytes")
 						validatedMetrics["nfs.mount.operation.received_bytes"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Total bytes received for these operations, including RPC headers and payload", mi.Description())
 						assert.Equal(t, "By", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -391,7 +436,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.operation.requests"], "Found a duplicate in the metrics slice: nfs.mount.operation.requests")
 						validatedMetrics["nfs.mount.operation.requests"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Number of requests", mi.Description())
 						assert.Equal(t, "{requests}", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -445,7 +492,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.operation.sent_bytes"], "Found a duplicate in the metrics slice: nfs.mount.operation.sent_bytes")
 						validatedMetrics["nfs.mount.operation.sent_bytes"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Total bytes sent for these operations, including RPC headers and payload", mi.Description())
 						assert.Equal(t, "By", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -494,7 +543,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.ops_per_second"], "Found a duplicate in the metrics slice: nfs.mount.ops_per_second")
 						validatedMetrics["nfs.mount.ops_per_second"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount Operations Per Second", mi.Description())
 						assert.Equal(t, "{count}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -541,7 +592,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.read_bytes"], "Found a duplicate in the metrics slice: nfs.mount.read_bytes")
 						validatedMetrics["nfs.mount.read_bytes"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Bytes read from remote NFS server", mi.Description())
 						assert.Equal(t, "By", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -588,7 +641,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.read_exe"], "Found a duplicate in the metrics slice: nfs.mount.read_exe")
 						validatedMetrics["nfs.mount.read_exe"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount Read EXE", mi.Description())
 						assert.Equal(t, "ms", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -633,7 +688,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.read_rtt"], "Found a duplicate in the metrics slice: nfs.mount.read_rtt")
 						validatedMetrics["nfs.mount.read_rtt"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount Read RTT", mi.Description())
 						assert.Equal(t, "ms", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -678,7 +735,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.rpc_backlog"], "Found a duplicate in the metrics slice: nfs.mount.rpc_backlog")
 						validatedMetrics["nfs.mount.rpc_backlog"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount RPC Backlog", mi.Description())
 						assert.Equal(t, "{count}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -725,7 +784,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.write_bytes"], "Found a duplicate in the metrics slice: nfs.mount.write_bytes")
 						validatedMetrics["nfs.mount.write_bytes"] = true
 						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
-						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Sum().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Sum().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Bytes wrote to remote NFS server", mi.Description())
 						assert.Equal(t, "By", mi.Unit())
 						assert.True(t, mi.Sum().IsMonotonic())
@@ -772,7 +833,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.write_exe"], "Found a duplicate in the metrics slice: nfs.mount.write_exe")
 						validatedMetrics["nfs.mount.write_exe"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount Write EXE", mi.Description())
 						assert.Equal(t, "ms", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -817,7 +880,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["nfs.mount.write_rtt"], "Found a duplicate in the metrics slice: nfs.mount.write_rtt")
 						validatedMetrics["nfs.mount.write_rtt"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "nfsiostat Mount Write RTT", mi.Description())
 						assert.Equal(t, "ms", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)

@@ -36,13 +36,13 @@ func (config *TLSConfig) transport() (http.RoundTripper, error) {
 	}
 
 	if config.insecure {
-		tls.InsecureSkipVerify = true
+		tls.InsecureSkipVerify = true // #nosec G402 -- explicit opt-in via the -insecure command line flag
 	} else {
 		transport.RegisterProtocol("http", denyHTTPTransport{})
 
 		if config.AllowCommonName {
 			// Replace the standard validation with our custom validation
-			tls.InsecureSkipVerify = true
+			tls.InsecureSkipVerify = true // #nosec G402 -- chain and hostname are verified by VerifyConnection below
 			tls.VerifyConnection = verifyWithCommonName(tls)
 		}
 	}

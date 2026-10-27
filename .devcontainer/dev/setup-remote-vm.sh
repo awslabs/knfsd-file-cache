@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.6"
+VERSION="1.1.0-beta.7"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -149,29 +149,31 @@ KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.10.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.112
+KNFSD_BOTO3_VERSION=1.43.119
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.28
+KNFSD_CHECKOV_VERSION=3.3.30
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=4.0.2
+# https://github.com/cli/cli/releases
+KNFSD_GH_VERSION=2.103.3
 # https://github.com/golangci/golangci-lint/releases
-KNFSD_GOLANGCI_LINT_VERSION=2.14.0
+KNFSD_GOLANGCI_LINT_VERSION=2.15.0
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.27.2
+KNFSD_GOLANG_VERSION=1.27.3
 # https://github.com/securego/gosec/releases
-KNFSD_GOSEC_VERSION=2.29.0
+KNFSD_GOSEC_VERSION=2.30.0
 # https://github.com/python/mypy/tags
 KNFSD_MYPY_VERSION=2.4.0
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.16.1
+KNFSD_PACKER_VERSION=1.16.2
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.7.0
 # https://github.com/pylint-dev/pylint/tags
 KNFSD_PYLINT_VERSION=4.1.3
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.180.0
+KNFSD_SEMGREP_VERSION=1.182.1
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.896.0
 # https://pypi.org/project/shellcheck-py/
@@ -181,13 +183,13 @@ KNFSD_SHFMT_VERSION=3.14.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
-KNFSD_TFLINT_VERSION=0.64.0
+KNFSD_TFLINT_VERSION=0.65.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.75.0
+KNFSD_TRIVY_VERSION=0.76.1
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.13.0
+KNFSD_UV_VERSION=0.13.6
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -223,6 +225,10 @@ curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/v${KNF
 ARCH=$([ "${BUILDARCH}" = "arm64" ] && echo "ARM64" || echo "64bit")
 curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${KNFSD_TRIVY_VERSION}/trivy_${KNFSD_TRIVY_VERSION}_Linux-${ARCH}.deb" \
 	-o trivy.deb && sudo dpkg -i trivy.deb && rm trivy.deb
+
+## install github cli
+curl -fsSL "https://github.com/cli/cli/releases/download/v${KNFSD_GH_VERSION}/gh_${KNFSD_GH_VERSION}_linux_${BUILDARCH}.deb" \
+	-o gh.deb && sudo dpkg -i gh.deb && rm gh.deb
 
 ## install bats-core
 curl -fsSL "https://github.com/bats-core/bats-core/archive/refs/tags/v${KNFSD_BATS_CORE_VERSION}.zip" \

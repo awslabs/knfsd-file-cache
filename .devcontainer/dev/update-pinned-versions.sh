@@ -75,6 +75,7 @@ VERSION_SOURCES=(
 	"KNFSD_DLV_VERSION|github|go-delve/delve"
 	"KNFSD_DYNAMODB_VERSION|ecr-public|aws-dynamodb-local/aws-dynamodb-local"
 	"KNFSD_EDITORCONFIG_VERSION|github|editorconfig-checker/editorconfig-checker"
+	"KNFSD_GH_VERSION|github|cli/cli"
 	"KNFSD_GOLANGCI_LINT_VERSION|github|golangci/golangci-lint"
 	"KNFSD_GOLANG_VERSION|godev|go"
 	"KNFSD_GOPLS_VERSION|github|golang/tools|gopls/v"
@@ -128,6 +129,7 @@ NOTIFY_ONLY=(
 ## "1.N.P" release is a bug fix and security roll up that is always wanted
 PATCH_ONLY=(
 	"KNFSD_GOLANG_VERSION"
+	"KNFSD_PYTHON_VERSION"
 )
 
 ## pins whose version has to be published by a second source before it can be

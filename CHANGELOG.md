@@ -1,5 +1,22 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.7 (October 27, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+* Packer: Updated to Linux kernel v7.2.13-knfsd.
+* Silenced `gosec` G402 findings in `netapp-exports` by annotating the intentional `InsecureSkipVerify` assignments with justified `#nosec` comments: one is the explicit `-insecure` opt-in, the other is replaced by the custom `VerifyConnection` chain and common name validation.
+* Silenced `gosec` G125 findings in the `knfsd-agent` client by annotating the `url.JoinPath` calls with justified `#nosec` comments, as every path is a fixed API route literal.
+* Fixed `gosec` G115 (`uint64` to `int64`) findings in the `knfsd-metrics-agent` generated `dataPointKey()` code by updating to OpenTelemetry Collector `mdatagen` v0.164.0, which uses the new `xhash.WithUint64` contributed upstream ([issue #16176](https://github.com/open-telemetry/opentelemetry-collector/issues/16176), [PR #16198](https://github.com/open-telemetry/opentelemetry-collector/pull/16198)).
+* Added the GitHub CLI (`gh`) to the `dev` devcontainer and the `remote.sh` EC2 VM (`setup-remote-vm.sh`), pinned with `KNFSD_GH_VERSION` and tracked by `update-pinned-versions.sh`. It authenticates with the `GITHUB_TOKEN` environment variable, passed in from the host by the devcontainer, or set in `/etc/environment` on the VM.
+* Updated to Packer v1.16.2.
+* Updated to Terraform `aws` provider v6.70.0.
+* Updated to Golang v1.27.3.
+* Updated to Python v3.14.10.
+* Updated GitHub CodeQL actions.
+* Minor Golang package updates.
+* Minor software version updates.
+
 ## v1.1.0-beta.6 (October 13, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.

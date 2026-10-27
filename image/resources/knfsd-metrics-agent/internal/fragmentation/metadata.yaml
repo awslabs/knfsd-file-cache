@@ -11,7 +11,7 @@ status:
     alpha: [metrics]
   codeowners:
     active: [AWS]
-  unsupported_platforms: [windows]
+  supported_platforms: [linux]
 
 metrics:
   fscache.extents.max:

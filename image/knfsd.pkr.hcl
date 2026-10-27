@@ -4,7 +4,7 @@
 
 packer {
   # https://github.com/hashicorp/packer/releases
-  required_version = ">= 1.16.1"
+  required_version = ">= 1.16.2"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
@@ -15,7 +15,7 @@ packer {
 }
 
 locals {
-  version       = "1.1.0-beta.6"
+  version       = "1.1.0-beta.7"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8

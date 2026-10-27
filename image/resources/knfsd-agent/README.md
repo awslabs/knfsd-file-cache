@@ -587,7 +587,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "7.2.10-knfsd",
+  "kernel": "7.2.13-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",

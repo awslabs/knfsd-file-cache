@@ -491,7 +491,7 @@ Gotchas:
 * `image/smoke-tests` dependencies never reach the AMI; the other five modules'
   binaries are installed into it by `10_build.sh`.
 * The Go toolchain itself is pinned separately. `10_build.sh` downloads a fixed
-  release, `go1.27.2` at the time of writing, and `KNFSD_GOLANG_VERSION` in
+  release, `go1.27.3` at the time of writing, and `KNFSD_GOLANG_VERSION` in
   `.gitlab-ci-aws.yml` must match. `goget` changes neither.
 * There is no Go workspace file, so `go get` and `go mod tidy` must run per module.
   The root aggregate targets already handle the loop.

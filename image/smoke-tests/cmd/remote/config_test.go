@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	KERNEL_VERSION = "7.2.10-knfsd"
+	KERNEL_VERSION = "7.2.13-knfsd"
 )
 
 func TestKernelVersion(t *testing.T) {

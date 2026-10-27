@@ -6,7 +6,7 @@
 # Usage: ./run-kics.sh <path>[optional]
 
 # https://hub.docker.com/r/checkmarx/kics/tags
-KNFSD_KICS_VERSION=2.1.20
+KNFSD_KICS_VERSION=2.2.0
 
 KICS_IMAGE=checkmarx/kics:v${KNFSD_KICS_VERSION}
 

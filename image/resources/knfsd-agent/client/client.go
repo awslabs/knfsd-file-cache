@@ -24,7 +24,7 @@ func NewKnfsdAgentClient(c *http.Client, baseURL string) *KnfsdAgentClient {
 }
 
 func (c *KnfsdAgentClient) get(path string, v any) error {
-	url, err := url.JoinPath(c.baseURL, path)
+	url, err := url.JoinPath(c.baseURL, path) // #nosec G125 -- path is a fixed API route literal from this package, not user input
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ type ErrorResponse struct {
 func (c *KnfsdAgentClient) post(path string, v any) error {
 	// url.JoinPath escapes the query string, so split it off and reattach.
 	base, query, hasQuery := strings.Cut(path, "?")
-	u, err := url.JoinPath(c.baseURL, base)
+	u, err := url.JoinPath(c.baseURL, base) // #nosec G125 -- base is a fixed API route literal from this package, not user input
 	if err != nil {
 		return err
 	}

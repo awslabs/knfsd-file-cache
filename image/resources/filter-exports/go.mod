@@ -3,7 +3,7 @@ module github.com/awslabs/knfsd-file-cache/image/resources/filter-exports
 go 1.27.0
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.10.3
+	github.com/bmatcuk/doublestar/v4 v4.10.4
 	github.com/stretchr/testify v1.12.1
 )
 
