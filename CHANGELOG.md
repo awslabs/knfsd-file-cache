@@ -1,5 +1,45 @@
 # KNFSD-File-Cache
 
+## v1.1.0-beta.8 (November 27, 2026)
+
+> BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
+
+> BREAKING CHANGES: The default `INSTANCE_TYPE` is now Graviton `arm64` based (`im4gn.8xlarge`).
+
+> BREAKING CHANGES: Build scripts were renamed to `10-build.sh`, `20-post-build.sh`, and `30-finalize.sh` (underscores now hyphens).
+
+* Packer: Updated to Linux kernel v7.3.6-knfsd.
+* Updated KNFSD Monitoring Dashboard to `v18`.
+* Improved the CloudWatch Dashboard `FSID DynamoDB Performance` widgets: consolidated widgets, graph only the DynamoDB operations used by `knfsd-fsidd`, and error, throttle, and contention widgets now show a zero line instead of "No data available".
+* Added a `kernel-cve` GitLab CI job (and a `make kernel-cve` target) that checks the pinned `KERNEL` version against the [Linux kernel CNA](https://git.kernel.org/pub/scm/linux/security/vulns.git) CVE records for `fs/nfsd`, `fs/nfs`, `net/sunrpc`, `fs/cachefiles`, and `fs/netfs`. It runs on every push and daily schedule, and flags affected CVEs with a CVSS score at or above `KNFSD_KERNEL_CVE_MIN_CVSS` (default `9.0`).
+* Updated default `INSTANCE_TYPE` to `im4gn.8xlarge` (Graviton/ARM) in `terraform-module-knfsd` module and all examples.
+* Updated default `INSTANCE_TYPE` to `im4gn.16xlarge` (Graviton/ARM) in `fanout` examples only.
+* Increased the maximum socket buffer sizes (`net.core.rmem_max`, `net.core.wmem_max`) and the TCP auto-tuning maximums (`net.ipv4.tcp_rmem`, `net.ipv4.tcp_wmem`) from 16MB to 32MB in `proxy-startup.sh`.
+* Fixed the `ENABLE_KNFSD_AUTOSCALING` scale-up alarm never receiving data, as the `knfsd-metrics-agent` only published `knfsd/nfs_connections` with the `[AutoScalingGroupName, InstanceId]` dimensions. The metric is now also published with an additional `[AutoScalingGroupName]` dimension, matching the CloudWatch alarm.
+* Increased the `cooldown` period for the `ENABLE_KNFSD_AUTOSCALING` scale-up alarm from 180 seconds to 300 seconds to allow for slow KNFSD instance startup times.
+* Clarified the Terraform `EXPORT_OPTIONS` description: custom options are appended after the defaults, so a conflicting option (for example `async` or `insecure`) overrides the default (`sync` or `secure`).
+* Packer: Removed the Snap Store as a build dependency, so a Snap Store outage no longer fails the AMI build. AWS CLI v2 is now installed with the official AWS installer (`awscli.amazonaws.com`), and the preinstalled snap `amazon-ssm-agent` is replaced with the official `.deb` package from the regional S3 bucket (`latest`, matching the snap `candidate` channel version). `snapd` itself remains installed.
+* Applied the same AWS CLI and `amazon-ssm-agent` install method to the smoke-test `source-nfs` and `nfs-client` startup scripts, and to the `setup-remote-vm.sh`, `setup-remote-docker.sh`, and `run-fio-nfs.sh` devcontainer scripts.
+* Log the `boto3` and `botocore` versions bundled in the AWS Lambda Python runtime in the `static_ip` Lambda function.
+* Smoke-tests: Updated `LATENCY_MS` default to 20ms in the `source-nfs` module to simulate WAN network latency.
+* Smoke-tests: Raised the `tc netem` queue `limit` from the default of 1000 packets to 100000 in the `source-nfs` module, so delayed packets are not tail-dropped at high throughput.
+* Added a `make upgrade` target that runs `update-pinned-versions.sh --write` and then `update-github-action-shas.sh --write`.
+* Fixed `update-github-action-shas.sh` failing to resolve a renamed or transferred action repo, by following GitHub API redirects, and no longer reporting every action as pinned when one could not be resolved.
+* The `dev` devcontainer and the `remote.sh` EC2 VM (`setup-remote-vm.sh`) now create the Python venv and install `black` on a uv-managed Python pinned by `KNFSD_PYTHON_VERSION`, rather than the older Ubuntu system Python, so `black`, `mypy`, and `pylint` run on the same Python version as CI.
+* Packer: Renamed the build scripts to `10-build.sh`, `20-post-build.sh`, and `30-finalize.sh`, and the `make clean` helper to `.devcontainer/dev/find-temp-files.sh`, for consistent hyphenated shell filenames. Historical entries in this `CHANGELOG.md` file now use the new names.
+* Packer: Fixed `knfsd-metrics-agent` crash-looping on start with `resource_to_telemetry_conversion is disabled by the exporter.prometheus.DisableResourceToTelemetryConversion feature gate`, which stopped all `/knfsd/metrics` CloudWatch metrics. The OpenTelemetry Collector Contrib `v0.166.0` `prometheus` exporter promoted this feature gate to beta ([#48861](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/48861)). The `prometheus` exporter now uses `resource_constant_labels` with `included: ["*"]`, and the `awsemf` exporter `resource_to_telemetry_conversion` now uses `included: ["*"]` instead of the deprecated `enabled: true`, ahead of the matching `exporter.awsemf.DisableLegacyResourceToTelemetryConversion` feature gate. Exported metrics and dimensions are unchanged.
+* Added a `knfsd-metrics-agent` unit test that validates the shipped proxy and client configurations with the collector's own config validation, so an upstream configuration breaking change fails `make gotest` instead of the agent on boot.
+* Updated the GitHub CodeQL workflow `free-disk-space` action to its new `lumbroso-commons/free-disk-space` location.
+* GitLab CI: Set `PIP_ROOT_USER_ACTION=ignore` and `PIP_DISABLE_PIP_VERSION_CHECK=1` globally, so the `spell-check`, `py-black`, `py-mypy`, `py-pylint`, and `pages` jobs no longer print the pip "running as root" warning or the pip upgrade notice.
+* Updated to Packer v1.16.3.
+* Updated to Terraform `aws` provider v6.74.0.
+* Updated to Golang v1.27.4.
+* Updated to Python v3.15.2.
+* Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.4.
+* Updated GitHub CodeQL actions.
+* Minor Golang package updates.
+* Minor software version updates.
+
 ## v1.1.0-beta.7 (October 27, 2026)
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
@@ -23,7 +63,7 @@
 
 * Packer: Updated to Linux kernel v7.2.10-knfsd.
 * Added `GLOBAL_TAGS` variable to apply (up to 40) custom AWS tags to all resources that support tagging, across the Packer AMI build process and Terraform deployment, including `./examples/*`. The [docs/iam/tf-required.json](docs/iam/tf-required.json) policy gains the matching tag and untag permissions. Exception: CloudWatch "log" groups created automatically by the CWAgent or OTEL Metrics Agent do not have the `GLOBAL_TAGS` applied to them.
-* Packer: Migrated the `amazon-ec2-net-utils` refresh timer override from an in-place rewrite of the packaged unit in `10_build.sh` to a `refresh-policy-routes@.timer.d/10-interval.conf` systemd drop-in, so upstream timer changes are preserved, and removed the 5s `RandomizedDelaySec` jitter.
+* Packer: Migrated the `amazon-ec2-net-utils` refresh timer override from an in-place rewrite of the packaged unit in `10-build.sh` to a `refresh-policy-routes@.timer.d/10-interval.conf` systemd drop-in, so upstream timer changes are preserved, and removed the 5s `RandomizedDelaySec` jitter.
 * Packer: Suppressed `amazon-ec2-net-utils` notice/info/debug messages via `LogLevelMax=warning` in the `refresh-policy-routes@.service.d/10-quiet.conf` file.
 * Packer: Updated `cachefilesd` to `0.10.10-0.6ubuntu2`, which ships a native `cachefilesd.service` systemd unit, removing the deprecated `systemd-sysv-generator` compatibility warning for `/etc/init.d/cachefilesd` from the journal.
 * Packer: Added a `cachefilesd.service.d/10-forking.conf` systemd drop-in that runs `cachefilesd` as `Type=forking`, so `systemctl start cachefilesd` blocks until the cache is bound and fails if the bind fails.
@@ -87,7 +127,7 @@
 * Smoke-tests: Added a `proxy serves reads from cache` check asserting the FS-Cache read counter increases, dropping the page cache on both the client and the proxy so the re-read cannot be served from RAM. The previous check only measured cache growth, which passes even when the cache never serves a read.
 * Smoke-tests: Added a `proxy caches sparse source files` check, covering buffered reads of sparse source files, which were not previously exercised as all test data was written as random bytes.
 * Added `AGENTS.md` for AI coding assistant guidance (excluded from the documentation site).
-* Enhanced the `repo_links.py` MkDocs hook so links to unpublished or non-renderable repository files now resolve to the repository browser.
+* Enhanced the `repo_links.py` MkDocs hook so links to unpublished or non-displayable repository files now resolve to the repository browser.
 * Improved the regex for matching icon/emoji shortcodes in the `cards.py` MkDocs hook to avoid exponential backtracking.
 * Updated `pre-commit` documentation.
 * Added a `semgrep` GitLab CI job to the `security` stage.
@@ -157,7 +197,7 @@
 * Reconciled [docs/iam.md](docs/iam.md): removed the stale `KnfsdAsgServiceLinkedRole` row (superseded by the `iam:ListRoles` pre-flight check), documented the new `vpc-endpoints.json` policy, and added a "Deploying under restrictive IAM" section mapping each `EXISTING_*` variable to the create-permissions it lets you drop.
 * Packer: Added optional AWS SSM Session Manager support to the Packer AMI build via a new `SSH_INTERFACE` variable (default `""`, unchanged SSH behaviour). Setting `SSH_INTERFACE = "session_manager"` tunnels the build connection over AWS Systems Manager, allowing the AMI to be built in a private subnet with no inbound SSH, no public IP address, and no bastion host. This mode requires `IAM_INSTANCE_PROFILE` to be set and the AWS `session-manager-plugin` to be installed locally. When enabled, the temporary security group is created without any ingress rule and `https://checkip.amazonaws.com` is no longer contacted ([#37](https://github.com/awslabs/knfsd-file-cache/issues/37)).
 * Packer: Added the `KnfsdPackerSsmChannels`, `KnfsdPackerSsmStartSession`, and `KnfsdPackerSsmManageSession` Sids to [docs/iam/packer.json](docs/iam/packer.json) so a single policy covers both Packer connection methods, plus a new standalone [docs/iam/packer-instance-profile.json](docs/iam/packer-instance-profile.json) least-privilege policy for the Packer build instance's own IAM role (AWS SSM agent registration, and `ec2:CreateTags` for `TAG_BUILD_STATUS`). [docs/iam.md](docs/iam.md) documents which Sids can be dropped when standardizing on one connection method, along with the trust policy and `aws iam` commands to pre-create the instance profile under restrictive IAM environments.
-* Packer: Split the `reboot` that follows `10_build.sh` into its own provisioner so the main build provisioner no longer sets `expect_disconnect`, and removed `expect_disconnect` from the `30_finalize.sh` provisioner. A connection lost during the build or finalize step (for example an EC2 Spot reclaim) now fails the build immediately instead of being treated as a completed provisioner, which could previously truncate the build silently.
+* Packer: Split the `reboot` that follows `10-build.sh` into its own provisioner so the main build provisioner no longer sets `expect_disconnect`, and removed `expect_disconnect` from the `30-finalize.sh` provisioner. A connection lost during the build or finalize step (for example an EC2 Spot reclaim) now fails the build immediately instead of being treated as a completed provisioner, which could previously truncate the build silently.
 * Packer: Fixed the documented security group precedence so that setting both `SECURITY_GROUP_ID` and `SECURITY_GROUP_IDS` now honours `SECURITY_GROUP_ID` as documented, instead of failing with "Only one of security_group_id or security_group_ids can be specified".
 * Remote-SSH: Added optional AWS SSM Session Manager support to the developer cloud development environment via a new `KNFSD_REMOTE_SSH_TUNNEL` environment variable (default `eice`, unchanged behaviour). Setting `KNFSD_REMOTE_SSH_TUNNEL=ssm` tunnels the SSH connection for `.devcontainer/dev/remote.sh` over AWS Systems Manager using the `AWS-StartSSHSession` document.
 * Remote-SSH: Added the same optional AWS SSM Session Manager support to `.devcontainer/dev/run-fio-nfs.sh` via a new `--tunnel <eice|ssm>` option on the `run` command (default `eice`, unchanged behaviour).
@@ -245,7 +285,7 @@
 * Added new Terraform variable `ASSOCIATE_PUBLIC_IP_ADDRESS` to `terraform-module-knfsd` to allow forcefully associating (or suppressing) a public IPv4 address on the proxy EC2 instances via the launch template's `network_interfaces` block. Defaults to `null` (inherits the subnet's `MapPublicIpOnLaunch` attribute, preserving prior behavior). See [deployment/README.md](deployment/README.md).
 * Tuned `configure_network()` in `proxy-startup.sh` for ENA-X high-latency (inter-AZ) conditions: raised socket buffer defaults (`net.core.rmem_default`/`wmem_default`) to 4 MB, increased `tcp_limit_output_bytes` from 1 MB to 4 MB, disabled `tcp_autocorking` to reduce latency for request-response workloads, and explicitly set `tcp_congestion_control` to `cubic`.
 * Packer: Reverted change by Canonical preventing ENA driver from being built as a `module`, blocking it from being upgradable later in the AMI build process.
-* Packer: Fixed `rm -rf /var/lib/apt/lists/*` syntax error in `20_post_build.sh` script.
+* Packer: Fixed `rm -rf /var/lib/apt/lists/*` syntax error in `20-post-build.sh` script.
 * Enhanced Packer and Terraform variable validation checks to provide more detailed error messages and improve user experience.
 * Added support for AWS GovCloud regions (`us-gov-east-1` and `us-gov-west-1`).
 * Added support for AWS China regions (`cn-north-1` and `cn-northwest-1`).
@@ -260,7 +300,7 @@
 * Added 11 BATS tests for `proxy-startup.sh` script: `export-auto-detect.bats`.
 * Added FAQ entry for SSH `Permission denied (publickey)` when connecting to a proxy instance.
 * Enhanced EC2 instance type validation and added region exclusion feature in query script: `.devcontainer/dev/query-regions-for-ec2-instance-type.sh`.
-* Improved logging in `.devcontainer/dev/find_temp_files.sh` script.
+* Improved logging in `.devcontainer/dev/find-temp-files.sh` script.
 * Packer: Updated `hashicorp/packer-plugin-amazon` to v1.8.1.
 * Packer: Updated to `amazon-ec2-net-utils` v2.7.3.
 * Updated to Terraform `aws` provider v6.52.0.
@@ -307,7 +347,7 @@
 * Added `iamlive` tool to `.devcontainer/dev` environment for creating IAM policies.
 * Exposed `TRAFFIC_MODE` Terraform variable to the `fsx-zfs` example.
 * Set default value for `TRAFFIC_MODE` Terraform variable to `dns_round_robin`.
-* Packer: Added `snap_refresh` function to `10_build.sh` script to retry `snap refresh` commands up to 5 times with a 10-50s delay between attempts to guard against transient "unable to contact snap store" errors from `api.snapcraft.io`.
+* Packer: Added `snap_refresh` function to `10-build.sh` script to retry `snap refresh` commands up to 5 times with a 10-50s delay between attempts to guard against transient "unable to contact snap store" errors from `api.snapcraft.io`.
 * Updated KNFSD Monitoring Dashboard to `v13`.
 * Packer: Updated to `amzn/amzn-drivers` ENA driver v2.17.0.
 * Packer: Updated to `amazon-efs-utils` v3.1.1.
@@ -356,9 +396,9 @@
 * Fixed `modernize` linter warnings in multiple golang projects.
 * Added missing `${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}` variable to GitLab CI configuration for PostgreSQL image in `go-knfsd-fsidd 4/5` job.
 * Packer: Updated minimum required IAM permissions for Packer build process in [README.md](image/README.md#iam-permissions) documentation.
-* Packer: Removed redundant `apt-get install` call for `make` and `gcc` in `20_post_build.sh` script.
-* Packer: Added `retry` and `retry-delay` to all `curl` commands in `10_build.sh` and `20_post_build.sh` scripts.
-* Packer: Wrapped all `git clone` commands in `10_build.sh` and `20_post_build.sh` with a `git_clone` function to add retry logic.
+* Packer: Removed redundant `apt-get install` call for `make` and `gcc` in `20-post-build.sh` script.
+* Packer: Added `retry` and `retry-delay` to all `curl` commands in `10-build.sh` and `20-post-build.sh` scripts.
+* Packer: Wrapped all `git clone` commands in `10-build.sh` and `20-post-build.sh` with a `git_clone` function to add retry logic.
 * Packer: Updated to `mdadm` v4.6.
 * Packer: Updated to `rust` v1.94.1.
 * Packer: Updated to `amazon-efs-utils` v3.1.0.
@@ -583,7 +623,7 @@
 
 > BREAKING CHANGES: Ensure AMI is rebuilt by Packer.
 
-* Packer: Fixed bug in `20_post_build.sh` script where `/etc/machine-id` file must exist for systemd dependencies at boot.
+* Packer: Fixed bug in `20-post-build.sh` script where `/etc/machine-id` file must exist for systemd dependencies at boot.
 * Packer: Added `proxy.golang.org` to `GOPROXY` environment variable to handle situations where a VCS based git repo is unavailable, causing the image build process to fail (continue to use `direct` only in the devcontainer/build environment to ensure golang dependencies/versions are working correctly).
 * Packer: Updated `hashicorp/packer-plugin-amazon` to v1.6.0.
 * Updated to Terraform AWS provider v6.19.0.

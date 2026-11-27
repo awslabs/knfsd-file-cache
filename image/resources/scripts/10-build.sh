@@ -12,8 +12,8 @@ SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
 # pinned versions
-VERSION="1.1.0-beta.7"
-KERNEL="7.2.13"
+VERSION="1.1.0-beta.8"
+KERNEL="7.3.6"
 
 # identify architecture
 export ARCH=$(uname -m)
@@ -80,7 +80,15 @@ function complete_command() {
 function install_aws_cli() (
 	echo -e "\n${SHELL_YELLOW}---- RUNNING: installing aws-cli${SHELL_DEFAULT}"
 	COMMAND_START_TIME=$(date +%s)
-	snap install aws-cli --classic
+	wait_for_apt_lock
+	apt-get -o DPkg::Lock::Timeout=60 -y -qq update
+	apt-get -o DPkg::Lock::Timeout=60 install -y -qq unzip
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip"
+	unzip -q awscliv2.zip
+	./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+	rm -rf awscliv2.zip aws
+	aws --version
 	complete_command
 )
 
@@ -114,37 +122,19 @@ function git_clone() {
 	return 1
 }
 
-# snap refresh with retry, 10-20s delay between attempts
-function snap_refresh() {
-	local max_attempts=3
-	local attempt
-	for attempt in $(seq 1 $max_attempts); do
-		if snap refresh "$@"; then
-			return 0
-		fi
-		[[ $attempt -lt $max_attempts ]] || break
-		echo "snap refresh failed (attempt $attempt/$max_attempts), retrying in ${attempt}0s..."
-		sleep $((attempt * 10))
-	done
-	echo "snap refresh failed after $max_attempts attempts"
-	return 1
-}
-
-# update amazon-ssm-agent
-function update_amazon_ssm_agent() (
-	begin_command "updating amazon-ssm-agent"
-
-	# wait up to 5 mins for snap seeding to complete before proceeding
-	if ! snap debug seeding | grep -q "^seeded: *true$"; then
-		echo "Waiting for snap seeding to complete..."
-		timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
-	fi
-
-	snap stop amazon-ssm-agent
-	snap switch --channel=candidate amazon-ssm-agent
-	snap_refresh amazon-ssm-agent
-	mkdir -p /etc/amazon/ssm
-	snap start amazon-ssm-agent
+# replace the preinstalled snap amazon-ssm-agent with the official .deb from
+# the regional S3 bucket; "latest" matches the snap "candidate" channel version
+# https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-deb.html
+function install_amazon_ssm_agent() (
+	begin_command "installing amazon-ssm-agent"
+	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+		-o amazon-ssm-agent.deb "https://s3.${REGION}.amazonaws.com/amazon-ssm-${REGION}/latest/debian_${ARCH_ALT}/amazon-ssm-agent.deb"
+	# wait up to 5 mins for snap seeding to complete before removing the snap
+	timeout 300 snap wait system seed.loaded
+	snap remove --purge amazon-ssm-agent
+	dpkg -i amazon-ssm-agent.deb
+	systemctl enable --now amazon-ssm-agent
+	rm -f amazon-ssm-agent.deb
 	complete_command
 )
 
@@ -379,7 +369,7 @@ function install_cloudwatch_agent() (
 function install_golang() (
 	begin_command "installing golang"
 	curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
-		-o go.tar.gz https://dl.google.com/go/go1.27.3.linux-${ARCH_ALT}.tar.gz
+		-o go.tar.gz https://dl.google.com/go/go1.27.4.linux-${ARCH_ALT}.tar.gz
 	rm -rf /usr/local/go
 	tar -C /usr/local -xzf go.tar.gz
 	mkdir -p "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR"
@@ -602,7 +592,7 @@ function copy_config() (
 # run build steps
 install_aws_cli
 disable_unattended_upgrades
-update_amazon_ssm_agent
+install_amazon_ssm_agent
 apt_update
 install_packages
 install_build_dependencies

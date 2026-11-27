@@ -163,7 +163,7 @@ This method provides basic information on the KNFSD proxy node. It is useful for
   "region": "eu-west-2",
   "availabilityZone": "eu-west-2a",
   "availabilityZoneId": "euw2-az2",
-  "instanceType": "i3en.6xlarge",
+  "instanceType": "im4gn.8xlarge",
   "amiId": "ami-07c1b39b7b3d2525d"
 }
 ```
@@ -587,7 +587,7 @@ Gets the OS and kernel versions.
 
 ```json
 {
-  "kernel": "7.2.13-knfsd",
+  "kernel": "7.3.6-knfsd",
   "os": {
     "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
     "HOME_URL": "https://www.ubuntu.com/",

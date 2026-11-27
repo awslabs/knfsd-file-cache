@@ -17,7 +17,7 @@ body:
       label: KNFSD File Cache (KNFSD) version
       description: |
         Which version of KNFSD File Cache (KNFSD) are you using? You can find release versions [here](https://github.com/awslabs/knfsd-file-cache/releases).
-      placeholder: v1.1.0-beta.7
+      placeholder: v1.1.0-beta.8
     validations:
       required: true
   - type: input
@@ -49,7 +49,6 @@ body:
     attributes:
       label: Steps to Reproduce
       description: Please provide steps to reproduce this issue. This will be automatically formatted into code, so no need for backticks.
-      render: shell
     validations:
       required: false
   - type: textarea
@@ -57,6 +56,5 @@ body:
     attributes:
       label: Relevant log/nfstrace output
       description: Please copy and paste any relevant log/nfstrace output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
     validations:
       required: false

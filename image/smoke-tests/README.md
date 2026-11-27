@@ -20,7 +20,7 @@ The smoke-test Terraform creates only the per-run resources (source NFS server, 
 
 Before a run you need:
 
-1. A subnet whose route table reaches the internet (NAT, or public subnet + IGW with a public IP) so the instances' SSM agents reach the SSM endpoints and `apt`/`snap` installs succeed. A default-VPC public subnet works.
+1. A subnet whose route table reaches the internet (NAT, or public subnet + IGW with a public IP) so the instances' SSM agents reach the SSM endpoints and the `apt` installs and the AWS CLI (`awscli.amazonaws.com`) and `amazon-ssm-agent` (`s3.<REGION>.amazonaws.com`) downloads succeed. A default-VPC public subnet works.
 2. A KNFSD proxy AMI ID to test, supplied directly via `PROXY_AMI`.
 
 The smoke-test Terraform consumes the following inputs (defined in [`terraform/variables.tf`](terraform/variables.tf)):
@@ -70,7 +70,7 @@ Each invocation drives `go test` against the smoke-test Terraform in [`terraform
 
 * AWS credentials with the IAM policies described above.
 * [Terraform](https://www.terraform.io/) 1.2.9 (matches the dev container).
-* [Go 1.27.3](https://go.dev/).
+* [Go 1.27.4](https://go.dev/).
 * [GNU Make](https://www.gnu.org/software/make/).
 * OpenSSH client (`ssh`, `scp`), the [AWS CLI](https://docs.aws.amazon.com/cli/), and the [`session-manager-plugin`](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (all preinstalled in the dev container).
 * A KNFSD proxy AMI ID supplied directly via `PROXY_AMI`. The test source/client AMIs are always resolved from SSM based on `ARCH`; see [`terraform/variables.tf`](terraform/variables.tf).

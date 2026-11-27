@@ -6,12 +6,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.70.0"
+      version = "~> 6.74.0"
     }
   }
   provider_meta "aws" {
     user_agent = [
-      "knfsd-file-cache/examples/weka/1.1.0-beta.7"
+      "knfsd-file-cache/examples/weka/1.1.0-beta.8"
     ]
   }
 }
@@ -31,7 +31,7 @@ module "projects" {
 
   GLOBAL_TAGS = var.GLOBAL_TAGS
 
-  INSTANCE_TYPE  = "i3en.6xlarge"
+  INSTANCE_TYPE  = "im4gn.8xlarge"
   PROXY_AMI      = var.PROXY_AMI
   PROXY_BASENAME = "projects"
   KNFSD_NODES    = 1 # set to 0 to disable cluster
@@ -70,7 +70,7 @@ module "software" {
 
   GLOBAL_TAGS = var.GLOBAL_TAGS
 
-  INSTANCE_TYPE  = "i3en.6xlarge"
+  INSTANCE_TYPE  = "im4gn.8xlarge"
   PROXY_AMI      = var.PROXY_AMI
   PROXY_BASENAME = "software"
   KNFSD_NODES    = 1 # set to 0 to disable cluster

@@ -255,7 +255,7 @@ exporters:
     # minimize the number of metrics published to CloudWatch (save cost)
     dimension_rollup_option: "NoDimensionRollup"
     resource_to_telemetry_conversion:
-      enabled: true
+      included: ["*"]
 
   # Useful when developing or debugging metrics. When running the agent from the
   # command line this will write the metrics to the terminal.

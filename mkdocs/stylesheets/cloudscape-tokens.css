@@ -12,7 +12,7 @@
  * LIGHT MODE (Cloudscape "Visual Refresh" light)
  * --------------------------------------------------------------------------- */
 [data-md-color-scheme="cloudscape-light"] {
-  /* Ensure native form controls, scrollbars and the search field render with a
+  /* Ensure native form controls, scrollbars and the search field display with a
      light UA appearance (Material only sets this for its built-in schemes). */
   color-scheme: light;
 
@@ -71,7 +71,7 @@
  * DARK MODE (Cloudscape "Visual Refresh" dark)
  * --------------------------------------------------------------------------- */
 [data-md-color-scheme="cloudscape-dark"] {
-  /* Render native form controls, scrollbars and the search field dark (Material
+  /* Draw native form controls, scrollbars and the search field dark (Material
      only applies this to its built-in "slate" scheme, not custom scheme names). */
   color-scheme: dark;
 

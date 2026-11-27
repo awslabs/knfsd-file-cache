@@ -13,7 +13,7 @@ directory such as ``.devcontainer/``. These 404 on the hosted page.
 
 Files MkDocs copies verbatim but a browser only downloads, such as ``*.sh``,
 ``*.tf``, ``*.json``, and ``*.yaml``. Clicking one saves a file instead of
-navigating, whereas the repo browser renders it with syntax highlighting.
+navigating, whereas the repo browser displays it with syntax highlighting.
 
 Directories such as ``../image/`` or ``resources/scripts``, which MkDocs does
 not resolve the way the GitLab/GitHub repo browser does.
@@ -26,7 +26,7 @@ contains a published ``README.md``/``index.md`` is repointed at that page
 repository URL (``/blob/`` for files, ``/tree/`` for directories) derived from
 ``repo_url``, injected per-platform via ``!ENV`` so nothing is hard-coded.
 
-Markdown pages and genuine browser-renderable assets (images, media, CSS, JS,
+Markdown pages and genuine browser-viewable assets (images, media, CSS, JS,
 fonts, PDFs) are deliberately left alone so they keep being served locally.
 
 When ``repo_url`` is unset (e.g. local ``mkdocs serve``) links are left
@@ -50,7 +50,7 @@ _INDEX_FILES = ("README.md", "index.md")
 # Extensions MkDocs turns into real HTML pages.
 _PAGE_EXTS = frozenset({".md", ".markdown", ".mdown", ".mkdn", ".mkd"})
 
-# Extensions a browser renders in place, so the site's own copy is genuinely
+# Extensions a browser displays in place, so the site's own copy is genuinely
 # useful and the link should stay local. Anything absent from this set is a
 # source or config file that reads better in the repo browser than as a
 # download, so it gets rewritten to a repository URL.
@@ -189,7 +189,7 @@ def on_page_markdown(markdown: str, *, page, config, files) -> str:
                 new_target = f"{tree_base}/{resolved}{sep}{suffix}"
         elif abs_target.is_file() and not _served_usefully(resolved):
             # Unpublished file, or one the browser would download rather than
-            # display; the repo browser renders it instead.
+            # display; the repo browser displays it instead.
             new_target = f"{blob_base}/{resolved}{sep}{suffix}"
 
         if new_target is None:

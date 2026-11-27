@@ -12,16 +12,16 @@ This pipeline is designed to run on a self-hosted GitLab deployment. It should b
 
 The GitLab CI pipeline is structured into 9(+1 scheduled) distinct stages that execute sequentially, with jobs within each stage running in parallel where possible:
 
-1. **dependencies** - Dependency management and automated updates (scheduled)
-2. **config** - Editorconfig, spell-check, and formatting
-3. **shell** - Shell script linting and formatting
-4. **packer** - Packer configuration validation
-5. **terraform** - Terraform configuration validation and linting
-6. **python** - Python code quality checks
-7. **test** - Integration testing
-8. **build** - Go application lint, test, cross-platform build, and vulnerability scanning
-9. **security** - Security scanning and vulnerability assessment
-10. **docs** - Build and publish the documentation site to GitLab Pages
+1. **dependencies**: Dependency management and automated updates (scheduled)
+2. **config**: Editorconfig, spell-check, and formatting
+3. **shell**: Shell script linting and formatting
+4. **packer**: Packer configuration validation
+5. **terraform**: Terraform configuration validation and linting
+6. **python**: Python code quality checks
+7. **test**: Integration testing
+8. **build**: Go application lint, test, cross-platform build, and vulnerability scanning
+9. **security**: Security scanning and vulnerability assessment (`kernel-cve` also runs on schedules)
+10. **docs**: Build and publish the documentation site to GitLab Pages
 
 ## Configuration
 
@@ -49,7 +49,7 @@ To enable this pipeline, you should:
     - [GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
     - [GitLab PAT](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
 
-5. Schedule the `renovate` job to run daily at 08:00 UTC+1 (or as needed) via `Build > Pipeline schedules` in your GitLab project.
+5. Schedule the `renovate` job to run daily at 08:00 UTC+1 (or as needed) via `Build > Pipeline schedules` in your GitLab project. The same schedule also runs the `kernel-cve` job.
 
     ![GitLab Renovate Schedule](images/gitlab-renovate-schedule.png)
 
@@ -173,7 +173,7 @@ The most compute and/or network intensive CI jobs are configured with a `2xlarge
 
 - **Purpose**: Python code formatting validation
 - **Tool**: [Black](https://github.com/psf/black)
-- **Target**: Python 3.14 compatibility
+- **Target**: Python 3.15 compatibility
 - **Reference**: [Black Documentation](https://black.readthedocs.io/)
 - **Failure Policy**: Blocking
 
@@ -299,6 +299,19 @@ located in `image/smoke-tests/`:
 - **Cache**: Maintains vulnerability database cache
 - **Failure Policy**: Warning
 
+#### `kernel-cve`
+
+- **Purpose**: Checks the pinned `KERNEL` version in `image/resources/scripts/10-build.sh` against the Linux kernel CNA CVE records, so a vulnerable AMI kernel is noticed before a customer reports it
+- **Tool**: [check_kernel_cves.py](../.devcontainer/dev/check_kernel_cves.py)
+- **Data Source**: The kernel CNA [vulns.git](https://git.kernel.org/pub/scm/linux/security/vulns.git) repository (`cve/published/<YEAR>/CVE-*.json`), fetched as a shallow, sparse checkout of the JSON records only
+- **Scope**: CVEs whose affected files are under `fs/nfsd/`, `fs/nfs/`, `net/sunrpc/`, `fs/cachefiles/`, or `fs/netfs/`
+- **Triggers**: Every push, and every scheduled pipeline (the daily `renovate` schedule also runs this job, so newly published CVEs are noticed without a commit)
+- **Threshold**: Flags affected CVEs with a CNA CVSS score at or above `KNFSD_KERNEL_CVE_MIN_CVSS` (default `9.0`). Override it in the pipeline schedule or in `Settings > CI/CD > Variables`. Affected CVEs that are not scored yet are skipped and listed by ID in the job log; set the threshold to `0` to flag them too
+- **Fail-safe**: A matching record whose version data cannot be evaluated is flagged as "unverifiable". The job errors (exit code `2`) instead of reporting clean if fewer than 10,000 records, or fewer than 100 matching records, are parsed, which catches an upstream layout change
+- **Cache**: Shared `kernel-vulns` cache of the `.vulns` checkout, updated with an incremental `git fetch` on each run
+- **Local equivalent**: `make kernel-cve` (optionally `make kernel-cve KNFSD_KERNEL_CVE_MIN_CVSS=0`)
+- **Failure Policy**: Warning. A flagged CVE means the `KERNEL` pin needs to move to a fixed release, followed by an AMI rebuild and a new release
+
 ### Docs Stage
 
 #### `pages`
@@ -359,6 +372,12 @@ The pipeline implements a sophisticated caching strategy to optimize build times
 - **Key Pattern**: `trivy-${CI_COMMIT_REF_SLUG}`
 - **Purpose**: Caches Trivy vulnerability database
 - **Location**: `.trivycache`
+
+### Kernel CVE Data Cache
+
+- **Key Pattern**: `kernel-vulns` (shared across branches, because the CVE data does not depend on the branch)
+- **Purpose**: Caches the sparse `vulns.git` checkout used by `kernel-cve`, so each run fetches only new commits from git.kernel.org
+- **Location**: `.vulns`
 
 ## GitLab Container Registry Usage
 

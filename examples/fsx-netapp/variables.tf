@@ -50,9 +50,9 @@ variable "KEY_NAME" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"i3en.6xlarge\"."
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Default: \"im4gn.8xlarge\"."
   type        = string
-  default     = "i3en.6xlarge"
+  default     = "im4gn.8xlarge"
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."

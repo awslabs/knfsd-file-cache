@@ -92,8 +92,8 @@ Enter at least the following required variable (additional `SUBNET` variable is 
 | `IAM_INSTANCE_PROFILE`                      | The name of an IAM instance profile to attach to the build instance. Required if your custom scripts need to access AWS resources, or if `TAG_BUILD_STATUS` is `true`.                                                                                                                 | string       | False    | `""`                                                |
 | `TAG_BUILD_STATUS`                          | Whether to update the build instance status via the `knfsd-file-cache:status` tag.<br><br>Requires `IAM_INSTANCE_PROFILE` to be set to an instance profile whose role holds the `ec2:CreateTags` permission.                                                                           | bool         | False    | `false`                                             |
 | `GLOBAL_TAGS`                               | AWS TAGS to apply to ALL AWS resources created by the build, plus the resulting AMI and its snapshots.<br><br>Existing hard-wired tags take precedence on duplicate keys. See [AWS resource tagging](#aws-resource-tagging).                                                           | map(string)  | False    | `{}`                                                |
-| `CUSTOM_PRE_BUILD_SCRIPT`                   | Path to a bash script file to run BEFORE the `10_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                            | string       | False    | `""`                                                |
-| `CUSTOM_POST_BUILD_SCRIPT`                  | Path to a bash script file to run AFTER the `20_post_build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                        | string       | False    | `""`                                                |
+| `CUSTOM_PRE_BUILD_SCRIPT`                   | Path to a bash script file to run BEFORE the `10-build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                            | string       | False    | `""`                                                |
+| `CUSTOM_POST_BUILD_SCRIPT`                  | Path to a bash script file to run AFTER the `20-post-build.sh` script. For example `"/home/$USER/myscript.sh"`.                                                                                                                                                                        | string       | False    | `""`                                                |
 | `DISTRIBUTION_REGIONS`                      | A list of additional AWS regions to copy the resulting AMI into. The build region is always governed by `REGION`. Example: `["us-east-2", "us-west-2"]`.                                                                                                                               | list(string) | False    | `[]`                                                |
 | `AMI_ENCRYPTED`                             | Whether the resulting AMI is encrypted. When `true` the AMI is encrypted with `KMS_KEY_ID` (or the region's default `aws/ebs` key when `KMS_KEY_ID` is empty). \*\*\*                                                                                                                  | bool         | False    | `true`                                              |
 | `KMS_KEY_ID`                                | Customer-managed KMS key identifier (key ID, alias, key ARN, or alias ARN) used to encrypt the AMI in the AWS build region.<br><br>Empty uses the AWS region's default `aws/ebs` key when `AMI_ENCRYPTED = true`.                                                                      | string       | False    | `""`                                                |
@@ -229,7 +229,7 @@ The instance profile must be pre-created by an administrator. The minimum permis
 
 #### Egress is still required
 
-> IMPORTANT: Session Manager removes the **inbound** connectivity requirement only. The build itself still downloads packages and sources from the internet, including `cdn.kernel.org` (Linux kernel and `nfs-utils`), `github.com`, `dl.google.com` (Go), `proxy.golang.org`, `launchpad.net`, `amazoncloudwatch-agent.s3.amazonaws.com`, the Ubuntu package archive, and the snap store.
+> IMPORTANT: Session Manager removes the **inbound** connectivity requirement only. The build itself still downloads packages and sources from the internet, including `cdn.kernel.org` (Linux kernel and `nfs-utils`), `github.com`, `dl.google.com` (Go), `proxy.golang.org`, `launchpad.net`, `amazoncloudwatch-agent.s3.amazonaws.com`, `awscli.amazonaws.com` (AWS CLI), `s3.<REGION>.amazonaws.com` (`amazon-ssm-agent` `.deb` package), and the Ubuntu package archive.
 
 The build subnet therefore still needs egress via a NAT gateway, a proxy, or an equivalent path. A subnet with no egress at all cannot complete the build, regardless of the connection method. Note that `checkip.amazonaws.com` is **not** contacted in this mode, as no temporary security group ingress rule is created.
 
@@ -351,7 +351,7 @@ amazon-ebs.knfsd: ---- SYSTEM INFO
 amazon-ebs.knfsd: Description:  Ubuntu 26.04.1 LTS
 amazon-ebs.knfsd: Release:      26.04
 amazon-ebs.knfsd: Codename:     resolute
-amazon-ebs.knfsd: Kernel:       7.2.13-knfsd
+amazon-ebs.knfsd: Kernel:       7.3.6-knfsd
 ...
 amazon-ebs.knfsd: ---- SUCCESS: Finished finalize image script
 ...
@@ -370,7 +370,7 @@ Once you have built and verified the AMI for KNFSD, you can deploy the supportin
 
 The KNFSD proxy AMI can be built in AWS Commercial, GovCloud (`aws-us-gov`), and China (`aws-cn`) partitions. The base Canonical Ubuntu 26.04 image is resolved from the public `/aws/service/canonical/...` SSM parameters, which are published in all three partitions, so the Packer AMI lookup works without modification.
 
-The image build process does, however, download several packages from commercial AWS endpoints during provisioning (for example `awscli.amazonaws.com` and `amazoncloudwatch-agent.s3.amazonaws.com` in [resources/scripts/10_build.sh](resources/scripts/10_build.sh)). When building in China:
+The image build process does, however, download several packages from commercial AWS endpoints during provisioning (for example `awscli.amazonaws.com` and `amazoncloudwatch-agent.s3.amazonaws.com` in [resources/scripts/10-build.sh](resources/scripts/10-build.sh)). When building in China:
 
 * Run the build from a China-based pipeline (EC2 build host in a `cn-*` region) that has network egress to the appropriate China mirrors, or pre-stage the packages.
 * `checkip.amazonaws.com` (used only as a developer convenience to discover the build host's public IP) is a commercial-only endpoint and is not required for the build itself.
@@ -418,7 +418,7 @@ cd knfsd-file-cache/image
 ### Update values in the brackets `<...>` below and set the shell variables
 
 ```bash
-VERSION="1.1.0-beta.7"
+VERSION="1.1.0-beta.8"
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
 
 export KNFSD_REGION=<region-name>
@@ -522,10 +522,10 @@ cd /mnt/build
 tar -zxf resources.tgz
 chmod +x scripts/*.sh
 # execute build script
-sudo bash scripts/10_build.sh 2>&1
+sudo bash scripts/10-build.sh 2>&1
 ```
 
-When the `10_build.sh` script completes you should see:
+When the `10-build.sh` script completes you should see:
 
 ```text
 ---- SUCCESS: Finished build image script. Reboot(ing) for new kernel to take effect
@@ -550,7 +550,7 @@ device=$(lsblk -o NAME,SIZE,TYPE | grep 'disk' | grep '20G' | awk '{print $1}' |
 sudo mount "/dev/$device" /mnt/build
 cd /mnt/build
 # execute post build script
-sudo bash scripts/20_post_build.sh 2>&1
+sudo bash scripts/20-post-build.sh 2>&1
 ```
 
 ### Customize the Image
@@ -565,7 +565,7 @@ Once the clean up is complete, the instance will shutdown.
 
 ```bash
 # execute finalize script
-sudo bash scripts/30_finalize.sh 2>&1
+sudo bash scripts/30-finalize.sh 2>&1
 cd ~
 sudo umount /mnt/build
 sudo rm -rf /mnt/build
@@ -581,7 +581,7 @@ A successful build will output something similar to the following:
 Description:  Ubuntu 26.04.1 LTS
 Release:      26.04
 Codename:     resolute
-Kernel:       7.2.13-knfsd
+Kernel:       7.3.6-knfsd
 ---- SUCCESS: Finished finalize image script
 ```
 

@@ -46,8 +46,8 @@ jobs:
       # cache, so removing it would break the run.
       - name: Free disk space
         if: matrix.language == 'go'
-        # https://github.com/jlumbroso/free-disk-space/releases
-        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        # https://github.com/lumbroso-commons/free-disk-space/releases
+        uses: lumbroso-commons/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
         with:
           preinstalled-runtimes: false
           android: true
@@ -63,13 +63,13 @@ jobs:
 
       - name: Initialize CodeQL
         # https://github.com/github/codeql-action/releases
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
       - name: Perform CodeQL Analysis
         # https://github.com/github/codeql-action/releases
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           category: "/language:${{ matrix.language }}"

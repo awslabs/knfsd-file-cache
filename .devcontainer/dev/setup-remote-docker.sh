@@ -11,23 +11,28 @@ USERNAME="ubuntu"
 ## disable unattended-upgrades.service
 systemctl disable unattended-upgrades.service
 
-## update amazon-ssm-agent
-# wait up to 5 mins for snap seeding to complete before proceeding
-if ! snap debug seeding | grep -q "^seeded: *true$"; then
-	echo "Waiting for snap seeding to complete..."
-	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
-fi
-snap stop amazon-ssm-agent
-snap switch --channel=candidate amazon-ssm-agent
-snap refresh amazon-ssm-agent
-snap start amazon-ssm-agent
-
-## install aws-cli
-snap install aws-cli --classic
-
-## instance identity for self-tagging the "knfsd-file-cache:status" tag
+## instance identity for self-tagging and the regional SSM agent download
 REGION="$(cloud-init query region)"
 INSTANCE_ID="$(cloud-init query instance_id)"
+
+## install aws-cli
+apt-get -o DPkg::Lock::Timeout=60 -y -q update
+apt-get -o DPkg::Lock::Timeout=60 install -y -q unzip
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip"
+unzip -q -d /tmp /tmp/awscliv2.zip
+/tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf /tmp/awscliv2.zip /tmp/aws
+
+## replace the preinstalled snap amazon-ssm-agent with the official .deb
+## from the regional S3 bucket ("latest" matches the snap "candidate" channel)
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/amazon-ssm-agent.deb "https://s3.${REGION}.amazonaws.com/amazon-ssm-${REGION}/latest/debian_$(dpkg --print-architecture)/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f /tmp/amazon-ssm-agent.deb
 
 ## update_status() sets the tag:"knfsd-file-cache:status" on this instance.
 ## @param (str) $1 status value (e.g. "ready", "error: ...")

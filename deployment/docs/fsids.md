@@ -93,7 +93,7 @@ The Database Terraform module in [deployment/database](../database/README.md) ca
 # Create a DynamoDB FSID table for use by KNFSD proxy cluster(s)
 
 module "fsid_database" {
-  source = "github.com/awslabs/knfsd-file-cache//deployment/database?ref=v1.1.0-beta.7"
+  source = "github.com/awslabs/knfsd-file-cache//deployment/database?ref=v1.1.0-beta.8"
 }
 
 output "table_name" {
@@ -141,7 +141,7 @@ The `[database]` section supports:
 
 * `table-name` (Required) - The name of the DynamoDB table storing the FSID mappings for the proxy cluster. Table names only need to be unique per AWS account and region; the Terraform `database` module generates a unique name automatically.
 
-* `region` (Optional) - The AWS region hosting the DynamoDB table. Because DynamoDB is a regional HTTPS API, `(region, table-name)` fully identifies the table. If absent, the daemon falls back to the instance's own region (via IMDSv2). The Terraform-rendered configuration always sets it explicitly.
+* `region` (Optional) - The AWS region hosting the DynamoDB table. Because DynamoDB is a regional HTTPS API, `(region, table-name)` fully identifies the table. If absent, the daemon falls back to the instance's own region (via IMDSv2). The Terraform-generated configuration always sets it explicitly.
 
 * `endpoint` (Optional) - Override the DynamoDB endpoint URL. Only intended for testing against `DynamoDB Local` container. Default empty (use the standard regional endpoint).
 

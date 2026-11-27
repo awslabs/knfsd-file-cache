@@ -74,7 +74,7 @@
 
 set -eo pipefail
 
-VERSION="1.1.0-beta.7"
+VERSION="1.1.0-beta.8"
 
 # terminal colors
 SHELL_RED='\033[0;31m'
@@ -268,7 +268,7 @@ function create_user_data_client() {
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y -q update
-apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev nfs-common
+apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev nfs-common unzip
 cd /tmp
 curl -fsSL "https://github.com/axboe/fio/archive/refs/tags/fio-${FIO_VERSION}.tar.gz" -o fio.tar.gz
 tar xzf fio.tar.gz
@@ -277,16 +277,24 @@ cd fio-fio-${FIO_VERSION}
 make -j\$(nproc)
 make install
 cd /tmp
-if ! snap debug seeding | grep -q "^seeded: *true\$"; then
-	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true\$"; do sleep 5; done'
-fi
-snap install aws-cli --classic
+REGION=\$(cloud-init query region)
+INSTANCE_ID=\$(cloud-init query instance_id)
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \\
+	-o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-\$(uname -m).zip"
+unzip -q awscliv2.zip
+./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf awscliv2.zip aws
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \\
+	-o amazon-ssm-agent.deb "https://s3.\${REGION}.amazonaws.com/amazon-ssm-\${REGION}/latest/debian_\$(dpkg --print-architecture)/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f amazon-ssm-agent.deb
 mkdir -p ${MOUNT_PATH}
 mount -t nfs -o vers=3,tcp,noatime,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${KNFSD_IP}:${MOUNT_EXPORT} ${MOUNT_PATH}
 mkdir -p ${MOUNT_PATH}/fio
 fio --server --daemonize=/var/run/fio.pid
-REGION=\$(cloud-init query region)
-INSTANCE_ID=\$(cloud-init query instance_id)
 aws ec2 create-tags --region "\${REGION}" --resources "\${INSTANCE_ID}" --tags "Key=knfsd-file-cache:status,Value=ready"
 EOT
 }
@@ -298,7 +306,7 @@ function create_user_data_captain() {
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y -q update
-apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev
+apt-get -y -q install -o=Dpkg::Use-Pty=0 build-essential libaio-dev unzip
 cd /tmp
 curl -fsSL "https://github.com/axboe/fio/archive/refs/tags/fio-${FIO_VERSION}.tar.gz" -o fio.tar.gz
 tar xzf fio.tar.gz
@@ -307,12 +315,20 @@ cd fio-fio-${FIO_VERSION}
 make -j\$(nproc)
 make install
 cd /tmp
-if ! snap debug seeding | grep -q "^seeded: *true\$"; then
-	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true\$"; do sleep 5; done'
-fi
-snap install aws-cli --classic
 REGION=\$(cloud-init query region)
 INSTANCE_ID=\$(cloud-init query instance_id)
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \\
+	-o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-\$(uname -m).zip"
+unzip -q awscliv2.zip
+./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf awscliv2.zip aws
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \\
+	-o amazon-ssm-agent.deb "https://s3.\${REGION}.amazonaws.com/amazon-ssm-\${REGION}/latest/debian_\$(dpkg --print-architecture)/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f amazon-ssm-agent.deb
 aws ec2 create-tags --region "\${REGION}" --resources "\${INSTANCE_ID}" --tags "Key=knfsd-file-cache:status,Value=ready"
 EOT
 }

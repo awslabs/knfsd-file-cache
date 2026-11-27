@@ -6,7 +6,7 @@ This Terraform module supports configuring autoscaling for the KNFSD Auto Scalin
 
 Autoscaling can be enabled by setting the `ENABLE_KNFSD_AUTOSCALING` environment variable to `true` (defaults to `false`). There are also some other configuration options detailed in the [Configuration Variables](../README.md#configuration-variables) section (such as how many NFS connections a KNFSD node should be handling before a scale-up).
 
-To avoid interruptions to existing NFS client mounts, and by extension render operations the Auto Scaling Group (ASG) behaviour is set to **SCALE UP ONLY**. When a KNFSD client exceeds the number of connections defined in the `KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD` variable a new instance will be added to the KNFSD ASG. If the number of KNFSD connections subsequently falls significantly the KNFSD cluster **will not** automatically scale down. This is not an AWS limitation but an intentional design consideration to avoid:
+To avoid interruptions to existing NFS client mounts, and by extension running compute jobs, the Auto Scaling Group (ASG) behaviour is set to **SCALE UP ONLY**. When a KNFSD client exceeds the number of connections defined in the `KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD` variable a new instance will be added to the KNFSD ASG. If the number of KNFSD connections subsequently falls significantly the KNFSD cluster **will not** automatically scale down. This is not an AWS limitation but an intentional design consideration to avoid:
 
 * Loss of FS-Cache data that would need to be re-pulled on scale up
 * Interruption to existing NFS client connections

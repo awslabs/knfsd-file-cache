@@ -304,7 +304,7 @@ The `eice` tunnel additionally means:
 The `ssm` tunnel additionally means:
 
 * No VPC infrastructure to create, delete, or pay cross-AZ data transfer on.
-* The AWS SSM agent must be running on the instance, and the instance's IAM instance profile must grant it permission to register (see [IAM Permissions](iam.md#remote-ssh-development-instance-profile)). The Ubuntu AMI ships the agent as a snap, and the user-data scripts refresh it at launch.
+* The AWS SSM agent must be running on the instance, and the instance's IAM instance profile must grant it permission to register (see [IAM Permissions](iam.md#remote-ssh-development-instance-profile)).
 * The `session-manager-plugin` must be installed on the machine that runs `ssh`. See [Remote-SSH: AWS SSM Session Manager](#remote-ssh-aws-ssm-session-manager).
 * AWS SSM reachability is required from the instance subnet: either a NAT Gateway, or the `ssm`, `ssmmessages`, and `ec2messages` interface VPC endpoints (all three are provided by the [vpc-endpoints](../deployment/vpc-endpoints/README.md) module).
 * Sessions are subject to an idle timeout (Session Manager preferences, default 20 mins) and a maximum session duration (60 mins). The generated SSH config sets `ServerAliveInterval` to keep an active session from idling out.

@@ -5,7 +5,7 @@ variable "VERSION" {
   description = "(Internal) The version of the KNFSD Monitoring Dashboard."
   type        = string
   nullable    = false
-  default     = "17"
+  default     = "18"
 }
 
 variable "GLOBAL_TAGS" {

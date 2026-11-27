@@ -61,6 +61,13 @@ image-iam:
 	export HTTPS_PROXY=http://127.0.0.1:10080; \
 	packer build -var-file image/image.pkrvars.hcl image
 
+.PHONY: upgrade update
+upgrade update:
+	@echo "[upgrade pinned versions]"
+	@$(ROOT_DIR)/.devcontainer/dev/update-pinned-versions.sh --write
+	@echo "[upgrade github actions]"
+	@$(ROOT_DIR)/.devcontainer/dev/update-github-action-shas.sh --write
+
 .PHONY: pre-commit precommit pc
 pre-commit precommit pc:
 	@pre-commit run --all-files
@@ -81,7 +88,23 @@ docs:
 
 .PHONY: clean delete del
 clean delete del:
-	@cd $(ROOT_DIR)/.devcontainer/dev && ./find_temp_files.sh -d
+	@cd $(ROOT_DIR)/.devcontainer/dev && ./find-temp-files.sh -d
+
+KNFSD_KERNEL_VULNS_REPO ?= https://git.kernel.org/pub/scm/linux/security/vulns.git
+KNFSD_KERNEL_CVE_MIN_CVSS ?= 9.0
+VULNS_DIR := $(ROOT_DIR)/.vulns
+
+.PHONY: kernel-cve
+kernel-cve:
+	@echo "[kernel-cve]"
+	@if ! { [ -d "$(VULNS_DIR)/.git" ] \
+		&& git -C "$(VULNS_DIR)" fetch --quiet --depth 1 origin HEAD \
+		&& git -C "$(VULNS_DIR)" reset --quiet --hard FETCH_HEAD; }; then \
+		rm -rf "$(VULNS_DIR)"; \
+		git clone --quiet --depth 1 --sparse "$(KNFSD_KERNEL_VULNS_REPO)" "$(VULNS_DIR)"; \
+		git -C "$(VULNS_DIR)" sparse-checkout set --no-cone '/cve/published/**/*.json'; \
+	fi
+	@cd $(ROOT_DIR) && python3 .devcontainer/dev/check_kernel_cves.py --vulns-dir "$(VULNS_DIR)" --min-cvss "$(KNFSD_KERNEL_CVE_MIN_CVSS)"
 
 .PHONY: lic-scan
 lic-scan:
@@ -128,7 +151,7 @@ shellcheck-bats:
 
 black:
 	@echo "[black]"
-	@black --target-version py314 --quiet --extend-exclude '^/(site|debug)/' .
+	@black --target-version py315 --quiet --extend-exclude '^/(site|debug)/' .
 
 mypy:
 	@echo "[mypy]"

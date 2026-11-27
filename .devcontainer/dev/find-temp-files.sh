@@ -5,7 +5,7 @@
 
 # Search recursively through the git repo for specific files and dirs
 
-# Usage: ./find_temp_files.sh [-d/--delete]
+# Usage: ./find-temp-files.sh [-d/--delete]
 
 # check script is being run from the .devcontainer/dev dir only
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,6 +57,7 @@ SEARCH_TARGETS=(
 DIR_TARGETS=(
 	".mypy_cache"
 	".trivycache"
+	".vulns"
 	"site"
 )
 

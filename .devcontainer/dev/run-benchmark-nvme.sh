@@ -21,7 +21,7 @@
 #   --output DIR      Output directory (default: /tmp/fio-results-<timestamp>)
 #   --help            Show this help message
 #
-# Expected NVMe performance targets (i3en.6xlarge, 2 x NVMe, RAID0):
+# Expected NVMe performance targets (i3en.6xlarge/im4gn.8xlarge, 2 x NVMe, RAID0):
 #   Random 4K 100% Read:  ~500K IOPS
 #   Random 4K 100% Write: ~400K IOPS
 #   Sequential 128K Read:  ~4 GB/s

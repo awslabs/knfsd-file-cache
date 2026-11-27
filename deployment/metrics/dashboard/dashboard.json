@@ -3097,8 +3097,6 @@
           "properties": {
               "metrics": [
                   [ "AWS/DynamoDB", "SuccessfulRequestLatency", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "GetItem" } ],
-                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "PutItem" } ],
-                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "UpdateItem" } ],
                   [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "TransactWriteItems" } ]
               ],
               "view": "timeSeries",
@@ -3123,10 +3121,10 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/DynamoDB", "ThrottledRequests", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "GetItem" } ],
-                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "PutItem" } ],
-                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "UpdateItem" } ],
-                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "TransactWriteItems" } ]
+                  [ "AWS/DynamoDB", "ThrottledRequests", "TableName", "DB_FILTER", "Operation", "GetItem", { "id": "m1", "visible": false } ],
+                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "id": "m2", "visible": false } ],
+                  [ { "expression": "FILL(m1, 0)", "label": "GetItem", "id": "e1" } ],
+                  [ { "expression": "FILL(m2, 0)", "label": "TransactWriteItems", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
@@ -3150,18 +3148,19 @@
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/DynamoDB", "SystemErrors", "TableName", "DB_FILTER", "Operation", "GetItem", { "label": "SystemErrors: GetItem" } ],
-                  [ ".", ".", ".", ".", ".", "PutItem", { "label": "SystemErrors: PutItem" } ],
-                  [ ".", ".", ".", ".", ".", "UpdateItem", { "label": "SystemErrors: UpdateItem" } ],
-                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "label": "SystemErrors: TransactWriteItems" } ],
-                  [ "AWS/DynamoDB", "UserErrors", { "label": "UserErrors (all tables)" } ]
+                  [ "AWS/DynamoDB", "SystemErrors", "TableName", "DB_FILTER", "Operation", "GetItem", { "id": "m1", "visible": false } ],
+                  [ ".", ".", ".", ".", ".", "TransactWriteItems", { "id": "m2", "visible": false } ],
+                  [ "AWS/DynamoDB", "UserErrors", { "id": "m3", "visible": false } ],
+                  [ { "expression": "FILL(m1, 0)", "label": "SystemErrors: GetItem", "id": "e1" } ],
+                  [ { "expression": "FILL(m2, 0)", "label": "SystemErrors: TransactWriteItems", "id": "e2" } ],
+                  [ { "expression": "FILL(m3, 0)", "label": "UserErrors (all tables, includes conflicts)", "id": "e3" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB System & User Errors",
+              "title": "DB Errors",
               "yAxis": {
                   "left": {
                       "label": "Count",
@@ -3174,18 +3173,21 @@
           "type": "metric",
           "x": 0,
           "y": 255,
-          "width": 6,
+          "width": 8,
           "height": 8,
           "properties": {
               "metrics": [
-                  [ "AWS/DynamoDB", "ConditionalCheckFailedRequests", "TableName", "DB_FILTER", { "label": "ConditionalCheckFailedRequests" } ]
+                  [ "AWS/DynamoDB", "TransactionConflict", "TableName", "DB_FILTER", { "id": "m1", "visible": false } ],
+                  [ ".", "ConditionalCheckFailedRequests", ".", ".", { "id": "m2", "visible": false } ],
+                  [ { "expression": "FILL(m1, 0)", "label": "TransactionConflict", "id": "e1" } ],
+                  [ { "expression": "FILL(m2, 0)", "label": "ConditionalCheckFailedRequests", "id": "e2" } ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "stat": "Sum",
               "period": 60,
               "region": "${region_filter}",
-              "title": "DB Conditional Check Failed",
+              "title": "DB Allocation Contention",
               "yAxis": {
                   "left": {
                       "label": "Count",
@@ -3196,80 +3198,8 @@
       },
       {
           "type": "metric",
-          "x": 6,
+          "x": 8,
           "y": 255,
-          "width": 6,
-          "height": 8,
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "TransactionConflict", "TableName", "DB_FILTER", { "label": "TransactionConflict" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "stat": "Sum",
-              "period": 60,
-              "region": "${region_filter}",
-              "title": "DB Transaction Conflicts",
-              "yAxis": {
-                  "left": {
-                      "label": "Count",
-                      "showUnits": false
-                  }
-              }
-          }
-      },
-      {
-          "type": "metric",
-          "x": 12,
-          "y": 255,
-          "width": 6,
-          "height": 8,
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "ReadThrottleEvents", "TableName", "DB_FILTER", { "label": "ReadThrottleEvents" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "stat": "Sum",
-              "period": 60,
-              "region": "${region_filter}",
-              "title": "DB Read Throttle Events",
-              "yAxis": {
-                  "left": {
-                      "label": "Count",
-                      "showUnits": false
-                  }
-              }
-          }
-      },
-      {
-          "type": "metric",
-          "x": 18,
-          "y": 255,
-          "width": 6,
-          "height": 8,
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "WriteThrottleEvents", "TableName", "DB_FILTER", { "label": "WriteThrottleEvents" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "stat": "Sum",
-              "period": 60,
-              "region": "${region_filter}",
-              "title": "DB Write Throttle Events",
-              "yAxis": {
-                  "left": {
-                      "label": "Count",
-                      "showUnits": false
-                  }
-              }
-          }
-      },
-      {
-          "type": "metric",
-          "x": 0,
-          "y": 263,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3292,8 +3222,8 @@
       },
       {
           "type": "metric",
-          "x": 8,
-          "y": 263,
+          "x": 16,
+          "y": 255,
           "width": 8,
           "height": 8,
           "properties": {
@@ -3309,35 +3239,6 @@
               "yAxis": {
                   "left": {
                       "label": "WCU",
-                      "showUnits": false
-                  }
-              }
-          }
-      },
-      {
-          "type": "metric",
-          "x": 16,
-          "y": 263,
-          "width": 8,
-          "height": 8,
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "ItemCount", "TableName", "DB_FILTER", { "label": "ItemCount" } ],
-                  [ "AWS/DynamoDB", "TableSizeBytes", "TableName", "DB_FILTER", { "label": "TableSizeBytes", "yAxis": "right" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "stat": "Average",
-              "period": 60,
-              "region": "${region_filter}",
-              "title": "DB Item Count & Table Size",
-              "yAxis": {
-                  "left": {
-                      "label": "Items",
-                      "showUnits": false
-                  },
-                  "right": {
-                      "label": "Bytes",
                       "showUnits": false
                   }
               }

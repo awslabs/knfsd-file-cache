@@ -24,7 +24,7 @@ exclude_docs: |
 
 # Rewrite links to repo-root files that a static site cannot host (extensionless
 # files like Makefile/LICENSE and dotfiles like .tflint.hcl) into canonical
-# repo_url links at build time — see mkdocs/hooks/repo_links.py. This is needed
+# repo_url links at build time (see mkdocs/hooks/repo_links.py). This is needed
 # because docs_dir is the repo root, so pages legitimately link to such files
 # with paths like ../Makefile. The hook uses the !ENV repo_url (per-platform,
 # nothing hard-coded); on local `mkdocs serve` (no repo_url) links are left as-is.

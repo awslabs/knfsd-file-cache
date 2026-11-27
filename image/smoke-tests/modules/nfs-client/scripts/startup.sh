@@ -44,7 +44,22 @@ on_exit() {
 trap on_exit EXIT
 
 log "Installing aws-cli"
-snap install aws-cli --classic
+apt-get -o DPkg::Lock::Timeout=60 -y -q update
+apt-get -o DPkg::Lock::Timeout=60 install -y -q unzip
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip"
+unzip -q -d /tmp /tmp/awscliv2.zip
+/tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf /tmp/awscliv2.zip /tmp/aws
+
+log "Installing amazon-ssm-agent"
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/amazon-ssm-agent.deb "https://s3.$${REGION}.amazonaws.com/amazon-ssm-$${REGION}/latest/debian_$(dpkg --print-architecture)/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f /tmp/amazon-ssm-agent.deb
 
 log "Installing nfs-common"
 apt-get -y -q update

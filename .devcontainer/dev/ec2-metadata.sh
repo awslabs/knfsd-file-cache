@@ -15,7 +15,7 @@ METADATA_BASEURL="http://169.254.169.254"
 METADATA_TOKEN_PATH="latest/api/token"
 QUIET=""
 
-VERSION="1.1.0-beta.7"
+VERSION="1.1.0-beta.8"
 
 tabs 1
 

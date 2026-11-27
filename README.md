@@ -16,7 +16,7 @@
   <img alt="Packer" src="https://img.shields.io/badge/Packer-1.16-02A8EF?style=for-the-badge&logo=packer&logoColor=white">
   <img alt="Terraform" src="https://img.shields.io/badge/Terraform-1.2-7B42BC?style=for-the-badge&logo=terraform&logoColor=white">
   <img alt="Go" src="https://img.shields.io/badge/Go-1.27-00ADD8?style=for-the-badge&logo=go&logoColor=white">
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.15-3776AB?style=for-the-badge&logo=python&logoColor=white">
 </div>
 
 https://github.com/user-attachments/assets/d54a5992-bd9a-4ded-be06-3d10111a57c1

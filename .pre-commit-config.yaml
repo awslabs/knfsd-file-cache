@@ -93,6 +93,12 @@ repos:
         language: system
         pass_filenames: false
         args: [tf-lint]
+      - id: kernel-cve
+        name: kernel-cve
+        entry: make
+        language: system
+        pass_filenames: false
+        args: [kernel-cve]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

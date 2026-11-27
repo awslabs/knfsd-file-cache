@@ -69,7 +69,7 @@ aws iam create-service-linked-role --aws-service-name fsx.amazonaws.com
 | `PROXY_BASENAME`          | Prefix used to name AWS resources. Every deployment in an AWS account MUST be given a globally, unique basename to avoid conflicts.        | False    | `knfsd`           |
 | `TRAFFIC_MODE`            | The traffic distribution mode to use for the KNFSD proxy cluster. The options are `dns_round_robin`, `loadbalancer`, or `none`.            | False    | `dns_round_robin` |
 | `KEY_NAME`                | The name of the key pair to use for the KNFSD instances. Leave BLANK to use AWS SSM.                                                       | False    | `""`              |
-| `INSTANCE_TYPE`           | The AWS EC2 instance type to use for the KNFSD cache.                                                                                      | False    | `i3en.6xlarge`    |
+| `INSTANCE_TYPE`           | The AWS EC2 instance type to use for the KNFSD cache.                                                                                      | False    | `im4gn.8xlarge`   |
 | `KNFSD_NODES`             | The number of KNFSD instances to deploy as part of the cluster.                                                                            | False    | `1`               |
 | `NUM_NFS_THREADS`         | The number of NFS threads to use for KNFSD.                                                                                                | False    | `128`             |
 | `FSID_MODE`               | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`.                            | False    | `external`        |

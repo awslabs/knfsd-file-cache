@@ -45,18 +45,18 @@ variable "ASSOCIATE_PUBLIC_IP_ADDRESS" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) Instance type to launch. Default 'i3en.large' which has local NVMe instance storage. Use 'im4gn.large' for arm64."
+  description = "(Optional) Instance type to launch. Default 'im4gn.large' which has local NVMe instance storage."
   type        = string
   nullable    = false
-  default     = "i3en.large"
+  default     = "im4gn.large"
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*\\.[a-z0-9]+$", var.INSTANCE_TYPE))
-    error_message = "INSTANCE_TYPE must be a valid AWS instance type. Example: \"i3en.large\"."
+    error_message = "INSTANCE_TYPE must be a valid AWS instance type. Example: \"im4gn.large\"."
   }
 }
 
 variable "AMI_ID" {
-  description = "(Optional) AMI ID for the source NFS server. If empty, the latest Ubuntu 26.04 amd64 AMI is resolved from SSM Parameter Store."
+  description = "(Optional) AMI ID for the source NFS server. If empty, the latest Ubuntu 26.04 AMI is resolved from SSM Parameter Store."
   type        = string
   nullable    = false
   default     = ""
@@ -69,7 +69,7 @@ variable "AMI_ID" {
 variable "ARCH" {
   description = "(Optional) Architecture (\"amd64\" or \"arm64\") used to resolve the default Ubuntu AMI when AMI_ID is empty."
   type        = string
-  default     = "amd64"
+  default     = "arm64"
   validation {
     condition     = contains(["amd64", "arm64"], var.ARCH)
     error_message = "ARCH must be either \"amd64\" or \"arm64\"."
@@ -88,10 +88,10 @@ variable "ROOT_VOLUME_SIZE_GB" {
 }
 
 variable "LATENCY_MS" {
-  description = "(Optional) Latency (delay) to apply via tc, in milliseconds. 0 means no additional latency."
+  description = "(Optional) Latency (RTT) to apply via tc, in milliseconds. 0 means no additional latency."
   type        = number
   nullable    = false
-  default     = 0
+  default     = 20
   validation {
     condition     = var.LATENCY_MS >= 0
     error_message = "LATENCY_MS must be greater than or equal to 0."

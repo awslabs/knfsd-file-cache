@@ -65,7 +65,7 @@
 }
 
 /* Cards built by the cards hook can end with a list of related pages.
- * Render it as a flush-left stack of links rather than a bulleted list, so the
+ * Display it as a flush-left stack of links rather than a bulleted list, so the
  * card reads as a small navigation block. A nested list inside a card item is
  * always a link list, so target it structurally rather than tagging the
  * Markdown. Links keep the normal body weight. */
@@ -449,7 +449,7 @@
   border-color: var(--md-primary-fg-color);
 }
 
-/* The `search.suggest` feature renders an autocomplete "ghost" of the matched
+/* The `search.suggest` feature shows an autocomplete "ghost" of the matched
    term in .md-search__suggest, positioned exactly on top of .md-search__input.
    When a query matches, the suggestion text is drawn over the typed text as a
    separate raster layer; on hi-DPI displays the two overlapping glyph layers
@@ -485,13 +485,13 @@
 }
 
 /* ---------------------------------------------------------------------------
- * SEARCH RESULTS — matched-term rendering and hover highlight
+ * SEARCH RESULTS: matched-term styling and hover highlight
  * --------------------------------------------------------------------------- */
 
 /* Material underlines the matched query term and paints it in the accent
    colour. On the dark scheme the softened-orange accent over the near-black
    dropdown is low-contrast, and the underline sitting under the glyphs reads as
-   a blurry, "double-rendered" term. Drop the underline and emphasise with a
+   a blurry, "double-drawn" term. Drop the underline and emphasise with a
    brighter, higher-contrast accent + weight so matches stay crisp. */
 .md-search-result mark {
   text-decoration: none;

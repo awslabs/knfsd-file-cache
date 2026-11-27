@@ -83,7 +83,7 @@ There is a [charge for number of bytes processed](https://aws.amazon.com/elastic
 
 In general the load balancer is aimed at request/response style traffic similar to that of HTTP where the volume of data tends to be small in comparison to the number of requests.
 
-However, with NFS traffic when performing jobs such as rendering a relatively small number of clients can easily fully saturate the bandwidth of several proxy instances for a sustained period of time. This means that the egress costs from the load balancer can be a significant portion of the cost to running a KNFSD proxy cluster.
+However, with NFS traffic when running burst compute jobs, a relatively small number of clients can easily fully saturate the bandwidth of several proxy instances for a sustained period of time. This means that the egress costs from the load balancer can be a significant portion of the cost to running a KNFSD proxy cluster.
 
 ## None
 

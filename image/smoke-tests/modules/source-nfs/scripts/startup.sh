@@ -3,13 +3,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Source NFS server startup script. Renders the local NVMe instance store as
+# Source NFS server startup script. Formats the local NVMe instance store as
 # an XFS filesystem mounted at /srv/nfs/files and exports it as /files via NFS
 # (v3 and v4) to the VPC CIDR. Optionally applies tc traffic shaping.
 #
 # Configuration is delivered via EC2 instance tags (read through IMDSv2):
 #   knfsd-file-cache:vpc-cidr   NFS export allowlist (e.g. "10.20.0.0/16")
-#   knfsd-file-cache:delay      tc netem delay (e.g. "10ms"), empty disables
+#   knfsd-file-cache:delay      tc netem delay (e.g. "20ms"), empty disables
 #   knfsd-file-cache:rate       tc netem rate (e.g. "100MBit"), empty disables
 
 set -o errexit
@@ -52,19 +52,23 @@ on_exit() {
 }
 trap on_exit EXIT
 
-log "Updating amazon-ssm-agent"
-if ! snap debug seeding | grep -q "^seeded: *true$"; then
-	log "Waiting for snap seeding to complete..."
-	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
-fi
-snap stop amazon-ssm-agent
-snap switch --channel=candidate amazon-ssm-agent
-snap refresh amazon-ssm-agent
-mkdir -p /etc/amazon/ssm
-snap start amazon-ssm-agent
-
 log "Installing aws-cli"
-snap install aws-cli --classic
+apt-get -o DPkg::Lock::Timeout=60 -y -q update
+apt-get -o DPkg::Lock::Timeout=60 install -y -q unzip
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip"
+unzip -q -d /tmp /tmp/awscliv2.zip
+/tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf /tmp/awscliv2.zip /tmp/aws
+
+log "Installing amazon-ssm-agent"
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/amazon-ssm-agent.deb "https://s3.$${REGION}.amazonaws.com/amazon-ssm-$${REGION}/latest/debian_$(dpkg --print-architecture)/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f /tmp/amazon-ssm-agent.deb
 
 # Fetch a short-lived IMDSv2 token, then read instance tags through IMDS.
 get_token() {
@@ -186,12 +190,14 @@ systemctl enable nfs-kernel-server
 systemctl restart nfs-kernel-server
 exportfs -ra
 
-# Optional traffic shaping. The primary ENI on Nitro instances is "ens5".
+# Optional traffic shaping.
 if [[ -n $DELAY || -n $RATE ]]; then
 	IFACE="$(ip -o -4 route show to default | awk '{print $5}' | head -n1)"
 	[[ -n $IFACE ]] || fatal "could not determine default network interface for tc"
 
-	tc_args=()
+	# Raise the netem queue limit from its default of 1000 packets, which can
+	# tail-drop and cap throughput once delayed packets fill the queue.
+	tc_args=(limit 100000)
 	[[ -n $DELAY ]] && tc_args+=(delay "$DELAY")
 	[[ -n $RATE ]] && tc_args+=(rate "$RATE")
 

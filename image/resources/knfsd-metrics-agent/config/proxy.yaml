@@ -12,6 +12,12 @@ receivers:
 exporters:
   awsemf:
     metric_declarations:
+      # asg-level metrics
+      - dimensions:
+          - [AutoScalingGroupName]
+        metric_name_selectors:
+          - "^knfsd/nfs_connections"
+
       # proxy-level metrics
       - dimensions:
           - [AutoScalingGroupName, InstanceId]

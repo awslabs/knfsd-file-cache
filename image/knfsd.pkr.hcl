@@ -4,18 +4,19 @@
 
 packer {
   # https://github.com/hashicorp/packer/releases
-  required_version = ">= 1.16.2"
+  required_version = ">= 1.16.3"
   required_plugins {
     amazon = {
       # https://github.com/hashicorp/packer-plugin-amazon
+      # https://developer.hashicorp.com/packer/integrations/hashicorp/amazon
       source  = "github.com/hashicorp/amazon"
-      version = "~> 1.8.3"
+      version = "~> 1.8.4"
     }
   }
 }
 
 locals {
-  version       = "1.1.0-beta.7"
+  version       = "1.1.0-beta.8"
   timestamp     = formatdate("YYYY-MM-DD-hhmmss", timestamp()) # UTC
   build_fs_size = 20
   tmp_fs_size   = 8
@@ -446,7 +447,7 @@ build {
     ]
     inline = [
       "chmod +x /mnt/build/scripts/*.sh",
-      "/mnt/build/scripts/10_build.sh 2>&1"
+      "/mnt/build/scripts/10-build.sh 2>&1"
     ]
     timeout = "1h"
   }
@@ -482,7 +483,7 @@ build {
     ]
     inline = [
       "chmod +x /mnt/build/scripts/*.sh",
-      "/mnt/build/scripts/20_post_build.sh 2>&1"
+      "/mnt/build/scripts/20-post-build.sh 2>&1"
     ]
     timeout = "5m"
   }
@@ -502,7 +503,7 @@ build {
       "TAG_BUILD_STATUS=${var.TAG_BUILD_STATUS}",
     ]
     inline = [
-      "/mnt/build/scripts/30_finalize.sh 2>&1",
+      "/mnt/build/scripts/30-finalize.sh 2>&1",
       "umount /mnt/build",
       "rm -rf /mnt/build"
     ]

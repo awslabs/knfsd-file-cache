@@ -25,7 +25,7 @@ provider "aws" {
 }
 
 module "metrics" {
-  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.7"
+  source  = "github.com/awslabs/knfsd-file-cache//deployment/metrics?ref=v1.1.0-beta.8"
 }
 
 # Print the name of the created CloudWatch dashboard
@@ -292,25 +292,21 @@ See [Kernel NFS Server Statistics](https://www.kernel.org/doc/html/latest/filesy
 
 AWS-native service metrics from Amazon CloudWatch.
 
-| Metric Name                                   | Description                                          | Stat    | Unit         | Period |
-| --------------------------------------------- | ---------------------------------------------------- | ------- | ------------ | ------ |
-| `AWS/EC2.CPUUtilization`                      | EC2 instance CPU utilization                         | Average | Percent      | 60s    |
-| `AWS/EC2.NetworkIn`                           | Network bytes received on all network interfaces     | Sum     | Bytes        | 60s    |
-| `AWS/EC2.NetworkOut`                          | Network bytes sent on all network interfaces         | Sum     | Bytes        | 60s    |
-| `AWS/AutoScaling.GroupDesiredCapacity`        | Desired capacity of Auto Scaling Group               | Average | Count        | 60s    |
-| `AWS/AutoScaling.GroupInServiceInstances`     | Number of instances in service in Auto Scaling Group | Maximum | Count        | 60s    |
-| `AWS/DynamoDB.SuccessfulRequestLatency`       | Latency of successful requests, per operation        | Average | Milliseconds | 60s    |
-| `AWS/DynamoDB.ThrottledRequests`              | Requests that exceeded throughput limits             | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.SystemErrors`                   | Requests that failed with an HTTP 500 (server error) | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.UserErrors`                     | Requests that failed with an HTTP 400 (client error) | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.ConditionalCheckFailedRequests` | Failed conditional writes (FSID allocation races)    | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.TransactionConflict`            | Rejected item-level requests due to transactions     | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.ReadThrottleEvents`             | Read events that exceeded throughput limits          | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.WriteThrottleEvents`            | Write events that exceeded throughput limits         | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.ConsumedReadCapacityUnits`      | Read capacity units consumed                         | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.ConsumedWriteCapacityUnits`     | Write capacity units consumed                        | Sum     | Count        | 60s    |
-| `AWS/DynamoDB.ItemCount`                      | Number of items in the FSID table                    | Average | Count        | 60s    |
-| `AWS/DynamoDB.TableSizeBytes`                 | Size of the FSID table                               | Average | Bytes        | 60s    |
+| Metric Name                                   | Description                                                                                    | Stat    | Unit         | Period |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------- | ------------ | ------ |
+| `AWS/EC2.CPUUtilization`                      | EC2 instance CPU utilization                                                                   | Average | Percent      | 60s    |
+| `AWS/EC2.NetworkIn`                           | Network bytes received on all network interfaces                                               | Sum     | Bytes        | 60s    |
+| `AWS/EC2.NetworkOut`                          | Network bytes sent on all network interfaces                                                   | Sum     | Bytes        | 60s    |
+| `AWS/AutoScaling.GroupDesiredCapacity`        | Desired capacity of Auto Scaling Group                                                         | Average | Count        | 60s    |
+| `AWS/AutoScaling.GroupInServiceInstances`     | Number of instances in service in Auto Scaling Group                                           | Maximum | Count        | 60s    |
+| `AWS/DynamoDB.SuccessfulRequestLatency`       | Latency of successful requests, per operation (`GetItem`, `TransactWriteItems`)                | Average | Milliseconds | 60s    |
+| `AWS/DynamoDB.ThrottledRequests`              | Requests that exceeded throughput limits, per operation (`GetItem`, `TransactWriteItems`)      | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.SystemErrors`                   | Requests that failed with an HTTP 500 (server error), per operation                            | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.UserErrors`                     | Requests that failed with an HTTP 400 (client error), account-wide, includes conflicts         | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.TransactionConflict`            | Rejected item-level requests due to transaction conflicts                                      | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConditionalCheckFailedRequests` | Failed conditional writes, including conditions inside `TransactWriteItems` (allocation races) | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConsumedReadCapacityUnits`      | Read capacity units consumed                                                                   | Sum     | Count        | 60s    |
+| `AWS/DynamoDB.ConsumedWriteCapacityUnits`     | Write capacity units consumed                                                                  | Sum     | Count        | 60s    |
 
 ## Dashboard Layout
 
@@ -529,17 +525,13 @@ KNFSD FSID daemon performance metrics for filesystem ID management.
 
 Amazon DynamoDB performance metrics for the FSID table.
 
-| Widget                      | Metrics                                       | Description                                               | Stat    | Period | Label   |
-| --------------------------- | --------------------------------------------- | --------------------------------------------------------- | ------- | ------ | ------- |
-| DB Request Latency          | `AWS/DynamoDB.SuccessfulRequestLatency`       | Latency of successful requests, per operation             | Average | 60s    | Time/ms |
-| DB Throttled Requests       | `AWS/DynamoDB.ThrottledRequests`              | Requests that exceeded throughput limits, per operation   | Sum     | 60s    | Count   |
-| DB System & User Errors     | `AWS/DynamoDB.SystemErrors`, `UserErrors`     | Server (HTTP 500) and client (HTTP 400) request failures  | Sum     | 60s    | Count   |
-| DB Conditional Check Failed | `AWS/DynamoDB.ConditionalCheckFailedRequests` | Failed conditional writes (FSID allocation races)         | Sum     | 60s    | Count   |
-| DB Transaction Conflicts    | `AWS/DynamoDB.TransactionConflict`            | Rejected item-level requests due to transaction conflicts | Sum     | 60s    | Count   |
-| DB Read Throttle Events     | `AWS/DynamoDB.ReadThrottleEvents`             | Read events that exceeded throughput limits               | Sum     | 60s    | Count   |
-| DB Write Throttle Events    | `AWS/DynamoDB.WriteThrottleEvents`            | Write events that exceeded throughput limits              | Sum     | 60s    | Count   |
-| DB Consumed Read Capacity   | `AWS/DynamoDB.ConsumedReadCapacityUnits`      | Read capacity units consumed                              | Sum     | 60s    | Count   |
-| DB Consumed Write Capacity  | `AWS/DynamoDB.ConsumedWriteCapacityUnits`     | Write capacity units consumed                             | Sum     | 60s    | Count   |
-| DB Item Count & Table Size  | `AWS/DynamoDB.ItemCount`, `TableSizeBytes`    | Number of items and size of the FSID table                | Average | 60s    | Count   |
+| Widget                     | Metrics                                                              | Description                                                      | Stat    | Period | Label   |
+| -------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- | ------- | ------ | ------- |
+| DB Request Latency         | `AWS/DynamoDB.SuccessfulRequestLatency`                              | Server-side latency of successful requests, per operation        | Average | 60s    | Time/ms |
+| DB Throttled Requests      | `AWS/DynamoDB.ThrottledRequests`                                     | Read (`GetItem`) and write (`TransactWriteItems`) throttling     | Sum     | 60s    | Count   |
+| DB Errors                  | `AWS/DynamoDB.SystemErrors`, `UserErrors`                            | Server (HTTP 500) per operation, and client (HTTP 400) failures  | Sum     | 60s    | Count   |
+| DB Allocation Contention   | `AWS/DynamoDB.TransactionConflict`, `ConditionalCheckFailedRequests` | Concurrent FSID allocation races between `knfsd-fsidd` instances | Sum     | 60s    | Count   |
+| DB Consumed Read Capacity  | `AWS/DynamoDB.ConsumedReadCapacityUnits`                             | Read capacity units consumed by all nodes                        | Sum     | 60s    | RCU     |
+| DB Consumed Write Capacity | `AWS/DynamoDB.ConsumedWriteCapacityUnits`                            | Write capacity units consumed by all nodes                       | Sum     | 60s    | WCU     |
 
-> **Note:** The FSID table uses on-demand capacity (`PAY_PER_REQUEST`), so there is no provisioned throughput to size. Throttle and capacity metrics are included to spot unexpected hot-partition or burst behaviour; for the FSID workload consumed capacity is normally near zero. Operation-level dimensions cover `GetItem`, `PutItem`, `UpdateItem`, and `TransactWriteItems` (the operations used by the `knfsd-fsidd` daemon).
+> **Note:** The FSID table uses on-demand capacity (`PAY_PER_REQUEST`), so there is no provisioned throughput to size. Throttle and capacity metrics are included to identify unexpected hot-partition or burst behaviour; for the FSID workload consumed capacity is normally near zero. Operation-level dimensions cover `GetItem` and `TransactWriteItems` (the operations used by the `knfsd-fsidd` daemon). DynamoDB only publishes error, throttle, and contention metrics when they occur, so these widgets use `FILL(m1, 0)` to draw a zero line when all is well; latency and capacity widgets are not filled. `UserErrors` is account-wide (all tables) and also counts transaction conflicts. For the client-side view per instance (counts, durations, retries, and `not_found` results), see [FSID Performance](#fsid-performance).

@@ -33,7 +33,7 @@ image/  --build--> AMI  ------------> deployment/  --apply--> running cluster
 ```
 
 The single most important consequence: **`image/resources/startup/proxy-startup.sh`
-lives inside the AMI.** `image/resources/scripts/10_build.sh` installs it to
+lives inside the AMI.** `image/resources/scripts/10-build.sh` installs it to
 `/usr/local/sbin/proxy-startup.sh`, and the launch-template user data in
 `deployment/terraform-module-knfsd/compute.tf` executes it on every boot. Editing
 that script has **no effect** until the AMI is rebuilt and the new AMI ID is
@@ -117,13 +117,15 @@ commands that provision large EC2 instances in a real AWS account, in one
 | `make lic-scan`                              | Trivy license scan of the tree. Local and free, just slow                                                                                         |
 | `make lint`                                  | `ec codespell shfmt shellcheck-sh shellcheck-bash shellcheck-bats black mypy pylint iam-size`                                                     |
 | `make iam-size`                              | Checks each IAM policy fits the 6,144 non-whitespace-character AWS managed-policy limit. Only needs `python3`                                     |
+| `make kernel-cve`                            | Checks the `KERNEL` pin in `10-build.sh` against kernel CNA CVE records.                                                                          |
 | `make packer-fmt`, `make packer-val`         | Format and validate the Packer template                                                                                                           |
 | `make tf-fmt`, `make tf-lint`, `make tf-val` | `terraform validate` runs with `-backend=false`, so no state and no credentials                                                                   |
 | `make scan`                                  | Checkov, KICS, Semgrep, Trivy. Static only; KICS needs Docker                                                                                     |
 | `make sec`                                   | Checkov, gosec, KICS, Semgrep, Trivy. Note `make all` runs `scan`, not `sec`, so gosec is only covered via `sec`                                  |
 | `make pc`                                    | `pre-commit run --all-files`. `fail_fast: true`, so it stops at the first failing hook                                                            |
 | `make docs`                                  | Builds and serves the mkdocs site at `127.0.0.1:8000` and blocks until interrupted. For humans previewing pages                                   |
-| `make clean`                                 | Deletes generated temporary files via `.devcontainer/dev/find_temp_files.sh`                                                                      |
+| `make clean`                                 | Deletes generated temporary files via `.devcontainer/dev/find-temp-files.sh`                                                                      |
+| `make upgrade`                               | Runs both `update-*` scripts with `--write`. No AWS calls, but rewrites pins repo-wide (AMI contents too), so run only when asked                 |
 
 There is **no** `make` target for a one-shot documentation build. To reproduce
 what CI does, run the same command from the repository root:
@@ -141,7 +143,7 @@ MKDOCS_SITE_URL="http://127.0.0.1:8000/" \
 |----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `make image`, `make image-log`, `make image-debug` | Runs a full Packer build. Launches EC2 **spot** instances from a list of 16xlarge/18xlarge types, and builds **both** `amd64` and `arm64` in parallel. Compiles a Linux kernel; takes a long time |
 | `make iamlive` then `make image-iam`               | The same build proxied through `iamlive`. `image-iam` aborts unless `iamlive` is already listening on `127.0.0.1:10080`                                                                           |
-| `terraform apply` in `deployment/` or `examples/`  | Provisions the cluster. Default `INSTANCE_TYPE` is `i3en.6xlarge` (24 vCPUs per node), plus a DynamoDB table, Auto Scaling group, and optionally a Network Load Balancer                          |
+| `terraform apply` in `deployment/` or `examples/`  | Provisions the cluster. Default `INSTANCE_TYPE` is `im4gn.8xlarge` (32 vCPUs per node), plus a DynamoDB table, Auto Scaling group, and optionally a Network Load Balancer                         |
 | `make test` in `image/smoke-tests/`                | Provisions a source NFS server, a KNFSD proxy, and a client instance, then tears them down                                                                                                        |
 | `.devcontainer/dev/remote.sh new ...`              | Creates an EC2 development instance                                                                                                                                                               |
 
@@ -165,6 +167,7 @@ Pick verification that matches what you touched. There is no single build.
 | Shell scripts                            | `make shfmt shellcheck-sh shellcheck-bash shellcheck-bats`               |
 | Python                                   | `make black mypy pylint`                                                 |
 | `docs/iam/*.json`, `examples/*/iam.json` | `make iam-size`                                                          |
+| `KERNEL=` in `10-build.sh`               | `make kernel-cve`                                                        |
 | `go.mod` / `go.sum`                      | `make -C <module> gotest golint`, then regenerate `THIRD-PARTY-LICENSES` |
 | Any Markdown                             | `make codespell ec`, plus the `mkdocs build --strict` command above      |
 
@@ -175,7 +178,9 @@ toolchain.
 CI runs the same checks. GitLab CI (`.gitlab-ci-aws.yml`) covers the `lint` suite,
 `iam-size`, BATS, Terraform and Packer format/validate, per-module
 `golangci-lint`, `go test`, `govulncheck`, cross-arch `go build`, `gosec`, the
-Checkov, KICS, Semgrep, and Trivy scanners, Renovate dependency updates, and a
+Checkov, KICS, Semgrep, and Trivy scanners, a `kernel-cve` check of the pinned
+kernel against kernel CNA CVE records (on every push and on schedules), Renovate
+dependency updates, and a
 `pages` job that publishes the site. GitHub Actions runs CodeQL and publishes the
 site from `main`. Passing the local targets above is a good predictor of a green
 pipeline, and since you never push, it is the only signal you get.
@@ -306,7 +311,7 @@ Markdown in the repository, converted into Material card grids at build time by
 
 The icon goes in an HTML comment so the repo browser does not show a literal
 `:material-...:` shortcode. Do not hand-write the `<div class="grid cards">`
-HTML; that is what the hook produces, and writing it directly breaks rendering on
+HTML; that is what the hook produces, and writing it directly breaks display on
 GitHub and GitLab.
 
 `mkdocs/hooks/repo_links.py` rewrites links that point at repo-root files a static
@@ -420,8 +425,8 @@ Anything in `image/` other than the Terraform-facing docs changes AMI contents.
    blocks, `amd64` and `arm64`, that build in parallel and largely mirror each
    other. A change to one usually needs the same change to the other.
 2. **`image/variables.pkr.hcl`** holds new Packer variables, with validation.
-3. **`image/resources/scripts/`** holds `10_build.sh` (main build),
-   `20_post_build.sh`, and `30_finalize.sh`.
+3. **`image/resources/scripts/`** holds `10-build.sh` (main build),
+   `20-post-build.sh`, and `30-finalize.sh`.
 4. **`image/resources/patches/`** holds patches applied with `quilt`, in two
    subdirectories that are applied at different points and behave differently:
    `cachefilesd/` is imported unconditionally while building the `cachefilesd`
@@ -439,10 +444,11 @@ Anything in `image/` other than the Terraform-facing docs changes AMI contents.
 Gotchas:
 
 * Network calls in build scripts must retry. `curl` invocations use `--retry` and
-  `--retry-delay`, `git clone` goes through the `git_clone` wrapper, and `snap`
-  goes through `snap_refresh`. Follow those patterns for anything new.
+  `--retry-delay`, and `git clone` goes through the `git_clone` wrapper. Follow
+  those patterns for anything new. The build no longer installs anything from the
+  Snap Store; do not reintroduce `snap install` or `snap refresh`.
 * Do not add `expect_disconnect` to the script provisioners. The only occurrence in
-  the template is on the dedicated reboot provisioner after `10_build.sh`; that
+  the template is on the dedicated reboot provisioner after `10-build.sh`; that
   separation is deliberate, so a lost connection during a build script, a spot
   reclaim for instance, fails the build instead of silently truncating it.
 * The build runs on EC2 spot with a list of candidate instance types and
@@ -460,7 +466,7 @@ instances and compiles a kernel, so get explicit approval first.
 ### 7.7 Update Go dependencies
 
 Six Go modules update independently, and five of them are compiled into the AMI by
-`10_build.sh`, so a dependency bump is an AMI-contents change with a side effect on
+`10-build.sh`, so a dependency bump is an AMI-contents change with a side effect on
 the license file. Renovate automates routine bumps in GitLab CI; this is for making
 the same change by hand.
 
@@ -489,9 +495,9 @@ the same change by hand.
 Gotchas:
 
 * `image/smoke-tests` dependencies never reach the AMI; the other five modules'
-  binaries are installed into it by `10_build.sh`.
-* The Go toolchain itself is pinned separately. `10_build.sh` downloads a fixed
-  release, `go1.27.3` at the time of writing, and `KNFSD_GOLANG_VERSION` in
+  binaries are installed into it by `10-build.sh`.
+* The Go toolchain itself is pinned separately. `10-build.sh` downloads a fixed
+  release, `go1.27.4` at the time of writing, and `KNFSD_GOLANG_VERSION` in
   `.gitlab-ci-aws.yml` must match. `goget` changes neither.
 * There is no Go workspace file, so `go get` and `go mod tidy` must run per module.
   The root aggregate targets already handle the loop.
@@ -598,12 +604,38 @@ JSON, HCL, Markdown, and Python use **spaces**. `.editorconfig` also carries the
 `keep_padding`), so run `make shfmt` rather than reformatting by hand. In shell
 scripts, put a single space before a redirect to `/dev/null`, as in `2> /dev/null`.
 
+**Filenames.** Python modules (`*.py`) use underscores, never hyphens, as in
+`static_ip.py` and `repo_links.py`. A module name must be a valid Python
+identifier to be importable, and `pylint` reports `invalid-name` otherwise.
+Shell scripts (`*.sh`, `*.bash`, `*.bats`) use hyphens, never underscores, as in
+`proxy-startup.sh` and `10-build.sh`. Use lowercase throughout. A numeric ordering
+prefix is separated with a hyphen too. Shell function and variable names still use
+underscores, since POSIX `sh` does not allow hyphens in function names. When
+renaming a file, update every reference (Packer `inline` paths, `Makefile`
+targets, pin lists in `update-pinned-versions.sh`, Markdown links, `mkdocs.yml`
+hooks, and historical `CHANGELOG.md` entries).
+
 **Terraform and language versions.** Terraform is pinned to v1.2.9 in CI, so keep
-Terraform v1.2 compatible. Python is 3.14 (`black --target-version py314`) and Go
+Terraform v1.2 compatible. Python is 3.15 (`black --target-version py315`) and Go
 is 1.27.
 
 **Documentation prose.** Fence every code block with a language. Keep tables padded
 to column width, matching the surrounding file. Do not use em dashes.
+
+**Terminology.** Do not use the word "render" or any derived form ("renders",
+"rendering", "renderer", "renderable") anywhere in the repository: prose, code
+comments, docstrings, identifiers, diagram labels, or commit messages. Use these
+replacements instead:
+
+* Workloads the cache serves: "compute", "burst compute", "batch compute",
+  "compute jobs", or "HPC workloads".
+* Client fleets and diagram layers: "Compute Nodes" or "NFS clients".
+* Pages, browsers, and Markdown: "display", "show", "draw", or "view"
+  ("browser-viewable").
+* Build-time transformation (for example the mkdocs hooks): "convert",
+  "generate", or "process" ("Markdown processor").
+* Templated configuration: "generated" or "templated".
+* Formatting a disk: "format".
 
 **Security.** IAM policies are committed JSON under `docs/iam/` and are treated as
 least-privilege reference material. Adding a permission means editing the policy
@@ -668,8 +700,8 @@ case; these are the disqualifiers.
 
 **Good fit:** read-heavy HPC and burst-compute workloads where many clients in AWS
 repeatedly read a largely static dataset held on a filer that is remote,
-bandwidth-constrained, or expensive to hit directly. Rendering, EDA, genomics,
-simulation, HPC, and CI fleets pulling shared assets or toolchains.
+bandwidth-constrained, or expensive to hit directly. Batch compute, EDA,
+genomics, simulation, HPC, and CI fleets pulling shared assets or toolchains.
 
 **Poor fit, or needs care:**
 
@@ -686,10 +718,11 @@ simulation, HPC, and CI fleets pulling shared assets or toolchains.
   freshness for throughput, so a client can see stale metadata for up to ten
   minutes. Lower `ACDIRMAX` to improve `readdir` freshness at the cost of more
   metadata traffic to the source.
-* **Cost-sensitive deployments.** The default node is an `i3en.6xlarge`. Sizing down
-  loses NVMe capacity for the L2 cache, and network bandwidth. Graviton (ARM) EC2
-  instances are supported such as `im4gn.8xlarge` and provide superior
-  cost-performance for these use cases.
+* **Cost-sensitive deployments.** The default node is an `im4gn.8xlarge`. Sizing down
+  loses NVMe capacity for the L2 cache, and network bandwidth. Intel (x86) EC2
+  instances are supported such as `i3en.6xlarge`. However, Graviton (ARM) EC2
+  instances provide superior NVMe capacity and network bandwidth performance
+  for this use case.
 * **Datasets smaller than client RAM,** or accessed once. The cache never pays for
   itself.
 * **Exports whose paths collide with local symlinks**, such as `/bin`, `/lib`, and

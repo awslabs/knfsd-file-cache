@@ -714,13 +714,13 @@ exporters:
     namespace: "/knfsd/metrics"
     dimension_rollup_option: NoDimensionRollup
     resource_to_telemetry_conversion:
-      enabled: true
+      included: ["*"]
 
   prometheus:
     endpoint: "localhost:9090"
     send_timestamps: false
-    resource_to_telemetry_conversion:
-      enabled: true
+    resource_constant_labels:
+      included: ["*"]
 
 service:
   telemetry:

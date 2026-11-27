@@ -9,7 +9,7 @@ resource "aws_autoscaling_policy" "scale_up_policy" {
   policy_type            = "SimpleScaling"
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
-  cooldown               = 180
+  cooldown               = 300
 }
 
 resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {

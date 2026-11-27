@@ -203,8 +203,8 @@ When using the default `FSID_MODE = "external"`, an Amazon DynamoDB **Gateway** 
 
 For hybrid deployments where the source NFS filer resides on-premises, the solution supports:
 
-- **AWS Direct Connect** — dedicated private connectivity with optional MACsec (Layer 2 encryption) for the physical link
-- **AWS Site-to-Site VPN** — IPSec-encrypted tunnels over the public internet
+- **AWS Direct Connect:** dedicated private connectivity with optional MACsec (Layer 2 encryption) for the physical link
+- **AWS Site-to-Site VPN:** IPSec-encrypted tunnels over the public internet
 
 Both approaches keep NFS traffic off the public internet and provide authenticated, encrypted transport for the WAN segment.
 
@@ -235,21 +235,21 @@ KNFSD File Cache provides comprehensive observability through Amazon CloudWatch:
 
 KNFSD proxy instances integrate with AWS Systems Manager for:
 
-- **Session Manager** — secure shell access without SSH keys or bastion hosts; all sessions are logged
-- **Run Command** — ad-hoc operational tasks across the fleet
-- **Parameter Store** — runtime configuration under the `/knfsd/<cluster-name>` namespace; no secrets stored in user data or launch templates
+- **Session Manager:** secure shell access without SSH keys or bastion hosts; all sessions are logged
+- **Run Command:** ad-hoc operational tasks across the fleet
+- **Parameter Store:** runtime configuration under the `/knfsd/<cluster-name>` namespace; no secrets stored in user data or launch templates
 
 ### Audit and Access Logging
 
-- **AWS CloudTrail** — captures all AWS API calls made by KNFSD IAM roles (instance profile, deployment principal, Lambda execution roles), providing an audit trail of infrastructure operations
-- **VPC Flow Logs** — can be enabled on subnets hosting KNFSD proxy instances to capture network-level traffic metadata for forensic analysis and anomaly detection
+- **AWS CloudTrail:** captures all AWS API calls made by KNFSD IAM roles (instance profile, deployment principal, Lambda execution roles), providing an audit trail of infrastructure operations
+- **VPC Flow Logs:** can be enabled on subnets hosting KNFSD proxy instances to capture network-level traffic metadata for forensic analysis and anomaly detection
 
 ### Threat Detection Compatibility
 
 The KNFSD File Cache architecture is compatible with:
 
-- **Amazon GuardDuty** — monitors for anomalous API activity, compromised instances, and malicious network behavior across the VPC
-- **AWS Security Hub** — aggregates findings from GuardDuty, Inspector, and third-party tools for centralized security posture management
+- **Amazon GuardDuty:** monitors for anomalous API activity, compromised instances, and malicious network behavior across the VPC
+- **AWS Security Hub:** aggregates findings from GuardDuty, Inspector, and third-party tools for centralized security posture management
 
 These services operate at the account/VPC level and require no solution-specific configuration.
 
@@ -281,9 +281,10 @@ KNFSD File Cache operates under the standard [AWS Shared Responsibility Model](h
 
 The KNFSD AMI is built from Ubuntu LTS using Packer with a custom-compiled Linux kernel optimized for NFS proxy workloads. Security patching follows this model:
 
-1. **Kernel updates** — tracked in the CHANGELOG (e.g., v7.0.11-knfsd); customers rebuild the AMI via `packer build` and perform a rolling ASG update
-2. **OS packages** — updated during Packer build; no automatic in-place patching on running instances
-3. **Dependency updates** — Golang, Python, OpenTelemetry Collector, ENA driver, and other components are version-pinned and updated in each release
+1. **Kernel updates**: tracked in the CHANGELOG (e.g., v7.0.11-knfsd); customers rebuild the AMI via `packer build` and perform a rolling ASG update
+2. **OS packages**: updated during Packer build; no automatic in-place patching on running instances
+3. **Dependency updates**: Golang, Python, OpenTelemetry Collector, ENA driver, and other components are version-pinned and updated in each release
+4. **Kernel CVE monitoring**: the `kernel-cve` GitLab CI job checks the pinned kernel version on every commit and daily against the [Linux kernel CNA](https://git.kernel.org/pub/scm/linux/security/vulns.git) CVE records for the NFS server, NFS client, SUNRPC, FS-Cache (`cachefiles`), and `netfs` code paths. CVEs with a CVSS score at or above the `KNFSD_KERNEL_CVE_MIN_CVSS` threshold (default `9.0`) are flagged; CVEs that are not scored yet are listed but not flagged until they are scored. A flagged CVE prompts a kernel upgrade and a new release; see [GitLab CI](gitlab-ci.md#kernel-cve)
 
 Customers should establish a cadence for AMI rebuilds aligned with their organization's patch management policy.
 

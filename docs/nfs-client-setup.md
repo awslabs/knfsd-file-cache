@@ -127,11 +127,11 @@ else
     echo "Instance type ${INSTANCE_TYPE} does not support ENA-X; skipping API enablement."
 fi
 
-sysctl -w net.core.rmem_max=16777216
-sysctl -w net.core.wmem_max=16777216
+sysctl -w net.core.rmem_max=33554432
+sysctl -w net.core.wmem_max=33554432
 sysctl -w net.core.netdev_max_backlog=16384
-sysctl -w net.ipv4.tcp_rmem="4096 131072 16777216"
-sysctl -w net.ipv4.tcp_wmem="4096 131072 16777216"
+sysctl -w net.ipv4.tcp_rmem="4096 131072 33554432"
+sysctl -w net.ipv4.tcp_wmem="4096 131072 33554432"
 sysctl -w net.ipv4.tcp_limit_output_bytes=1048576
 sysctl -w net.ipv4.tcp_autocorking=0
 echo 0 > /sys/module/tcp_cubic/parameters/hystart_detect

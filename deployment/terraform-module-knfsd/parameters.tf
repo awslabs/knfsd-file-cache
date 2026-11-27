@@ -34,7 +34,7 @@ locals {
     WSIZE             = "(Optional) The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines. Default: \"1048576\" (1 MiB)."
     NOHIDE            = "(Optional) When \"true\", adds the \"nohide\" option to all the exports. Overridden by AUTO_REEXPORT. Default: \"true\"."
     MOUNT_OPTIONS     = "(Optional) Any additional NFS mount options not covered by existing variables. These options will be applied to all NFS mounts. Default: \"\"."
-    EXPORT_OPTIONS    = "(Optional) Any custom NFS exports options. These options will be applied to all NFS exports. Default: \"\"."
+    EXPORT_OPTIONS    = "(Optional) Any custom NFS export options, applied to all NFS exports. These are appended after the defaults, so a conflicting option (for example \"async\" or \"insecure\") overrides the default (\"sync\" or \"secure\"). Default: \"\"."
     NFS_MOUNT_VERSION = "(Optional) The mount version to use for NFS client mounts (\"vers\" option). Acceptable values are \"3\", \"4\", \"4.0\", \"4.1\", \"4.2\". Default: \"3\"."
 
     # auto re-export nested mounts

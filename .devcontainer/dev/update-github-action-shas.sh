@@ -76,7 +76,7 @@ if [[ ! -d ${WORKFLOW_DIR} ]]; then
 fi
 
 # authenticate when a token is available to avoid the low anonymous rate limit
-CURL_ARGS=(--silent --show-error --fail --max-time 30 --header "Accept: application/vnd.github+json")
+CURL_ARGS=(--silent --show-error --fail --location --max-time 30 --header "Accept: application/vnd.github+json")
 if [[ -n ${GITHUB_TOKEN} ]]; then
 	CURL_ARGS+=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
@@ -112,6 +112,9 @@ function resolve_latest_release() {
 	while ((page <= MAX_TAG_PAGES)); do
 		json=$(curl "${CURL_ARGS[@]}" \
 			"${GITHUB_API}/repos/${repo}/tags?per_page=${TAGS_PER_PAGE}&page=${page}") || return 1
+
+		# anything other than a tag list, such as an error object, is a failure
+		jq -e 'type == "array"' <<< "${json}" > /dev/null 2>&1 || return 1
 
 		# the tags endpoint reports the commit SHA, so annotated tags need no deref
 		tags+=$(jq -r --arg semver "${SEMVER_TAG}" \
@@ -192,7 +195,6 @@ while IFS= read -r file; do
 	done
 done < <(find "${WORKFLOW_DIR}" -maxdepth 1 -type f \( -name '*.yml' -or -name '*.yaml' \) | sort)
 
-echo ''
 if ((failures > 0)); then
 	echo -e "${SHELL_RED}${failures} action(s) could not be resolved${SHELL_DEFAULT}"
 fi
@@ -201,8 +203,8 @@ if ((skipped > 0)); then
 fi
 
 if ((updates == 0)); then
-	echo -e "${SHELL_GREEN}All actions are pinned to the commit SHA of their latest release${SHELL_DEFAULT}"
 	((failures == 0)) || exit 1
+	echo -e "${SHELL_GREEN}All actions are pinned to the commit SHA of their latest release${SHELL_DEFAULT}"
 	exit 0
 fi
 

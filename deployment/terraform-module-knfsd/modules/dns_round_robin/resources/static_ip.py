@@ -17,12 +17,17 @@ import json
 import logging
 import time
 import boto3
+import botocore
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 # configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+# log AWS SDK versions bundled in the Lambda runtime
+logger.info("boto3 version: %s", boto3.__version__)
+logger.info("botocore version: %s", botocore.__version__)
 
 # configure user agent
 SCRIPT_ID = "knfsd-file-cache/static-ip"

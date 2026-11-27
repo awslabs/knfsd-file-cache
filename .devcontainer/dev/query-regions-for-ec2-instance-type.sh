@@ -129,7 +129,7 @@ function print_summary() {
 		"$((${#full[@]} + ${#partial[@]}))/${#REGIONS_QUERIED[@]} regions" \
 		"(${#full[@]} full, ${#partial[@]} partial, ${#none[@]} none)"
 
-	summary_row "REGION" "STATUS" "AZS" "AVAILABILITY"
+	summary_row "REGION" "STATUS" "AZs" "AVAILABILITY"
 	printf '\n'
 	print_rows "${SHELL_BLUE}" "${full[@]}"
 	print_rows "${SHELL_YELLOW}" "${partial[@]}"

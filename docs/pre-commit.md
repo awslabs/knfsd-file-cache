@@ -55,6 +55,10 @@ make autoupdate
 # Update the Go dependencies of every Go project
 make goget
 
+# Update every KNFSD_*_VERSION pin, Terraform provider and Packer plugin,
+# then pin every GitHub Action to the commit SHA of its latest release
+make upgrade
+
 # Clean and update pre-commit cache
 pre-commit clean
 pre-commit install
@@ -71,12 +75,20 @@ The root [`Makefile`](../Makefile) provides the following targets:
 | `make all`       | Run complete validation suite    | All linting, Packer, Terraform, BATS, security scanners, Go tools                      | Various cache and build artifacts |
 | `make pc`        | Run all pre-commit hooks         | [pre-commit](https://pre-commit.com/)                                                  | -                                 |
 | `make pc-update` | Update pinned hook revisions     | [pre-commit](https://pre-commit.com/)                                                  | -                                 |
+| `make upgrade`   | Update pinned versions and SHAs  | `update-pinned-versions.sh`, `update-github-action-shas.sh`                            | -                                 |
 | `make lint`      | Run all linting tools            | EditorConfig, Codespell, shfmt, ShellCheck, Black, MyPy, Pylint, IAM policy size check | -                                 |
 | `make sec`       | Run every security scanner       | Checkov, Gosec, KICS, Semgrep, Trivy                                                   | Scanner caches                    |
 | `make docs`      | Serve the documentation locally  | [MkDocs](https://www.mkdocs.org/)                                                      | -                                 |
-| `make clean`     | Delete generated temporary files | [`find_temp_files.sh`](../.devcontainer/dev/find_temp_files.sh)                        | -                                 |
+| `make clean`     | Delete generated temporary files | [`find-temp-files.sh`](../.devcontainer/dev/find-temp-files.sh)                        | -                                 |
 
 `make all` runs `lint`, `packer`, `terraform`, `bats`, `scan`, `golint` and `gotest`.
+
+`make upgrade` runs [`update-pinned-versions.sh`](../.devcontainer/dev/update-pinned-versions.sh)
+and then [`update-github-action-shas.sh`](../.devcontainer/dev/update-github-action-shas.sh), both
+with `--write`, so the outdated pins are rewritten in place. It contacts the GitHub API and other
+package registries, so set `GITHUB_TOKEN` to raise the GitHub API rate limit, and review the result
+with `git diff` before committing. The target stops at the first script that fails, so a version
+that cannot be resolved leaves the GitHub Action SHAs unchanged.
 
 ### Image Build Commands
 
@@ -103,7 +115,7 @@ These targets are not part of the pre-commit flow, but they live in the same roo
 | `make shellcheck-sh`   | Lint tracked `*.sh` scripts                | [ShellCheck](https://github.com/koalaman/shellcheck)                                 | [`.shellcheckrc`](../.shellcheckrc) | [ShellCheck Documentation](https://www.shellcheck.net/)                                  |
 | `make shellcheck-bash` | Lint tracked `*.bash` scripts              | [ShellCheck](https://github.com/koalaman/shellcheck)                                 | [`.shellcheckrc`](../.shellcheckrc) | [ShellCheck Documentation](https://www.shellcheck.net/)                                  |
 | `make shellcheck-bats` | Lint tracked `*.bats` test files           | [ShellCheck](https://github.com/koalaman/shellcheck)                                 | [`.shellcheckrc`](../.shellcheckrc) | [ShellCheck Documentation](https://www.shellcheck.net/)                                  |
-| `make black`           | Format Python code                         | [Black](https://github.com/psf/black)                                                | `py314` target version              | [Black Documentation](https://black.readthedocs.io/)                                     |
+| `make black`           | Format Python code                         | [Black](https://github.com/psf/black)                                                | `py315` target version              | [Black Documentation](https://black.readthedocs.io/)                                     |
 | `make mypy`            | Type check Python code                     | [MyPy](https://github.com/python/mypy)                                               | Built-in configuration              | [MyPy Documentation](https://mypy.readthedocs.io/)                                       |
 | `make pylint`          | Lint Python code                           | [Pylint](https://github.com/pylint-dev/pylint)                                       | Built-in configuration              | [Pylint Documentation](https://pylint.pycqa.org/)                                        |
 | `make iam-size`        | Verify IAM policy JSON size limits         | Embedded Python script                                                               | 6,144 character AWS limit           | [IAM Quotas](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html) |

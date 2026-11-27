@@ -582,10 +582,10 @@ function configure_kernel() {
 function configure_network() {
 	begin_command "configure network"
 
-	# Raise socket buffer ceiling to 16MB so NFS can buffer 1-4MB
+	# Raise socket buffer ceiling to 32MB so NFS can buffer
 	# rsize/wsize responses under high concurrency.
-	sysctl -w net.core.rmem_max=16777216
-	sysctl -w net.core.wmem_max=16777216
+	sysctl -w net.core.rmem_max=33554432
+	sysctl -w net.core.wmem_max=33554432
 
 	# Raise socket buffer defaults to 4MB for ENA-X high-rtt conditions
 	sysctl -w net.core.rmem_default=4194304
@@ -595,11 +595,11 @@ function configure_network() {
 	# prevent packet drops at high PPS before reaching the NFS stack.
 	sysctl -w net.core.netdev_max_backlog=16384
 
-	# Set TCP auto-tuning range (min/default/max) to 4KB/128KB/16MB.
-	# Aligns with rmem_max/wmem_max so TCP can auto-tune up to 16MB
+	# Set TCP auto-tuning range (min/default/max) to 4KB/128KB/32MB.
+	# Aligns with rmem_max/wmem_max so TCP can auto-tune up to 32MB
 	# for NFS connections with 1-100ms latency.
-	sysctl -w net.ipv4.tcp_rmem="4096 131072 16777216"
-	sysctl -w net.ipv4.tcp_wmem="4096 131072 16777216"
+	sysctl -w net.ipv4.tcp_rmem="4096 131072 33554432"
+	sysctl -w net.ipv4.tcp_wmem="4096 131072 33554432"
 
 	# Raise TCP small queue limit to 4MB (default 128KB) for ENA-X
 	sysctl -w net.ipv4.tcp_limit_output_bytes=4194304
@@ -637,7 +637,7 @@ function configure_network() {
 		remaining=$((remaining - chunk_bits))
 	done
 
-	# ENA interface udev names: ens5(i3en), enp39s0(i7i), ens36(i8g), ens37(r8gd)
+	# ENA interface udev names: ens5/6(i3en/im4gn), enp39s0/40(i7i), ens35/36(i8g), ens37/38(r8gd)
 	for dev in /sys/class/net/en*; do
 		local iface
 		iface=$(basename "${dev}")

@@ -9,7 +9,7 @@ set -eo pipefail
 BUILDARCH=$(dpkg --print-architecture)
 HOSTNAME="knfsd-dev-ec2"
 USERNAME="ubuntu"
-VERSION="1.1.0-beta.7"
+VERSION="1.1.0-beta.8"
 
 ## set env vars for build env only
 export DEBIAN_FRONTEND=noninteractive
@@ -19,16 +19,19 @@ export DEBIAN_PRIORITY=critical
 ## disable unattended-upgrades.service
 systemctl disable unattended-upgrades.service
 
-## update amazon-ssm-agent
-# wait up to 5 mins for snap seeding to complete before proceeding
-if ! snap debug seeding | grep -q "^seeded: *true$"; then
-	echo "Waiting for snap seeding to complete..."
-	timeout 300 sh -c 'until snap debug seeding | grep -q "^seeded: *true$"; do sleep 5; done'
-fi
-snap stop amazon-ssm-agent
-snap switch --channel=candidate amazon-ssm-agent
-snap refresh amazon-ssm-agent
-snap start amazon-ssm-agent
+## instance identity for self-tagging and the regional SSM agent download
+REGION="$(cloud-init query region)"
+INSTANCE_ID="$(cloud-init query instance_id)"
+
+## replace the preinstalled snap amazon-ssm-agent with the official .deb
+## from the regional S3 bucket ("latest" matches the snap "candidate" channel)
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/amazon-ssm-agent.deb "https://s3.${REGION}.amazonaws.com/amazon-ssm-${REGION}/latest/debian_${BUILDARCH}/amazon-ssm-agent.deb"
+timeout 300 snap wait system seed.loaded
+snap remove --purge amazon-ssm-agent
+dpkg -i /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+rm -f /tmp/amazon-ssm-agent.deb
 
 ## OS update, upgrade, install apt pkgs
 apt-get -y -q update && apt-get -y -q upgrade \
@@ -115,11 +118,11 @@ echo "GITHUB_TOKEN=" >> /etc/environment \
 	&& echo "TF_APPEND_USER_AGENT=AWSSOLUTION/SO9129/${VERSION}" >> /etc/environment
 
 ## install aws-cli
-snap install aws-cli --classic
-
-## instance identity for self-tagging the "knfsd-file-cache:status" tag
-REGION="$(cloud-init query region)"
-INSTANCE_ID="$(cloud-init query instance_id)"
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 --retry-max-time 300 --connect-timeout 30 --max-time 600 \
+	-o /tmp/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip"
+unzip -q -d /tmp /tmp/awscliv2.zip
+/tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+rm -rf /tmp/awscliv2.zip /tmp/aws
 
 ## update_status() sets the tag:"knfsd-file-cache:status" on this instance.
 ## @param (str) $1 status value (e.g. "ready", "error: ...")
@@ -149,31 +152,33 @@ KNFSD_BATS_CORE_VERSION=1.14.0
 # https://github.com/psf/black/releases
 KNFSD_BLACK_VERSION=26.10.1
 # https://github.com/boto/boto3/tags
-KNFSD_BOTO3_VERSION=1.43.119
+KNFSD_BOTO3_VERSION=1.44.12
 # https://hub.docker.com/r/bridgecrew/checkov/tags
-KNFSD_CHECKOV_VERSION=3.3.30
+KNFSD_CHECKOV_VERSION=3.4.11
 # https://github.com/codespell-project/codespell/releases
 KNFSD_CODESPELL_VERSION=2.4.3
 # https://github.com/editorconfig-checker/editorconfig-checker/releases
 KNFSD_EDITORCONFIG_VERSION=4.0.2
 # https://github.com/cli/cli/releases
-KNFSD_GH_VERSION=2.103.3
+KNFSD_GH_VERSION=2.106.0
 # https://github.com/golangci/golangci-lint/releases
 KNFSD_GOLANGCI_LINT_VERSION=2.15.0
 # https://go.dev/dl/
-KNFSD_GOLANG_VERSION=1.27.3
+KNFSD_GOLANG_VERSION=1.27.4
 # https://github.com/securego/gosec/releases
 KNFSD_GOSEC_VERSION=2.30.0
 # https://github.com/python/mypy/tags
-KNFSD_MYPY_VERSION=2.4.0
+KNFSD_MYPY_VERSION=2.4.1
 # https://github.com/hashicorp/packer/releases
-KNFSD_PACKER_VERSION=1.16.2
+KNFSD_PACKER_VERSION=1.16.3
 # https://github.com/pre-commit/pre-commit/releases
 KNFSD_PRECOMMIT_VERSION=4.7.0
 # https://github.com/pylint-dev/pylint/tags
-KNFSD_PYLINT_VERSION=4.1.3
+KNFSD_PYLINT_VERSION=4.1.4
+# https://hub.docker.com/_/python/tags
+KNFSD_PYTHON_VERSION=3.15.2
 # https://github.com/semgrep/semgrep/releases
-KNFSD_SEMGREP_VERSION=1.182.1
+KNFSD_SEMGREP_VERSION=1.187.0
 # https://github.com/aws/session-manager-plugin/tags
 KNFSD_SESSION_MANAGER_PLUGIN_VERSION=1.2.896.0
 # https://pypi.org/project/shellcheck-py/
@@ -183,13 +188,13 @@ KNFSD_SHFMT_VERSION=3.14.1
 # https://github.com/hashicorp/terraform/releases
 KNFSD_TERRAFORM_VERSION=1.2.9
 # https://github.com/terraform-linters/tflint/releases
-KNFSD_TFLINT_VERSION=0.65.0
+KNFSD_TFLINT_VERSION=0.66.0
 # https://github.com/aquasecurity/trivy/releases
-KNFSD_TRIVY_VERSION=0.76.1
+KNFSD_TRIVY_VERSION=0.76.2
 # https://pypi.org/project/tzupdate/
 KNFSD_TZUPDATE_VERSION=2.1.0
 # https://github.com/astral-sh/uv/releases
-KNFSD_UV_VERSION=0.13.6
+KNFSD_UV_VERSION=0.13.10
 
 ## install golang, delete empty lines and lines containing PATH= in /etc/environment
 curl -fsSL "https://dl.google.com/go/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" -o "/tmp/go${KNFSD_GOLANG_VERSION}.linux-${BUILDARCH}.tar.gz" \
@@ -291,12 +296,12 @@ echo 'export TRIVY_CACHE_DIR=\$HOME/.cache/trivy' >> ~/.bashrc
 mkdir -p ~/.terraform.d/plugin-cache
 echo 'export TF_PLUGIN_CACHE_DIR=\$HOME/.terraform.d/plugin-cache' >> ~/.bashrc
 
-## create venv with uv
-uv venv ~/.venv
+## create venv with a uv managed Python
+uv venv --python "${KNFSD_PYTHON_VERSION}" ~/.venv
 
 ## uv tool install binaries into isolated virt envs
 uv tool install -q "tzupdate==${KNFSD_TZUPDATE_VERSION}" \
-	&& uv tool install -q "black==${KNFSD_BLACK_VERSION}" \
+	&& uv tool install -q --python "${KNFSD_PYTHON_VERSION}" "black==${KNFSD_BLACK_VERSION}" \
 	&& uv tool install -q "checkov==${KNFSD_CHECKOV_VERSION}" \
 	&& uv tool install -q "codespell==${KNFSD_CODESPELL_VERSION}" \
 	&& uv tool install -q "pre-commit==${KNFSD_PRECOMMIT_VERSION}" \

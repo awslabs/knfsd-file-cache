@@ -6,10 +6,10 @@ variable "VERSION" {
   description = "(Required) The version of the KNFSD File Cache."
   type        = string
   nullable    = false
-  default     = "1.1.0-beta.7"
+  default     = "1.1.0-beta.8"
   validation {
     condition     = can(regex("^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$", var.VERSION))
-    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.7\"."
+    error_message = "VERSION must be a valid semantic version 2.0.0 format. Example: \"1.1.0-beta.8\"."
   }
 }
 
@@ -411,9 +411,9 @@ variable "CUSTOM_POST_STARTUP_SCRIPT" {
 }
 
 variable "INSTANCE_TYPE" {
-  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Must match PROXY_AMI architecture. Default: \"i3en.6xlarge\"."
+  description = "(Optional) The AWS EC2 instance type to use for the KNFSD cache. Must match PROXY_AMI architecture. Default: \"im4gn.8xlarge\"."
   type        = string
-  default     = "i3en.6xlarge"
+  default     = "im4gn.8xlarge"
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*\\.(metal(-[0-9]+xl)?|[a-z0-9]+)$", var.INSTANCE_TYPE))
     error_message = "INSTANCE_TYPE must be a valid AWS EC2 instance type."
@@ -658,7 +658,7 @@ variable "AUTO_REEXPORT" {
 }
 
 variable "EXPORT_OPTIONS" {
-  description = "(Optional) Any custom NFS exports options. These options will be applied to all NFS exports. Default: \"\"."
+  description = "(Optional) Any custom NFS export options, applied to all NFS exports. These are appended after the defaults, so a conflicting option (for example \"async\" or \"insecure\") overrides the default (\"sync\" or \"secure\"). Default: \"\"."
   type        = string
   nullable    = false
   default     = ""

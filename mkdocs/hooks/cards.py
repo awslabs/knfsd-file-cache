@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""MkDocs build hook: render marked blocks as card grids.
+"""MkDocs build hook: convert marked blocks into card grids.
 
 Two kinds of card are produced: Material grid cards linking to pages, built from
 a bullet list, and click-to-play video cards, built from a table of posters. Both
@@ -12,15 +12,15 @@ as a package).
 
 The trick is that the richer HTML each needs cannot be authored directly. GitHub
 and GitLab ignore the ``markdown`` attribute, so Markdown inside a hand-written
-``<div>`` renders as literal broken text; both strip ``<iframe>`` entirely, GitHub
-against a fixed allowlist and GitLab unless an instance administrator has enabled
-"Embedded content"; and neither allows any CSS, GitHub dropping ``style`` and
-``class`` outright while GitLab permits ``style`` only on table cells and only for
-``text-align``. This matters here because every page is also a repo file. So the
-source stays markup those browsers render natively, and this hook expands it at
-build time. Icons and video ids travel in HTML comments, invisible in the repo
-browser, keeping Material's ``:material-...:`` shortcodes and other build-only
-details out of that view.
+``<div>`` displays as literal broken text; both strip ``<iframe>`` entirely,
+GitHub against a fixed allowlist and GitLab unless an instance administrator
+has enabled "Embedded content"; and neither allows any CSS, GitHub dropping
+``style`` and ``class`` outright while GitLab permits ``style`` only on table
+cells and only for ``text-align``. This matters here because every page is also
+a repo file. So the source stays markup those browsers display natively, and
+this hook expands it at build time. Icons and video ids travel in HTML comments,
+invisible in the repo browser, keeping Material's ``:material-...:`` shortcodes
+and other build-only details out of that view.
 
 Registered after ``repo_links.py`` so link rewriting happens while the content is
 still plain Markdown.
@@ -70,7 +70,7 @@ to the browser as ``data-youtube`` and ``videos.js`` swaps in a
 ``youtube-nocookie.com`` iframe on click. Cells without it stay plain links,
 which is what a video hosted somewhere unembeddable needs -- notably a GitHub
 ``user-attachments`` asset, whose URL is a five-minute signed redirect that only
-GitHub's own Markdown renderer can mint.
+GitHub's own Markdown processor can mint.
 
 Both wrappers carry ``markdown`` so python-markdown parses the body. For video
 cards that is also why each poster is re-emitted as Markdown rather than having
@@ -162,7 +162,7 @@ def _item_lines(item: str) -> list[str]:
 
 
 def _format_grid_card(item: str) -> str | None:
-    """Render one list item as a Material grid card, or None if it is empty."""
+    """Convert one list item into a Material grid card, or None if it is empty."""
     lines = _item_lines(item)
     if not lines:
         return None
@@ -282,11 +282,12 @@ def on_page_markdown(markdown: str, *, page, config, files) -> str:
                 if card
             ]
             if not cards:
-                # Warn rather than fail: the authored source still renders, so a
-                # page is never broken by a malformed block. Silence would be
-                # worse than noise here, because the fallback for a video block
-                # is the raw table, whose repo-relative image paths 404 on the
-                # site -- a symptom whose cause is not otherwise obvious.
+                # Warn rather than fail: the authored source still displays
+                # correctly, so a page is never broken by a malformed block.
+                # Silence would be worse than noise here, because the fallback
+                # for a video block is the raw table, whose repo-relative image
+                # paths 404 on the site -- a symptom whose cause is not
+                # otherwise obvious.
                 _log.warning(
                     "%s: could not parse a '%s' block; left as authored",
                     page.file.src_path,

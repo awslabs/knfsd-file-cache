@@ -176,13 +176,13 @@ variable "IAM_INSTANCE_PROFILE" {
 }
 
 variable "CUSTOM_PRE_BUILD_SCRIPT" {
-  description = "(Optional) Path to a bash script file to run BEFORE the \"10_build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
+  description = "(Optional) Path to a bash script file to run BEFORE the \"10-build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
   type        = string
   default     = ""
 }
 
 variable "CUSTOM_POST_BUILD_SCRIPT" {
-  description = "(Optional) Path to a bash script file to run AFTER the \"20_post_build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
+  description = "(Optional) Path to a bash script file to run AFTER the \"20-post-build.sh\" script. For example \"/home/$USER/myscript.sh\". Default: \"\"."
   type        = string
   default     = ""
 }

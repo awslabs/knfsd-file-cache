@@ -165,7 +165,7 @@ EXTRA_PINS=(
 	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|[Go "
 	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|https://go.dev/dl/go"
 	"KNFSD_GOLANG_VERSION|docs/client-metrics.md|-xzf go"
-	"KNFSD_GOLANG_VERSION|image/resources/scripts/10_build.sh|https://dl.google.com/go/go"
+	"KNFSD_GOLANG_VERSION|image/resources/scripts/10-build.sh|https://dl.google.com/go/go"
 	"KNFSD_GOLANG_VERSION|image/smoke-tests/README.md|[Go "
 	"KNFSD_PACKER_VERSION|image/knfsd.pkr.hcl|required_version = \">= "
 )
@@ -897,7 +897,6 @@ echo -e "Checking pinned versions in: ${SHELL_BLUE}${REPO_ROOT}${SHELL_DEFAULT}"
 if [[ -z ${GITHUB_TOKEN} ]]; then
 	echo -e "${SHELL_YELLOW}- GITHUB_TOKEN not set; using the 60 req/hour anonymous rate limit${SHELL_DEFAULT}"
 fi
-echo ''
 
 ## RULE 1: verify the frozen pins have not drifted, without querying upstream
 for frozen in "${FROZEN_VERSIONS[@]}"; do
@@ -1120,7 +1119,6 @@ for entry in "${hcl_addresses[@]}"; do
 	fi
 done
 
-echo ''
 if [[ -n ${ONLY_VARIABLE} ]] && ! in_list "${ONLY_VARIABLE}" "${KNOWN_VARIABLES[@]}"; then
 	echo -e "${SHELL_RED}ERROR: unknown variable: ${ONLY_VARIABLE}${SHELL_DEFAULT}" 1>&2
 	echo -e "${SHELL_BLUE}Add it to VERSION_SOURCES to have it checked${SHELL_DEFAULT}" 1>&2
@@ -1147,7 +1145,6 @@ if ((series_available > 0)); then
 fi
 
 if ${WRITE_MODE}; then
-	echo -e "${SHELL_GREEN}Review the changes with: git diff${SHELL_DEFAULT}"
 	((failures == 0 && frozen_errors == 0)) || exit 1
 	exit 0
 fi

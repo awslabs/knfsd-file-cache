@@ -74,6 +74,9 @@ checkov-report.xml
 .trivycache
 !/.trivy.tfvars
 
+# kernel CVE check
+/.vulns/
+
 # NFS
 nfstrace.log
 
